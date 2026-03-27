@@ -1413,13 +1413,33 @@ const Business = {
   },
 
   /**
+   * 获取颜色
+   * @param {number} n - 号码
+   * @returns {string} 颜色
+   */
+  getColor: (n) => {
+    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
+    const colorMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
+    return colorMap[color] || 'red';
+  },
+  
+  /**
+   * 获取颜色中文名称
+   * @param {number} n - 号码
+   * @returns {string} 颜色中文名称
+   */
+  getColorName: (n) => {
+    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
+    return color || '红';
+  },
+  
+  /**
    * 获取特码信息
    * @param {Object} item - 历史数据项
    * @returns {Object} 特码信息
    */
   getSpecial: (item) => {
     const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
-    const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
     const zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
     const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
     const te = Math.max(0, Number(codeArr[6]));
@@ -1428,7 +1448,8 @@ const Business = {
       te,
       tail: te % 10,
       head: Math.floor(te / 10),
-      wave: waveArr[6],
+      wave: Business.getColor(te),
+      colorName: Business.getColorName(te),
       zod: zodArr[6] || '-',
       odd: te % 2 === 1,
       big: te >= 25,
@@ -1444,12 +1465,8 @@ const Business = {
    * @returns {string} 五行
    */
   getWuxing: (n) => {
-    const m = n % 10;
-    if([0,5].includes(m)) return '金';
-    if([1,6].includes(m)) return '木';
-    if([2,7].includes(m)) return '水';
-    if([3,8].includes(m)) return '火';
-    return '土';
+    const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(n));
+    return element || '金';
   },
 
   /**
@@ -1473,15 +1490,15 @@ const Business = {
   renderLatest: (item) => {
     if(!item) return;
     const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
-    const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
     const s = Business.getSpecial(item);
     const zodArr = s.fullZodArr;
     
     let html = '';
     for(let i = 0; i < 6; i++) {
-      html += Business.buildBall(codeArr[i], waveArr[i], zodArr[i]);
+      const num = Number(codeArr[i]);
+      html += Business.buildBall(codeArr[i], Business.getColor(num), zodArr[i]);
     }
-    html += '<div class="ball-sep">+</div>' + Business.buildBall(codeArr[6], waveArr[6], zodArr[6]);
+    html += '<div class="ball-sep">+</div>' + Business.buildBall(codeArr[6], s.wave, zodArr[6]);
     
     const latestBalls = document.getElementById('latestBalls');
     const curExpect = document.getElementById('curExpect');
@@ -1571,7 +1588,7 @@ const Business = {
       s.te <= 9 ? range['1-9']++ : s.te <= 19 ? range['10-19']++ : s.te <= 29 ? range['20-29']++ : s.te <= 39 ? range['30-39']++ : range['40-49']++;
       head[s.head]++;
       tail[s.tail]++;
-      s.wave === 'red' ? color['红']++ : s.wave === 'blue' ? color['蓝']++ : color['绿']++;
+      color[s.colorName]++;
       wuxing[s.wuxing]++;
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
@@ -2306,6 +2323,22 @@ const EventBinder = {
     window.addEventListener('beforeunload', Business.handlePageUnload);
     // 全局错误捕获
     window.addEventListener('error', EventBinder.handleGlobalError);
+    
+    // 分析页面：全维度分析选择器change事件
+    const analyzeSelect = document.getElementById('analyzeSelect');
+    if(analyzeSelect) {
+      analyzeSelect.addEventListener('change', function() {
+        Business.syncAnalyze();
+      });
+    }
+    
+    // 分析页面：特码生肖关联选择器change事件
+    const zodiacAnalyzeSelect = document.getElementById('zodiacAnalyzeSelect');
+    if(zodiacAnalyzeSelect) {
+      zodiacAnalyzeSelect.addEventListener('change', function() {
+        Business.syncZodiacAnalyze();
+      });
+    }
     
     // 分析页面：号码数量选择器change事件
     const numCountSelect = document.getElementById('numCountSelect');
