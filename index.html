@@ -1,5 +1,5 @@
 <!-- 
-  GoingBeta
+  GoingBeta V1.2
   代码结构说明：
   - CONFIG: 配置常量模块
   - Utils: 工具函数模块（节流、防抖、深拷贝等）
@@ -360,10 +360,10 @@
 
         <div class="analysis-sub-title">
           <span>生肖统计 <span class="hot-tag">热门TOP</span></span>
-          <button class="toggle-btn" data-action="toggleDetail" data-target="zodiacDetail">展开详情</button>
         </div>
-        <div class="analysis-item-full" style="text-align:left;line-height:1.6;display:block;">
-          热门生肖 → <span id="hotZodiac2" style="color:var(--danger);font-weight:700;">--</span>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门生肖 → <span id="hotZodiac2" class="hot-zodiac-list">--</span></span>
+          <button class="toggle-btn" data-action="toggleDetail" data-target="zodiacDetail">展开详情</button>
         </div>
         <div class="detail-box" id="zodiacDetail">
           <div id="zodiacRank" class="rank-box"></div>
@@ -371,9 +371,11 @@
 
         <div class="analysis-sub-title">
           <span>单双 & 大小 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门 → <span id="hotShape2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail1">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门 → <span id="hotShape2">--</span></div>
         <div class="detail-box" id="detail1">
           <div class="analysis-grid">
             <div class="analysis-item"><div class="label">单数</div><div class="value" id="odd">--</div></div>
@@ -387,9 +389,11 @@
 
         <div class="analysis-sub-title">
           <span>区间统计 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门区间 → <span id="hotRange2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail2">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门区间 → <span id="hotRange2">--</span></div>
         <div class="detail-box" id="detail2">
           <div class="analysis-row">
             <div class="analysis-item"><div class="label">1-9</div><div class="value" id="r1">--</div></div>
@@ -403,9 +407,11 @@
 
         <div class="analysis-sub-title">
           <span>头数统计 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门头数 → <span id="hotHead2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail3">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门头数 → <span id="hotHead2">--</span></div>
         <div class="detail-box" id="detail3">
           <div class="analysis-row">
             <div class="analysis-item"><div class="label">头0</div><div class="value" id="h0">--</div></div>
@@ -419,9 +425,11 @@
 
         <div class="analysis-sub-title">
           <span>尾数统计 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门尾数 → <span id="hotTail2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail4">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门尾数 → <span id="hotTail2">--</span></div>
         <div class="detail-box" id="detail4">
           <div class="analysis-row" id="tailRow"></div>
           <div id="tailRank" class="rank-box"></div>
@@ -429,9 +437,11 @@
 
         <div class="analysis-sub-title">
           <span>波色统计 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门波色 → <span id="hotColor2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail5">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门波色 → <span id="hotColor2">--</span></div>
         <div class="detail-box" id="detail5">
           <div class="analysis-row">
             <div class="analysis-item"><div class="label">红波</div><div class="value" id="cRed">--</div></div>
@@ -443,9 +453,11 @@
 
         <div class="analysis-sub-title">
           <span>五行统计 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门五行 → <span id="hotWuxing2" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail6">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门五行 → <span id="hotWuxing2">--</span></div>
         <div class="detail-box" id="detail6">
           <div class="analysis-row">
             <div class="analysis-item"><div class="label">金</div><div class="value" id="wJin">--</div></div>
@@ -459,9 +471,11 @@
 
         <div class="analysis-sub-title">
           <span>家禽/野兽 <span class="hot-tag">热门</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热门 → <span id="hotAnimal" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail7">展开详情</button>
         </div>
-        <div class="analysis-item-full">热门 → <span id="hotAnimal">--</span></div>
         <div class="detail-box" id="detail7">
           <div class="analysis-grid">
             <div class="analysis-item"><div class="label">家禽</div><div class="value" id="aniHome">--</div></div>
@@ -472,9 +486,11 @@
 
         <div class="analysis-sub-title">
           <span>遗漏统计 <span class="hot-tag">公式版</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">热号/温号/冷号 → <span id="hotColdTip" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail8">展开详情</button>
         </div>
-        <div class="analysis-item-full">热号/温号/冷号 → <span id="hotColdTip">--</span></div>
         <div class="detail-box" id="detail8">
           <div class="analysis-grid">
             <div class="analysis-item"><div class="label">当前最大遗漏</div><div class="value" id="missCur">--</div></div>
@@ -488,9 +504,11 @@
 
         <div class="analysis-sub-title">
           <span>连出统计 <span class="hot-tag">公式版</span></span>
+        </div>
+        <div class="hot-summary-row">
+          <span class="hot-summary-text">当前/最长连出 → <span id="streakTip" class="hot-value">--</span></span>
           <button class="toggle-btn" data-action="toggleDetail" data-target="detail9">展开详情</button>
         </div>
-        <div class="analysis-item-full">当前/最长连出 → <span id="streakTip">--</span></div>
         <div class="detail-box" id="detail9">
           <div class="analysis-grid">
             <div class="analysis-item"><div class="label">当前连出</div><div class="value" id="streakCur">--</div></div>
@@ -560,7 +578,6 @@
 
 <!-- 快捷导航 -->
 <div class="quick-nav collapsed" id="quickNav" role="navigation" aria-label="模块快捷导航">
-  <button class="nav-toggle-btn" id="navToggle" aria-label="展开快捷导航">导航</button>
   <div class="nav-tabs" id="navTabs" style="display:none" role="tablist">
     <button class="nav-tab" data-target="mod-saved" role="tab">我的方案</button>
     <button class="nav-tab" data-target="mod-zodiac" role="tab">生肖</button>
@@ -580,11 +597,22 @@
 <button class="back-top-btn" id="backTopBtn" aria-label="返回顶部">↑</button>
 
 <!-- 固定底部导航栏 -->
-<div class="bottom-nav" role="navigation" aria-label="底部主导航">
-  <div class="bottom-nav-item active" data-action="switchBottomNav" data-index="0">筛选</div>
-  <div class="bottom-nav-item" data-action="switchBottomNav" data-index="1">分析</div>
-  <div class="bottom-nav-item" data-action="switchBottomNav" data-index="2">Going</div>
-  <div class="bottom-nav-item" data-action="switchBottomNav" data-index="3">我的</div>
+<div class="bottom-nav-wrapper">
+  <div class="bottom-nav" role="navigation" aria-label="底部主导航">
+    <div class="bottom-nav-item active" data-action="switchBottomNav" data-index="0">
+      <span>主页</span>
+    </div>
+    <div class="bottom-nav-item" data-action="switchBottomNav" data-index="1">
+      <span>广播</span>
+    </div>
+    <div class="bottom-nav-item" data-action="switchBottomNav" data-index="2">
+      <span>资料</span>
+    </div>
+    <div class="bottom-nav-item" data-action="switchBottomNav" data-index="3">
+      <span>我的</span>
+    </div>
+  </div>
+  <button class="nav-toggle-btn bottom-nav-toggle" id="navToggle" aria-label="展开快捷导航">导航</button>
 </div>
 
 <!-- 轻提示 -->

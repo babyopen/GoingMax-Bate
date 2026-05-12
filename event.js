@@ -101,7 +101,7 @@ const EventBinder = {
     }
 
     // 4. 快捷导航开关
-    if(target === DOM.navToggle){
+    if(DOM.navToggle.contains(target)){
       Business.toggleQuickNav();
       return;
     }
@@ -194,6 +194,7 @@ const EventBinder = {
    * @param {MouseEvent} e - 点击事件
    */
   handleClickOutside: (e) => {
+    if(DOM.navToggle.contains(e.target)) return;
     if(!DOM.quickNav.contains(e.target) && DOM.quickNav.classList.contains('expanded')){
       Business.toggleQuickNav(false);
     }

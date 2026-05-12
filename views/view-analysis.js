@@ -218,11 +218,8 @@ const ViewAnalysis = {
     if(!el) return;
     var isVisible = window.getComputedStyle(el).display !== 'none';
     el.style.display = isVisible ? 'none' : 'block';
-    var parent = el.parentElement;
-    if(parent){
-      var btn = parent.querySelector('[data-target="' + targetId + '"]');
-      if(btn) btn.textContent = isVisible ? '展开详情' : '收起详情';
-    }
+    var btn = document.querySelector('[data-action="toggleDetail"][data-target="' + targetId + '"]');
+    if(btn) btn.textContent = isVisible ? '展开详情' : '收起详情';
   },
 
   /**

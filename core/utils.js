@@ -95,5 +95,33 @@ const Utils = {
       if(el) fragment.appendChild(el);
     });
     return fragment;
+  },
+
+  calcMiss: (lastIdx, total, latestExpect, list) => {
+    if(lastIdx === -1) return total;
+    const appearItem = list[lastIdx];
+    const appearExpect = Number(appearItem?.expect || 0);
+    return latestExpect - appearExpect;
+  },
+
+  getRangeCategory: (te) => {
+    if(te <= 9) return '1-9';
+    if(te <= 19) return '10-19';
+    if(te <= 29) return '20-29';
+    if(te <= 39) return '30-39';
+    return '40-49';
+  },
+
+  getTailCategory: (t) => t,
+
+  filterByYear: (historyData, year) => {
+    return historyData.filter(item => {
+      const expect = item.expect || '';
+      return String(expect).startsWith(String(year));
+    });
+  },
+
+  getHotEntries: (obj, limit) => {
+    return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, limit);
   }
 };

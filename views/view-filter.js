@@ -63,13 +63,13 @@ const ViewFilter = {
     if(shouldOpen){
       DOM.quickNav.classList.remove('collapsed');
       DOM.quickNav.classList.add('expanded');
-      DOM.navToggle.style.display = 'none';
       DOM.navTabs.style.display = 'flex';
+      DOM.navToggle.classList.add('active');
     } else {
       DOM.quickNav.classList.remove('expanded');
       DOM.quickNav.classList.add('collapsed');
       DOM.navTabs.style.display = 'none';
-      DOM.navToggle.style.display = 'grid';
+      DOM.navToggle.classList.remove('active');
     }
   },
 

@@ -371,9 +371,22 @@ const Business = {
       }
     } catch(e) {
       console.error('加载历史数据失败', e);
-      if(!silentUpdate) {
-        ViewAnalysis.showHistoryError();
-        Toast.show('数据加载失败');
+      const cache = Storage.getHistoryCache();
+      if(cache && cache.data && cache.data.length > 0) {
+        const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
+        StateManager.setState({ analysis: newAnalysis }, false);
+        Business.renderLatest(cache.data[0]);
+        Business.renderHistory();
+        Business.renderFullAnalysis();
+        Business.renderZodiacAnalysis();
+        if(!silentUpdate) {
+          Toast.show('使用缓存数据（网络不可用）');
+        }
+      } else {
+        if(!silentUpdate) {
+          ViewAnalysis.showHistoryError();
+          Toast.show('数据加载失败');
+        }
       }
     }
 
@@ -552,7 +565,7 @@ const Business = {
       const s = Business.getSpecial(item);
       s.odd ? singleDouble['单']++ : singleDouble['双']++;
       s.big ? bigSmall['大']++ : bigSmall['小']++;
-      const rangeKey = s.te <= 9 ? '1-9' : s.te <= 19 ? '10-19' : s.te <= 29 ? '20-29' : s.te <= 39 ? '30-39' : '40-49';
+      const rangeKey = Utils.getRangeCategory(s.te);
       range[rangeKey]++;
       head[s.head]++;
       tail[s.tail]++;
@@ -580,48 +593,41 @@ const Business = {
     });
 
     // 计算遗漏值
-    const calcMiss = (lastIdx, total) => {
-      if(lastIdx === -1) return total;
-      const appearItem = list[lastIdx];
-      const appearExpect = Number(appearItem?.expect || 0);
-      return latestExpect - appearExpect;
-    };
-
-    const sdMiss = { '单': calcMiss(lastAppearSD['单'], total), '双': calcMiss(lastAppearSD['双'], total) };
-    const bsMiss = { '大': calcMiss(lastAppearBS['大'], total), '小': calcMiss(lastAppearBS['小'], total) };
+    const sdMiss = { '单': Utils.calcMiss(lastAppearSD['单'], total, latestExpect, list), '双': Utils.calcMiss(lastAppearSD['双'], total, latestExpect, list) };
+    const bsMiss = { '大': Utils.calcMiss(lastAppearBS['大'], total, latestExpect, list), '小': Utils.calcMiss(lastAppearBS['小'], total, latestExpect, list) };
     const rangeMiss = {
-      '1-9': calcMiss(lastAppearRange['1-9'], total),
-      '10-19': calcMiss(lastAppearRange['10-19'], total),
-      '20-29': calcMiss(lastAppearRange['20-29'], total),
-      '30-39': calcMiss(lastAppearRange['30-39'], total),
-      '40-49': calcMiss(lastAppearRange['40-49'], total)
+      '1-9': Utils.calcMiss(lastAppearRange['1-9'], total, latestExpect, list),
+      '10-19': Utils.calcMiss(lastAppearRange['10-19'], total, latestExpect, list),
+      '20-29': Utils.calcMiss(lastAppearRange['20-29'], total, latestExpect, list),
+      '30-39': Utils.calcMiss(lastAppearRange['30-39'], total, latestExpect, list),
+      '40-49': Utils.calcMiss(lastAppearRange['40-49'], total, latestExpect, list)
     };
     const headMiss = {
-      0: calcMiss(lastAppearHead[0], total),
-      1: calcMiss(lastAppearHead[1], total),
-      2: calcMiss(lastAppearHead[2], total),
-      3: calcMiss(lastAppearHead[3], total),
-      4: calcMiss(lastAppearHead[4], total)
+      0: Utils.calcMiss(lastAppearHead[0], total, latestExpect, list),
+      1: Utils.calcMiss(lastAppearHead[1], total, latestExpect, list),
+      2: Utils.calcMiss(lastAppearHead[2], total, latestExpect, list),
+      3: Utils.calcMiss(lastAppearHead[3], total, latestExpect, list),
+      4: Utils.calcMiss(lastAppearHead[4], total, latestExpect, list)
     };
     const tailMiss = {};
-    for(let t = 0; t <= 9; t++) tailMiss[t] = calcMiss(lastAppearTail[t], total);
-    const colorMiss = { '红': calcMiss(lastAppearColor['红'], total), '蓝': calcMiss(lastAppearColor['蓝'], total), '绿': calcMiss(lastAppearColor['绿'], total) };
+    for(let t = 0; t <= 9; t++) tailMiss[t] = Utils.calcMiss(lastAppearTail[t], total, latestExpect, list);
+    const colorMiss = { '红': Utils.calcMiss(lastAppearColor['红'], total, latestExpect, list), '蓝': Utils.calcMiss(lastAppearColor['蓝'], total, latestExpect, list), '绿': Utils.calcMiss(lastAppearColor['绿'], total, latestExpect, list) };
     const wuxingMiss = {
-      '金': calcMiss(lastAppearWuxing['金'], total),
-      '木': calcMiss(lastAppearWuxing['木'], total),
-      '水': calcMiss(lastAppearWuxing['水'], total),
-      '火': calcMiss(lastAppearWuxing['火'], total),
-      '土': calcMiss(lastAppearWuxing['土'], total)
+      '金': Utils.calcMiss(lastAppearWuxing['金'], total, latestExpect, list),
+      '木': Utils.calcMiss(lastAppearWuxing['木'], total, latestExpect, list),
+      '水': Utils.calcMiss(lastAppearWuxing['水'], total, latestExpect, list),
+      '火': Utils.calcMiss(lastAppearWuxing['火'], total, latestExpect, list),
+      '土': Utils.calcMiss(lastAppearWuxing['土'], total, latestExpect, list)
     };
-    const animalMiss = { '家禽': calcMiss(lastAppearAnimal['家禽'], total), '野兽': calcMiss(lastAppearAnimal['野兽'], total) };
+    const animalMiss = { '家禽': Utils.calcMiss(lastAppearAnimal['家禽'], total, latestExpect, list), '野兽': Utils.calcMiss(lastAppearAnimal['野兽'], total, latestExpect, list) };
     const zodiacMiss = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiacMiss[z] = calcMiss(lastAppearZod[z], total));
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiacMiss[z] = Utils.calcMiss(lastAppearZod[z], total, latestExpect, list));
 
     // 号码遗漏计算
     let totalMissSum = 0, maxMiss = 0, hot = 0, warm = 0, cold = 0;
     const allMiss = [];
     for(let m = 1; m <= 49; m++) {
-      const miss = calcMiss(lastAppearIdx[m], total);
+      const miss = Utils.calcMiss(lastAppearIdx[m], total, latestExpect, list);
       allMiss.push(miss);
       totalMissSum += miss;
       if(miss > maxMiss) maxMiss = miss;
@@ -738,16 +744,6 @@ const Business = {
   },
 
   /**
-   * 渲染完整排行
-   * @param {string} containerId - 容器ID
-   * @param {Object} dataObj - 数据对象
-   * @param {number} total - 总数
-   */
-  renderFullRank: (containerId, dataObj, total) => {
-    ViewAnalysis.renderRankToDOM(containerId, ViewAnalysis.buildRankHtml(dataObj, total));
-  },
-
-  /**
    * 计算生肖关联分析
    * @returns {Object} 分析数据
    */
@@ -791,13 +787,7 @@ const Business = {
     const zodMiss = {};
     const zodAvgMiss = {};
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
-      if(lastAppearIdx[z] === -1) {
-        zodMiss[z] = total;
-      } else {
-        const appearItem = list[lastAppearIdx[z]];
-        const appearExpect = Number(appearItem?.expect || 0);
-        zodMiss[z] = latestExpect - appearExpect;
-      }
+      zodMiss[z] = Utils.calcMiss(lastAppearIdx[z], total, latestExpect, list);
       zodAvgMiss[z] = zodCount[z] > 0 ? (total / zodCount[z]).toFixed(1) : total;
     });
 
