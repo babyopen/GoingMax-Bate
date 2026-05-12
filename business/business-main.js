@@ -1,0 +1,1035 @@
+const Business = {
+  // ====================== 排除号码相关 ======================
+  /**
+   * 切换号码排除状态
+   * @param {number} num - 号码
+   */
+  toggleExclude: (num) => {
+    const state = StateManager._state;
+    if(state.lockExclude) return;
+
+    const newExcluded = [...state.excluded];
+    const newHistory = [...state.excludeHistory];
+
+    if(newExcluded.includes(num)){
+      newHistory.push([num, 'out']);
+      const index = newExcluded.indexOf(num);
+      newExcluded.splice(index, 1);
+    } else {
+      newHistory.push([num, 'in']);
+      newExcluded.push(num);
+    }
+
+    StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
+  },
+
+  /**
+   * 反选排除号码（已排除的恢复，未排除的排除）
+   */
+  invertExclude: () => {
+    const state = StateManager._state;
+    if(state.lockExclude) return;
+
+    const allNums = Array.from({length: 49}, (_, i) => i + 1);
+    const newExcluded = [];
+    const newHistory = [...state.excludeHistory];
+
+    allNums.forEach(num => {
+      const isCurrentlyExcluded = state.excluded.includes(num);
+      if(!isCurrentlyExcluded){
+        // 当前未排除的，现在排除
+        newExcluded.push(num);
+        newHistory.push([num, 'in']);
+      } else {
+        // 当前已排除的，现在恢复
+        newHistory.push([num, 'out']);
+      }
+    });
+
+    StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
+    Toast.show(`已反选，当前排除 ${newExcluded.length} 个号码`);
+  },
+
+  /**
+   * 撤销上一次排除操作
+   */
+  undoExclude: () => {
+    const state = StateManager._state;
+    if(state.lockExclude || !state.excludeHistory.length) return;
+
+    const newHistory = [...state.excludeHistory];
+    const [num, act] = newHistory.pop();
+    const newExcluded = [...state.excluded];
+
+    act === 'in' 
+      ? newExcluded.splice(newExcluded.indexOf(num), 1)
+      : newExcluded.push(num);
+
+    StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
+  },
+
+  /**
+   * 清空所有排除号码
+   */
+  clearExclude: () => {
+    const state = StateManager._state;
+    if(state.lockExclude) return;
+    StateManager.setState({ excluded: [], excludeHistory: [] });
+    Toast.show('已清空所有排除号码');
+  },
+
+  /**
+   * 批量排除号码弹窗
+   */
+  batchExcludePrompt: () => {
+    const state = StateManager._state;
+    if(state.lockExclude) return;
+
+    if(typeof GIONGBETA_INPUT_MODAL !== 'undefined' && GIONGBETA_INPUT_MODAL.show){
+      GIONGBETA_INPUT_MODAL.show('批量排除号码', '输入要排除的号码，空格/逗号分隔', '', (input) => {
+        if(!input) return;
+        const nums = input.split(/[\s,，]+/).map(Number).filter(num => num >=1 && num <=49);
+        if(nums.length === 0) {
+          Toast.show('请输入有效的号码');
+          return;
+        }
+        const newExcluded = [...state.excluded];
+        const newHistory = [...state.excludeHistory];
+        let addCount = 0;
+        nums.forEach(num => {
+          if(!newExcluded.includes(num)){
+            newExcluded.push(num);
+            newHistory.push([num, 'in']);
+            addCount++;
+          }
+        });
+        StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
+        Toast.show(addCount > 0 ? `已添加${addCount}个排除号码` : '号码已在排除列表中');
+      });
+    }
+  },
+
+  /**
+   * 切换排除锁定状态
+   */
+  toggleExcludeLock: () => {
+    const isLocked = DOM.lockExclude.checked;
+    StateManager.setState({ lockExclude: isLocked }, false);
+    Toast.show(isLocked ? '已锁定排除号码' : '已解锁排除号码');
+  },
+
+  // ====================== 方案管理相关 ======================
+  /**
+   * 保存方案弹窗
+   */
+  saveFilterPrompt: () => {
+    const state = StateManager._state;
+    if(state.savedFilters.length >= CONFIG.MAX_SAVE_COUNT){
+      Toast.show(`最多只能保存${CONFIG.MAX_SAVE_COUNT}个方案`);
+      return;
+    }
+
+    const defaultName = `方案${state.savedFilters.length + 1}`;
+    GIONGBETA_INPUT_MODAL.show('请输入方案名称', '请输入方案名称', defaultName, (name) => {
+      if(name === null) return;
+      const filterName = name.trim() || defaultName;
+      const filterItem = {
+        name: filterName,
+        selected: Utils.deepClone(state.selected),
+        excluded: Utils.deepClone(state.excluded)
+      };
+      const success = Storage.saveFilter(filterItem);
+      if(success){
+        Render.renderFilterList();
+        Toast.show('保存成功');
+      }
+    });
+  },
+
+  /**
+   * 加载保存的方案
+   * @param {number} index - 方案索引
+   */
+  loadFilter: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    if(!item) return;
+
+    StateManager.setState({
+      selected: Utils.deepClone(item.selected),
+      excluded: Utils.deepClone(item.excluded)
+    });
+    Toast.show('加载成功');
+  },
+
+  /**
+   * 复制方案号码
+   * @param {number} index - 方案索引
+   */
+  copyFilterNums: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    if(!item) return;
+
+    const list = Filter.getFilteredList(item.selected, item.excluded);
+    if(list.length === 0){
+      Toast.show('该方案无符合条件的号码');
+      return;
+    }
+
+    const numStr = list.map(n => n.s).join(' ');
+    // 剪贴板API兼容
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(numStr).then(() => {
+        Toast.show('复制成功');
+      }).catch(() => {
+        GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', numStr, () => {});
+      });
+    } else {
+      GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', numStr, () => {});
+    }
+  },
+
+  /**
+   * 重命名方案
+   * @param {number} index - 方案索引
+   */
+  renameFilter: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    if(!item) return;
+
+    GIONGBETA_INPUT_MODAL.show('修改方案名称', '请输入新名称', item.name, (newName) => {
+      if(newName === null || newName.trim() === "") return;
+      const newList = [...state.savedFilters];
+      newList[index].name = newName.trim();
+      const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
+      if(success){
+        StateManager.setState({ savedFilters: newList }, false);
+        Render.renderFilterList();
+        Toast.show('重命名成功');
+      }
+    });
+  },
+
+  /**
+   * 置顶方案
+   * @param {number} index - 方案索引
+   */
+  topFilter: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    if(!item) return;
+
+    const newList = [...state.savedFilters];
+    newList.splice(index, 1);
+    newList.unshift(item);
+    const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
+    
+    if(success){
+      StateManager.setState({ savedFilters: newList }, false);
+      Render.renderFilterList();
+      Toast.show('置顶成功');
+    }
+  },
+
+  /**
+   * 删除方案
+   * @param {number} index - 方案索引
+   */
+  deleteFilter: (index) => {
+    const doDelete = () => {
+      const state = StateManager._state;
+      const newList = [...state.savedFilters];
+      newList.splice(index, 1);
+      const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
+      if(success){
+        StateManager.setState({ savedFilters: newList }, false);
+        Render.renderFilterList();
+        Toast.show('删除成功');
+      }
+    };
+
+    GIONGBETA_CONFIRM_MODAL.show('确定删除该方案？', (result) => {
+      if(result) doDelete();
+    });
+  },
+
+  /**
+   * 清空所有方案
+   */
+  clearAllSavedFilters: () => {
+    const doClear = () => {
+      Storage.remove(Storage.KEYS.SAVED_FILTERS);
+      StateManager.setState({ savedFilters: [] }, false);
+      Render.renderFilterList();
+      Toast.show('已清空所有方案');
+    };
+
+    GIONGBETA_CONFIRM_MODAL.show('确定清空所有方案？', (result) => {
+      if(result) doClear();
+    });
+  },
+
+  /**
+   * 切换方案列表展开/收起
+   */
+  toggleShowAllFilters: () => {
+    const state = StateManager._state;
+    StateManager.setState({ showAllFilters: !state.showAllFilters }, false);
+    Render.renderFilterList();
+  },
+
+  // ====================== 导航相关 ======================
+  /**
+   * 切换底部导航
+   * @param {number} index - 导航索引
+   */
+  switchBottomNav: (index) => {
+    ViewFilter.switchBottomNavUI(index);
+    if(index === 2) {
+      Business.initAnalysisPage();
+    }
+  },
+
+  // ====================== 分析页面相关 ======================
+  /**
+   * 初始化分析页面
+   */
+  initAnalysisPage: () => {
+    const state = StateManager._state;
+    if(state.analysis.historyData.length === 0) {
+      Business.refreshHistory();
+    }
+    Business.startCountdown();
+    Business.startAutoRefresh();
+  },
+
+  /**
+   * 刷新历史数据
+   */
+  refreshHistory: async () => {
+    ViewAnalysis.showHistoryLoading();
+
+    try {
+      const year = new Date().getFullYear();
+      const res = await fetch(CONFIG.API.HISTORY + year);
+      const data = await res.json();
+      let rawData = data.data || [];
+
+      rawData = rawData.filter(item => {
+        const expect = item.expect || '';
+        const openCode = item.openCode || '';
+        return expect && openCode && openCode.split(',').length === 7;
+      });
+
+      const uniqueMap = new Map();
+      rawData.forEach(item => {
+        const expectNum = Number(item.expect || 0);
+        if(expectNum && !isNaN(expectNum)) {
+          uniqueMap.set(expectNum, item);
+        }
+      });
+
+      const sortedData = Array.from(uniqueMap.values()).sort((a, b) => {
+        return Number(b.expect || 0) - Number(a.expect || 0);
+      });
+
+      const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
+      StateManager.setState({ analysis: newAnalysis }, false);
+
+      Business.renderLatest(sortedData[0]);
+      Business.renderHistory();
+      Business.renderFullAnalysis();
+      Business.renderZodiacAnalysis();
+
+      Toast.show('数据加载成功');
+    } catch(e) {
+      console.error('加载历史数据失败', e);
+      ViewAnalysis.showHistoryError();
+      Toast.show('数据加载失败');
+    }
+
+    ViewAnalysis.updateLoadMoreBtn(
+      StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
+    );
+  },
+
+  /**
+   * 获取特码信息
+   * @param {Object} item - 历史数据项
+   * @returns {Object} 特码信息
+   */
+  getSpecial: (item) => {
+    const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
+    const zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
+    const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+    const te = Math.max(0, Number(codeArr[6]));
+    
+    return {
+      te,
+      tail: te % 10,
+      head: Math.floor(te / 10),
+      wave: Business.getColor(te),
+      colorName: Business.getColorName(te),
+      zod: zodArr[6] || '-',
+      odd: te % 2 === 1,
+      big: te >= 25,
+      animal: CONFIG.ANALYSIS.HOME_ZODIAC.includes(zodArr[6]) ? '家禽' : '野兽',
+      wuxing: Business.getWuxing(te),
+      fullZodArr: zodArr
+    };
+  },
+
+  /**
+   * 获取五行
+   * @param {number} n - 号码
+   * @returns {string} 五行
+   */
+  getColor: (n) => {
+    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
+    const colorMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
+    return colorMap[color] || 'red';
+  },
+  
+  getColorName: (n) => {
+    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
+    return color || '红';
+  },
+  
+  getWuxing: (n) => {
+    const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(n));
+    return element || '金';
+  },
+
+  /**
+   * 获取生肖等级
+   * @param {number} count - 出现次数
+   * @param {number} miss - 遗漏期数
+   * @param {number} total - 总期数
+   * @returns {Object} 等级信息
+   */
+  getZodiacLevel: (count, miss, total) => {
+    const avgCount = total / 12;
+    if(count >= avgCount * 1.5 && miss <= 3) return { cls: 'hot', text: '热' };
+    if(count <= avgCount * 0.5 || miss >= 8) return { cls: 'cold', text: '冷' };
+    return { cls: 'warm', text: '温' };
+  },
+
+  /**
+   * 渲染最新开奖
+   * @param {Object} item - 最新数据项
+   */
+  renderLatest: (item) => {
+    if(!item) return;
+    const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
+    const s = Business.getSpecial(item);
+    const zodArr = s.fullZodArr;
+
+    let html = '';
+    for(let i = 0; i < 6; i++) {
+      const num = Number(codeArr[i]);
+      html += Business.buildBall(codeArr[i], Business.getColor(num), zodArr[i]);
+    }
+    html += '<div class="ball-sep">+</div>' + Business.buildBall(codeArr[6], s.wave, zodArr[6]);
+
+    ViewAnalysis.renderLatest({ ballsHtml: html, expect: item.expect || '--' });
+  },
+
+  /**
+   * 构建球元素
+   * @param {string} num - 号码
+   * @param {string} color - 颜色
+   * @param {string} zodiac - 生肖
+   * @returns {string} HTML字符串
+   */
+  buildBall: (num, color, zodiac) => {
+    return `
+    <div class="ball-item">
+      <div class="ball ${color}">${num}</div>
+      <div class="ball-zodiac">${zodiac}</div>
+    </div>`;
+  },
+
+  /**
+   * 渲染历史记录
+   */
+  renderHistory: () => {
+    const state = StateManager._state;
+    const list = state.analysis.historyData.slice(0, state.analysis.showCount);
+
+    if(!list.length) {
+      ViewAnalysis.renderHistory({ isEmpty: true });
+      return;
+    }
+
+    const historyHtml = list.map(item => {
+      const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
+      const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
+      const s = Business.getSpecial(item);
+      const zodArr = s.fullZodArr;
+      let balls = '';
+      for(let i = 0; i < 6; i++) balls += Business.buildBall(codeArr[i], waveArr[i], zodArr[i]);
+      balls += '<div class="ball-sep">+</div>' + Business.buildBall(codeArr[6], waveArr[6], zodArr[6]);
+      return '<div class="history-item"><div class="history-expect">第' + (item.expect || '') + '期</div><div class="ball-group">' + balls + '</div></div>';
+    }).join('');
+
+    const loadMoreVisible = state.analysis.showCount < state.analysis.historyData.length;
+    ViewAnalysis.renderHistory({ historyHtml: historyHtml, isEmpty: false, loadMoreVisible: loadMoreVisible });
+  },
+
+  /**
+   * 计算全维度分析
+   * @returns {Object} 分析数据
+   */
+  calcFullAnalysis: () => {
+    const state = StateManager._state;
+    const { historyData, analyzeLimit } = state.analysis;
+    if(!historyData.length) return null;
+
+    const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
+    const total = list.length;
+
+    // 初始化统计对象
+    const singleDouble = { '单': 0, '双': 0 };
+    const bigSmall = { '大': 0, '小': 0 };
+    const range = { '1-9': 0, '10-19': 0, '20-29': 0, '30-39': 0, '40-49': 0 };
+    const head = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+    const tail = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    const color = { '红': 0, '蓝': 0, '绿': 0 };
+    const wuxing = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+    const animal = { '家禽': 0, '野兽': 0 };
+    const zodiac = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
+    const numCount = {};
+    for(let i = 1; i <= 49; i++) numCount[String(i).padStart(2, '0')] = 0;
+    const lastAppear = {};
+    for(let i = 1; i <= 49; i++) lastAppear[i] = -1;
+
+    // 统计
+    list.forEach((item, idx) => {
+      const s = Business.getSpecial(item);
+      s.odd ? singleDouble['单']++ : singleDouble['双']++;
+      s.big ? bigSmall['大']++ : bigSmall['小']++;
+      s.te <= 9 ? range['1-9']++ : s.te <= 19 ? range['10-19']++ : s.te <= 29 ? range['20-29']++ : s.te <= 39 ? range['30-39']++ : range['40-49']++;
+      head[s.head]++;
+      tail[s.tail]++;
+      color[s.colorName]++;
+      wuxing[s.wuxing]++;
+      animal[s.animal]++;
+      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
+      numCount[String(s.te).padStart(2, '0')]++;
+      if(lastAppear[s.te] === -1) lastAppear[s.te] = idx;
+    });
+
+    // 遗漏计算
+    let totalMissSum = 0, maxMiss = 0, hot = 0, warm = 0, cold = 0;
+    const allMiss = [];
+    for(let m = 1; m <= 49; m++) {
+      const p = lastAppear[m];
+      const currentMiss = p === -1 ? total : p;
+      allMiss.push(currentMiss);
+      totalMissSum += currentMiss;
+      if(currentMiss > maxMiss) maxMiss = currentMiss;
+      if(currentMiss <= 3) hot++;
+      else if(currentMiss <= 9) warm++;
+      else cold++;
+    }
+    const avgMiss = (totalMissSum / 49).toFixed(1);
+    const curMaxMiss = Math.max(...allMiss);
+
+    // 连出计算
+    let curStreak = 1, maxStreak = 1, current = 1;
+    if(list.length >= 2) {
+      const firstShape = `${Business.getSpecial(list[0]).odd}_${Business.getSpecial(list[0]).big}`;
+      for(let i = 1; i < list.length; i++) {
+        const s = Business.getSpecial(list[i]);
+        const shape = `${s.odd}_${s.big}`;
+        if(shape === firstShape) curStreak++;
+        else break;
+      }
+      let prevShape = `${Business.getSpecial(list[0]).odd}_${Business.getSpecial(list[0]).big}`;
+      for(let i = 1; i < list.length; i++) {
+        const s = Business.getSpecial(list[i]);
+        const shape = `${s.odd}_${s.big}`;
+        if(shape === prevShape) {
+          current++;
+          if(current > maxStreak) maxStreak = current;
+        } else {
+          current = 1;
+          prevShape = shape;
+        }
+      }
+    }
+
+    // 热门排序
+    const hotSD = Object.entries(singleDouble).sort((a, b) => b[1] - a[1])[0];
+    const hotBS = Object.entries(bigSmall).sort((a, b) => b[1] - a[1])[0];
+    const hotHead = Object.entries(head).sort((a, b) => b[1] - a[1])[0];
+    const hotTail = Object.entries(tail).sort((a, b) => b[1] - a[1])[0];
+    const hotColor = Object.entries(color).sort((a, b) => b[1] - a[1])[0];
+    const hotWx = Object.entries(wuxing).sort((a, b) => b[1] - a[1])[0];
+    const hotZod = Object.entries(zodiac).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => i[0]).join('、');
+    const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
+    const hotNum = Object.entries(numCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(i => i[0]).join(' ');
+
+    return {
+      total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
+      hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
+      miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
+      streak: { curStreak, maxStreak }
+    };
+  },
+
+  /**
+   * 渲染全维度分析
+   */
+  renderFullAnalysis: () => {
+    const data = Business.calcFullAnalysis();
+    if(!data) {
+      ViewAnalysis.renderFullAnalysis(null);
+      return;
+    }
+
+    const rankKeys = ['singleDoubleRank', 'bigSmallRank', 'rangeRank', 'headRank', 'tailRank', 'colorRank', 'wuxingRank', 'animalRank', 'zodiacRank'];
+    const rankDataObjs = [data.singleDouble, data.bigSmall, data.range, data.head, data.tail, data.color, data.wuxing, data.animal, data.zodiac];
+    const rankHtmls = {};
+    rankKeys.forEach(function(k, i) {
+      rankHtmls[k] = ViewAnalysis.buildRankHtml(rankDataObjs[i], data.total);
+    });
+
+    ViewAnalysis.renderFullAnalysis({
+      hotSD: data.hotSD[0] + ' / ' + data.hotBS[0],
+      hotZodiac: data.hotZod,
+      hotHT: data.hotHead[0] + '头 / ' + data.hotTail[0] + '尾',
+      hotCW: data.hotColor[0] + ' / ' + data.hotWx[0],
+      hotMiss: '热:' + data.miss.hot + ' 温:' + data.miss.warm + ' 冷:' + data.miss.cold + ' | 最大遗漏:' + data.miss.maxMiss + '期',
+      odd: data.singleDouble['单'], even: data.singleDouble['双'],
+      big: data.bigSmall['大'], small: data.bigSmall['小'],
+      r1: data.range['1-9'], r2: data.range['10-19'], r3: data.range['20-29'], r4: data.range['30-39'], r5: data.range['40-49'],
+      h0: data.head[0], h1: data.head[1], h2: data.head[2], h3: data.head[3], h4: data.head[4],
+      cRed: data.color['红'], cBlue: data.color['蓝'], cGreen: data.color['绿'],
+      wJin: data.wuxing['金'], wMu: data.wuxing['木'], wShui: data.wuxing['水'], wHuo: data.wuxing['火'], wTu: data.wuxing['土'],
+      aniHome: data.animal['家禽'], aniWild: data.animal['野兽'],
+      _hotShape2: Business.getTopHot(Object.entries(data.singleDouble).concat(Object.entries(data.bigSmall))),
+      _hotRange2: Business.getTopHot(Object.entries(data.range)),
+      _hotHead2: Business.getTopHot(Object.entries(data.head)),
+      _hotTail2: Business.getTopHot(Object.entries(data.tail)),
+      _hotColor2: Business.getTopHot(Object.entries(data.color)),
+      _hotWuxing2: Business.getTopHot(Object.entries(data.wuxing)),
+      _hotAnimal: Business.getTopHot(Object.entries(data.animal)),
+      _hotZodiac2: Object.entries(data.zodiac).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5).map(function(i) { return i[0] + '(' + i[1] + ')'; }).join(' '),
+      hotNum: data.hotNum,
+      missCur: data.miss.curMaxMiss, missAvg: data.miss.avgMiss, missMax: data.miss.maxMiss,
+      missHot: data.miss.hot, missWarm: data.miss.warm, missCold: data.miss.cold,
+      hotColdTip: '热:' + data.miss.hot + ' 温:' + data.miss.warm + ' 冷:' + data.miss.cold,
+      streakCur: data.streak.curStreak, streakMax: data.streak.maxStreak,
+      streakTip: '当前:' + data.streak.curStreak + '期 最长:' + data.streak.maxStreak + '期',
+      tailArr: data.tail,
+      rankHtmls: rankHtmls
+    });
+  },
+
+  /**
+   * 获取热门值
+   * @param {Array} arr - 数组
+   * @param {number} limit - 限制数量
+   * @returns {string} 热门值字符串
+   */
+  getTopHot: (arr, limit = 2) => {
+    return arr.sort((a, b) => b[1] - a[1]).slice(0, limit).map(i => i[0]).join(' / ');
+  },
+
+  /**
+   * 渲染完整排行
+   * @param {string} containerId - 容器ID
+   * @param {Object} dataObj - 数据对象
+   * @param {number} total - 总数
+   */
+  renderFullRank: (containerId, dataObj, total) => {
+    ViewAnalysis.renderRankToDOM(containerId, ViewAnalysis.buildRankHtml(dataObj, total));
+  },
+
+  /**
+   * 计算生肖关联分析
+   * @returns {Object} 分析数据
+   */
+  calcZodiacAnalysis: () => {
+    const state = StateManager._state;
+    const { historyData, analyzeLimit } = state.analysis;
+    if(!historyData.length || historyData.length < 2) return null;
+
+    const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
+    const total = list.length;
+    const avgExpect = total / 12;
+
+    // 初始化统计对象
+    const zodCount = {};
+    const lastAppear = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => { zodCount[z] = 0; lastAppear[z] = -1; });
+    const tailZodMap = {};
+    for(let t = 0; t <= 9; t++) tailZodMap[t] = {};
+    const followMap = {};
+
+    // 循环统计
+    list.forEach((item, idx) => {
+      const s = Business.getSpecial(item);
+      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
+        zodCount[s.zod]++;
+        if(lastAppear[s.zod] === -1) lastAppear[s.zod] = idx;
+      }
+      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
+        tailZodMap[s.tail][s.zod] = (tailZodMap[s.tail][s.zod] || 0) + 1;
+      }
+    });
+
+    // 跟随统计
+    for(let i = 1; i < list.length; i++) {
+      const preZod = Business.getSpecial(list[i-1]).zod;
+      const curZod = Business.getSpecial(list[i]).zod;
+      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(preZod) && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curZod)) {
+        if(!followMap[preZod]) followMap[preZod] = {};
+        followMap[preZod][curZod] = (followMap[preZod][curZod] || 0) + 1;
+      }
+    }
+
+    // 遗漏期数计算
+    const zodMiss = {};
+    const zodAvgMiss = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
+      zodMiss[z] = lastAppear[z] === -1 ? total : lastAppear[z];
+      zodAvgMiss[z] = zodCount[z] > 0 ? (total / zodCount[z]).toFixed(1) : total;
+    });
+
+    // 热门排序
+    const topZod = Object.entries(zodCount).sort((a, b) => b[1] - a[1]);
+    const topTail = Array.from({ length: 10 }, (_, t) => ({
+      t, sum: Object.values(tailZodMap[t]).reduce((a, b) => a + b, 0)
+    })).sort((a, b) => b.sum - a.sum);
+
+    return { list, total, avgExpect, zodCount, zodMiss, zodAvgMiss, tailZodMap, followMap, topZod, topTail };
+  },
+
+  /**
+   * 渲染生肖关联分析
+   */
+  renderZodiacAnalysis: () => {
+    const data = Business.calcZodiacAnalysis();
+
+    if(!data) {
+      ViewAnalysis.renderZodiacAnalysis(null);
+      return;
+    }
+
+    const combo1 = '1. 首选：尾' + (data.topTail[0]?.t ?? '-') + ' + ' + (data.topZod[0]?.[0] ?? '-') + '（出现' + (data.topZod[0]?.[1] ?? 0) + '次）';
+    const combo2 = '2. 次选：尾' + (data.topTail[1]?.t ?? '-') + ' + ' + (data.topZod[1]?.[0] ?? '-') + '（出现' + (data.topZod[1]?.[1] ?? 0) + '次）';
+    const combo3 = '3. 备选：尾' + (data.topTail[2]?.t ?? '-') + ' + ' + (data.topZod[2]?.[0] ?? '-') + '（出现' + (data.topZod[2]?.[1] ?? 0) + '次）';
+
+    let tailZodiacHtml = '';
+    for(let t = 0; t <= 9; t++) {
+      const arr = Object.entries(data.tailZodMap[t]).sort((a, b) => b[1] - a[1]);
+      const topZ = arr.length ? arr[0][0] : '-';
+      const cnt = arr.length ? arr[0][1] : 0;
+      const level = Business.getZodiacLevel(cnt, data.zodMiss[topZ] || 0, data.total);
+      tailZodiacHtml += '<div class="data-item-z ' + level.cls + '">尾' + t + '<br>' + topZ + '<br>' + cnt + '次</div>';
+    }
+
+    let followTableHtml = '<tr><th>上期生肖</th><th>首选(次数)</th><th>次选(次数)</th><th>排除生肖</th></tr>';
+    const followKeys = Object.keys(data.followMap).slice(0, 4);
+    followKeys.forEach(k => {
+      const arr = Object.entries(data.followMap[k]).sort((a, b) => b[1] - a[1]);
+      const first = arr[0] ? arr[0][0] + '(' + arr[0][1] + ')' : '-';
+      const second = arr[1] ? arr[1][0] + '(' + arr[1][1] + ')' : '-';
+      const exclude = CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => !arr.some(x => x[0] === z)).slice(0, 2).join('、');
+      followTableHtml += '<tr><td>' + k + '</td><td>' + first + '</td><td>' + second + '</td><td>' + (exclude || '-') + '</td></tr>';
+    });
+
+    let zodiacTotalHtml = '';
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
+      const cnt = data.zodCount[z];
+      const miss = data.zodMiss[z];
+      const rate = ((cnt / data.total) * 100).toFixed(0) + '%';
+      const level = Business.getZodiacLevel(cnt, miss, data.total);
+      zodiacTotalHtml += '<div class="data-item-z ' + level.cls + '">' + z + '<br>' + cnt + '次/' + rate + '<br>遗' + miss + '</div>';
+    });
+
+    let zodiacMissHtml = '';
+    const missSort = Object.entries(data.zodMiss).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    missSort.forEach(function(entry) {
+      const z = entry[0], m = entry[1];
+      const avgMiss = data.zodAvgMiss[z];
+      const tag = m > avgMiss ? '超平均' : '';
+      zodiacMissHtml += '<div class="data-item-z cold">' + z + '<br>遗' + m + '期<br>' + tag + '</div>';
+    });
+
+    ViewAnalysis.renderZodiacAnalysis({
+      combo1, combo2, combo3,
+      tailZodiacHtml, followTableHtml, zodiacTotalHtml, zodiacMissHtml,
+      finalNums: Business.renderZodiacFinalNums(data)
+    });
+  },
+
+  /**
+   * 渲染生肖精选号码
+   * @param {Object} data - 分析数据
+   */
+  renderZodiacFinalNums: (data) => {
+    const state = StateManager._state;
+    const numZodiacMap = new Map();
+    const latestItem = data.list[0];
+    if(latestItem) {
+      const codeArr = (latestItem.openCode || '').split(',');
+      const zodArrRaw = (latestItem.zodiac || '').split(',');
+      const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+      codeArr.forEach((num, idx) => {
+        const numVal = Number(num);
+        if(numVal && zodArr[idx]) numZodiacMap.set(numVal, zodArr[idx]);
+      });
+    }
+
+    const coreZodiacs = data.topZod.slice(0, 2).map(i => i[0]);
+    const missZodiac = Object.entries(data.zodMiss).sort((a, b) => b[1] - a[1]).slice(0, 1).map(i => i[0]);
+    if(missZodiac.length && !coreZodiacs.includes(missZodiac[0])) coreZodiacs.push(missZodiac[0]);
+
+    const hotTails = data.topTail.slice(0, 3).map(i => i.t);
+
+    const candidateNums = [];
+    for(let num = 1; num <= 49; num++) {
+      const zod = numZodiacMap.get(num);
+      const tail = num % 10;
+      if(coreZodiacs.includes(zod) && hotTails.includes(tail)) {
+        const miss = data.zodMiss[zod] || 0;
+        const count = data.zodCount[zod] || 0;
+        candidateNums.push({ num, weight: count * 10 + (10 - miss) });
+      }
+    }
+
+    const targetCount = state.analysis.selectedNumCount;
+    candidateNums.sort((a, b) => b.weight - a.weight);
+    let finalNums = candidateNums.slice(0, targetCount).map(i => i.num);
+
+    if(finalNums.length < targetCount) {
+      const fillNums = [...new Set(data.list.map(item => Business.getSpecial(item).te))]
+        .filter(num => !finalNums.includes(num))
+        .slice(0, targetCount - finalNums.length);
+      finalNums.push(...fillNums);
+    }
+
+    finalNums.sort((a, b) => a - b);
+    const finalFormatNums = finalNums.map(num => String(num).padStart(2, '0'));
+    return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
+  },
+
+  /**
+   * 同步全维度分析
+   */
+  syncAnalyze: () => {
+    const customNumEl = document.getElementById('customNum');
+    const analyzeSelectEl = document.getElementById('analyzeSelect');
+    const custom = customNumEl ? customNumEl.value.trim() : '';
+    const selectVal = analyzeSelectEl ? analyzeSelectEl.value : '30';
+    const historyData = StateManager._state.analysis.historyData;
+
+    const newLimit = custom && !isNaN(custom) && custom > 0
+      ? Number(custom)
+      : selectVal === 'all' ? historyData.length : Number(selectVal);
+
+    const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit };
+    StateManager.setState({ analysis: newAnalysis }, false);
+
+    ViewAnalysis.syncSelectors({ zodiacAnalyzeSelect: selectVal, zodiacCustomNum: custom });
+
+    Business.renderFullAnalysis();
+    Business.renderZodiacAnalysis();
+  },
+
+  /**
+   * 同步生肖关联分析
+   */
+  syncZodiacAnalyze: () => {
+    const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
+    const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
+    const numCountSelectEl = document.getElementById('numCountSelect');
+    const customNumCountEl = document.getElementById('customNumCount');
+
+    const customPeriod = zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '';
+    const selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '30';
+    const historyData = StateManager._state.analysis.historyData;
+
+    const newLimit = customPeriod && !isNaN(customPeriod) && customPeriod > 0
+      ? Number(customPeriod)
+      : selectPeriodVal === 'all' ? historyData.length : Number(selectPeriodVal);
+
+    const countVal = numCountSelectEl ? numCountSelectEl.value : '5';
+    const customCount = customNumCountEl ? customNumCountEl.value.trim() : '';
+    let finalCount = 5;
+
+    if(countVal === 'custom') {
+      finalCount = customCount && !isNaN(customCount) && Number(customCount) >= 1 && Number(customCount) <= 49
+        ? Number(customCount) : 5;
+    } else {
+      finalCount = Number(countVal);
+    }
+
+    const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit, selectedNumCount: finalCount };
+    StateManager.setState({ analysis: newAnalysis }, false);
+
+    ViewAnalysis.syncSelectors({
+      analyzeSelect: selectPeriodVal,
+      customNum: customPeriod,
+      customNumCountVisible: countVal === 'custom'
+    });
+
+    Business.renderFullAnalysis();
+    Business.renderZodiacAnalysis();
+  },
+
+  /**
+   * 切换详情显示
+   * @param {string} targetId - 目标元素ID
+   */
+  toggleDetail: (targetId) => {
+    ViewAnalysis.toggleDetail(targetId);
+  },
+
+  /**
+   * 切换分析标签页
+   * @param {string} tab - 标签名
+   */
+  switchAnalysisTab: (tab) => {
+    ViewAnalysis.switchTabUI(tab);
+    const newAnalysis = { ...StateManager._state.analysis, currentTab: tab };
+    StateManager.setState({ analysis: newAnalysis }, false);
+    if(tab === 'analysis') Business.renderFullAnalysis();
+    if(tab === 'zodiac') Business.renderZodiacAnalysis();
+  },
+
+  /**
+   * 加载更多历史
+   */
+  loadMoreHistory: () => {
+    const state = StateManager._state;
+    const newShowCount = state.analysis.showCount + 30;
+    const newAnalysis = { ...state.analysis, showCount: newShowCount };
+    StateManager.setState({ analysis: newAnalysis }, false);
+    Business.renderHistory();
+    ViewAnalysis.updateLoadMoreBtn(newShowCount < state.analysis.historyData.length);
+  },
+
+  /**
+   * 开始倒计时
+   */
+  startCountdown: () => {
+    setInterval(() => {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(21, 32, 32, 0);
+      if(now > target) target.setDate(target.getDate() + 1);
+      const diff = target - now;
+      const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+      const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+      const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+      ViewAnalysis.updateCountdown(h + ':' + m + ':' + s);
+    }, 1000);
+  },
+
+  /**
+   * 检查是否在开奖时间
+   * @returns {boolean} 是否在开奖时间
+   */
+  isInDrawTime: () => {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    return h === 21 && m >= 32 && m <= 40;
+  },
+
+  /**
+   * 开始自动刷新
+   */
+  startAutoRefresh: () => {
+    const state = StateManager._state;
+    if(state.analysis.autoRefreshTimer) clearInterval(state.analysis.autoRefreshTimer);
+    
+    const newTimer = setInterval(() => {
+      if(Business.isInDrawTime()) {
+        Business.refreshHistory();
+      } else {
+        clearInterval(state.analysis.autoRefreshTimer);
+        const newAnalysis = { 
+          ...StateManager._state.analysis, 
+          autoRefreshTimer: null 
+        };
+        StateManager.setState({ analysis: newAnalysis }, false);
+      }
+    }, 20000);
+    
+    const newAnalysis = { 
+      ...state.analysis, 
+      autoRefreshTimer: newTimer 
+    };
+    StateManager.setState({ analysis: newAnalysis }, false);
+  },
+
+  /**
+   * 检查开奖时间循环
+   */
+  checkDrawTimeLoop: () => {
+    setInterval(() => {
+      if(Business.isInDrawTime() && !StateManager._state.analysis.autoRefreshTimer) {
+        Business.startAutoRefresh();
+      }
+    }, 60000);
+  },
+
+  /**
+   * 滚动到指定模块
+   * @param {string} targetId - 模块ID
+   */
+  scrollToModule: (targetId) => {
+    ViewFilter.scrollToModule(targetId);
+    Business.toggleQuickNav(false);
+  },
+
+  /**
+   * 切换快捷导航展开/收起
+   * @param {boolean|null} isOpen - 强制指定展开/收起
+   */
+  toggleQuickNav: (isOpen = null) => {
+    const shouldOpen = isOpen === null ? !ViewFilter.isQuickNavExpanded() : isOpen;
+    ViewFilter.toggleQuickNavUI(shouldOpen);
+  },
+
+  /**
+   * 返回顶部
+   */
+  backToTop: () => {
+    ViewFilter.backToTop();
+  },
+
+  /**
+   * 滚动事件处理（已节流优化）
+   */
+  handleScroll: Utils.throttle(() => {
+    const state = StateManager._state;
+    const scrollTop = ViewFilter.getScrollTop();
+    clearTimeout(state.scrollTimer);
+
+    if(scrollTop > CONFIG.BACK_TOP_THRESHOLD){
+      ViewFilter.toggleBackTopBtn(true);
+      state.scrollTimer = setTimeout(() => {
+        ViewFilter.toggleBackTopBtn(false);
+      }, CONFIG.SCROLL_HIDE_DELAY);
+    } else {
+      ViewFilter.toggleBackTopBtn(false);
+    }
+  }, CONFIG.SCROLL_THROTTLE_DELAY),
+
+  /**
+   * 页面卸载清理，避免内存泄漏
+   */
+  handlePageUnload: () => {
+    StateManager.clearAllTimers();
+    ViewFilter.cleanupPageEvents(Business.handleScroll, Business.handlePageUnload);
+  }
+};
