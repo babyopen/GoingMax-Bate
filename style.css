@@ -438,25 +438,25 @@ body{
 
 /* 固定底部导航栏 */
 :root{
-  --nav-glass-bg:rgba(255,255,255,0.7);
-  --nav-glass-border:rgba(255,255,255,0.4);
-  --nav-glass-shadow:rgba(0,0,0,0.08);
-  --nav-item-bg:rgba(0,0,0,0.05);
-  --nav-item-border:rgba(0,0,0,0.08);
-  --nav-item-text:rgba(0,0,0,0.6);
-  --nav-item-active-bg:rgba(255,107,138,0.12);
-  --nav-item-active-text:rgba(255,107,138,1);
+  --nav-glass-bg:rgba(255,255,255,0.55);
+  --nav-glass-border:rgba(255,255,255,0.35);
+  --nav-glass-shadow:rgba(0,0,0,0.06);
+  --nav-item-bg:rgba(0,0,0,0.04);
+  --nav-item-border:rgba(0,0,0,0.06);
+  --nav-item-text:rgba(0,0,0,0.45);
+  --nav-item-active-text:rgba(0,0,0,0.85);
+  --nav-item-active-bg:rgba(255,107,138,0.1);
 }
 @media (prefers-color-scheme: dark) {
   :root{
-    --nav-glass-bg:rgba(28,28,30,0.7);
-    --nav-glass-border:rgba(255,255,255,0.12);
-    --nav-glass-shadow:rgba(0,0,0,0.35);
-    --nav-item-bg:rgba(255,255,255,0.08);
-    --nav-item-border:rgba(255,255,255,0.15);
-    --nav-item-text:rgba(255,255,255,0.65);
-    --nav-item-active-bg:rgba(255,107,138,0.12);
-    --nav-item-active-text:rgba(255,107,138,1);
+    --nav-glass-bg:rgba(28,28,30,0.55);
+    --nav-glass-border:rgba(255,255,255,0.1);
+    --nav-glass-shadow:rgba(0,0,0,0.3);
+    --nav-item-bg:rgba(255,255,255,0.06);
+    --nav-item-border:rgba(255,255,255,0.12);
+    --nav-item-text:rgba(255,255,255,0.5);
+    --nav-item-active-text:rgba(255,255,255,0.95);
+    --nav-item-active-bg:rgba(255,107,138,0.1);
   }
 }
 .bottom-nav-wrapper{
@@ -511,6 +511,7 @@ body{
   border-color:var(--nav-item-active-text);
   box-shadow:0 4px 16px rgba(255,107,138,0.3);
   color:var(--nav-item-active-text);
+  font-weight:700;
 }
 .bottom-nav-toggle:active{transform:scale(0.95)}
 .bottom-nav-item{
@@ -533,7 +534,7 @@ body{
   font-size:12px;
   font-weight:500;
   color:var(--nav-item-text);
-  transition:color var(--anim-fast);
+  transition:color var(--anim-fast), font-weight var(--anim-fast);
   line-height:1.2;
 }
 .bottom-nav-item.active{
@@ -541,6 +542,7 @@ body{
 }
 .bottom-nav-item.active span{
   color:var(--nav-item-active-text);
+  font-weight:700;
 }
 .bottom-nav-item:active{transform:scale(0.95)}
 
