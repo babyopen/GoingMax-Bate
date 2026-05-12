@@ -6,7 +6,9 @@ const Storage = {
    */
   KEYS: Object.freeze({
     SAVED_FILTERS: 'savedFilters',
-    DATA_VERSION: 'dataVersion'
+    DATA_VERSION: 'dataVersion',
+    HISTORY_DATA: 'historyData',
+    HISTORY_TIMESTAMP: 'historyTimestamp'
   }),
 
   /**
@@ -120,5 +122,27 @@ const Storage = {
     const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
     if(success) StateManager.setState({ savedFilters: newList });
     return success;
+  },
+
+  /**
+   * 获取缓存的历史数据
+   * @returns {Object|null} { data: Array, timestamp: number }
+   */
+  getHistoryCache: () => {
+    const data = Storage.get(Storage.KEYS.HISTORY_DATA, null);
+    const timestamp = Storage.get(Storage.KEYS.HISTORY_TIMESTAMP, 0);
+    if(data && Array.isArray(data) && data.length > 0) {
+      return { data, timestamp };
+    }
+    return null;
+  },
+
+  /**
+   * 保存历史数据到缓存
+   * @param {Array} data - 历史数据数组
+   */
+  saveHistoryCache: (data) => {
+    Storage.set(Storage.KEYS.HISTORY_DATA, data);
+    Storage.set(Storage.KEYS.HISTORY_TIMESTAMP, Date.now());
   }
 };

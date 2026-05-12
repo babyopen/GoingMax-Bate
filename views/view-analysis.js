@@ -138,16 +138,22 @@ const ViewAnalysis = {
    * 渲染完整排行表HTML（不写入DOM，返回HTML供调用方使用）
    * @param {Object} dataObj - 数据对象
    * @param {number} total - 总数
+   * @param {Object} missMap - 遗漏值映射 {name: missValue}
    * @returns {string} HTML
    */
-  buildRankHtml: (dataObj, total) => {
+  buildRankHtml: (dataObj, total, missMap) => {
     if(total === 0 || !dataObj) return '';
     var entries = Object.entries(dataObj).sort(function(a, b) { return b[1] - a[1]; });
     var html = '<div class="rank-header"><div class="rank-no">名次</div><div class="rank-name">分类</div><div class="rank-count">次数</div><div class="rank-rate">占比</div><div class="rank-miss">遗漏</div></div>';
     entries.forEach(function(entry, idx) {
       var name = entry[0], count = entry[1];
       var rate = ((count / total) * 100).toFixed(0) + '%';
-      var miss = count > 0 ? Math.floor((total - count) / count) : total;
+      var miss;
+      if(missMap && missMap[name] !== undefined) {
+        miss = missMap[name];
+      } else {
+        miss = count > 0 ? Math.floor((total - count) / count) : total;
+      }
       html += '<div class="rank-row"><div class="rank-no">' + (idx + 1) + '</div><div class="rank-name">' + name + '</div><div class="rank-count">' + count + '</div><div class="rank-rate">' + rate + '</div><div class="rank-miss">' + miss + '</div></div>';
     });
     return html;

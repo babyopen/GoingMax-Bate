@@ -22,6 +22,18 @@ const EventBinder = {
       analyzeSelect.addEventListener('change', function() {
         Business.syncAnalyze();
       });
+      analyzeSelect.addEventListener('input', function() {
+        Business.syncAnalyze();
+      });
+    }
+    
+    // 分析页面：自定义期数输入事件（防抖优化）
+    const customNum = document.getElementById('customNum');
+    if(customNum) {
+      const debouncedSync = Utils.debounce(() => Business.syncAnalyze(), 300);
+      customNum.addEventListener('input', function() {
+        debouncedSync();
+      });
     }
     
     // 分析页面：特码生肖关联选择器change事件

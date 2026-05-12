@@ -86,9 +86,9 @@ const Business = {
     if(state.lockExclude) return;
 
     if(typeof GIONGBETA_INPUT_MODAL !== 'undefined' && GIONGBETA_INPUT_MODAL.show){
-      GIONGBETA_INPUT_MODAL.show('批量排除号码', '输入要排除的号码，空格/逗号分隔', '', (input) => {
+      GIONGBETA_INPUT_MODAL.show('批量排除号码', '输入要排除的号码，空格/逗号/顿号/引号/竖线/点/横线分隔', '', (input) => {
         if(!input) return;
-        const nums = input.split(/[\s,，]+/).map(Number).filter(num => num >=1 && num <=49);
+        const nums = input.split(/[\s,，、。"'|-]+/).map(Number).filter(num => num >=1 && num <=49);
         if(nums.length === 0) {
           Toast.show('请输入有效的号码');
           return;
@@ -287,12 +287,30 @@ const Business = {
    */
   switchBottomNav: (index) => {
     ViewFilter.switchBottomNavUI(index);
-    if(index === 2) {
+    if(index === 1) {
       Business.initAnalysisPage();
     }
   },
 
   // ====================== 分析页面相关 ======================
+  /**
+   * 加载历史记录缓存
+   */
+  loadHistoryCache: () => {
+    const cache = Storage.getHistoryCache();
+    if(cache && cache.data && cache.data.length > 0) {
+      const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
+      StateManager.setState({ analysis: newAnalysis }, false);
+      Business.renderLatest(cache.data[0]);
+      Business.renderHistory();
+      Business.renderFullAnalysis();
+      Business.renderZodiacAnalysis();
+      ViewAnalysis.updateLoadMoreBtn(
+        StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
+      );
+    }
+  },
+
   /**
    * 初始化分析页面
    */
@@ -307,9 +325,12 @@ const Business = {
 
   /**
    * 刷新历史数据
+   * @param {boolean} silentUpdate - 是否静默更新（不显示loading）
    */
-  refreshHistory: async () => {
-    ViewAnalysis.showHistoryLoading();
+  refreshHistory: async (silentUpdate = false) => {
+    if(!silentUpdate) {
+      ViewAnalysis.showHistoryLoading();
+    }
 
     try {
       const year = new Date().getFullYear();
@@ -335,6 +356,8 @@ const Business = {
         return Number(b.expect || 0) - Number(a.expect || 0);
       });
 
+      Storage.saveHistoryCache(sortedData);
+
       const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
       StateManager.setState({ analysis: newAnalysis }, false);
 
@@ -343,11 +366,15 @@ const Business = {
       Business.renderFullAnalysis();
       Business.renderZodiacAnalysis();
 
-      Toast.show('数据加载成功');
+      if(!silentUpdate) {
+        Toast.show('数据加载成功');
+      }
     } catch(e) {
       console.error('加载历史数据失败', e);
-      ViewAnalysis.showHistoryError();
-      Toast.show('数据加载失败');
+      if(!silentUpdate) {
+        ViewAnalysis.showHistoryError();
+        Toast.show('数据加载失败');
+      }
     }
 
     ViewAnalysis.updateLoadMoreBtn(
@@ -489,6 +516,7 @@ const Business = {
 
     const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
     const total = list.length;
+    const latestExpect = historyData[0]?.expect || 0;
 
     // 初始化统计对象
     const singleDouble = { '单': 0, '双': 0 };
@@ -503,15 +531,29 @@ const Business = {
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
     const numCount = {};
     for(let i = 1; i <= 49; i++) numCount[String(i).padStart(2, '0')] = 0;
-    const lastAppear = {};
-    for(let i = 1; i <= 49; i++) lastAppear[i] = -1;
 
-    // 统计
+    // 初始化遗漏计算对象
+    const lastAppearIdx = {};
+    for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
+    
+    const lastAppearSD = { '单': -1, '双': -1 };
+    const lastAppearBS = { '大': -1, '小': -1 };
+    const lastAppearRange = { '1-9': -1, '10-19': -1, '20-29': -1, '30-39': -1, '40-49': -1 };
+    const lastAppearHead = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1 };
+    const lastAppearTail = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1 };
+    const lastAppearColor = { '红': -1, '蓝': -1, '绿': -1 };
+    const lastAppearWuxing = { '金': -1, '木': -1, '水': -1, '火': -1, '土': -1 };
+    const lastAppearAnimal = { '家禽': -1, '野兽': -1 };
+    const lastAppearZod = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => lastAppearZod[z] = -1);
+
+    // 统计并记录最后出现位置
     list.forEach((item, idx) => {
       const s = Business.getSpecial(item);
       s.odd ? singleDouble['单']++ : singleDouble['双']++;
       s.big ? bigSmall['大']++ : bigSmall['小']++;
-      s.te <= 9 ? range['1-9']++ : s.te <= 19 ? range['10-19']++ : s.te <= 29 ? range['20-29']++ : s.te <= 39 ? range['30-39']++ : range['40-49']++;
+      const rangeKey = s.te <= 9 ? '1-9' : s.te <= 19 ? '10-19' : s.te <= 29 ? '20-29' : s.te <= 39 ? '30-39' : '40-49';
+      range[rangeKey]++;
       head[s.head]++;
       tail[s.tail]++;
       color[s.colorName]++;
@@ -519,20 +561,72 @@ const Business = {
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
       numCount[String(s.te).padStart(2, '0')]++;
-      if(lastAppear[s.te] === -1) lastAppear[s.te] = idx;
+      
+      // 记录最后出现索引
+      if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
+      if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
+      else if(!s.odd && lastAppearSD['双'] === -1) lastAppearSD['双'] = idx;
+      if(s.big && lastAppearBS['大'] === -1) lastAppearBS['大'] = idx;
+      else if(!s.big && lastAppearBS['小'] === -1) lastAppearBS['小'] = idx;
+      if(lastAppearRange[rangeKey] === -1) lastAppearRange[rangeKey] = idx;
+      if(lastAppearHead[s.head] === -1) lastAppearHead[s.head] = idx;
+      if(lastAppearTail[s.tail] === -1) lastAppearTail[s.tail] = idx;
+      if(lastAppearColor[s.colorName] === -1) lastAppearColor[s.colorName] = idx;
+      if(lastAppearWuxing[s.wuxing] === -1) lastAppearWuxing[s.wuxing] = idx;
+      if(lastAppearAnimal[s.animal] === -1) lastAppearAnimal[s.animal] = idx;
+      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod) && lastAppearZod[s.zod] === -1) {
+        lastAppearZod[s.zod] = idx;
+      }
     });
 
-    // 遗漏计算
+    // 计算遗漏值
+    const calcMiss = (lastIdx, total) => {
+      if(lastIdx === -1) return total;
+      const appearItem = list[lastIdx];
+      const appearExpect = Number(appearItem?.expect || 0);
+      return latestExpect - appearExpect;
+    };
+
+    const sdMiss = { '单': calcMiss(lastAppearSD['单'], total), '双': calcMiss(lastAppearSD['双'], total) };
+    const bsMiss = { '大': calcMiss(lastAppearBS['大'], total), '小': calcMiss(lastAppearBS['小'], total) };
+    const rangeMiss = {
+      '1-9': calcMiss(lastAppearRange['1-9'], total),
+      '10-19': calcMiss(lastAppearRange['10-19'], total),
+      '20-29': calcMiss(lastAppearRange['20-29'], total),
+      '30-39': calcMiss(lastAppearRange['30-39'], total),
+      '40-49': calcMiss(lastAppearRange['40-49'], total)
+    };
+    const headMiss = {
+      0: calcMiss(lastAppearHead[0], total),
+      1: calcMiss(lastAppearHead[1], total),
+      2: calcMiss(lastAppearHead[2], total),
+      3: calcMiss(lastAppearHead[3], total),
+      4: calcMiss(lastAppearHead[4], total)
+    };
+    const tailMiss = {};
+    for(let t = 0; t <= 9; t++) tailMiss[t] = calcMiss(lastAppearTail[t], total);
+    const colorMiss = { '红': calcMiss(lastAppearColor['红'], total), '蓝': calcMiss(lastAppearColor['蓝'], total), '绿': calcMiss(lastAppearColor['绿'], total) };
+    const wuxingMiss = {
+      '金': calcMiss(lastAppearWuxing['金'], total),
+      '木': calcMiss(lastAppearWuxing['木'], total),
+      '水': calcMiss(lastAppearWuxing['水'], total),
+      '火': calcMiss(lastAppearWuxing['火'], total),
+      '土': calcMiss(lastAppearWuxing['土'], total)
+    };
+    const animalMiss = { '家禽': calcMiss(lastAppearAnimal['家禽'], total), '野兽': calcMiss(lastAppearAnimal['野兽'], total) };
+    const zodiacMiss = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiacMiss[z] = calcMiss(lastAppearZod[z], total));
+
+    // 号码遗漏计算
     let totalMissSum = 0, maxMiss = 0, hot = 0, warm = 0, cold = 0;
     const allMiss = [];
     for(let m = 1; m <= 49; m++) {
-      const p = lastAppear[m];
-      const currentMiss = p === -1 ? total : p;
-      allMiss.push(currentMiss);
-      totalMissSum += currentMiss;
-      if(currentMiss > maxMiss) maxMiss = currentMiss;
-      if(currentMiss <= 3) hot++;
-      else if(currentMiss <= 9) warm++;
+      const miss = calcMiss(lastAppearIdx[m], total);
+      allMiss.push(miss);
+      totalMissSum += miss;
+      if(miss > maxMiss) maxMiss = miss;
+      if(miss <= 3) hot++;
+      else if(miss <= 9) warm++;
       else cold++;
     }
     const avgMiss = (totalMissSum / 49).toFixed(1);
@@ -577,7 +671,8 @@ const Business = {
       total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
       hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
       miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
-      streak: { curStreak, maxStreak }
+      streak: { curStreak, maxStreak },
+      sdMiss, bsMiss, rangeMiss, headMiss, tailMiss, colorMiss, wuxingMiss, animalMiss, zodiacMiss
     };
   },
 
@@ -593,9 +688,10 @@ const Business = {
 
     const rankKeys = ['singleDoubleRank', 'bigSmallRank', 'rangeRank', 'headRank', 'tailRank', 'colorRank', 'wuxingRank', 'animalRank', 'zodiacRank'];
     const rankDataObjs = [data.singleDouble, data.bigSmall, data.range, data.head, data.tail, data.color, data.wuxing, data.animal, data.zodiac];
+    const rankMissMaps = [data.sdMiss, data.bsMiss, data.rangeMiss, data.headMiss, data.tailMiss, data.colorMiss, data.wuxingMiss, data.animalMiss, data.zodiacMiss];
     const rankHtmls = {};
     rankKeys.forEach(function(k, i) {
-      rankHtmls[k] = ViewAnalysis.buildRankHtml(rankDataObjs[i], data.total);
+      rankHtmls[k] = ViewAnalysis.buildRankHtml(rankDataObjs[i], data.total, rankMissMaps[i]);
     });
 
     ViewAnalysis.renderFullAnalysis({
@@ -626,7 +722,8 @@ const Business = {
       streakCur: data.streak.curStreak, streakMax: data.streak.maxStreak,
       streakTip: '当前:' + data.streak.curStreak + '期 最长:' + data.streak.maxStreak + '期',
       tailArr: data.tail,
-      rankHtmls: rankHtmls
+      rankHtmls: rankHtmls,
+      zodiacMiss: data.zodiacMiss
     });
   },
 
@@ -662,28 +759,26 @@ const Business = {
     const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
     const total = list.length;
     const avgExpect = total / 12;
+    const latestExpect = historyData[0]?.expect || 0;
 
-    // 初始化统计对象
     const zodCount = {};
-    const lastAppear = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => { zodCount[z] = 0; lastAppear[z] = -1; });
+    const lastAppearIdx = {};
+    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => { zodCount[z] = 0; lastAppearIdx[z] = -1; });
     const tailZodMap = {};
     for(let t = 0; t <= 9; t++) tailZodMap[t] = {};
     const followMap = {};
 
-    // 循环统计
     list.forEach((item, idx) => {
       const s = Business.getSpecial(item);
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
         zodCount[s.zod]++;
-        if(lastAppear[s.zod] === -1) lastAppear[s.zod] = idx;
+        if(lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
       }
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
         tailZodMap[s.tail][s.zod] = (tailZodMap[s.tail][s.zod] || 0) + 1;
       }
     });
 
-    // 跟随统计
     for(let i = 1; i < list.length; i++) {
       const preZod = Business.getSpecial(list[i-1]).zod;
       const curZod = Business.getSpecial(list[i]).zod;
@@ -693,15 +788,19 @@ const Business = {
       }
     }
 
-    // 遗漏期数计算
     const zodMiss = {};
     const zodAvgMiss = {};
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
-      zodMiss[z] = lastAppear[z] === -1 ? total : lastAppear[z];
+      if(lastAppearIdx[z] === -1) {
+        zodMiss[z] = total;
+      } else {
+        const appearItem = list[lastAppearIdx[z]];
+        const appearExpect = Number(appearItem?.expect || 0);
+        zodMiss[z] = latestExpect - appearExpect;
+      }
       zodAvgMiss[z] = zodCount[z] > 0 ? (total / zodCount[z]).toFixed(1) : total;
     });
 
-    // 热门排序
     const topZod = Object.entries(zodCount).sort((a, b) => b[1] - a[1]);
     const topTail = Array.from({ length: 10 }, (_, t) => ({
       t, sum: Object.values(tailZodMap[t]).reduce((a, b) => a + b, 0)
@@ -827,12 +926,22 @@ const Business = {
     const customNumEl = document.getElementById('customNum');
     const analyzeSelectEl = document.getElementById('analyzeSelect');
     const custom = customNumEl ? customNumEl.value.trim() : '';
-    const selectVal = analyzeSelectEl ? analyzeSelectEl.value : '30';
+    const selectVal = analyzeSelectEl ? analyzeSelectEl.value : '12';
     const historyData = StateManager._state.analysis.historyData;
 
-    const newLimit = custom && !isNaN(custom) && custom > 0
-      ? Number(custom)
-      : selectVal === 'all' ? historyData.length : Number(selectVal);
+    let newLimit;
+    if(custom && !isNaN(custom) && custom > 0) {
+      newLimit = Number(custom);
+    } else if(selectVal === 'all') {
+      const currentYear = new Date().getFullYear();
+      const yearData = historyData.filter(item => {
+        const expect = item.expect || '';
+        return String(expect).startsWith(String(currentYear));
+      });
+      newLimit = yearData.length;
+    } else {
+      newLimit = Number(selectVal);
+    }
 
     const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit };
     StateManager.setState({ analysis: newAnalysis }, false);
@@ -853,12 +962,22 @@ const Business = {
     const customNumCountEl = document.getElementById('customNumCount');
 
     const customPeriod = zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '';
-    const selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '30';
+    const selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36';
     const historyData = StateManager._state.analysis.historyData;
 
-    const newLimit = customPeriod && !isNaN(customPeriod) && customPeriod > 0
-      ? Number(customPeriod)
-      : selectPeriodVal === 'all' ? historyData.length : Number(selectPeriodVal);
+    let newLimit;
+    if(customPeriod && !isNaN(customPeriod) && customPeriod > 0) {
+      newLimit = Number(customPeriod);
+    } else if(selectPeriodVal === 'all') {
+      const currentYear = new Date().getFullYear();
+      const yearData = historyData.filter(item => {
+        const expect = item.expect || '';
+        return String(expect).startsWith(String(currentYear));
+      });
+      newLimit = yearData.length;
+    } else {
+      newLimit = Number(selectPeriodVal);
+    }
 
     const countVal = numCountSelectEl ? numCountSelectEl.value : '5';
     const customCount = customNumCountEl ? customNumCountEl.value.trim() : '';

@@ -243,6 +243,18 @@ body{
   gap:8px;
   margin:10px 0;
 }
+@media (max-width: 375px) {
+  .exclude-grid{
+    grid-template-columns:repeat(6,1fr);
+    gap:6px;
+  }
+}
+@media (max-width: 320px) {
+  .exclude-grid{
+    grid-template-columns:repeat(5,1fr);
+    gap:5px;
+  }
+}
 .exclude-tag{
   aspect-ratio:1/1;
   display:grid;

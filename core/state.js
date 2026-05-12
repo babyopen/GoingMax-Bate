@@ -23,7 +23,7 @@ const StateManager = {
     // 分析模块状态
     analysis: {
       historyData: [],
-      analyzeLimit: 30,
+      analyzeLimit: 12,
       selectedNumCount: 5,
       showCount: 20,
       currentTab: 'history',

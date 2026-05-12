@@ -276,27 +276,6 @@
       </div>
     </div>
 
-    <!-- 冷热号筛选模块 -->
-    <div class="card" id="mod-hot">
-      <div class="card-header">
-        <h2>冷热号</h2>
-        <div class="btn-group" role="group" aria-label="冷热号操作">
-          <button class="btn-mini" data-action="lockGroup" data-group="hot">锁定</button>
-          <button class="btn-mini" data-action="markGroup" data-group="hot">标记</button>
-          <button class="btn-mini" data-action="selectGroup" data-group="hot">全选</button>
-          <button class="btn-mini" data-action="invertGroup" data-group="hot">反选</button>
-          <button class="btn-mini red" data-action="clearGroup" data-group="hot">清除</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="tags" data-group="hot" role="group" aria-label="冷热号选项">
-          <div class="tag" data-value="热号" data-group="hot">热号</div>
-          <div class="tag" data-value="温号" data-group="hot">温号</div>
-          <div class="tag" data-value="冷号" data-group="hot">冷号</div>
-        </div>
-      </div>
-    </div>
-
     <!-- 号码排除模块 -->
     <div class="card" id="mod-exclude">
       <div class="card-header">
@@ -358,9 +337,9 @@
         <div class="analysis-card-title">特码全维度统计</div>
         <div class="analysis-filter-bar">
           <select id="analyzeSelect" class="analysis-filter-select">
-            <option value="10">最近10期</option>
-            <option value="20">最近20期</option>
-            <option value="30" selected>最近30期</option>
+            <option value="12" selected>最近12期</option>
+            <option value="24">最近24期</option>
+            <option value="36">最近36期</option>
             <option value="all">全年数据</option>
           </select>
           <input type="number" id="customNum" class="analysis-filter-input" placeholder="自定义期数">
@@ -533,9 +512,9 @@
         <!-- 期数+号码数量双筛选栏 -->
         <div class="analysis-filter-bar">
           <select id="zodiacAnalyzeSelect" class="analysis-filter-select">
-            <option value="10">最近10期</option>
-            <option value="20">最近20期</option>
-            <option value="30" selected>最近30期</option>
+            <option value="12">最近12期</option>
+            <option value="24">最近24期</option>
+            <option value="36" selected>最近36期</option>
             <option value="all">全年数据</option>
           </select>
           <input type="number" id="zodiacCustomNum" class="analysis-filter-input" placeholder="自定义期数">
@@ -593,7 +572,6 @@
     <button class="nav-tab" data-target="mod-tail" role="tab">尾数</button>
     <button class="nav-tab" data-target="mod-sum" role="tab">尾合</button>
     <button class="nav-tab" data-target="mod-bs" role="tab">大小单双</button>
-    <button class="nav-tab" data-target="mod-hot" role="tab">冷热号</button>
     <button class="nav-tab" data-target="mod-exclude" role="tab">号码排除</button>
   </div>
 </div>
@@ -604,8 +582,8 @@
 <!-- 固定底部导航栏 -->
 <div class="bottom-nav" role="navigation" aria-label="底部主导航">
   <div class="bottom-nav-item active" data-action="switchBottomNav" data-index="0">筛选</div>
-  <div class="bottom-nav-item" data-action="switchBottomNav" data-index="2">Going</div>
   <div class="bottom-nav-item" data-action="switchBottomNav" data-index="1">分析</div>
+  <div class="bottom-nav-item" data-action="switchBottomNav" data-index="2">Going</div>
   <div class="bottom-nav-item" data-action="switchBottomNav" data-index="3">我的</div>
 </div>
 

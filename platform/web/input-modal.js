@@ -49,7 +49,7 @@ const GIONGBETA_INPUT_MODAL = {
           box-sizing: border-box;
           outline: none;
           transition: border-color 0.2s;
-        " placeholder="">
+        " placeholder="输入要排除的号码，空格/逗号/顿号/引号/竖线/点/横线分隔">
         <div style="display: flex; gap: 12px; margin-top: 20px;">
           <button id="giongbeta-modal-cancel" style="
             flex: 1;
@@ -107,6 +107,37 @@ const GIONGBETA_INPUT_MODAL = {
         }
       }
     });
+
+    const darkStyle = document.createElement('style');
+    darkStyle.id = 'giongbeta-modal-dark-style';
+    darkStyle.textContent = `
+      @media (prefers-color-scheme: dark) {
+        #giongbeta-input-modal > div {
+          background: #1C1C1E !important;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+        }
+        #giongbeta-modal-title {
+          color: #FFFFFF !important;
+        }
+        #giongbeta-modal-input {
+          background: #2C2C2E !important;
+          border-color: #3A3A3C !important;
+          color: #FFFFFF !important;
+        }
+        #giongbeta-modal-input::placeholder {
+          color: #98989F !important;
+        }
+        #giongbeta-modal-cancel {
+          background: #2C2C2E !important;
+          border-color: #3A3A3C !important;
+          color: #FFFFFF !important;
+        }
+        #giongbeta-modal-cancel:hover {
+          background: #3A3A3C !important;
+        }
+      }
+    `;
+    document.head.appendChild(darkStyle);
   },
 
   show: (title, placeholder = '', defaultValue = '', callback) => {
