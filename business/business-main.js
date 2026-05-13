@@ -290,6 +290,9 @@ const Business = {
     if(index === 1) {
       Business.initAnalysisPage();
     }
+    if(index === 2) {
+      Business.initZodiacPrediction();
+    }
   },
 
   // ====================== 分析页面相关 ======================
@@ -1140,5 +1143,98 @@ const Business = {
   handlePageUnload: () => {
     StateManager.clearAllTimers();
     ViewFilter.cleanupPageEvents(Business.handleScroll, Business.handlePageUnload);
+  },
+
+  // ====================== 生肖预测相关 ======================
+  initZodiacPrediction: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+    Business.renderZodiacPrediction();
+    Business.initZodiacBacktest();
+  },
+
+  renderZodiacPrediction: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      ViewZodiacPrediction.renderEmpty();
+      return;
+    }
+    var result = ZodiacPrediction.calcContinuousScores(historyData);
+    ViewZodiacPrediction.renderPrediction(result);
+  },
+
+  initZodiacBacktest: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      ViewZodiacPrediction.renderBacktest(null);
+      ViewZodiacPrediction.renderStrategyPanel(null);
+      return;
+    }
+    var cached = ZodiacPrediction.getBacktestSummary();
+    var tuned = ZodiacPrediction.getTunedStrategy();
+
+    if (cached && cached.total && tuned) {
+      ViewZodiacPrediction.renderBacktest(cached);
+      ViewZodiacPrediction.renderStrategyPanel(tuned);
+    } else if (cached && cached.total) {
+      ViewZodiacPrediction.renderBacktest(cached);
+      var newTuned = ZodiacPrediction.analyzeBacktest(cached);
+      ViewZodiacPrediction.renderStrategyPanel(newTuned);
+    } else {
+      ViewZodiacPrediction.renderBacktestEmpty();
+      ViewZodiacPrediction.renderStrategyPanel(null);
+      setTimeout(function() {
+        var result = ZodiacPrediction.runBacktest(historyData);
+        ViewZodiacPrediction.renderBacktest(result);
+        if (result) {
+          var newTuned = ZodiacPrediction.analyzeBacktest(result);
+          ViewZodiacPrediction.renderStrategyPanel(newTuned);
+        }
+      }, 100);
+    }
+  },
+
+  switchZodiacTab: (tab) => {
+    ViewZodiacPrediction.switchTabUI(tab);
+    if (tab === 'predict') Business.renderZodiacPrediction();
+    if (tab === 'giong') Business.initGiongTab();
+  },
+
+  initGiongTab: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+    if (!historyData || !historyData.length) return;
+
+    var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
+    ViewZodiacPrediction.renderFrequencyRating(freqResult);
+
+    var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
+    ViewZodiacPrediction.renderZoneAnalysis(patternResult);
+
+    if (freqResult && patternResult) {
+      var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
+      ViewZodiacPrediction.renderZoneRecommend(recommend);
+    }
+
+    var cachedZoneBacktest = ZodiacPrediction.getZoneBacktestSummary();
+    if (cachedZoneBacktest && cachedZoneBacktest.total) {
+      ViewZodiacPrediction.renderZoneBacktest(cachedZoneBacktest);
+    } else {
+      ViewZodiacPrediction.renderZoneBacktestEmpty();
+      setTimeout(function() {
+        var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
+        if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
+      }, 150);
+    }
   }
 };

@@ -574,6 +574,109 @@
       </div>
     </div>
   </div>
+
+  <!-- 资料页面 -->
+  <div class="page" id="randomPage" style="display:none">
+    <div class="zodiac-tab-bar">
+      <button class="zodiac-tab-btn active" data-zodiac-tab="predict">生肖预测</button>
+      <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
+    </div>
+
+    <!-- 生肖预测面板 -->
+    <div class="zodiac-tab-panel active" id="zodiacPredictPanel">
+      <div class="card">
+        <div class="card-header">
+          <h2>生肖预测</h2>
+        </div>
+        <div class="card-body">
+          <div id="zodiacPredictionGrid" class="zodiac-prediction-grid">
+            <div class="empty-tip">暂无开奖数据，请先在广播页刷新数据</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>动态策略</h2>
+        </div>
+        <div class="card-body">
+          <div id="zodiacStrategyPanel" class="zodiac-strategy-panel">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>回测追踪</h2>
+        </div>
+        <div class="card-body">
+          <div id="zodiacBacktestContainer" class="zodiac-backtest-container">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Giong 面板：频率评级系统 -->
+    <div class="zodiac-tab-panel" id="zodiacGiongPanel">
+      <div class="card">
+        <div class="card-header">
+          <h2>频率评级表</h2>
+        </div>
+        <div class="card-body">
+          <div id="giongFreqGrid">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>区域概率分析</h2>
+        </div>
+        <div class="card-body">
+          <div id="giongAnalysisPanel">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>区域综合推荐</h2>
+        </div>
+        <div class="card-body">
+          <div id="giongRecommendPanel">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>区域回测追踪</h2>
+        </div>
+        <div class="card-body">
+          <div id="giongBacktestPanel">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">仅供娱乐，非投注建议</div>
+  </div>
+
+  <!-- 我的页面 -->
+  <div class="page" id="profilePage" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <h2>我的</h2>
+      </div>
+      <div class="card-body">
+        <div class="empty-tip">更多功能开发中...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 快捷导航 -->
@@ -645,10 +748,12 @@
 
 <!-- 业务层：禁止DOM操作 -->
 <script src="business/business-main.js"></script>
+<script src="business/business-zodiac-prediction.js"></script>
 
 <!-- 视图层：禁止业务计算 -->
 <script src="views/view-filter.js"></script>
 <script src="views/view-analysis.js"></script>
+<script src="views/view-zodiac-prediction.js"></script>
 
 <!-- 事件层：统一事件委托 -->
 <script src="event.js"></script>

@@ -8,7 +8,8 @@ const Storage = {
     SAVED_FILTERS: 'savedFilters',
     DATA_VERSION: 'dataVersion',
     HISTORY_DATA: 'historyData',
-    HISTORY_TIMESTAMP: 'historyTimestamp'
+    HISTORY_TIMESTAMP: 'historyTimestamp',
+    ZODIAC_BACKTEST: 'zodiacBacktest'
   }),
 
   /**

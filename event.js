@@ -169,6 +169,13 @@ const EventBinder = {
       Business.loadMoreHistory();
       return;
     }
+
+    // 9. 资料页标签切换
+    const zodiacTabBtn = target.closest('.zodiac-tab-btn[data-zodiac-tab]');
+    if(zodiacTabBtn){
+      Business.switchZodiacTab(zodiacTabBtn.dataset.zodiacTab);
+      return;
+    }
   },
 
   /**
