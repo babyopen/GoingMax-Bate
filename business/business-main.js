@@ -310,6 +310,7 @@ const Business = {
       Business.renderHistory();
       Business.renderFullAnalysis();
       Business.renderZodiacAnalysis();
+      Business.renderZodiacPrediction();
       ViewAnalysis.updateLoadMoreBtn(
         StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
       );
@@ -333,8 +334,23 @@ const Business = {
    * @param {boolean} silentUpdate - 是否静默更新（不显示loading）
    */
   refreshHistory: async (silentUpdate = false) => {
-    if(!silentUpdate) {
-      ViewAnalysis.showHistoryLoading();
+    const state = StateManager._state;
+    const cache = Storage.getHistoryCache();
+    const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
+    const currentLatestExpect = state.analysis.historyData.length ? Number(state.analysis.historyData[0].expect || 0) : 0;
+
+    if(cacheLatestExpect > currentLatestExpect && cacheLatestExpect > 0) {
+      const newAnalysis = { ...state.analysis, historyData: cache.data };
+      StateManager.setState({ analysis: newAnalysis }, false);
+      Business.renderLatest(cache.data[0]);
+      Business.renderHistory();
+      Business.renderFullAnalysis();
+      Business.renderZodiacAnalysis();
+      Business.renderZodiacPrediction();
+      ViewAnalysis.updateLoadMoreBtn(newAnalysis.historyData.length > newAnalysis.showCount);
+      if(!silentUpdate) Toast.show('已加载缓存最新数据');
+    } else {
+      if(!silentUpdate) ViewAnalysis.showHistoryLoading();
     }
 
     try {
@@ -361,22 +377,22 @@ const Business = {
         return Number(b.expect || 0) - Number(a.expect || 0);
       });
 
-      Storage.saveHistoryCache(sortedData);
-
-      const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
-      StateManager.setState({ analysis: newAnalysis }, false);
-
-      Business.renderLatest(sortedData[0]);
-      Business.renderHistory();
-      Business.renderFullAnalysis();
-      Business.renderZodiacAnalysis();
-
-      if(!silentUpdate) {
-        Toast.show('数据加载成功');
+      const newLatestExpect = sortedData.length ? Number(sortedData[0].expect || 0) : 0;
+      if(newLatestExpect > currentLatestExpect || currentLatestExpect === 0) {
+        Storage.saveHistoryCache(sortedData);
+        const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
+        StateManager.setState({ analysis: newAnalysis }, false);
+        Business.renderLatest(sortedData[0]);
+        Business.renderHistory();
+        Business.renderFullAnalysis();
+        Business.renderZodiacAnalysis();
+        Business.renderZodiacPrediction();
+        if(!silentUpdate) Toast.show('数据加载成功');
+      } else if(!silentUpdate) {
+        Toast.show('已是最新数据');
       }
     } catch(e) {
       console.error('加载历史数据失败', e);
-      const cache = Storage.getHistoryCache();
       if(cache && cache.data && cache.data.length > 0) {
         const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
         StateManager.setState({ analysis: newAnalysis }, false);
@@ -384,9 +400,8 @@ const Business = {
         Business.renderHistory();
         Business.renderFullAnalysis();
         Business.renderZodiacAnalysis();
-        if(!silentUpdate) {
-          Toast.show('使用缓存数据（网络不可用）');
-        }
+        Business.renderZodiacPrediction();
+        if(!silentUpdate) Toast.show('使用缓存数据（网络不可用）');
       } else {
         if(!silentUpdate) {
           ViewAnalysis.showHistoryError();
