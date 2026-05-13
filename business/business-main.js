@@ -314,6 +314,8 @@ const Business = {
       Business.renderFullAnalysis();
       Business.renderZodiacAnalysis();
       Business.renderZodiacPrediction();
+      Business.initZodiacBacktest();
+      Business.initGiongTab();
       ViewAnalysis.updateLoadMoreBtn(
         StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
       );
@@ -379,6 +381,7 @@ const Business = {
         Business.renderZodiacAnalysis();
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
+        Business.initGiongTab();
         if(!silentUpdate) Toast.show('数据加载成功');
       } else if(cacheLatestExpect > currentLatestExpect) {
         const newAnalysis = { ...state.analysis, historyData: cache.data };
@@ -389,6 +392,7 @@ const Business = {
         Business.renderZodiacAnalysis();
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
+        Business.initGiongTab();
         if(!silentUpdate) Toast.show('已加载缓存最新数据');
       } else {
         if(!silentUpdate) Toast.show('已是最新数据');
@@ -404,6 +408,7 @@ const Business = {
         Business.renderZodiacAnalysis();
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
+        Business.initGiongTab();
         if(!silentUpdate) Toast.show('使用缓存数据（网络不可用）');
       } else {
         if(!silentUpdate) {
@@ -1196,28 +1201,16 @@ const Business = {
       ViewZodiacPrediction.renderStrategyPanel(null);
       return;
     }
-    var cached = ZodiacPrediction.getBacktestSummary();
-    var tuned = ZodiacPrediction.getTunedStrategy();
-
-    if (cached && cached.total && tuned) {
-      ViewZodiacPrediction.renderBacktest(cached);
-      ViewZodiacPrediction.renderStrategyPanel(tuned);
-    } else if (cached && cached.total) {
-      ViewZodiacPrediction.renderBacktest(cached);
-      var newTuned = ZodiacPrediction.analyzeBacktest(cached);
-      ViewZodiacPrediction.renderStrategyPanel(newTuned);
-    } else {
-      ViewZodiacPrediction.renderBacktestEmpty();
-      ViewZodiacPrediction.renderStrategyPanel(null);
-      setTimeout(function() {
-        var result = ZodiacPrediction.runBacktest(historyData);
-        ViewZodiacPrediction.renderBacktest(result);
-        if (result) {
-          var newTuned = ZodiacPrediction.analyzeBacktest(result);
-          ViewZodiacPrediction.renderStrategyPanel(newTuned);
-        }
-      }, 100);
-    }
+    ViewZodiacPrediction.renderBacktestEmpty();
+    ViewZodiacPrediction.renderStrategyPanel(null);
+    setTimeout(function() {
+      var result = ZodiacPrediction.runBacktest(historyData);
+      ViewZodiacPrediction.renderBacktest(result);
+      if (result) {
+        var newTuned = ZodiacPrediction.analyzeBacktest(result);
+        ViewZodiacPrediction.renderStrategyPanel(newTuned);
+      }
+    }, 100);
   },
 
   switchZodiacTab: (tab) => {
@@ -1246,15 +1239,10 @@ const Business = {
       ViewZodiacPrediction.renderZoneRecommend(recommend);
     }
 
-    var cachedZoneBacktest = ZodiacPrediction.getZoneBacktestSummary();
-    if (cachedZoneBacktest && cachedZoneBacktest.total) {
-      ViewZodiacPrediction.renderZoneBacktest(cachedZoneBacktest);
-    } else {
-      ViewZodiacPrediction.renderZoneBacktestEmpty();
-      setTimeout(function() {
-        var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
-        if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
-      }, 150);
-    }
+    ViewZodiacPrediction.renderZoneBacktestEmpty();
+    setTimeout(function() {
+      var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
+      if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
+    }, 150);
   }
 };
