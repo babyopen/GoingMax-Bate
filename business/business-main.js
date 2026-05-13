@@ -303,7 +303,10 @@ const Business = {
    */
   loadHistoryCache: () => {
     const cache = Storage.getHistoryCache();
-    if(cache && cache.data && cache.data.length > 0) {
+    const currentLatestExpect = StateManager._state.analysis.historyData.length ? Number(StateManager._state.analysis.historyData[0].expect || 0) : 0;
+    const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
+    
+    if(cache && cache.data && cache.data.length > 0 && cacheLatestExpect > currentLatestExpect) {
       const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
       StateManager.setState({ analysis: newAnalysis }, false);
       Business.renderLatest(cache.data[0]);
@@ -339,19 +342,7 @@ const Business = {
     const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
     const currentLatestExpect = state.analysis.historyData.length ? Number(state.analysis.historyData[0].expect || 0) : 0;
 
-    if(cacheLatestExpect > currentLatestExpect && cacheLatestExpect > 0) {
-      const newAnalysis = { ...state.analysis, historyData: cache.data };
-      StateManager.setState({ analysis: newAnalysis }, false);
-      Business.renderLatest(cache.data[0]);
-      Business.renderHistory();
-      Business.renderFullAnalysis();
-      Business.renderZodiacAnalysis();
-      Business.renderZodiacPrediction();
-      ViewAnalysis.updateLoadMoreBtn(newAnalysis.historyData.length > newAnalysis.showCount);
-      if(!silentUpdate) Toast.show('已加载缓存最新数据');
-    } else {
-      if(!silentUpdate) ViewAnalysis.showHistoryLoading();
-    }
+    if(!silentUpdate) ViewAnalysis.showHistoryLoading();
 
     try {
       const year = new Date().getFullYear();
@@ -378,7 +369,7 @@ const Business = {
       });
 
       const newLatestExpect = sortedData.length ? Number(sortedData[0].expect || 0) : 0;
-      if(newLatestExpect > currentLatestExpect || currentLatestExpect === 0) {
+      if(newLatestExpect > currentLatestExpect) {
         Storage.saveHistoryCache(sortedData);
         const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
         StateManager.setState({ analysis: newAnalysis }, false);
@@ -388,13 +379,22 @@ const Business = {
         Business.renderZodiacAnalysis();
         Business.renderZodiacPrediction();
         if(!silentUpdate) Toast.show('数据加载成功');
-      } else if(!silentUpdate) {
-        Toast.show('已是最新数据');
+      } else if(cacheLatestExpect > currentLatestExpect) {
+        const newAnalysis = { ...state.analysis, historyData: cache.data };
+        StateManager.setState({ analysis: newAnalysis }, false);
+        Business.renderLatest(cache.data[0]);
+        Business.renderHistory();
+        Business.renderFullAnalysis();
+        Business.renderZodiacAnalysis();
+        Business.renderZodiacPrediction();
+        if(!silentUpdate) Toast.show('已加载缓存最新数据');
+      } else {
+        if(!silentUpdate) Toast.show('已是最新数据');
       }
     } catch(e) {
       console.error('加载历史数据失败', e);
-      if(cache && cache.data && cache.data.length > 0) {
-        const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
+      if(cacheLatestExpect > currentLatestExpect) {
+        const newAnalysis = { ...state.analysis, historyData: cache.data };
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderLatest(cache.data[0]);
         Business.renderHistory();
