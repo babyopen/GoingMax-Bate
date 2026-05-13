@@ -296,74 +296,6 @@
       </div>
     </div>
 
-    <!-- DB算法面板 -->
-    <div class="zodiac-tab-panel" id="zodiacDBPanel">
-      <div class="card db-card">
-        <div class="card-header">
-          <div class="db-header-left">
-            <h2>DB算法预测</h2>
-            <span class="db-badge">126-131连中</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="db-intro">
-            <p>短线顺势 · 温号闭环 · 区间轮转 · 回踩惯性</p>
-          </div>
-
-          <div class="db-result-container" id="dbResultContainer">
-            <div class="db-main-section">
-              <div class="db-section-label">主推 4 码</div>
-              <div class="db-number-grid" id="dbMainGrid"></div>
-            </div>
-            <div class="db-divider"></div>
-            <div class="db-backup-section">
-              <div class="db-section-label">备选 2 码</div>
-              <div class="db-number-grid" id="dbBackupGrid"></div>
-            </div>
-          </div>
-
-          <div class="db-detail-toggle" id="dbDetailToggle" data-action="toggleDBDetail">
-            <span>查看热度分布</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-
-          <div class="db-heat-panel" id="dbHeatPanel" style="display:none;">
-            <div class="db-heat-grid" id="dbHeatGrid"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card db-card">
-        <div class="card-header">
-          <h2>算法规则</h2>
-        </div>
-        <div class="card-body">
-          <div class="db-rules">
-            <div class="db-rule-item">
-              <div class="db-rule-num">①</div>
-              <div class="db-rule-text">优先温号闭环：近几期反复开出的温号组，循环顺延</div>
-            </div>
-            <div class="db-rule-item">
-              <div class="db-rule-num">②</div>
-              <div class="db-rule-text">区间轮转：上期开哪区，下期优先相邻区/回踩同区温号</div>
-            </div>
-            <div class="db-rule-item">
-              <div class="db-rule-num">③</div>
-              <div class="db-rule-text">回踩惯性：±1、±2、同尾、同区温号必带</div>
-            </div>
-            <div class="db-rule-item">
-              <div class="db-rule-num">④</div>
-              <div class="db-rule-text">冷号轻补：遗漏5-15期冷号可带1个，>20期不选</div>
-            </div>
-            <div class="db-rule-item">
-              <div class="db-rule-num">⑤</div>
-              <div class="db-rule-text">不逆势、不跳变：全程跟走势节奏</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="disclaimer">仅供娱乐，非投注建议</div>
   </div>
 
@@ -727,6 +659,74 @@
         <div class="card-body">
           <div id="giongBacktestPanel">
             <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DB算法面板 -->
+    <div class="zodiac-tab-panel" id="zodiacDBPanel">
+      <div class="card db-card">
+        <div class="card-header">
+          <div class="db-header-left">
+            <h2>DB算法预测</h2>
+            <span class="db-badge">126-131连中</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="db-intro">
+            <p>短线顺势 · 温号闭环 · 区间轮转 · 回踩惯性</p>
+          </div>
+
+          <div class="db-result-container" id="dbResultContainer">
+            <div class="db-main-section">
+              <div class="db-section-label">主推 4 码</div>
+              <div class="db-number-grid" id="dbMainGrid"></div>
+            </div>
+            <div class="db-divider"></div>
+            <div class="db-backup-section">
+              <div class="db-section-label">备选 2 码</div>
+              <div class="db-number-grid" id="dbBackupGrid"></div>
+            </div>
+          </div>
+
+          <div class="db-detail-toggle" id="dbDetailToggle" data-action="toggleDBDetail">
+            <span>查看热度分布</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <div class="db-heat-panel" id="dbHeatPanel" style="display:none;">
+            <div class="db-heat-grid" id="dbHeatGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card db-card">
+        <div class="card-header">
+          <h2>算法规则</h2>
+        </div>
+        <div class="card-body">
+          <div class="db-rules">
+            <div class="db-rule-item">
+              <div class="db-rule-num">①</div>
+              <div class="db-rule-text">优先温号闭环：近几期反复开出的温号组，循环顺延</div>
+            </div>
+            <div class="db-rule-item">
+              <div class="db-rule-num">②</div>
+              <div class="db-rule-text">区间轮转：上期开哪区，下期优先相邻区/回踩同区温号</div>
+            </div>
+            <div class="db-rule-item">
+              <div class="db-rule-num">③</div>
+              <div class="db-rule-text">回踩惯性：±1、±2、同尾、同区温号必带</div>
+            </div>
+            <div class="db-rule-item">
+              <div class="db-rule-num">④</div>
+              <div class="db-rule-text">冷号轻补：遗漏5-15期冷号可带1个，>20期不选</div>
+            </div>
+            <div class="db-rule-item">
+              <div class="db-rule-num">⑤</div>
+              <div class="db-rule-text">不逆势、不跳变：全程跟走势节奏</div>
+            </div>
           </div>
         </div>
       </div>
