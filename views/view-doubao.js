@@ -54,11 +54,13 @@ const ViewDoubao = {
     }
 
     var heatWindow = historyData.slice(0, 10);
-    var prevNum = 0;
-    var nums = heatWindow.slice(0, 10).map(function(item) {
-      return BusinessPredictOld._toNum(item);
+    var zodiacList = heatWindow.slice(0, 10).map(function(item) {
+      return ViewDoubao._getSpecialZodiac(item);
+    }).filter(Boolean);
+    var nums = zodiacList.map(function(z) {
+      return BusinessPredictOld._toNum(z);
     }).filter(function(n) { return n > 0; });
-    if (nums.length > 0) prevNum = nums[0];
+    var prevNum = nums.length > 0 ? nums[0] : 0;
 
     var heatMap = {};
     for (var i = 1; i <= 12; i++) {
@@ -104,6 +106,18 @@ const ViewDoubao = {
     }
   },
 
+  _getSpecialZodiac: function(item) {
+    var zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
+    var zodArr = zodArrRaw.map(function(z) {
+      var map = {
+        '鼠': '鼠', '牛': '牛', '虎': '虎', '兔': '兔', '龙': '龙', '蛇': '蛇',
+        '馬': '马', '馬': '马', '羊': '羊', '猴': '猴', '雞': '鸡', '狗': '狗', '豬': '猪'
+      };
+      return map[z] || z;
+    });
+    return zodArr[6] || '';
+  },
+
   renderAll: function(historyData) {
     if (!historyData || historyData.length < 10) {
       this.renderMainGrid(null);
@@ -114,7 +128,7 @@ const ViewDoubao = {
     }
 
     var zodiacHistory = historyData.slice(0, 15).map(function(item) {
-      return item.specialZodiac || '';
+      return ViewDoubao._getSpecialZodiac(item);
     }).filter(Boolean);
 
     if (zodiacHistory.length < 10) {
