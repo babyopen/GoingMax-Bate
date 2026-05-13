@@ -323,11 +323,25 @@ body{
     grid-template-columns:repeat(6,1fr);
     gap:6px;
   }
+  .bottom-nav-toggle{
+    width:72px;
+    height:72px;
+    min-width:72px;
+    border-radius:36px;
+    font-size:15px;
+  }
 }
 @media (max-width: 320px) {
   .exclude-grid{
     grid-template-columns:repeat(5,1fr);
     gap:5px;
+  }
+  .bottom-nav-toggle{
+    width:76px;
+    height:76px;
+    min-width:76px;
+    border-radius:38px;
+    font-size:16px;
   }
 }
 .exclude-tag{
@@ -535,21 +549,21 @@ body{
   background:var(--nav-glass-bg);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   backdrop-filter:blur(20px) saturate(180%);
-  border-radius:26px;
-  padding:8px 12px;
-  height:48px;
+  border-radius:30px;
+  padding:10px 16px;
+  height:60px;
   box-sizing:border-box;
   box-shadow:0 4px 24px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
-  gap:8px;
+  gap:10px;
 }
 .bottom-nav-toggle{
   display:flex;
   justify-content:center;
   align-items:center;
-  width:48px;
-  height:48px;
-  min-width:48px;
-  border-radius:24px;
+  width:58px;
+  height:58px;
+  min-width:58px;
+  border-radius:29px;
   background:var(--nav-glass-bg);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   backdrop-filter:blur(20px) saturate(180%);
@@ -558,7 +572,7 @@ body{
   touch-action:manipulation;
   transition:all var(--anim-fast);
   box-shadow:0 4px 12px var(--nav-glass-shadow);
-  font-size:11px;
+  font-size:13px;
   font-weight:500;
   color:var(--nav-item-text);
   padding:0;
@@ -577,10 +591,10 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  min-width:48px;
-  height:48px;
-  border-radius:24px;
-  padding:4px 8px;
+  min-width:60px;
+  height:60px;
+  border-radius:30px;
+  padding:6px 12px;
   transition:all var(--anim-fast);
   cursor:pointer;
   touch-action:manipulation;
@@ -590,7 +604,7 @@ body{
   position:relative;
 }
 .bottom-nav-item span{
-  font-size:12px;
+  font-size:14px;
   font-weight:500;
   color:var(--nav-item-text);
   transition:color var(--anim-fast), font-weight var(--anim-fast);
