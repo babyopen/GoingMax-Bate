@@ -151,8 +151,13 @@ const ViewZodiacPrediction = {
     document.querySelectorAll('.zodiac-tab-btn').forEach(function(btn) {
       btn.classList.toggle('active', btn.dataset.zodiacTab === tab);
     });
+    var panelMap = {
+      predict: 'zodiacPredictPanel',
+      giong: 'zodiacGiongPanel',
+      doubao: 'zodiacDoubaoPanel'
+    };
     document.querySelectorAll('.zodiac-tab-panel').forEach(function(panel) {
-      panel.classList.toggle('active', panel.id === (tab === 'predict' ? 'zodiacPredictPanel' : 'zodiacGiongPanel'));
+      panel.classList.toggle('active', panel.id === panelMap[tab]);
     });
   },
 

@@ -2131,3 +2131,213 @@ input[type="checkbox"]{
   color: var(--sub-text);
 }
 
+/* ========== iOS 17 风格 - 豆包算法 ========== */
+.doubao-card {
+  background: rgba(28, 28, 30, 0.7);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-radius: 20px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.doubao-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 12px;
+}
+
+.doubao-card-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.doubao-card-header h2 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.doubao-subtitle {
+  font-size: 13px;
+  color: rgba(235, 235, 245, 0.6);
+  margin: 2px 0 0;
+  font-weight: 400;
+}
+
+.doubao-card-body {
+  padding: 0 18px 16px;
+}
+
+.doubao-num-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.doubao-num-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.doubao-num-chip:hover {
+  transform: scale(1.02);
+}
+
+.doubao-chip-zodiac {
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+}
+
+.doubao-chip-label {
+  font-size: 11px;
+  color: rgba(235, 235, 245, 0.5);
+  font-weight: 500;
+}
+
+.doubao-num-chip.main-chip {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.2), rgba(90, 200, 250, 0.15));
+  border-color: rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.15);
+}
+
+.doubao-num-chip.main-chip .doubao-chip-zodiac {
+  color: #64D2FF;
+}
+
+.doubao-num-chip.main-chip .doubao-chip-label {
+  color: rgba(100, 210, 255, 0.7);
+}
+
+.doubao-num-chip.backup-chip {
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.15), rgba(255, 204, 0, 0.1));
+  border-color: rgba(255, 159, 10, 0.25);
+}
+
+.doubao-num-chip.backup-chip .doubao-chip-zodiac {
+  color: #FFD60A;
+}
+
+.doubao-num-chip.backup-chip .doubao-chip-label {
+  color: rgba(255, 214, 10, 0.6);
+}
+
+.doubao-heatmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.doubao-heat-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.doubao-heat-zodiac {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.doubao-heat-bar {
+  height: 3px;
+  border-radius: 2px;
+  margin: 4px 0;
+}
+
+.doubao-heat-count {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.doubao-heat-item.heat-hot .doubao-heat-bar {
+  background: linear-gradient(90deg, #30D158, #63E6FF);
+}
+
+.doubao-heat-item.heat-hot .doubao-heat-count {
+  color: #30D158;
+}
+
+.doubao-heat-item.heat-warm .doubao-heat-bar {
+  background: linear-gradient(90deg, #FF9F0A, #FFD60A);
+}
+
+.doubao-heat-item.heat-warm .doubao-heat-count {
+  color: #FF9F0A;
+}
+
+.doubao-heat-item.heat-cold .doubao-heat-bar {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.15));
+}
+
+.doubao-heat-item.heat-cold .doubao-heat-count {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.doubao-heat-item.heat-inertia {
+  border-color: rgba(0, 122, 255, 0.2);
+  background: rgba(0, 122, 255, 0.06);
+}
+
+.doubao-heat-item.heat-inertia .doubao-heat-zodiac {
+  color: #64D2FF;
+}
+
+.doubao-heat-item.heat-inertia .doubao-heat-bar {
+  background: linear-gradient(90deg, #007AFF, #64D2FF);
+}
+
+.doubao-heat-item.heat-inertia .doubao-heat-count {
+  color: #64D2FF;
+}
+
+.doubao-heat-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.heat-hot .doubao-heat-tag {
+  background: rgba(48, 209, 88, 0.15);
+  color: #30D158;
+}
+
+.heat-warm .doubao-heat-tag {
+  background: rgba(255, 159, 10, 0.15);
+  color: #FF9F0A;
+}
+
+.heat-cold .doubao-heat-tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.35);
+}
+

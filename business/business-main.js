@@ -1217,6 +1217,15 @@ const Business = {
     ViewZodiacPrediction.switchTabUI(tab);
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
+    if (tab === 'doubao') {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+      if (!historyData || !historyData.length) {
+        Business.loadHistoryCache();
+        historyData = StateManager._state.analysis.historyData;
+      }
+      ViewDoubao.renderAll(historyData);
+    }
   },
 
   initGiongTab: () => {

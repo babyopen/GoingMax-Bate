@@ -296,9 +296,6 @@
       </div>
     </div>
 
-    <div class="disclaimer">仅供娱乐，非投注建议</div>
-  </div>
-
   <!-- 分析页面 -->
   <div class="page" id="analysisPage" style="display:none">
     <!-- 最新开奖 + 倒计时模块 -->
@@ -580,6 +577,7 @@
     <div class="zodiac-tab-bar">
       <button class="zodiac-tab-btn active" data-zodiac-tab="predict">生肖预测</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
+      <button class="zodiac-tab-btn" data-zodiac-tab="doubao">豆包算法</button>
     </div>
 
     <!-- 生肖预测面板 -->
@@ -658,6 +656,54 @@
         <div class="card-body">
           <div id="giongBacktestPanel">
             <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 豆包算法面板 -->
+    <div class="zodiac-tab-panel" id="zodiacDoubaoPanel">
+      <div class="doubao-card">
+        <div class="doubao-card-header">
+          <span class="doubao-card-icon">🎯</span>
+          <div>
+            <h2>主推预测</h2>
+            <p class="doubao-subtitle" id="doubaoPeriodText">等待数据...</p>
+          </div>
+        </div>
+        <div class="doubao-card-body">
+          <div id="doubaoMainGrid" class="doubao-num-grid">
+            <div class="empty-tip">暂无数据</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doubao-card">
+        <div class="doubao-card-header">
+          <span class="doubao-card-icon">🔄</span>
+          <div>
+            <h2>备选号码</h2>
+            <p class="doubao-subtitle">补位防守</p>
+          </div>
+        </div>
+        <div class="doubao-card-body">
+          <div id="doubaoBackupGrid" class="doubao-num-grid">
+            <div class="empty-tip">暂无数据</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doubao-card">
+        <div class="doubao-card-header">
+          <span class="doubao-card-icon">📊</span>
+          <div>
+            <h2>热度分析</h2>
+            <p class="doubao-subtitle">近10期数据</p>
+          </div>
+        </div>
+        <div class="doubao-card-body">
+          <div id="doubaoHeatMap" class="doubao-heatmap">
+            <div class="empty-tip">暂无数据</div>
           </div>
         </div>
       </div>
@@ -755,6 +801,7 @@
 <script src="views/view-filter.js"></script>
 <script src="views/view-analysis.js"></script>
 <script src="views/view-zodiac-prediction.js"></script>
+<script src="views/view-doubao.js"></script>
 
 <!-- 事件层：统一事件委托 -->
 <script src="event.js"></script>
