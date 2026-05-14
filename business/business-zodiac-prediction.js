@@ -630,14 +630,21 @@ const ZodiacPrediction = {
       }
       var windowData = historyData.slice(0, w);
       var freq = {};
-      ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { freq[z] = 0; });
+      var appearExpects = {};
+      ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { 
+        freq[z] = 0; 
+        appearExpects[z] = [];
+      });
 
-      windowData.forEach(function(item) {
+      windowData.forEach(function(item, idx) {
         var s = ZodiacPrediction._getSpecial(item);
         if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
           freq[s.zod]++;
+          appearExpects[s.zod].push(Number(item.expect || 0));
         }
       });
+
+      var windowStartExpect = windowData.length > 0 ? Number(windowData[windowData.length - 1].expect || 0) : 0;
 
       var rated = [];
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
@@ -645,12 +652,24 @@ const ZodiacPrediction = {
         var level = count >= 4 ? 4 : count;
         var zone = ZodiacPrediction.ZONE_MAP[level];
         var miss = Utils.calcMiss(missLastIdx[z], missScope, missLatest, missList);
+        
+        var earliestExpectInWindow = null;
+        var willDrop = false;
+        
+        if (w === 12 && appearExpects[z].length > 0) {
+          var sortedExpects = appearExpects[z].sort(function(a, b) { return a - b; });
+          earliestExpectInWindow = sortedExpects[0];
+          willDrop = (earliestExpectInWindow === windowStartExpect);
+        }
+        
         rated.push({
           zodiac: z,
           count: count,
           zone: zone,
           zoneLevel: level,
-          miss: miss
+          miss: miss,
+          willDrop: willDrop,
+          earliestExpectInWindow: earliestExpectInWindow
         });
       });
 

@@ -382,6 +382,7 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
+        Business.initDBAlgorithm();
         if(!silentUpdate) Toast.show('数据加载成功');
       } else if(cacheLatestExpect > currentLatestExpect) {
         const newAnalysis = { ...state.analysis, historyData: cache.data };
@@ -393,6 +394,7 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
+        Business.initDBAlgorithm();
         if(!silentUpdate) Toast.show('已加载缓存最新数据');
       } else {
         if(!silentUpdate) Toast.show('已是最新数据');
@@ -409,6 +411,7 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
+        Business.initDBAlgorithm();
         if(!silentUpdate) Toast.show('使用缓存数据（网络不可用）');
       } else {
         if(!silentUpdate) {

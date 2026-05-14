@@ -225,8 +225,9 @@ const ViewZodiacPrediction = {
           var missClass = zoneColors[prevZone] || '';
           var badgeClass = zoneColors[prevZone] || '';
           newZoneMap[item.zodiac] = currentZone;
+          var dropArrow = (period.key === 'p12' && item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
           html += '<div class="zone-zod-card">';
-          html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + '</div>';
+          html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + dropArrow + '</div>';
           html += '<div class="zod-card-name">' + item.zodiac + '</div>';
           html += '<div class="zod-card-stats">';
           html += '<span class="zod-card-miss ' + missClass + '">' + item.miss + '期</span>';
