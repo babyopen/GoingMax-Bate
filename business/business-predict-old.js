@@ -26,32 +26,51 @@ const BusinessPredictOld = {
     var nums = history.filter(function(n) { return n >= 1 && n <= 12; });
     if (nums.length < 8) return { main: [], backup: [] };
 
-    // 规则2：数据窗口 最近10-15期
+    // 规则2：数据窗口 最近15期
     var pool = nums.slice(0, 15);               // 数据池（15期）
-    var last10 = pool.slice(0, 10);             // 热度窗口（10期）
-    var last5 = pool.slice(0, 5);               // 闭环窗口（5期，追踪最近反复）
-    var prevNum = last10[0] || 0;               // 上期开奖号
+    var last12 = pool.slice(0, 12);             // 热度统计窗口（12期）
+    var last5 = pool.slice(0, 5);               // 闭环窗口（5期）
+    var prevNum = last12[0] || 0;               // 上期开奖号
 
-    // 规则3：热度定义 — 在最近10期中统计
+    // 热度定义 — 在最近12期中统计
+    // 热号≥3次 | 温号1-2次 | 冷号0次
     var heatMap = {};
     var warmPool = [], hotPool = [], coldPool = [];
     for (var i = 1; i <= 12; i++) {
-      var cnt = last10.filter(function(n) { return n === i; }).length;
-      heatMap[i] = { count: cnt, level: cnt >= 3 ? 'hot' : (cnt >= 1 ? 'warm' : 'cold') };
-      if (heatMap[i].level === 'hot') hotPool.push(i);
-      else if (heatMap[i].level === 'warm') warmPool.push(i);
-      else coldPool.push(i);
+      var cnt = last12.filter(function(n) { return n === i; }).length;
+      if (cnt >= 3) {
+        heatMap[i] = { count: cnt, level: 'hot' };
+        hotPool.push(i);
+      } else if (cnt >= 1) {
+        heatMap[i] = { count: cnt, level: 'warm' };
+        warmPool.push(i);
+      } else {
+        heatMap[i] = { count: cnt, level: 'cold' };
+        coldPool.push(i);
+      }
     }
 
-    // 规则4-1：优先温号闭环 — 近几期反复开出的温号组，循环顺延
-    // 最近5期内出现的温号权重更高（闭环效应）
+    // 上期刚开出的生肖直接降权（保持现状）
+    if (prevNum > 0 && heatMap[prevNum]) {
+      var prevLevel = heatMap[prevNum].level;
+      if (prevLevel === 'hot') {
+        hotPool = hotPool.filter(function(n) { return n !== prevNum; });
+      } else if (prevLevel === 'warm') {
+        warmPool = warmPool.filter(function(n) { return n !== prevNum; });
+      } else if (prevLevel === 'cold') {
+        coldPool = coldPool.filter(function(n) { return n !== prevNum; });
+      }
+      heatMap[prevNum].level = 'downgrade';
+    }
+
+    // 规则4-1：优先温号闭环 — 近几期反复开出的温号组（剔除降权号）
     var warmClosedLoop = [];
     var seenIn5 = {};
     last5.forEach(function(n) { seenIn5[n] = true; });
     warmPool.forEach(function(n) {
       var baseW = heatMap[n].count * 10;           // 基础：出现次数×10
       var loopBonus = seenIn5[n] ? 15 : 0;          // 闭环：近5期出现+15
-      var orderBonus = last5.indexOf(n) >= 0 ? (5 - last5.indexOf(n)) * 2 : 0; // 越近权重越高
+      var orderBonus = last5.indexOf(n) >= 0 ? (5 - last5.indexOf(n)) * 2 : 0;
       warmClosedLoop.push({ num: n, weight: baseW + loopBonus + orderBonus });
     });
     warmClosedLoop.sort(function(a, b) { return b.weight - a.weight; });
@@ -60,37 +79,34 @@ const BusinessPredictOld = {
     var targetZones = [];
     if (prevNum > 0) {
       var pz = this._getZone(prevNum);
-      if (pz === 1) targetZones = [1, 2];           // 一区→同区+二区
-      else if (pz === 2) targetZones = [2, 1, 3];   // 二区→同区+一区+三区
-      else targetZones = [3, 2];                     // 三区→同区+二区
+      if (pz === 1) targetZones = [1, 2];
+      else if (pz === 2) targetZones = [2, 1, 3];
+      else targetZones = [3, 2];
     }
 
     // 规则4-3：回踩惯性 — 上期号码 ±1、±2、同尾、同区温号 必带
-    var inertiaWarm = [];  // 惯性号中的温号（必带）
-    var inertiaOther = []; // 惯性号中的其他号
+    var inertiaWarm = [];
+    var inertiaOther = [];
     if (prevNum > 0) {
       var prevZone = this._getZone(prevNum);
-      // ±1（最近），±2（次近）
       [prevNum - 1, prevNum + 1, prevNum - 2, prevNum + 2].forEach(function(n) {
         if (n >= 1 && n <= 12) {
           if (heatMap[n].level === 'warm') inertiaWarm.push(n);
-          else if (heatMap[n].level !== 'hot') inertiaOther.push(n);
+          else if (heatMap[n].level !== 'hot' && inertiaOther.indexOf(n) === -1) inertiaOther.push(n);
         }
       });
-      // 同尾温号
       var prevTail = prevNum % 10;
       [prevTail, prevTail + 10].filter(function(n) { return n >= 1 && n <= 12 && n !== prevNum; }).forEach(function(n) {
         if (heatMap[n].level === 'warm' && inertiaWarm.indexOf(n) === -1) inertiaWarm.push(n);
         else if (heatMap[n].level !== 'hot' && inertiaOther.indexOf(n) === -1) inertiaOther.push(n);
       });
-      // 同区温号
       this.ZONES[prevZone].filter(function(n) { return n !== prevNum; }).forEach(function(n) {
         if (heatMap[n].level === 'warm' && inertiaWarm.indexOf(n) === -1) inertiaWarm.push(n);
         else if (heatMap[n].level !== 'hot' && inertiaOther.indexOf(n) === -1) inertiaOther.push(n);
       });
     }
 
-    // 规则4-4：冷号轻补 — 遗漏5-15期可带1个，>20期不选
+    // 规则4-4：冷号轻补 — 遗漏5-15期可带1个（含降权号中遗漏段的）
     var coldCandidates = [];
     coldPool.forEach(function(n) {
       var miss = 0;
@@ -101,23 +117,25 @@ const BusinessPredictOld = {
     // === 规则5：最终选号 ===
     var selected = [], used = {};
 
-    // Step1: 优先从温号闭环中选（目标区间内加权）
+    // Step1: 优先从温号闭环中选（全区间，排除降权号）
     warmClosedLoop.forEach(function(c) {
       if (selected.length >= 4) return;
-      var inTarget = targetZones.indexOf(this._getZone(c.num)) !== -1;
-      if (inTarget && heatMap[c.num].level === 'warm' && !used[c.num]) {
+      if (heatMap[c.num].level === 'warm' && !used[c.num]) {
         selected.push(c.num); used[c.num] = true;
       }
     }.bind(this));
 
-    // Step2: 回踩惯性温号 必带
+    // Step2: 回踩惯性温号 必带（从惯性中剔除已在Step1选过的）
     inertiaWarm.forEach(function(n) {
       if (selected.length >= 4) return;
-      if (!used[n]) { selected.push(n); used[n] = true; }
+      if (!used[n] && heatMap[n].level === 'warm') { selected.push(n); used[n] = true; }
     });
 
-    // Step3: 补齐温号（从闭环池剩余）
-    warmClosedLoop.forEach(function(c) {
+    // Step3: 补齐温号（从闭环池剩余，排除惯性温号避免重复）
+    var remainingLoop = warmClosedLoop.filter(function(c) {
+      return inertiaWarm.indexOf(c.num) === -1;
+    });
+    remainingLoop.forEach(function(c) {
       if (selected.length >= 4) return;
       if (!used[c.num] && heatMap[c.num].level === 'warm') { selected.push(c.num); used[c.num] = true; }
     });
@@ -130,21 +148,24 @@ const BusinessPredictOld = {
       }
     }
 
-    // Step5: 仍不足4码，从惯性其他号 + 闭环池补位（不逆势，不全热）
-    inertiaOther.forEach(function(n) {
-      if (selected.length >= 4) return;
-      if (!used[n]) { selected.push(n); used[n] = true; }
-    });
-    warmClosedLoop.forEach(function(c) {
+    // Step5: 仍不足4码，按优先级补足（剩余温→轻冷→热号兜底）
+    remainingLoop.forEach(function(c) {
       if (selected.length >= 4) return;
       if (!used[c.num]) { selected.push(c.num); used[c.num] = true; }
     });
+    coldCandidates.forEach(function(n) {
+      if (selected.length >= 4) return;
+      if (!used[n]) { selected.push(n); used[n] = true; }
+    });
+    hotPool.forEach(function(n) {
+      if (selected.length >= 4) return;
+      if (!used[n]) { selected.push(n); used[n] = true; }
+    });
 
-    // 备选2码：从剩余温号 + 惯性号中补位
+    // 备选2码：轻冷 + 惯性其他号 + 温号，维持结构平衡
     var backup = [];
-    inertiaWarm.forEach(function(n) { if (!used[n] && backup.length < 2) backup.push(n); });
+    coldCandidates.forEach(function(n) { if (!used[n] && backup.length < 2) backup.push(n); });
     inertiaOther.forEach(function(n) { if (!used[n] && backup.length < 2) backup.push(n); });
-    warmClosedLoop.forEach(function(c) { if (!used[c.num] && backup.length < 2) backup.push(c.num); });
     warmPool.forEach(function(n) { if (!used[n] && backup.length < 2) backup.push(n); });
 
     // 规则5-⑥：数字→生肖，输出 { main: [x,x,x,x], backup: [x,x] }

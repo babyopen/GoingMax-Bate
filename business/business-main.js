@@ -1260,28 +1260,47 @@ const Business = {
       return;
     }
 
-    var zodiacNums = historyData.map(function(item) {
-      var codes = (item.openCode || '').split(',');
-      return codes.length >= 7 ? parseInt(codes[6], 10) : 0;
+    var reverseZodMap = {};
+    Object.keys(BusinessPredictOld.NUM_ZODIAC_MAP).forEach(function(k) {
+      reverseZodMap[BusinessPredictOld.NUM_ZODIAC_MAP[k]] = Number(k);
     });
+    var zodiacNums = historyData.map(function(item) {
+      var zodArrRaw = (item.zodiac || '').split(',');
+      var zodArr = zodArrRaw.map(function(z) {
+        return CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z;
+      });
+      var zod = zodArr[6] || '';
+      return reverseZodMap[zod] || 0;
+    });
+
+    console.log('[DB算法] zodiacNums 前12个:', JSON.stringify(zodiacNums.slice(0, 12)));
+    console.log('[DB算法] 前3期 zodiac:', historyData.slice(0, 3).map(function(h) { return h.expect + ':' + (h.zodiac || '').split(',')[6]; }));
 
     var result = BusinessPredictOld.predictOldVersion(zodiacNums);
 
-    var last10 = zodiacNums.filter(function(n) { return n >= 1 && n <= 12; }).slice(0, 10);
+    var last12 = zodiacNums.filter(function(n) { return n >= 1 && n <= 12; }).slice(0, 12);
     var heatMap = {};
     BusinessPredictOld.ZODIAC_ORDER.forEach(function(z) {
       heatMap[z] = { count: 0, level: 'cold' };
     });
-    last10.forEach(function(n) {
+    last12.forEach(function(n) {
       var zName = BusinessPredictOld._toZodiac(n);
       if (zName && heatMap[zName]) {
         heatMap[zName].count++;
       }
     });
     BusinessPredictOld.ZODIAC_ORDER.forEach(function(z) {
-      heatMap[z].level = heatMap[z].count >= 3 ? 'hot' : (heatMap[z].count >= 1 ? 'warm' : 'cold');
+      var cnt = heatMap[z].count;
+      if (cnt >= 3) heatMap[z].level = 'hot';
+      else if (cnt >= 1) heatMap[z].level = 'warm';
+      else heatMap[z].level = 'cold';
     });
 
-    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last10[0] || '');
+    var prevZ = BusinessPredictOld._toZodiac(last12[0] || 0);
+    if (prevZ && heatMap[prevZ]) {
+      heatMap[prevZ].level = 'downgrade';
+    }
+
+    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last12[0] || '');
   }
 };

@@ -223,9 +223,10 @@ const ViewZodiacPrediction = {
           var currentZone = item.zone;
           var prevZone = prevZoneMap[item.zodiac] || currentZone;
           var missClass = zoneColors[prevZone] || '';
+          var badgeClass = zoneColors[prevZone] || '';
           newZoneMap[item.zodiac] = currentZone;
           html += '<div class="zone-zod-card">';
-          html += '<div class="zod-card-count-badge">' + item.count + '</div>';
+          html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + '</div>';
           html += '<div class="zod-card-name">' + item.zodiac + '</div>';
           html += '<div class="zod-card-stats">';
           html += '<span class="zod-card-miss ' + missClass + '">' + item.miss + '期</span>';
@@ -471,13 +472,17 @@ const ViewZodiacPrediction = {
     }
 
     if (heatGrid && heatMap) {
-      var tags = { hot: '热', warm: '温', cold: '冷' };
-      var zOrder = BusinessPredictOld.ZODIAC_ORDER;
+      var tags = { hot: '热', downgrade: '降权', warm: '温', cold: '冷' };
+      var zList = BusinessPredictOld.ZODIAC_ORDER.map(function(z) {
+        return { zodiac: z, info: heatMap[z] };
+      });
+      zList.sort(function(a, b) { return b.info.count - a.info.count; });
       var hHtml = '';
-      zOrder.forEach(function(z) {
-        var info = heatMap[z];
+      zList.forEach(function(item) {
+        var z = item.zodiac;
+        var info = item.info;
         if (!info) return;
-        var tagClass = info.level === 'hot' ? 'is-hot' : (info.level === 'warm' ? 'is-warm' : 'is-cold');
+        var tagClass = info.level === 'hot' ? 'is-hot' : (info.level === 'downgrade' ? 'is-downgrade' : (info.level === 'warm' ? 'is-warm' : 'is-cold'));
         hHtml += '<div class="db-heat-item">';
         hHtml += '<div class="db-heat-zodiac">' + z + '</div>';
         hHtml += '<div class="db-heat-count">' + info.count + '次</div>';
