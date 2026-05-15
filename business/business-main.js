@@ -1221,6 +1221,7 @@ const Business = {
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
     if (tab === 'db') Business.initDBAlgorithm();
+    if (tab === 'ultimate') Business.initUltimateAlgorithm();
   },
 
   initGiongTab: () => {
@@ -1276,15 +1277,15 @@ const Business = {
       return reverseZodMap[zod] || 0;
     });
 
-    console.log('[DB算法] zodiacNums 前12个:', JSON.stringify(zodiacNums.slice(0, 12)));
-    console.log('[DB算法] 前3期 zodiac:', historyData.slice(0, 3).map(function(h) { return h.expect + ':' + (h.zodiac || '').split(',')[6]; }));
+    console.log('[DB算法-链条顺延] zodiacNums 前12个:', JSON.stringify(zodiacNums.slice(0, 12)));
+    console.log('[DB算法-链条顺延] 最新一期:', zodiacNums[0], '→', BusinessPredictOld._toZodiac(zodiacNums[0]));
 
-    var result = BusinessPredictOld.predictOldVersion(zodiacNums);
+    var result = BusinessPredictOld.predictCycleVersion(zodiacNums);
 
     var last12 = zodiacNums.filter(function(n) { return n >= 1 && n <= 12; }).slice(0, 12);
     var heatMap = {};
     BusinessPredictOld.ZODIAC_ORDER.forEach(function(z) {
-      heatMap[z] = { count: 0, level: 'cold' };
+      heatMap[z] = { count: 0, level: 'cold', zone: 'cold' };
     });
     last12.forEach(function(n) {
       var zName = BusinessPredictOld._toZodiac(n);
@@ -1293,6 +1294,15 @@ const Business = {
       }
     });
     BusinessPredictOld.ZODIAC_ORDER.forEach(function(z) {
+      var num = Object.keys(BusinessPredictOld.NUM_ZODIAC_MAP).find(function(k) { return BusinessPredictOld.NUM_ZODIAC_MAP[k] === z; });
+      num = Number(num) || 0;
+      if (BusinessPredictOld._hotZone.indexOf(num) !== -1) {
+        heatMap[z].zone = 'hot';
+      } else if (BusinessPredictOld._midZone.indexOf(num) !== -1) {
+        heatMap[z].zone = 'mid';
+      } else {
+        heatMap[z].zone = 'cold';
+      }
       var cnt = heatMap[z].count;
       if (cnt >= 3) heatMap[z].level = 'hot';
       else if (cnt >= 1) heatMap[z].level = 'warm';
@@ -1304,6 +1314,56 @@ const Business = {
       heatMap[prevZ].level = 'downgrade';
     }
 
-    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last12[0] || '');
+    var missMap = BusinessPredictOld.getAllMiss(zodiacNums);
+    var missStatus = BusinessPredictOld.getMissStatus(missMap);
+    var hitRate = BusinessPredictOld.calcHitRate(zodiacNums);
+
+    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last12[0] || '', missStatus, hitRate);
+  },
+
+  initUltimateAlgorithm: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+    if (!historyData || !historyData.length) {
+      ViewZodiacPrediction.renderUltimateAlgorithm(null);
+      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      return;
+    }
+
+    var ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
+    if (!ultimateHistory || !ultimateHistory.length) {
+      ViewZodiacPrediction.renderUltimateAlgorithm(null);
+      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      return;
+    }
+
+    var report = BusinessUltimate.generateFullReport(ultimateHistory);
+    var nextExpect = Number(historyData[0].expect || 0) + 1;
+    var numbers = report.numbers ? (report.numbers.mainNumbers || report.numbers.transitionNumbers || []) : [];
+
+    if (numbers.length > 0) {
+      BusinessUltimate.saveRecommendHistory(nextExpect, numbers);
+    }
+
+    ViewZodiacPrediction.renderUltimateAlgorithm({
+      report: report,
+      nextExpect: nextExpect,
+      numbers: BusinessUltimate.formatNumbersToDisplay(numbers),
+      alternative: report.numbers ? BusinessUltimate.formatNumbersToDisplay(report.numbers.alternativeNumbers || []) : []
+    });
+
+    if (ultimateHistory.length >= 25) {
+      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      setTimeout(function() {
+        var btSummary = BusinessUltimate.runBacktest(ultimateHistory);
+        if (btSummary) ViewZodiacPrediction.renderUltimateBacktest(btSummary);
+      }, 100);
+    } else {
+      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+    }
   }
 };

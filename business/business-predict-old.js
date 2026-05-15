@@ -173,5 +173,144 @@ const BusinessPredictOld = {
       main: selected.map(function(n) { return this._toZodiac(n); }.bind(this)).filter(Boolean),
       backup: backup.map(function(n) { return this._toZodiac(n); }.bind(this)).filter(Boolean)
     };
+  },
+
+  // 固定区间定义（永久不变）
+  _hotZone: [1, 4, 5, 7, 9, 10],
+  _midZone: [3, 6, 11],
+  _coldZone: [2, 8, 12],
+
+  // 永恒轮转链条
+  _cycleLink: [1, 5, 7, 9, 4, 10],
+
+  // 轮转链条获取下一个号码
+  _getNextFromCycle: function(lastNum) {
+    var idx = this._cycleLink.indexOf(lastNum);
+    if (idx === -1) return this._cycleLink[0];
+    return this._cycleLink[(idx + 1) % this._cycleLink.length];
+  },
+
+  /**
+   * 旧版原版算法（纯链条顺延）
+   * 输入：历史开奖数字数组 [7,5,5,1,...] （索引0为最新一期）
+   * 输出：{ main, backup, mainNumbers, backupNumbers, last3, last3Zodiac }
+   */
+  predictCycleVersion: function(history) {
+    var nums = history.filter(function(n) { return n >= 1 && n <= 12; });
+    if (nums.length < 1) return { main: [], backup: [], mainNumbers: [], backupNumbers: [], last3: [], last3Zodiac: [] };
+
+    var last = nums[0];
+    var self = this;
+
+    var s1 = self._getNextFromCycle(last);
+    var s2 = self._getNextFromCycle(s1);
+    var s3 = self._getNextFromCycle(s2);
+    var s4 = self._getNextFromCycle(s3);
+
+    var mainNums = [s1, s2, s3, s4];
+    var backupNums = [3, 6];
+
+    var mainZodiac = mainNums.map(function(num) { return self._toZodiac(num); });
+    var backupZodiac = backupNums.map(function(num) { return self._toZodiac(num); });
+    var last3 = nums.slice(0, 3);
+    var last3Zodiac = last3.map(function(num) { return self._toZodiac(num); });
+
+    return {
+      main: mainZodiac,
+      backup: backupZodiac,
+      mainNumbers: mainNums,
+      backupNumbers: backupNums,
+      last3: last3,
+      last3Zodiac: last3Zodiac
+    };
+  },
+
+  /**
+   * 全号遗漏计算（1-12）
+   * 输入：历史数字数组（索引0为最新）
+   * 输出：{ 1:遗漏期数, 2:遗漏期数, ... }
+   */
+  getAllMiss: function(history) {
+    var miss = {};
+    for (var n = 1; n <= 12; n++) {
+      var missDay = 0;
+      for (var i = 0; i < history.length; i++) {
+        if (history[i] === n) break;
+        missDay++;
+      }
+      miss[n] = missDay;
+    }
+    return miss;
+  },
+
+  /**
+   * 近10期命中率统计
+   * 输入：历史数字数组（索引0为最新）
+   * 输出：{ total, hit, missCount, hitRate }
+   */
+  calcHitRate: function(history) {
+    var nums = history.filter(function(n) { return n >= 1 && n <= 12; });
+    if (nums.length < 2) return { total: 0, hit: 0, missCount: 0, hitRate: '0.0%' };
+
+    var len = nums.length;
+    var total = 0, hit = 0;
+    var self = this;
+
+    for (var i = 0; i < len - 1 && total < 10; i++) {
+      var openNum = nums[i];
+      var prevNum = nums[i + 1];
+      var idx = self._cycleLink.indexOf(prevNum);
+      if (idx === -1) continue;
+      var main = [
+        self._cycleLink[(idx + 1) % 6],
+        self._cycleLink[(idx + 2) % 6],
+        self._cycleLink[(idx + 3) % 6],
+        self._cycleLink[(idx + 4) % 6]
+      ];
+      total++;
+      if (main.indexOf(openNum) !== -1) hit++;
+    }
+
+    return {
+      total: total,
+      hit: hit,
+      missCount: total - hit,
+      hitRate: total > 0 ? (hit / total * 100).toFixed(1) + '%' : '0.0%'
+    };
+  },
+
+  /**
+   * 冷热判断 + 临界回补 + 爆发倒计时
+   * 输入：遗漏map { 1:miss, 2:miss, ... }
+   * 输出：{ 1:{miss,level,tip}, 2:{miss,level,tip}, ... }
+   */
+  getMissStatus: function(missMap) {
+    var status = {};
+    var self = this;
+    for (var n = 1; n <= 12; n++) {
+      var m = missMap[n] || 0;
+      var level = '';
+      var tip = '';
+      if (m <= 4) {
+        level = 'hot';
+        tip = '热号（常态循环）';
+      } else if (m <= 10) {
+        level = 'warm';
+        tip = '温号（平稳观望）';
+      } else if (m <= 20) {
+        level = 'cold';
+        tip = '冷号（逐步酝酿）';
+      } else {
+        level = 'deep';
+        tip = '极限深冷（爆发临界）';
+      }
+      status[n] = {
+        miss: m,
+        level: level,
+        tip: tip,
+        zodiac: self._toZodiac(n)
+      };
+    }
+    return status;
   }
 };

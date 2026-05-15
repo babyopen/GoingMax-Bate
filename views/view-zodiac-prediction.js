@@ -8,22 +8,25 @@ const ViewZodiacPrediction = {
       return;
     }
 
-    var cardsHtml = '';
-    predictionData.cards.forEach(function(card) {
-      var roleClass = card.roleTag === '精选' ? 'tag-selected' : (card.roleTag === '防守' && card.cardClass === 'is-featured' ? 'tag-featured' : 'tag-secondary-label');
-      var heatClass = card.heatTag === '热号' ? 'tag-hot' : (card.heatTag === '温号' ? 'tag-warm' : 'tag-cold');
+    var html = '';
+    predictionData.cards.forEach(function(card, idx) {
+      var rankNum = idx + 1;
+      var cardClass = '';
+      if (rankNum === 1) cardClass = 'card-rank-1';
+      else if (rankNum === 2) cardClass = 'card-rank-2';
+      else if (rankNum === 3) cardClass = 'card-rank-3';
+      else cardClass = 'card-rank-other';
 
-      cardsHtml += '<div class="zodiac-prediction-card ' + card.cardClass + '">';
-      cardsHtml += '<div class="zodiac-card-zodiac">' + card.zodiac + '</div>';
-      cardsHtml += '<div class="zodiac-card-score">' + card.score + '分</div>';
-      cardsHtml += '<div class="zodiac-card-tags">';
-      cardsHtml += '<span class="zodiac-card-tag ' + roleClass + '">' + card.roleTag + '</span>';
-      cardsHtml += '<span class="zodiac-card-tag ' + heatClass + '">' + card.heatTag + '</span>';
-      cardsHtml += '</div>';
-      cardsHtml += '</div>';
+      var emoji = ZodiacPrediction.getZodiacEmoji(card.zodiac);
+
+      html += '<div class="zodiac-static-card ' + cardClass + '">';
+      html += '<div class="zodiac-static-rank">' + rankNum + '</div>';
+      html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
+      html += '<div class="zodiac-static-name">' + card.zodiac + '</div>';
+      html += '</div>';
     });
 
-    grid.innerHTML = cardsHtml;
+    grid.innerHTML = html;
   },
 
   renderEmpty: function() {
@@ -153,7 +156,7 @@ const ViewZodiacPrediction = {
     });
     document.querySelectorAll('.zodiac-tab-panel').forEach(function(panel) {
       var panelId = panel.id;
-      var panelMap = { predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', db: 'zodiacDBPanel' };
+      var panelMap = { predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', db: 'zodiacDBPanel', ultimate: 'zodiacUltimatePanel' };
       panel.classList.toggle('active', panelId === panelMap[tab]);
     });
   },
@@ -343,31 +346,35 @@ const ViewZodiacPrediction = {
     container.innerHTML = html;
   },
 
-  renderZoneRecommend: function(recommend, nextExpect) {
+  renderZoneRecommend: function(zodiacList, nextExpect) {
     var container = document.getElementById('giongRecommendPanel');
     if (!container) return;
 
-    if (!recommend || !recommend.length) {
+    if (!zodiacList || !zodiacList.length) {
       container.innerHTML = '';
       return;
     }
-
-    var top6 = recommend.slice(0, 6);
-    var rankClasses = ['rank-gold', 'rank-silver', 'rank-silver', 'rank-bronze', 'rank-bronze', 'rank-bronze'];
-    var rankIcons = ['🥇', '🥈', '🥉', '4', '5', '6'];
 
     var title = '区域综合推荐';
     if (nextExpect) title = '第' + nextExpect + '期推荐';
 
     var html = '<div class="analysis-section-title">' + title + '</div>';
-    html += '<div class="recommend-card-grid">';
-    top6.forEach(function(entry, idx) {
-      var rankClass = rankClasses[idx] || 'rank-default';
-      var icon = rankIcons[idx] || (idx + 1);
-      html += '<div class="recommend-card ' + rankClass + '">';
-      html += '<div class="recommend-rank-badge">' + icon + '</div>';
-      html += '<div class="recommend-zodiac-name">' + entry[0] + '</div>';
-      html += '<div class="recommend-score-tag">' + entry[1] + '分</div>';
+    html += '<div class="zodiac-static-grid">';
+    zodiacList.forEach(function(item, idx) {
+      var zodiac = Array.isArray(item) ? item[0] : item;
+      var rankNum = idx + 1;
+      var cardClass = '';
+      if (rankNum === 1) cardClass = 'card-rank-1';
+      else if (rankNum === 2) cardClass = 'card-rank-2';
+      else if (rankNum === 3) cardClass = 'card-rank-3';
+      else cardClass = 'card-rank-other';
+
+      var emoji = ZodiacPrediction.getZodiacEmoji(zodiac);
+
+      html += '<div class="zodiac-static-card ' + cardClass + '">';
+      html += '<div class="zodiac-static-rank">' + rankNum + '</div>';
+      html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
+      html += '<div class="zodiac-static-name">' + zodiac + '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -432,48 +439,67 @@ const ViewZodiacPrediction = {
     container.innerHTML = '<div class="empty-tip">计算中…</div>';
   },
 
-  renderDBAlgorithm: function(result, heatMap, prevNum) {
+  renderDBAlgorithm: function(result, heatMap, prevNum, missStatus, hitRate) {
     var mainGrid = document.getElementById('dbMainGrid');
     var backupGrid = document.getElementById('dbBackupGrid');
     var heatGrid = document.getElementById('dbHeatGrid');
+    var missGrid = document.getElementById('dbMissGrid');
+    var hitRateEl = document.getElementById('dbHitRate');
 
     if (!result) {
       if (mainGrid) mainGrid.innerHTML = '<div class="empty-tip">暂无历史数据，请先刷新数据</div>';
       if (backupGrid) backupGrid.innerHTML = '';
       if (heatGrid) heatGrid.innerHTML = '';
+      if (missGrid) missGrid.innerHTML = '';
+      if (hitRateEl) hitRateEl.innerHTML = '';
       return;
     }
 
     if (mainGrid) {
       if (!result.main || !result.main.length) {
         mainGrid.innerHTML = '<div class="empty-tip">数据不足</div>';
+        mainGrid.style.gridTemplateColumns = '';
       } else {
         var mHtml = '';
-        result.main.forEach(function(z) {
-          mHtml += '<div class="db-number-item">';
-          mHtml += '<div class="db-number-circle">' + z + '</div>';
+        result.main.forEach(function(z, idx) {
+          var rank = idx + 1;
+          var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
+          var emoji = ZodiacPrediction.getZodiacEmoji(z);
+          mHtml += '<div class="db-card-item ' + rankClass + '">';
+          mHtml += '<div class="db-rank-badge">' + rank + '</div>';
+          mHtml += '<div class="db-card-emoji">' + emoji + '</div>';
+          mHtml += '<div class="db-card-name">' + z + '</div>';
           mHtml += '</div>';
         });
         mainGrid.innerHTML = mHtml;
+        mainGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
       }
     }
 
     if (backupGrid) {
       if (!result.backup || !result.backup.length) {
         backupGrid.innerHTML = '';
+        backupGrid.style.gridTemplateColumns = '';
       } else {
         var bHtml = '';
-        result.backup.forEach(function(z) {
-          bHtml += '<div class="db-number-item">';
-          bHtml += '<div class="db-number-circle">' + z + '</div>';
+        result.backup.forEach(function(z, idx) {
+          var rank = idx + 1;
+          var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : 'card-rank-other');
+          var emoji = ZodiacPrediction.getZodiacEmoji(z);
+          bHtml += '<div class="db-card-item ' + rankClass + '">';
+          bHtml += '<div class="db-rank-badge">' + rank + '</div>';
+          bHtml += '<div class="db-card-emoji">' + emoji + '</div>';
+          bHtml += '<div class="db-card-name">' + z + '</div>';
           bHtml += '</div>';
         });
         backupGrid.innerHTML = bHtml;
+        backupGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
       }
     }
 
     if (heatGrid && heatMap) {
       var tags = { hot: '热', downgrade: '降权', warm: '温', cold: '冷' };
+      var zoneTags = { hot: '温号组', mid: '中等', cold: '冷号' };
       var zList = BusinessPredictOld.ZODIAC_ORDER.map(function(z) {
         return { zodiac: z, info: heatMap[z] };
       });
@@ -484,13 +510,44 @@ const ViewZodiacPrediction = {
         var info = item.info;
         if (!info) return;
         var tagClass = info.level === 'hot' ? 'is-hot' : (info.level === 'downgrade' ? 'is-downgrade' : (info.level === 'warm' ? 'is-warm' : 'is-cold'));
+        var zoneClass = info.zone === 'hot' ? 'is-hot' : (info.zone === 'mid' ? 'is-warm' : 'is-cold');
         hHtml += '<div class="db-heat-item">';
         hHtml += '<div class="db-heat-zodiac">' + z + '</div>';
         hHtml += '<div class="db-heat-count">' + info.count + '次</div>';
         hHtml += '<span class="db-heat-tag ' + tagClass + '">' + tags[info.level] + '</span>';
+        hHtml += '<span class="db-heat-tag db-heat-zone ' + zoneClass + '">' + zoneTags[info.zone] + '</span>';
         hHtml += '</div>';
       });
       heatGrid.innerHTML = hHtml;
+    }
+
+    if (hitRateEl && hitRate) {
+      var rateClass = parseFloat(hitRate.hitRate) >= 40 ? 'hitrate-high' : (parseFloat(hitRate.hitRate) >= 20 ? 'hitrate-mid' : 'hitrate-low');
+      hitRateEl.innerHTML = '<span class="db-hitrate-label">近' + hitRate.total + '期命中率</span><span class="db-hitrate-value ' + rateClass + '">' + hitRate.hit + '/' + hitRate.total + ' (' + hitRate.hitRate + ')</span>';
+    }
+
+    if (missGrid && missStatus) {
+      var missLevelTags = { hot: '🔥热号', warm: '☀️温号', cold: '❄️冷号', deep: '🥶深冷' };
+      var missLevelClass = { hot: 'miss-hot', warm: 'miss-warm', cold: 'miss-cold', deep: 'miss-deep' };
+      var missList = [];
+      for (var n = 1; n <= 12; n++) {
+        missList.push(missStatus[n]);
+      }
+      missList.sort(function(a, b) { return b.miss - a.miss; });
+      var mHtml = '<div class="db-miss-section-label">01–12 遗漏统计 / 冷热状态</div>';
+      mHtml += '<div class="db-miss-grid">';
+      missList.forEach(function(item) {
+        if (!item) return;
+        var cls = missLevelClass[item.level] || 'miss-warm';
+        mHtml += '<div class="db-miss-item">';
+        mHtml += '<div class="db-miss-zodiac">' + item.zodiac + '</div>';
+        mHtml += '<div class="db-miss-count">遗漏<span class="db-miss-num">' + item.miss + '</span>期</div>';
+        mHtml += '<span class="db-miss-tag ' + cls + '">' + (missLevelTags[item.level] || '') + '</span>';
+        mHtml += '<div class="db-miss-tip">' + item.tip + '</div>';
+        mHtml += '</div>';
+      });
+      mHtml += '</div>';
+      missGrid.innerHTML = mHtml;
     }
   },
 
@@ -504,5 +561,214 @@ const ViewZodiacPrediction = {
     if (arrow) {
       arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
     }
+  },
+
+  renderUltimateAlgorithm: function(data) {
+    var resultContainer = document.getElementById('ultimateResultContainer');
+    var recommendPanel = document.getElementById('ultimateRecommendPanel');
+
+    if (!data) {
+      if (resultContainer) resultContainer.innerHTML = '<div class="empty-tip">暂无历史数据，请先刷新数据</div>';
+      if (recommendPanel) recommendPanel.innerHTML = '';
+      return;
+    }
+
+    if (data.insufficient) {
+      if (resultContainer) resultContainer.innerHTML = '<div class="empty-tip">数据不足，无法生成推荐</div>';
+      if (recommendPanel) recommendPanel.innerHTML = '';
+      return;
+    }
+
+    var report = data.report;
+    if (!report) {
+      if (resultContainer) resultContainer.innerHTML = '<div class="empty-tip">算法计算异常</div>';
+      if (recommendPanel) recommendPanel.innerHTML = '';
+      return;
+    }
+
+    if (report.currentStage === '数据不足无法判断') {
+      var adviceText = report.cycleStatus && report.cycleStatus.advice ? report.cycleStatus.advice : '历史数据不足，无法准确判断周期';
+      if (resultContainer) resultContainer.innerHTML = '<div class="empty-tip">' + adviceText + '</div>';
+      if (recommendPanel) recommendPanel.innerHTML = '';
+      return;
+    }
+
+    var stageNames = {
+      'V1稳定运行期': 'V1冷号周期',
+      'V2稳定运行期': 'V2热号周期',
+      '过渡混沌期': '过渡混沌期',
+      '数据不足无法判断': '数据不足'
+    };
+
+    var riskNames = {
+      '低风险': '✅ 低风险',
+      '中风险': '⚠️ 中风险',
+      '极高风险': '🚨 极高风险',
+      '未知风险': '❓ 未知风险'
+    };
+
+    var html = '';
+    html += '<div class="db-result-container">';
+
+    if (report.currentStage === '过渡混沌期') {
+      html += '<div class="db-main-section">';
+      html += '<div class="db-section-label">过渡期 2 码</div>';
+      html += '<div class="db-number-grid" id="ultimateMainGrid">';
+      if (data.numbers) {
+        data.numbers.forEach(function(item, idx) {
+          var rank = idx + 1;
+          var rankClass = rank === 1 ? 'card-rank-1' : 'card-rank-2';
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          html += '<div class="db-card-item ' + rankClass + '">';
+          html += '<div class="db-rank-badge">' + rank + '</div>';
+          html += '<div class="db-card-emoji">' + emoji + '</div>';
+          html += '<div class="db-card-name">' + item.zodiac + '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div></div>';
+    } else {
+      html += '<div class="db-main-section">';
+      html += '<div class="db-section-label">主推 4 码</div>';
+      html += '<div class="db-number-grid" id="ultimateMainGrid">';
+      if (data.numbers) {
+        data.numbers.forEach(function(item, idx) {
+          var rank = idx + 1;
+          var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          html += '<div class="db-card-item ' + rankClass + '">';
+          html += '<div class="db-rank-badge">' + rank + '</div>';
+          html += '<div class="db-card-emoji">' + emoji + '</div>';
+          html += '<div class="db-card-name">' + item.zodiac + '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div></div>';
+
+      if (data.alternative && data.alternative.length) {
+        html += '<div class="db-divider"></div>';
+        html += '<div class="db-backup-section">';
+        html += '<div class="db-section-label">备选号码</div>';
+        html += '<div class="db-number-grid" id="ultimateBackupGrid">';
+        data.alternative.forEach(function(item, idx) {
+          var rank = idx + 1;
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          html += '<div class="db-card-item">';
+          html += '<div class="db-rank-badge">' + rank + '</div>';
+          html += '<div class="db-card-emoji">' + emoji + '</div>';
+          html += '<div class="db-card-name">' + item.zodiac + '</div>';
+          html += '</div>';
+        });
+        html += '</div></div></div>';
+      }
+    }
+
+    html += '</div>';
+
+    html += '<div class="db-miss-container">';
+    html += '<div class="db-miss-section-label">周期状态</div>';
+    html += '<div class="db-miss-grid">';
+
+    var stageInfo = report.cycleStatus;
+    html += '<div class="db-miss-item" style="grid-column: span 2;">';
+    html += '<div class="db-miss-zodiac">' + (stageNames[report.currentStage] || report.currentStage) + '</div>';
+    html += '<div class="db-miss-count"><span>风险等级</span></div>';
+    html += '<span class="db-miss-tag ' + (report.riskLevel === '低风险' ? 'miss-hot' : (report.riskLevel === '极高风险' ? 'miss-deep' : 'miss-warm')) + '">' + (riskNames[report.riskLevel] || report.riskLevel) + '</span>';
+    html += '</div>';
+
+    if (stageInfo && stageInfo.v1MainCount !== undefined) {
+      html += '<div class="db-miss-item">';
+      html += '<div class="db-miss-zodiac">V1出号</div>';
+      html += '<div class="db-miss-count">' + stageInfo.v1MainCount + '次</div>';
+      html += '</div>';
+      html += '<div class="db-miss-item">';
+      html += '<div class="db-miss-zodiac">V2出号</div>';
+      html += '<div class="db-miss-count">' + stageInfo.v2MainCount + '次</div>';
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+
+    if (resultContainer) resultContainer.innerHTML = html;
+
+    if (recommendPanel) {
+      var recHtml = '';
+      if (data.numbers) {
+        recHtml += '<div class="zodiac-static-grid">';
+        data.numbers.forEach(function(item, idx) {
+          var rankNum = idx + 1;
+          var cardClass = rankNum === 1 ? 'card-rank-1' : (rankNum === 2 ? 'card-rank-2' : (rankNum === 3 ? 'card-rank-3' : 'card-rank-other'));
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          recHtml += '<div class="zodiac-static-card ' + cardClass + '">';
+          recHtml += '<div class="zodiac-static-rank">' + rankNum + '</div>';
+          recHtml += '<div class="zodiac-static-emoji">' + emoji + '</div>';
+          recHtml += '<div class="zodiac-static-name">' + item.zodiac + '</div>';
+          recHtml += '</div>';
+        });
+        recHtml += '</div>';
+      }
+      if (data.nextExpect) {
+        recHtml = '<div class="analysis-section-title">第' + data.nextExpect + '期综合推荐</div>' + recHtml;
+      }
+      recommendPanel.innerHTML = recHtml;
+    }
+  },
+
+  renderUltimateBacktest: function(summary) {
+    var container = document.getElementById('ultimateBacktestContainer');
+    if (!container) return;
+
+    if (!summary || !summary.total) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var hitClass = summary.hitRate >= 70 ? 'backtest-rate-high' : (summary.hitRate >= 40 ? 'backtest-rate-mid' : 'backtest-rate-low');
+
+    var html = '<div class="backtest-summary">';
+    html += '<div class="backtest-summary-title">终极算法回测追踪</div>';
+    html += '<div class="backtest-summary-row">';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">回测期数</span>';
+    html += '<span class="backtest-stat-value">' + summary.total + '期</span>';
+    html += '</div>';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">命中次数</span>';
+    html += '<span class="backtest-stat-value">' + summary.hits + '次</span>';
+    html += '</div>';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">命中率</span>';
+    html += '<span class="backtest-stat-value ' + hitClass + '">' + summary.hitRate + '%</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="backtest-breakdown">';
+    html += '<span class="backtest-breakdown-item">🥇No.1：' + summary.top1Hits + '次</span>';
+    html += '<span class="backtest-breakdown-item">🥈No.2：' + summary.top2Hits + '次</span>';
+    html += '<span class="backtest-breakdown-item">🥉No.3：' + summary.top3Hits + '次</span>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="backtest-records">';
+    var recentRecords = summary.records.slice(0, 10);
+    recentRecords.forEach(function(r) {
+      var hitIcon = r.hit ? '✅' : '❌';
+      var hitText = r.hit ? '第' + r.hitRank + '名命中' : '未命中';
+      var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
+      var topNText = r.topN.join(' ');
+      html += '<div class="backtest-record-row ' + hitRowClass + '">';
+      html += '<div class="backtest-record-period">' + r.expect + '期</div>';
+      html += '<div class="backtest-record-predict">预测：' + topNText + '</div>';
+      html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  renderUltimateBacktestEmpty: function() {
+    var container = document.getElementById('ultimateBacktestContainer');
+    if (!container) return;
+    container.innerHTML = '<div class="empty-tip">回测计算中…</div>';
   }
 };

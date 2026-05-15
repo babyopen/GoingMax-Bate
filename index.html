@@ -581,17 +581,14 @@
       <button class="zodiac-tab-btn active" data-zodiac-tab="predict">生肖预测</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="db">DB算法</button>
+      <button class="zodiac-tab-btn" data-zodiac-tab="ultimate">终极算法</button>
     </div>
 
     <!-- 生肖预测面板 -->
     <div class="zodiac-tab-panel active" id="zodiacPredictPanel">
       <div class="card">
-        <div class="card-header">
-          <h2>生肖预测</h2>
-        </div>
         <div class="card-body">
-          <div id="zodiacPredictionGrid" class="zodiac-prediction-grid">
-            <div class="empty-tip">暂无开奖数据，请先在广播页刷新数据</div>
+          <div id="zodiacPredictionGrid" class="zodiac-static-grid">
           </div>
         </div>
       </div>
@@ -621,6 +618,13 @@
     <!-- Giong 面板：频率评级系统 -->
     <div class="zodiac-tab-panel" id="zodiacGiongPanel">
       <div class="card">
+        <div class="card-body">
+          <div id="giongRecommendPanel">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-header">
           <h2>频率评级表</h2>
         </div>
@@ -638,16 +642,6 @@
         <div class="card-body">
           <div id="giongAnalysisPanel">
             <div class="empty-tip">加载中…</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2>区域综合推荐</h2>
-        </div>
-        <div class="card-body">
-          <div id="giongRecommendPanel">
           </div>
         </div>
       </div>
@@ -675,7 +669,7 @@
         </div>
         <div class="card-body">
           <div class="db-intro">
-            <p>短线顺势 · 温号闭环 · 区间轮转 · 回踩惯性</p>
+            <p>固定轮转链 · 纯顺延驱动 · 链条为主热度为辅 · 和你手动推号一致</p>
           </div>
 
           <div class="db-result-container" id="dbResultContainer">
@@ -696,7 +690,9 @@
           </div>
 
           <div class="db-heat-panel" id="dbHeatPanel" style="display:none;">
+            <div class="db-hit-rate" id="dbHitRate"></div>
             <div class="db-heat-grid" id="dbHeatGrid"></div>
+            <div class="db-miss-container" id="dbMissGrid"></div>
           </div>
         </div>
       </div>
@@ -709,24 +705,60 @@
           <div class="db-rules">
             <div class="db-rule-item">
               <div class="db-rule-num">①</div>
-              <div class="db-rule-text">优先温号闭环：近几期反复开出的温号组，循环顺延</div>
+              <div class="db-rule-text">固定轮转链：马→虎→鼠→狗→兔→鸡（01→05→07→09→04→10）</div>
             </div>
             <div class="db-rule-item">
               <div class="db-rule-num">②</div>
-              <div class="db-rule-text">区间轮转：上期开哪区，下期优先相邻区/回踩同区温号</div>
+              <div class="db-rule-text">取最新一期开奖号，在链条中顺延1位、2位、3位、4位</div>
             </div>
             <div class="db-rule-item">
               <div class="db-rule-num">③</div>
-              <div class="db-rule-text">回踩惯性：±1、±2、同尾、同区温号必带</div>
+              <div class="db-rule-text">主推4码 = 链条顺延前4个（和你手动推号完全一致）</div>
             </div>
             <div class="db-rule-item">
               <div class="db-rule-num">④</div>
-              <div class="db-rule-text">冷号轻补：遗漏5-15期冷号可带1个，>20期不选</div>
+              <div class="db-rule-text">备选2码 = 固定观望区 龙(03)、牛(06)</div>
             </div>
             <div class="db-rule-item">
               <div class="db-rule-num">⑤</div>
-              <div class="db-rule-text">不逆势、不跳变：全程跟走势节奏</div>
+              <div class="db-rule-text">纯链条驱动，不追热度、不猜冷号、不逆势跳变</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 终极算法面板 -->
+    <div class="zodiac-tab-panel" id="zodiacUltimatePanel">
+      <div class="card">
+        <div class="card-header">
+          <h2>终极算法预测</h2>
+        </div>
+        <div class="card-body">
+          <div id="ultimateResultContainer">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>综合推荐</h2>
+        </div>
+        <div class="card-body">
+          <div id="ultimateRecommendPanel">
+            <div class="empty-tip">加载中…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>回测追踪</h2>
+        </div>
+        <div class="card-body">
+          <div id="ultimateBacktestContainer">
+            <div class="empty-tip">加载中…</div>
           </div>
         </div>
       </div>
@@ -819,6 +851,7 @@
 <script src="business/business-main.js"></script>
 <script src="business/business-zodiac-prediction.js"></script>
 <script src="business/business-predict-old.js"></script>
+<script src="business/business-ultimate.js"></script>
 
 <!-- 视图层：禁止业务计算 -->
 <script src="views/view-filter.js"></script>
