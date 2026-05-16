@@ -197,16 +197,34 @@ const ViewZodiacPrediction = {
       }
 
       var storageKey = 'ZONE_PREV_ZONE_' + period.key;
+      var appearPosKey = 'ZONE_APPEAR_POS_' + period.key;
+      var lastCountKey = 'ZONE_LAST_COUNT_' + period.key;
+      
       var prevZoneMap = {};
-      var cached = Storage.get(storageKey);
-      if (cached) prevZoneMap = cached;
+      var cachedPrev = Storage.get(storageKey);
+      if (cachedPrev) prevZoneMap = cachedPrev;
+
+      var lastAppearPosMap = {};
+      var cachedAppear = Storage.get(appearPosKey);
+      if (cachedAppear) lastAppearPosMap = cachedAppear;
+
+      var lastCountMap = {};
+      var cachedCount = Storage.get(lastCountKey);
+      if (cachedCount) lastCountMap = cachedCount;
+
+      console.log('[Badge颜色] ' + period.label + ' ================================');
+      console.log('[Badge颜色] 上次开出位置:', JSON.stringify(lastAppearPosMap));
+      console.log('[Badge颜色] 上次count:', JSON.stringify(lastCountMap));
 
       var newZoneMap = {};
+      var newAppearPosMap = {};
+      var newCountMap = {};
 
       var grouped = {};
       zoneOrder.forEach(function(z) { grouped[z] = []; });
       data.forEach(function(item) {
         grouped[item.zone].push(item);
+        newCountMap[item.zodiac] = item.count;
       });
 
       html += '<div class="freq-card">';
@@ -225,10 +243,41 @@ const ViewZodiacPrediction = {
         items.forEach(function(item) {
           var currentZone = item.zone;
           var prevZone = prevZoneMap[item.zodiac] || currentZone;
+          var lastCount = lastCountMap[item.zodiac];
+          var currCount = item.count;
+          var lastAppearPos = lastAppearPosMap[item.zodiac];
+          
+          var hasNewDraw = false;
+          if (lastCount !== undefined && currCount > lastCount) {
+            hasNewDraw = true;
+            newAppearPosMap[item.zodiac] = prevZone;
+          } else if (lastCount === undefined && currCount > 0) {
+            newAppearPosMap[item.zodiac] = currentZone;
+          } else if (!lastAppearPos) {
+            newAppearPosMap[item.zodiac] = currentZone;
+          }
+          
+          var appearPosForBadge = lastAppearPosMap[item.zodiac];
+          if (!appearPosForBadge && newAppearPosMap[item.zodiac]) {
+            appearPosForBadge = newAppearPosMap[item.zodiac];
+          }
+          if (!appearPosForBadge) {
+            appearPosForBadge = currentZone;
+          }
+          
           var missClass = zoneColors[prevZone] || '';
-          var badgeClass = zoneColors[prevZone] || '';
+          var badgeClass = zoneColors[appearPosForBadge] || '';
           newZoneMap[item.zodiac] = currentZone;
-          var dropArrow = (period.key === 'p12' && item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
+          
+          if (item.zodiac === '羊' || item.zodiac === '马' || item.zodiac === '牛' || item.zodiac === '龙') {
+            console.log('[Badge颜色] ' + item.zodiac + ':');
+            console.log('   当前区=' + currentZone + ', 上次渲染区=' + prevZone);
+            console.log('   lastCount=' + lastCount + ', currCount=' + currCount + ', hasNewDraw=' + hasNewDraw);
+            console.log('   上次开出区(lastAppearPos)=' + lastAppearPos + ' → 新值=' + newAppearPosMap[item.zodiac]);
+            console.log('   最终badge颜色=' + badgeClass + '(' + appearPosForBadge + ')');
+          }
+          
+          var dropArrow = (item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
           html += '<div class="zone-zod-card">';
           html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + dropArrow + '</div>';
           html += '<div class="zod-card-name">' + item.zodiac + '</div>';
@@ -253,6 +302,12 @@ const ViewZodiacPrediction = {
         }
       }
       if (changed) Storage.set(storageKey, newZoneMap);
+      
+      Storage.set(appearPosKey, newAppearPosMap);
+      Storage.set(lastCountKey, newCountMap);
+
+      console.log('[Badge颜色] ' + period.label + ' 本次保存的lastAppearPosMap:', JSON.stringify(newAppearPosMap));
+      console.log('[Badge颜色] ' + period.label + ' 本次保存的newCountMap:', JSON.stringify(newCountMap));
     });
 
     grid.innerHTML = html;

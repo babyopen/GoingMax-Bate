@@ -640,12 +640,17 @@ const ZodiacPrediction = {
       }
       var windowData = historyData.slice(0, w);
       var freq = {};
-      ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { freq[z] = 0; });
+      var posMap = {};
+      ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { 
+        freq[z] = 0; 
+        posMap[z] = [];
+      });
 
-      windowData.forEach(function(item) {
+      windowData.forEach(function(item, idx) {
         var s = ZodiacPrediction._getSpecial(item);
         if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
           freq[s.zod]++;
+          posMap[s.zod].push(idx);
         }
       });
 
@@ -655,12 +660,22 @@ const ZodiacPrediction = {
         var level = count >= 4 ? 4 : count;
         var zone = ZodiacPrediction.ZONE_MAP[level];
         var miss = Utils.calcMiss(missLastIdx[z], missScope, missLatest, missList);
+        
+        var positions = posMap[z];
+        var earliestPos = positions.length > 0 ? Math.max.apply(null, positions) : -1;
+        var willDrop = false;
+        if (count > 0 && earliestPos >= w - 1) {
+          willDrop = true;
+        }
+        
         rated.push({
           zodiac: z,
           count: count,
           zone: zone,
           zoneLevel: level,
-          miss: miss
+          miss: miss,
+          earliestPos: earliestPos,
+          willDrop: willDrop
         });
       });
 

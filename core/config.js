@@ -1,5 +1,5 @@
 const CONFIG = Object.freeze({
-  VERSION: '1.0',
+  VERSION: 'Beta2',
   DATA_VERSION: 1, // 数据版本号，用于后续数据迁移
   // API配置
   API: Object.freeze({
