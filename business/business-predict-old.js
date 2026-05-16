@@ -183,11 +183,34 @@ const BusinessPredictOld = {
   // 永恒轮转链条
   _cycleLink: [1, 5, 7, 9, 4, 10],
 
-  // 轮转链条获取下一个号码
-  _getNextFromCycle: function(lastNum) {
+  // 轮转链条获取下一个号码（增强版：处理不在链条中的情况）
+  _getNextFromCycle: function(lastNum, historyForLookup) {
     var idx = this._cycleLink.indexOf(lastNum);
-    if (idx === -1) return this._cycleLink[0];
-    return this._cycleLink[(idx + 1) % this._cycleLink.length];
+
+    if (idx !== -1) {
+      return this._cycleLink[(idx + 1) % this._cycleLink.length];
+    }
+
+    if (!historyForLookup || !historyForLookup.length) {
+      console.log('[DB算法-链条] 号码', lastNum, '(', this._toZodiac(lastNum), ')不在轮转链中，且无历史数据，默认使用链条起始:', this._cycleLink[0], '(', this._toZodiac(this._cycleLink[0]), ')');
+      return this._cycleLink[0];
+    }
+
+    for (var i = 1; i < Math.min(historyForLookup.length, 20); i++) {
+      var prevNum = historyForLookup[i];
+      if (this._cycleLink.indexOf(prevNum) !== -1) {
+        var foundIdx = this._cycleLink.indexOf(prevNum);
+        var nextIdx = (foundIdx + 1) % this._cycleLink.length;
+        var result = this._cycleLink[nextIdx];
+        console.log('[DB算法-链条] 号码', lastNum, '(', this._toZodiac(lastNum), ')不在轮转链中');
+        console.log('  → 向前查找', i, '期找到', prevNum, '(', this._toZodiac(prevNum), ')在链条位置', foundIdx);
+        console.log('  → 顺延预测:', result, '(', this._toZodiac(result), ')');
+        return result;
+      }
+    }
+
+    console.log('[DB算法-链条] 号码', lastNum, '(', this._toZodiac(lastNum), ')不在轮转链中，前20期也未找到链条号码，使用默认:', this._cycleLink[0]);
+    return this._cycleLink[0];
   },
 
   /**
@@ -202,10 +225,10 @@ const BusinessPredictOld = {
     var last = nums[0];
     var self = this;
 
-    var s1 = self._getNextFromCycle(last);
-    var s2 = self._getNextFromCycle(s1);
-    var s3 = self._getNextFromCycle(s2);
-    var s4 = self._getNextFromCycle(s3);
+    var s1 = self._getNextFromCycle(last, nums);
+    var s2 = self._getNextFromCycle(s1, nums);
+    var s3 = self._getNextFromCycle(s2, nums);
+    var s4 = self._getNextFromCycle(s3, nums);
 
     var mainNums = [s1, s2, s3, s4];
     var backupNums = [3, 6];

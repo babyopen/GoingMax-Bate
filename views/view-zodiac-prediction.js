@@ -494,12 +494,15 @@ const ViewZodiacPrediction = {
     container.innerHTML = '<div class="empty-tip">计算中…</div>';
   },
 
-  renderDBAlgorithm: function(result, heatMap, prevNum, missStatus, hitRate) {
+  renderDBAlgorithm: function(result, heatMap, prevNum, missStatus, hitRate, backtestStats) {
     var mainGrid = document.getElementById('dbMainGrid');
     var backupGrid = document.getElementById('dbBackupGrid');
     var heatGrid = document.getElementById('dbHeatGrid');
     var missGrid = document.getElementById('dbMissGrid');
     var hitRateEl = document.getElementById('dbHitRate');
+    var backtestContainer = document.getElementById('dbBacktestContainer');
+    var backtestStatsEl = document.getElementById('dbBacktestStats');
+    var backtestRecordsEl = document.getElementById('dbBacktestRecords');
 
     if (!result) {
       if (mainGrid) mainGrid.innerHTML = '<div class="empty-tip">暂无历史数据，请先刷新数据</div>';
@@ -507,6 +510,7 @@ const ViewZodiacPrediction = {
       if (heatGrid) heatGrid.innerHTML = '';
       if (missGrid) missGrid.innerHTML = '';
       if (hitRateEl) hitRateEl.innerHTML = '';
+      if (backtestContainer) backtestContainer.style.display = 'none';
       return;
     }
 
@@ -603,6 +607,74 @@ const ViewZodiacPrediction = {
       });
       mHtml += '</div>';
       missGrid.innerHTML = mHtml;
+    }
+
+    if (backtestContainer) {
+      backtestContainer.style.display = 'block';
+    }
+
+    if (backtestStatsEl && backtestStats) {
+      var validTotal = backtestStats.totalRecords - backtestStats.pendingCount;
+      var rateColor = parseFloat(backtestStats.hitRate) >= 50 ? 'backtest-rate-high' : (parseFloat(backtestStats.hitRate) >= 30 ? 'backtest-rate-mid' : 'backtest-rate-low');
+      var statsHtml = '<span class="backstat-item">命中率 <strong class="' + rateColor + '">' + backtestStats.hitRate + '%</strong></span>';
+      statsHtml += '<span class="backstat-item">连中 <strong>' + backtestStats.consecutiveHits + '</strong>期</span>';
+      statsHtml += '<span class="backstat-item">' + backtestStats.hitCount + '/' + validTotal + '中</span>';
+      backtestStatsEl.innerHTML = statsHtml;
+    }
+
+    if (backtestRecordsEl && backtestStats && backtestStats.recentRecords) {
+      if (backtestStats.recentRecords.length === 0) {
+        backtestRecordsEl.innerHTML = '<div class="backtest-empty">暂无回测记录，预测后自动记录</div>';
+      } else {
+        var rHtml = '';
+        backtestStats.recentRecords.forEach(function(record, idx) {
+          var expectStr = record.expect ? (record.expect + '期') : ('#' + (idx + 1));
+
+          var mainStr = record.mainPredictions ? record.mainPredictions.join(' ') : '-';
+          var backupStr = record.backupPredictions ? record.backupPredictions.join(' ') : '-';
+
+          var statusClass = '';
+          var statusText = '';
+          var actualStr = '-';
+
+          if (record.isHit === null) {
+            statusClass = 'backtest-status-pending';
+            statusText = '待开奖';
+          } else if (record.isHit) {
+            if (record.hitType === 'main') {
+              statusClass = 'backtest-status-hit-main';
+              statusText = '主推中 ✓';
+            } else {
+              statusClass = 'backtest-status-hit-backup';
+              statusText = '备选中 ○';
+            }
+            actualStr = record.actualResult || '?';
+          } else {
+            statusClass = 'backtest-status-miss';
+            statusText = '未命中 ✗';
+            actualStr = record.actualResult || '?';
+          }
+
+          rHtml += '<div class="backtest-record-item">';
+          rHtml += '<div class="backtest-record-time">' + expectStr + '</div>';
+          rHtml += '<div class="backtest-record-content">';
+          rHtml += '<span class="backtest-label">推荐:</span>';
+          rHtml += '<span class="backtest-value main-value">' + mainStr + '</span>';
+          if (backupStr && backupStr !== '-') {
+            rHtml += '<span class="backtest-paren">(</span>';
+            rHtml += '<span class="backtest-value backup-value">' + backupStr + '</span>';
+            rHtml += '<span class="backtest-paren">)</span>';
+          }
+          if (record.isHit !== null) {
+            rHtml += '<span class="backtest-sep">·</span>';
+            rHtml += '<span class="backtest-actual">开奖 ' + actualStr + '</span>';
+          }
+          rHtml += '<span class="backtest-status-badge ' + statusClass + '">' + statusText + '</span>';
+          rHtml += '</div>';
+          rHtml += '</div>';
+        });
+        backtestRecordsEl.innerHTML = rHtml;
+      }
     }
   },
 
@@ -801,18 +873,39 @@ const ViewZodiacPrediction = {
     html += '<span class="backtest-breakdown-item">🥈No.2：' + summary.top2Hits + '次</span>';
     html += '<span class="backtest-breakdown-item">🥉No.3：' + summary.top3Hits + '次</span>';
     html += '</div>';
+
+    if (summary.missInBlackList !== undefined || summary.missNotInRecommend !== undefined) {
+      var totalMiss = summary.total - summary.hits;
+      html += '<div class="backtest-miss-analysis">';
+      html += '<div class="backtest-miss-title">未命中原因分析：</div>';
+      if (totalMiss > 0) {
+        var missBlackPct = Math.round((summary.missInBlackList || 0) / totalMiss * 100);
+        var missNotRecPct = Math.round((summary.missNotInRecommend || 0) / totalMiss * 100);
+        html += '<div class="backtest-miss-row"><span>因降权错失:</span><span>' + (summary.missInBlackList || 0) + '次 (' + missBlackPct + '%)</span></div>';
+        html += '<div class="backtest-miss-row"><span>未推荐到:</span><span>' + (summary.missNotInRecommend || 0) + '次 (' + missNotRecPct + '%)</span></div>';
+      }
+      if (summary.maxConsecutiveMiss > 0) {
+        html += '<div class="backtest-miss-row"><span>最大连亏:</span><span>' + summary.maxConsecutiveMiss + '期</span></div>';
+      }
+      html += '</div>';
+    }
+
     html += '</div>';
 
     html += '<div class="backtest-records">';
-    var recentRecords = summary.records.slice(0, 10);
+    var recentRecords = summary.records.slice(0, 15);
     recentRecords.forEach(function(r) {
       var hitIcon = r.hit ? '✅' : '❌';
       var hitText = r.hit ? '第' + r.hitRank + '名命中' : '未命中';
       var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
       var topNText = r.topN.join(' ');
+      
+      var stageTag = r.stage ? '<span class="backtest-stage-tag">' + r.stage + '</span>' : '';
+      var blackInfo = r.blackListCount > 0 ? '<span class="backtest-black-info">降权' + r.blackListCount + '个</span>' : '';
+      
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
-      html += '<div class="backtest-record-period">' + r.expect + '期</div>';
-      html += '<div class="backtest-record-predict">预测：' + topNText + '</div>';
+      html += '<div class="backtest-record-period">' + r.expect + '期 ' + stageTag + '</div>';
+      html += '<div class="backtest-record-predict">预测：' + topNText + ' ' + blackInfo + '</div>';
       html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
       html += '</div>';
     });

@@ -9,7 +9,8 @@ const Storage = {
     DATA_VERSION: 'dataVersion',
     HISTORY_DATA: 'historyData',
     HISTORY_TIMESTAMP: 'historyTimestamp',
-    ZODIAC_BACKTEST: 'zodiacBacktest'
+    ZODIAC_BACKTEST: 'zodiacBacktest',
+    DB_BACKTEST_RECORDS: 'dbBacktestRecords'
   }),
 
   /**
@@ -145,5 +146,13 @@ const Storage = {
   saveHistoryCache: (data) => {
     Storage.set(Storage.KEYS.HISTORY_DATA, data);
     Storage.set(Storage.KEYS.HISTORY_TIMESTAMP, Date.now());
+  },
+
+  getDBBacktestRecords: () => {
+    return Storage.get(Storage.KEYS.DB_BACKTEST_RECORDS, []);
+  },
+
+  saveDBBacktestRecords: (records) => {
+    return Storage.set(Storage.KEYS.DB_BACKTEST_RECORDS, records);
   }
 };

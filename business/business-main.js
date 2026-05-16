@@ -1318,7 +1318,13 @@ const Business = {
     var missStatus = BusinessPredictOld.getMissStatus(missMap);
     var hitRate = BusinessPredictOld.calcHitRate(zodiacNums);
 
-    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last12[0] || '', missStatus, hitRate);
+    var currentExpect = historyData[0] ? (historyData[0].expect || '') : '';
+    var nextExpect = currentExpect ? (String(Number(currentExpect) + 1)) : '';
+
+    Business.saveDBBacktestRecord(result, zodiacNums[0], nextExpect);
+    var backtestStats = Business.calculateDBBacktestStats(nextExpect);
+
+    ViewZodiacPrediction.renderDBAlgorithm(result, heatMap, last12[0] || '', missStatus, hitRate, backtestStats);
   },
 
   initUltimateAlgorithm: () => {
@@ -1365,5 +1371,236 @@ const Business = {
     } else {
       ViewZodiacPrediction.renderUltimateBacktestEmpty();
     }
+  },
+
+  saveDBBacktestRecord: (result, currentNum, expect) => {
+    if (!result || !result.main) return;
+
+    var records = Storage.getDBBacktestRecords();
+
+    records = Business._deduplicateByExpect(records);
+    records = Business._cleanInvalidRecords(records, expect);
+
+    if (expect && currentNum >= 1 && currentNum <= 12) {
+      var prevExpect = String(Number(expect) - 1);
+      var prevIndex = records.findIndex(function(r) {
+        return r.expect === prevExpect && r.actualResult === null;
+      });
+      if (prevIndex !== -1) {
+        var prevRecord = records[prevIndex];
+        prevRecord.actualResult = currentNum;
+        var mainHit = prevRecord.mainPredictions.indexOf(BusinessPredictOld._toZodiac(currentNum)) !== -1;
+        var backupHit = prevRecord.backupPredictions.indexOf(BusinessPredictOld._toZodiac(currentNum)) !== -1;
+        if (mainHit) {
+          prevRecord.isHit = true;
+          prevRecord.hitType = 'main';
+        } else if (backupHit) {
+          prevRecord.isHit = true;
+          prevRecord.hitType = 'backup';
+        } else {
+          prevRecord.isHit = false;
+          prevRecord.hitType = null;
+        }
+        console.log('[DB回测-核对] 期号', prevExpect, '开奖:', BusinessPredictOld._toZodiac(currentNum), '→', prevRecord.isHit ? (prevRecord.hitType === 'main' ? '主推中✓' : '备选中○') : '未命中✗');
+      }
+    }
+
+    if (expect) {
+      var existingIndex = records.findIndex(function(r) { return r.expect === expect; });
+      if (existingIndex !== -1) {
+        var existRecord = records[existingIndex];
+
+        var samePredictions = JSON.stringify(existRecord.mainPredictions) === JSON.stringify(result.main.slice()) &&
+                               JSON.stringify(existRecord.backupPredictions) === JSON.stringify(result.backup ? result.backup.slice() : []);
+        if (!samePredictions) {
+          existRecord.mainPredictions = result.main.slice();
+          existRecord.backupPredictions = result.backup ? result.backup.slice() : [];
+          existRecord.currentNum = currentNum;
+          console.log('[DB回测-更新] 期号', expect, '预测内容已更新，重置为待开奖');
+        }
+
+        Storage.saveDBBacktestRecords(records);
+        return;
+      }
+    } else {
+      if (records.length > 0 && currentNum >= 1 && currentNum <= 12) {
+        var lastRecord = records[0];
+        if (lastRecord.actualResult === null) {
+          lastRecord.actualResult = currentNum;
+          var mainHit2 = lastRecord.mainPredictions.indexOf(BusinessPredictOld._toZodiac(currentNum)) !== -1;
+          var backupHit2 = lastRecord.backupPredictions.indexOf(BusinessPredictOld._toZodiac(currentNum)) !== -1;
+          if (mainHit2) {
+            lastRecord.isHit = true;
+            lastRecord.hitType = 'main';
+          } else if (backupHit2) {
+            lastRecord.isHit = true;
+            lastRecord.hitType = 'backup';
+          } else {
+            lastRecord.isHit = false;
+            lastRecord.hitType = null;
+          }
+        }
+        Storage.saveDBBacktestRecords(records);
+        return;
+      }
+    }
+
+    var now = new Date();
+    var recordId = now.getTime();
+
+    var newRecord = {
+      id: recordId,
+      predictTime: now.toISOString(),
+      expect: expect || '',
+      mainPredictions: result.main.slice(),
+      backupPredictions: result.backup ? result.backup.slice() : [],
+      currentNum: currentNum,
+      actualResult: null,
+      isHit: null,
+      hitType: null
+    };
+
+    console.log('[DB回测-新建] 期号', expect || '(无期号)', '推荐:', result.main.join(' '), result.backup ? '(' + result.backup.join(' ') + ')' : '');
+
+    records.unshift(newRecord);
+    var maxRecords = 50;
+    if (records.length > maxRecords) {
+      records = records.slice(0, maxRecords);
+    }
+
+    Storage.saveDBBacktestRecords(records);
+  },
+
+  _deduplicateByExpect: (records) => {
+    if (!records || !Array.isArray(records) || records.length <= 1) return records || [];
+
+    var seen = {};
+    var unique = [];
+
+    for (var i = records.length - 1; i >= 0; i--) {
+      var record = records[i];
+      var key = record.expect || ('time_' + record.predictTime);
+      if (!seen[key]) {
+        seen[key] = true;
+        unique.unshift(record);
+      }
+    }
+
+    console.log('[DB回测-去重] 原始记录数:', records.length, '→ 去重后:', unique.length);
+
+    return unique;
+  },
+
+  _cleanInvalidRecords: (records, latestExpect) => {
+    if (!records || !records.length || !latestExpect) return records;
+
+    var cleaned = false;
+    var latestNum = Number(latestExpect);
+
+    records.forEach(function(record) {
+      if (!record.expect) return;
+
+      var recordExpect = Number(record.expect);
+      if (isNaN(recordExpect)) return;
+
+      if (recordExpect > latestNum && record.actualResult !== null) {
+        console.log('[DB回测-清理] 期号', record.expect, '是未来期却被标记为已开奖，重置为待开奖');
+        record.actualResult = null;
+        record.isHit = null;
+        record.hitType = null;
+        cleaned = true;
+      }
+
+      if (recordExpect === latestNum && record.actualResult === null) {
+        console.log('[DB回测-清理] 期号', record.expect, '是当前最新期但未开奖，保持待开奖');
+      }
+    });
+
+    if (cleaned) {
+      console.log('[DB回测-清理] 已清理无效的核对数据');
+    }
+
+    return records;
+  },
+
+  calculateDBBacktestStats: (latestExpect) => {
+    var records = Storage.getDBBacktestRecords();
+
+    records = Business._deduplicateByExpect(records);
+    records = Business._cleanInvalidRecords(records, latestExpect);
+
+    if (latestExpect) {
+      Storage.saveDBBacktestRecords(records);
+    }
+
+    var stats = {
+      totalRecords: records.length,
+      hitCount: 0,
+      mainHitCount: 0,
+      backupHitCount: 0,
+      missCount: 0,
+      pendingCount: 0,
+      recentRecords: [],
+      consecutiveHits: 0,
+      maxConsecutiveHits: 0,
+      hitRate: '0.0'
+    };
+
+    var validRecords = records.filter(function(r) { return r.isHit !== null; });
+    stats.pendingCount = records.length - validRecords.length;
+
+    validRecords.forEach(function(record) {
+      if (record.isHit) {
+        stats.hitCount++;
+        if (record.hitType === 'main') {
+          stats.mainHitCount++;
+        } else if (record.hitType === 'backup') {
+          stats.backupHitCount++;
+        }
+      } else {
+        stats.missCount++;
+        stats.consecutiveHits = 0;
+      }
+    });
+
+    var tempConsecutive = 0;
+    for (var i = validRecords.length - 1; i >= 0; i--) {
+      if (validRecords[i].isHit) {
+        tempConsecutive++;
+        if (tempConsecutive > stats.maxConsecutiveHits) {
+          stats.maxConsecutiveHits = tempConsecutive;
+        }
+      } else {
+        tempConsecutive = 0;
+      }
+    }
+
+    for (var j = 0; j < validRecords.length; j++) {
+      if (validRecords[j].isHit) {
+        stats.consecutiveHits++;
+      } else {
+        break;
+      }
+    }
+
+    if (validRecords.length > 0) {
+      stats.hitRate = ((stats.hitCount / validRecords.length) * 100).toFixed(1);
+    }
+
+    stats.recentRecords = records.slice(0, 10).map(function(r) {
+      return {
+        id: r.id,
+        predictTime: r.predictTime,
+        expect: r.expect || '',
+        mainPredictions: r.mainPredictions,
+        backupPredictions: r.backupPredictions,
+        actualResult: r.actualResult ? BusinessPredictOld._toZodiac(r.actualResult) : null,
+        isHit: r.isHit,
+        hitType: r.hitType
+      };
+    });
+
+    console.log('[DB回测] 统计:', JSON.stringify(stats));
+    return stats;
   }
 };
