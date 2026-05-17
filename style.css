@@ -2704,14 +2704,19 @@ input[type="checkbox"]{
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  touch-action: pan-y;
+  overflow-x: hidden;
 }
 
 .freq-swiper-wrapper {
   display: flex;
   flex: 1;
   min-height: 0;
-  transition: transform 0.3s ease-out;
+  transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
   will-change: transform;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .freq-swiper-wrapper .freq-card {
@@ -2727,6 +2732,8 @@ input[type="checkbox"]{
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .zodiac-pred-card {
@@ -2786,12 +2793,16 @@ input[type="checkbox"]{
   overflow: hidden;
   margin: 0 calc(-1 * clamp(12px, 3vw, 20px));
   padding-bottom: 8px;
+  touch-action: pan-y;
 }
 
 .zone-swiper-wrapper {
   display: flex;
-  transition: transform 0.3s ease-out;
+  transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
   will-change: transform;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .zone-swiper-wrapper .freq-section {
@@ -2799,6 +2810,8 @@ input[type="checkbox"]{
   flex-shrink: 0;
   padding: 0 clamp(12px, 3vw, 20px);
   box-sizing: border-box;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .zone-swiper-dots {
