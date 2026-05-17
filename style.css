@@ -358,8 +358,6 @@ body{
   touch-action:manipulation;
   -webkit-user-select:none;
   user-select:none;
-  role:checkbox;
-  tabindex:0;
 }
 .tag.active{background:var(--primary);color:#FFFFFF}
 .tag.locked{background:rgba(255,59,48,0.12);color:var(--danger);cursor:default}
