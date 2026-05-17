@@ -665,16 +665,16 @@ body{
   height:60px;
   box-sizing:border-box;
   box-shadow:0 4px 24px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
-  gap:10px;
+  gap:14px;
 }
 .bottom-nav-toggle{
   display:flex;
   justify-content:center;
   align-items:center;
-  width:58px;
-  height:58px;
-  min-width:58px;
-  border-radius:29px;
+  width:50px;
+  height:50px;
+  min-width:50px;
+  border-radius:30px;
   background:var(--nav-glass-bg);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   backdrop-filter:blur(20px) saturate(180%);
@@ -699,21 +699,21 @@ body{
 }
 .bottom-nav-toggle:active{transform:scale(0.95)}
 .bottom-nav-item{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-width:60px;
-  height:60px;
-  border-radius:30px;
-  padding:6px 12px;
-  transition:all var(--anim-fast);
-  cursor:pointer;
-  touch-action:manipulation;
-  -webkit-user-select:none;
-  user-select:none;
-  tabindex:0;
-  position:relative;
-}
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:65px;
+    height:50px;
+    border-radius:30px;
+    padding:0 18px;
+    transition:all var(--anim-fast);
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+    tabindex:0;
+    position:relative;
+  }
 .bottom-nav-item span{
   font-size:14px;
   font-weight:500;
@@ -815,19 +815,27 @@ input[type="checkbox"]{
     gap:6px;
   }
   .bottom-nav-item{
-    min-width:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:52px;
     height:42px;
-    border-radius:21px;
+    border-radius:22px;
+    padding:0 12px;
   }
   .bottom-nav-item span{
-    font-size:11px;
+    font-size:12px;
   }
   .bottom-nav-toggle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
     width:42px;
     height:42px;
     min-width:42px;
-    border-radius:21px;
-    font-size:10px;
+    border-radius:22px;
+    font-size:11px;
+    padding:0;
   }
 }
 
