@@ -402,16 +402,24 @@ const ZodiacPrediction = {
     var latestSpecial = ZodiacPrediction._getSpecial(list[0]);
     var lastZodiac = latestSpecial ? latestSpecial.zod : null;
 
-    var windowSize = 12;
-    var windowData = list.slice(0, windowSize);
-    var frequencyMap = {};
+    var window12 = list.slice(0, 12);
+    var window11 = list.slice(0, 11);
+    var freq12 = {};
+    var freq11 = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      frequencyMap[z] = 0;
+      freq12[z] = 0;
+      freq11[z] = 0;
     });
-    windowData.forEach(function(item) {
+    window12.forEach(function(item) {
       var s = ZodiacPrediction._getSpecial(item);
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
-        frequencyMap[s.zod]++;
+        freq12[s.zod]++;
+      }
+    });
+    window11.forEach(function(item) {
+      var s = ZodiacPrediction._getSpecial(item);
+      if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
+        freq11[s.zod]++;
       }
     });
 
@@ -426,7 +434,7 @@ const ZodiacPrediction = {
         score -= PENALTY_LAST;
       }
 
-      if (frequencyMap[zodiac] >= 3) {
+      if (freq12[zodiac] >= 3 && freq11[zodiac] !== 2) {
         score -= PENALTY_FREQ;
       }
 
