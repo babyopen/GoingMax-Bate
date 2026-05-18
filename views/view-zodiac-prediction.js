@@ -95,25 +95,32 @@ const ViewZodiacPrediction = {
       }
     }
 
+    var isTouchDevice = 'ontouchstart' in window;
+
     function start(e) {
+      if (e.type === 'mousedown' && isTouchDevice) return;
       dragging = true; w.style.transition = 'none';
-      sx = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      sx = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
       cx = sx; lastT = Date.now();
     }
 
     function move(e) {
       if (!dragging) return;
-      cx = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      if (e.type === 'touchmove') e.preventDefault();
+      cx = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
       lastT = Date.now();
       var d = sx - cx;
       w.style.transform = 'translateX(' + (-(idx * 100) - (d / w.offsetWidth * 100)) + '%)';
     }
 
-    function end() {
+    function end(e) {
       if (!dragging) return; dragging = false; w.style.transition = '';
+      if (e.type === 'touchend' && e.changedTouches && e.changedTouches.length) {
+        cx = e.changedTouches[0].clientX;
+      }
       var d = sx - cx, ad = Math.abs(d);
-      var th = w.offsetWidth * 0.15, vel = ad / Math.max(Date.now() - lastT, 1);
-      if (ad > th || (ad > 20 && vel > 0.5)) {
+      var th = w.offsetWidth * 0.08, vel = ad / Math.max(Date.now() - lastT, 1);
+      if (ad > th || (ad > 15 && vel > 0.3)) {
         if (d > 0 && idx < total - 1) slide(idx + 1);
         else if (d < 0 && idx > 0) slide(idx - 1);
         else slide(idx);
@@ -121,12 +128,15 @@ const ViewZodiacPrediction = {
     }
 
     w.addEventListener('touchstart', start, { passive: true });
-    w.addEventListener('touchmove', move, { passive: true });
+    w.addEventListener('touchmove', move, { passive: false });
     w.addEventListener('touchend', end);
-    w.addEventListener('mousedown', start);
-    w.addEventListener('mousemove', move);
-    w.addEventListener('mouseup', end);
-    w.addEventListener('mouseleave', end);
+    w.addEventListener('touchcancel', end);
+    if (!isTouchDevice) {
+      w.addEventListener('mousedown', start);
+      w.addEventListener('mousemove', move);
+      w.addEventListener('mouseup', end);
+      w.addEventListener('mouseleave', end);
+    }
 
     if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
     ViewZodiacPrediction[config.updateRef] = slide;
@@ -629,13 +639,12 @@ const ViewZodiacPrediction = {
     var backtestStatsEl = document.getElementById('dbBacktestStats');
     var backtestRecordsEl = document.getElementById('dbBacktestRecords');
 
+    var dbPanel = document.getElementById('zodiacDBPanel');
+
     if (!result) {
-      if (mainGrid) mainGrid.innerHTML = '<div class="empty-tip">暂无历史数据，请先刷新数据</div>';
-      if (backupGrid) backupGrid.innerHTML = '';
-      if (heatGrid) heatGrid.innerHTML = '';
-      if (missGrid) missGrid.innerHTML = '';
-      if (hitRateEl) hitRateEl.innerHTML = '';
-      if (backtestContainer) backtestContainer.style.display = 'none';
+      if (dbPanel) {
+        dbPanel.innerHTML = '';
+      }
       return;
     }
 
