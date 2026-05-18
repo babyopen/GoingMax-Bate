@@ -119,8 +119,9 @@ const ViewZodiacPrediction = {
         cx = e.changedTouches[0].clientX;
       }
       var d = sx - cx, ad = Math.abs(d);
-      var th = w.offsetWidth * 0.08, vel = ad / Math.max(Date.now() - lastT, 1);
-      if (ad > th || (ad > 15 && vel > 0.3)) {
+      var cardW = w.offsetWidth / total;
+      var th = cardW * 0.08, vel = ad / Math.max(Date.now() - lastT, 1);
+      if (ad > th || (ad > cardW * 0.04 && vel > 0.3)) {
         if (d > 0 && idx < total - 1) slide(idx + 1);
         else if (d < 0 && idx > 0) slide(idx - 1);
         else slide(idx);
