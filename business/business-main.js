@@ -730,7 +730,7 @@ const Business = {
   },
 
   initGiongTab: function() {
-    var historyData = State.get('historyData') || [];
+    var historyData = StateManager._state.analysis.historyData || [];
     if (!historyData.length) {
       ViewZodiacPrediction.renderGiongDualChain(null);
       return;
