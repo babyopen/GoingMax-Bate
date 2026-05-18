@@ -813,6 +813,262 @@ const ViewZodiacPrediction = {
     }
   },
 
+  renderGiongAlgorithm: function(data, backtestStats) {
+    var dbPanel = document.getElementById('zodiacDBPanel');
+    if (!dbPanel) return;
+
+    if (!data || data.insufficient) {
+      ViewZodiacPrediction._renderGiongEmpty(dbPanel, data ? data.message : '暂无数据');
+      return;
+    }
+
+    var html = '';
+
+    html += '<div class="card db-card">';
+    html += '<div class="card-header">';
+    html += '<div class="db-header-left">';
+    html += '<h2>Giong双链预测</h2>';
+    html += '<span class="db-badge">算法v1.0</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="card-body">';
+
+    html += '<div class="giong-latest-info">';
+    html += '<div class="giong-latest-label">最新落点</div>';
+    html += '<div class="giong-latest-num">' + data.latestNum + '</div>';
+    html += '<div class="giong-latest-zodiac">' + data.latestZodiac + '</div>';
+    html += '</div>';
+
+    html += '<div class="db-result-container">';
+
+    html += '<div class="db-main-section">';
+    html += '<div class="db-section-label giong-chain-label">' + data.newResult.chainName + '（主力）</div>';
+    html += '<div class="giong-chain-desc">' + data.newResult.chainDesc + '</div>';
+    html += '<div class="db-section-label">主推 4 码</div>';
+    html += '<div class="db-number-grid">';
+    data.newResult.main.forEach(function(item, idx) {
+      var rank = idx + 1;
+      var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
+      var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+      html += '<div class="db-card-item ' + rankClass + '">';
+      html += '<div class="db-rank-badge">' + rank + '</div>';
+      html += '<div class="db-card-emoji">' + emoji + '</div>';
+      html += '<div class="db-card-name">' + item.zodiac + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    if (data.newResult.backup && data.newResult.backup.length) {
+      html += '<div class="db-divider"></div>';
+      html += '<div class="db-backup-section">';
+      html += '<div class="db-section-label">备选 ' + data.newResult.backup.length + ' 码</div>';
+      html += '<div class="db-number-grid">';
+      data.newResult.backup.forEach(function(item, idx) {
+        var rank = idx + 1;
+        var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+        html += '<div class="db-card-item">';
+        html += '<div class="db-rank-badge">' + rank + '</div>';
+        html += '<div class="db-card-emoji">' + emoji + '</div>';
+        html += '<div class="db-card-name">' + item.zodiac + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+    html += '</div>';
+
+    html += '<div class="giong-chain-divider">━━ 双链对照 ━━</div>';
+
+    html += '<div class="db-main-section">';
+    html += '<div class="db-section-label giong-chain-label giong-chain-old">' + data.oldResult.chainName + '（防守）</div>';
+    html += '<div class="giong-chain-desc">' + data.oldResult.chainDesc + '</div>';
+    html += '<div class="db-section-label">主推 4 码</div>';
+    html += '<div class="db-number-grid">';
+    data.oldResult.main.forEach(function(item, idx) {
+      var rank = idx + 1;
+      var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
+      var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+      html += '<div class="db-card-item ' + rankClass + '">';
+      html += '<div class="db-rank-badge">' + rank + '</div>';
+      html += '<div class="db-card-emoji">' + emoji + '</div>';
+      html += '<div class="db-card-name">' + item.zodiac + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    if (data.oldResult.backup && data.oldResult.backup.length) {
+      html += '<div class="db-divider"></div>';
+      html += '<div class="db-backup-section">';
+      html += '<div class="db-section-label">备选 ' + data.oldResult.backup.length + ' 码</div>';
+      html += '<div class="db-number-grid">';
+      data.oldResult.backup.forEach(function(item, idx) {
+        var rank = idx + 1;
+        var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+        html += '<div class="db-card-item">';
+        html += '<div class="db-rank-badge">' + rank + '</div>';
+        html += '<div class="db-card-emoji">' + emoji + '</div>';
+        html += '<div class="db-card-name">' + item.zodiac + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+    html += '</div>';
+
+    html += '</div>';
+
+    if (data.downWeightList && data.downWeightList.length) {
+      html += '<div class="db-miss-container">';
+      html += '<div class="db-miss-section-label">降权名单（12期≥3次）</div>';
+      html += '<div class="giong-downweight-list">';
+      data.downWeightList.forEach(function(item) {
+        html += '<span class="giong-downweight-tag">' + item.zodiac + '</span>';
+      });
+      html += '</div></div>';
+    }
+
+    if (data.isCongestion) {
+      html += '<div class="giong-warning">⚠ 高热拥堵：12期≥3次号码超过3个，2次号暂停推荐</div>';
+    }
+
+    html += '</div></div>';
+
+    html += '<div class="card db-card">';
+    html += '<div class="card-header"><h2>热度分布</h2></div>';
+    html += '<div class="card-body">';
+    html += '<div class="db-heat-grid" id="giongHeatGrid">';
+    var zodiacOrder = BusinessPredictOld.ZODIAC_ORDER;
+    zodiacOrder.forEach(function(z) {
+      var num = BusinessGiong._toNum(z);
+      var info = data.heatMap[num] || {};
+      var tagClass = info.level === 'hot' ? 'is-hot' : (info.level === 'warm' ? 'is-warm' : (info.level === 'cool' ? 'is-cold' : (info.level === 'deep' ? 'is-cold' : 'is-cold')));
+      var dwBadge = info.isDownWeight ? '<span class="giong-badge-dw">降权</span>' : '';
+      var czBadge = info.isColdZone ? '<span class="giong-badge-cz">冷区</span>' : '';
+      html += '<div class="db-heat-item">';
+      html += '<div class="db-heat-zodiac">' + z + dwBadge + czBadge + '</div>';
+      html += '<div class="db-heat-count">12期 ' + (info.count || 0) + '次 / 24期 ' + (info.count24 || 0) + '次</div>';
+      html += '<span class="db-heat-tag ' + tagClass + '">' + (info.label || '--') + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div></div>';
+
+    html += '<div class="card db-card">';
+    html += '<div class="card-header"><h2>算法规则</h2></div>';
+    html += '<div class="card-body">';
+    html += '<div class="db-rules">';
+    html += '<div class="db-rule-item"><div class="db-rule-num">①</div><div class="db-rule-text">旧版经典主链：01→05→07→09→04→10→01（马→虎→鼠→狗→兔→鸡→马）</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">②</div><div class="db-rule-text">新版实测主链：01→04→05→07→09→01（马→兔→虎→鼠→狗→马）</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">③</div><div class="db-rule-text">10(鸡)挂靠04(兔)，06(牛)为变盘专属号→01/07</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">④</div><div class="db-rule-text">12期内出现≥3次→降权；11期回落=2次→解除降权</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">⑤</div><div class="db-rule-text">冷门四区：蛇(02)、猪(08)、猴(11)、羊(12)永不进主推</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">⑥</div><div class="db-rule-text">高热拥堵(≥3次号码>3个)：普通2次号暂停推荐</div></div>';
+    html += '<div class="db-rule-item"><div class="db-rule-num">⑦</div><div class="db-rule-text">06热度达标(2次+)可顶替链内冷号进主推</div></div>';
+    html += '</div></div></div>';
+
+    if (backtestStats) {
+      html += ViewZodiacPrediction._renderGiongBacktestCard(backtestStats);
+    }
+
+    dbPanel.innerHTML = html;
+  },
+
+  _renderGiongEmpty: function(dbPanel, message) {
+    dbPanel.innerHTML = '<div class="card db-card"><div class="card-body"><div class="empty-tip">' + (message || '数据不足，无法生成Giong预测') + '</div></div></div>';
+  },
+
+  _renderGiongBacktestCard: function(stats) {
+    if (!stats || stats.totalRecords === 0) return '';
+
+    var validTotal = stats.totalRecords - stats.pendingCount;
+    var rateColor = parseFloat(stats.hitRate) >= 50 ? 'backtest-rate-high' : (parseFloat(stats.hitRate) >= 30 ? 'backtest-rate-mid' : 'backtest-rate-low');
+
+    var html = '';
+    html += '<div class="card db-card giong-backtest-card">';
+    html += '<div class="card-header"><h2>Giong回测追踪</h2></div>';
+    html += '<div class="card-body">';
+
+    html += '<div class="giong-backtest-header">';
+    html += '<div class="backtest-summary">';
+    html += '<div class="backtest-summary-row">';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">回测期数</span>';
+    html += '<span class="backtest-stat-value">' + validTotal + '期</span>';
+    html += '</div>';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">命中次数</span>';
+    html += '<span class="backtest-stat-value">' + stats.hitCount + '次</span>';
+    html += '</div>';
+    html += '<div class="backtest-stat">';
+    html += '<span class="backtest-stat-label">命中率</span>';
+    html += '<span class="backtest-stat-value ' + rateColor + '">' + stats.hitRate + '%</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="backtest-breakdown">';
+    html += '<span class="backtest-breakdown-item">🎯主推中：' + stats.mainHitCount + '次</span>';
+    html += '<span class="backtest-breakdown-item">🔶备选中：' + stats.backupHitCount + '次</span>';
+    html += '<span class="backtest-breakdown-item">🔥连中：' + stats.consecutiveHits + '期</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (stats.pendingCount > 0) {
+      html += '<div class="giong-pending-tip">' + stats.pendingCount + ' 条记录待开奖验证</div>';
+    }
+
+    html += '<div class="db-backtest-records">';
+    if (!stats.recentRecords || stats.recentRecords.length === 0) {
+      html += '<div class="backtest-empty">暂无回测记录</div>';
+    } else {
+      stats.recentRecords.forEach(function(record) {
+        var mainStr = record.mainPredictions ? record.mainPredictions.join(' ') : '-';
+        var backupStr = record.backupPredictions ? record.backupPredictions.join(' ') : '-';
+        var expectStr = record.expect ? (record.expect + '期') : '--';
+
+        var statusClass = '';
+        var statusText = '';
+        var actualStr = '-';
+
+        if (record.isHit === null) {
+          statusClass = 'backtest-status-pending';
+          statusText = '待开奖';
+        } else if (record.isHit) {
+          if (record.hitType === 'main') {
+            statusClass = 'backtest-status-hit-main';
+            statusText = '主推中 ✓';
+          } else {
+            statusClass = 'backtest-status-hit-backup';
+            statusText = '备选中 ○';
+          }
+          actualStr = record.actualResult || '?';
+        } else {
+          statusClass = 'backtest-status-miss';
+          statusText = '未命中 ✗';
+          actualStr = record.actualResult || '?';
+        }
+
+        html += '<div class="backtest-record-item">';
+        html += '<div class="backtest-record-time">' + expectStr + '</div>';
+        html += '<div class="backtest-record-content">';
+        html += '<span class="backtest-label">推荐:</span>';
+        html += '<span class="backtest-value main-value">' + mainStr + '</span>';
+        if (backupStr && backupStr !== '-') {
+          html += '<span class="backtest-paren">(</span>';
+          html += '<span class="backtest-value backup-value">' + backupStr + '</span>';
+          html += '<span class="backtest-paren">)</span>';
+        }
+        if (record.isHit !== null) {
+          html += '<span class="backtest-sep">·</span>';
+          html += '<span class="backtest-actual">开奖 ' + actualStr + '</span>';
+        }
+        html += '<span class="backtest-status-badge ' + statusClass + '">' + statusText + '</span>';
+        html += '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+
+    html += '</div></div>';
+    return html;
+  },
+
   toggleDBDetail: function() {
     var panel = document.getElementById('dbHeatPanel');
     var toggle = document.getElementById('dbDetailToggle');
@@ -1159,94 +1415,6 @@ const ViewZodiacPrediction = {
       dotsId: 'zoneSwiperDots', dotClass: 'zone-swiper-dot',
       updateRef: 'zoneSwiperUpdate', dataAttr: ['data-zone-current', '0']
     });
-  },
-
-  renderGiongDualChain: function(result) {
-    ViewZodiacPrediction._renderGiongRecommend(result);
-    ViewZodiacPrediction._renderGiongChainDetail(result);
-    ViewZodiacPrediction._renderGiongBacktestSummary(result);
-  },
-
-  _renderGiongRecommend: function(result) {
-    var container = document.getElementById('giongRecommendPanel');
-    if (!container || !result) return;
-
-    var html = '<div class="analysis-section-title">第' + result.nextExpect + '期 Giong双链推荐</div>';
-    html += '<div class="giong-dual-chain">';
-
-    html += ViewZodiacPrediction._buildChainCard('旧版经典链（保守顺势）', result.old, 'old');
-    html += ViewZodiacPrediction._buildChainCard('新版实测链（主力实战）', result.new, 'new');
-
-    html += '</div>';
-    container.innerHTML = html;
-  },
-
-  _buildChainCard: function(title, chainResult, cls) {
-    var html = '<div class="giong-chain-card ' + cls + '">';
-    html += '<div class="giong-chain-title">' + title + '</div>';
-
-    html += '<div class="giong-chain-row"><span class="giong-label">主推</span><div class="giong-zod-list">';
-    chainResult.main.forEach(function(m) {
-      var tag = m.special ? ' <span class="giong-special-tag">' + m.special + '</span>' : '';
-      html += '<span class="giong-zod-item main">' + BusinessGiong.ZODIAC_CODE[m.code] + '(' + m.c12 + ')' + tag + '</span>';
-    });
-    html += '</div></div>';
-
-    html += '<div class="giong-chain-row"><span class="giong-label">备选</span><div class="giong-zod-list">';
-    chainResult.backup.forEach(function(b) {
-      html += '<span class="giong-zod-item backup">' + BusinessGiong.ZODIAC_CODE[b.code] + '(' + b.c12 + ')<span class="giong-reason">' + (b.reason || '') + '</span></span>';
-    });
-    html += '</div></div>';
-
-    html += '</div>';
-    return html;
-  },
-
-  _renderGiongChainDetail: function(result) {
-    var freqContainer = document.getElementById('giongFreqGrid');
-    var analysisContainer = document.getElementById('giongAnalysisPanel');
-    if (!result) return;
-
-    if (freqContainer) {
-      var html = '<div class="giong-chain-status">';
-      html += '<div class="giong-status-item"><span class="giong-status-label">最新落点</span><span class="giong-status-value">' + result.latestZodiac + '(' + result.latestCode + ')</span></div>';
-      html += '<div class="giong-status-item"><span class="giong-status-label">下期</span><span class="giong-status-value">第' + result.nextExpect + '期</span></div>';
-      html += '</div>';
-      html += '<div class="giong-chain-rules-title">双链推荐规则说明</div>';
-      html += '<div class="giong-rules-list">';
-      html += '<div class="giong-rule-item">1. 12期滑动窗口出现≥3次 → 降权不进主推</div>';
-      html += '<div class="giong-rule-item">2. 11期窗口回落=2次 → 解除降权恢复推荐</div>';
-      html += '<div class="giong-rule-item">3. 链内冷号（12期≤1次）→ 自动下放备选</div>';
-      html += '<div class="giong-rule-item">4. 冷门四区（牛/羊/狗/猪）→ 永不进主推</div>';
-      html += '<div class="giong-rule-item">5. 蛇（06）热度达标（2次+）→ 变盘顶替冷号进主推</div>';
-      html += '<div class="giong-rule-item">6. 高热拥堵（12期≥3次号>3个）→ 普通2次号暂停</div>';
-      html += '</div>';
-      freqContainer.innerHTML = html;
-    }
-
-    if (analysisContainer) {
-      var oldChainInfo = BusinessGiong.OLD_CHAIN.map(function(c) { return BusinessGiong.ZODIAC_CODE[c]; }).join(' → ');
-      var newChainInfo = BusinessGiong.NEW_CHAIN.map(function(c) { return BusinessGiong.ZODIAC_CODE[c]; }).join(' → ');
-      var html2 = '<div class="giong-chain-info">';
-      html2 += '<div class="giong-chain-info-item"><strong>旧版链</strong>：' + oldChainInfo + '</div>';
-      html2 += '<div class="giong-chain-info-item"><strong>新版链</strong>：' + newChainInfo + '</div>';
-      html2 += '<div class="giong-chain-info-item"><strong>10号（鸡）</strong>：挂靠04（兔），不进新版主干</div>';
-      html2 += '<div class="giong-chain-info-item"><strong>06号（蛇）</strong>：变盘专属号，跳转优先01(鼠)/07(马)</div>';
-      html2 += '</div>';
-      analysisContainer.innerHTML = html2;
-    }
-  },
-
-  _renderGiongBacktestSummary: function(result) {
-    var container = document.getElementById('giongBacktestPanel');
-    if (!container || !result) return;
-
-    var html = '<div class="giong-backtest-summary">';
-    html += '<div class="giong-backtest-item">当前盘面：最新落点 <strong>' + result.latestZodiac + '</strong>（' + result.latestCode + '），新版正统主链标准顺位 <strong>' + BusinessGiong.ZODIAC_CODE['04'] + '</strong>（超长遗漏蓄力）</div>';
-    html += '<div class="giong-backtest-item">链态：主链断档蓄力期，04破冰后行情彻底顺畅</div>';
-    html += '<div class="giong-backtest-item">策略：优先吃热流顺势 + 埋伏压盘回补，06为变盘核心、04为行情总开关</div>';
-    html += '</div>';
-    container.innerHTML = html;
   },
 
   zoneSwiperUpdate: null,

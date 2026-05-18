@@ -729,18 +729,57 @@ const Business = {
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
   },
 
-  initGiongTab: function() {
-    var historyData = StateManager._state.analysis.historyData || [];
-    if (!historyData.length) {
-      ViewZodiacPrediction.renderGiongDualChain(null);
-      return;
+  initGiongTab: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
     }
-    var result = BusinessGiong.predict(historyData);
-    ViewZodiacPrediction.renderGiongDualChain(result);
+    if (!historyData || !historyData.length) return;
+
+    var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
+    ViewZodiacPrediction.renderFrequencyRating(freqResult);
+
+    var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
+    ViewZodiacPrediction.renderZoneAnalysis(patternResult);
+
+    if (freqResult && patternResult) {
+      var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
+      var nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
+      ViewZodiacPrediction.renderZoneRecommend(recommend, nextExpect);
+    }
+
+    ViewZodiacPrediction.renderZoneBacktestEmpty();
+    setTimeout(function() {
+      var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
+      if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
+    }, 150);
   },
 
   initDBAlgorithm: () => {
-    ViewZodiacPrediction.renderDBAlgorithm(null, null, null);
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+    if (!historyData || !historyData.length) {
+      ViewZodiacPrediction.renderDBAlgorithm(null, null, null);
+      return;
+    }
+
+    var numArray = BusinessGiong.historyDataToNumArray(historyData);
+    var result = BusinessGiong.generateFullResult(numArray);
+    var displayData = BusinessGiong.formatResultForDisplay(result);
+
+    var expect = historyData[0] ? historyData[0].expect : '';
+    var currentNum = numArray[0] || 0;
+    Business.saveGiongBacktestRecord(displayData, currentNum, expect);
+
+    var backtestStats = Business.calculateGiongBacktestStats(expect);
+
+    ViewZodiacPrediction.renderGiongAlgorithm(displayData, backtestStats);
   },
 
   initUltimateAlgorithm: () => {
@@ -1019,6 +1058,168 @@ const Business = {
     });
 
     console.log('[DB回测] 统计:', JSON.stringify(stats));
+    return stats;
+  },
+
+  saveGiongBacktestRecord: (giongData, currentNum, expect) => {
+    if (!giongData || giongData.insufficient) return;
+
+    var newMain = giongData.newResult.main.map(function(item) { return item.zodiac; });
+    var newBackup = giongData.newResult.backup.map(function(item) { return item.zodiac; });
+    var oldMain = giongData.oldResult.main.map(function(item) { return item.zodiac; });
+    var oldBackup = giongData.oldResult.backup.map(function(item) { return item.zodiac; });
+
+    var allMain = newMain.slice();
+    var allBackup = newBackup.concat(oldMain).concat(oldBackup);
+
+    var seen = {};
+    var dedupedBackup = [];
+    allBackup.forEach(function(z) {
+      if (allMain.indexOf(z) === -1 && !seen[z]) {
+        seen[z] = true;
+        dedupedBackup.push(z);
+      }
+    });
+
+    var records = Storage.getGiongBacktestRecords();
+    records = Business._deduplicateByExpect(records);
+    records = Business._cleanInvalidRecords(records, expect);
+
+    if (expect && currentNum >= 1 && currentNum <= 12) {
+      var prevExpect = String(Number(expect) - 1);
+      var prevIndex = records.findIndex(function(r) {
+        return r.expect === prevExpect && r.actualResult === null;
+      });
+      if (prevIndex !== -1) {
+        var prevRecord = records[prevIndex];
+        prevRecord.actualResult = currentNum;
+        var mainHit = prevRecord.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+        var backupHit = prevRecord.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+        if (mainHit) {
+          prevRecord.isHit = true;
+          prevRecord.hitType = 'main';
+        } else if (backupHit) {
+          prevRecord.isHit = true;
+          prevRecord.hitType = 'backup';
+        } else {
+          prevRecord.isHit = false;
+          prevRecord.hitType = null;
+        }
+      }
+    }
+
+    if (expect) {
+      var existingIndex = records.findIndex(function(r) { return r.expect === expect; });
+      if (existingIndex !== -1) {
+        var exist = records[existingIndex];
+        var sameMain = JSON.stringify(exist.mainPredictions) === JSON.stringify(allMain);
+        var sameBackup = JSON.stringify(exist.backupPredictions) === JSON.stringify(dedupedBackup);
+        if (!sameMain || !sameBackup) {
+          exist.mainPredictions = allMain.slice();
+          exist.backupPredictions = dedupedBackup.slice();
+          exist.currentNum = currentNum;
+        }
+        Storage.saveGiongBacktestRecords(records);
+        return;
+      }
+    } else {
+      if (records.length > 0 && currentNum >= 1 && currentNum <= 12) {
+        var last = records[0];
+        if (last.actualResult === null) {
+          last.actualResult = currentNum;
+          var mh = last.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+          var bh = last.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+          if (mh) { last.isHit = true; last.hitType = 'main'; }
+          else if (bh) { last.isHit = true; last.hitType = 'backup'; }
+          else { last.isHit = false; last.hitType = null; }
+        }
+        Storage.saveGiongBacktestRecords(records);
+        return;
+      }
+    }
+
+    var now = new Date();
+    var newRecord = {
+      id: now.getTime(),
+      predictTime: now.toISOString(),
+      expect: expect || '',
+      mainPredictions: allMain.slice(),
+      backupPredictions: dedupedBackup.slice(),
+      currentNum: currentNum,
+      actualResult: null,
+      isHit: null,
+      hitType: null
+    };
+
+    records.unshift(newRecord);
+    if (records.length > 50) records = records.slice(0, 50);
+    Storage.saveGiongBacktestRecords(records);
+  },
+
+  calculateGiongBacktestStats: (latestExpect) => {
+    var records = Storage.getGiongBacktestRecords();
+    records = Business._deduplicateByExpect(records);
+    records = Business._cleanInvalidRecords(records, latestExpect);
+    if (latestExpect) Storage.saveGiongBacktestRecords(records);
+
+    var stats = {
+      totalRecords: records.length,
+      hitCount: 0,
+      mainHitCount: 0,
+      backupHitCount: 0,
+      missCount: 0,
+      pendingCount: 0,
+      recentRecords: [],
+      consecutiveHits: 0,
+      maxConsecutiveHits: 0,
+      hitRate: '0.0'
+    };
+
+    var validRecords = records.filter(function(r) { return r.isHit !== null; });
+    stats.pendingCount = records.length - validRecords.length;
+
+    validRecords.forEach(function(record) {
+      if (record.isHit) {
+        stats.hitCount++;
+        if (record.hitType === 'main') stats.mainHitCount++;
+        else if (record.hitType === 'backup') stats.backupHitCount++;
+      } else {
+        stats.missCount++;
+      }
+    });
+
+    var tempConsecutive = 0;
+    for (var i = validRecords.length - 1; i >= 0; i--) {
+      if (validRecords[i].isHit) {
+        tempConsecutive++;
+        if (tempConsecutive > stats.maxConsecutiveHits) stats.maxConsecutiveHits = tempConsecutive;
+      } else {
+        tempConsecutive = 0;
+      }
+    }
+
+    for (var j = 0; j < validRecords.length; j++) {
+      if (validRecords[j].isHit) stats.consecutiveHits++;
+      else break;
+    }
+
+    if (validRecords.length > 0) {
+      stats.hitRate = ((stats.hitCount / validRecords.length) * 100).toFixed(1);
+    }
+
+    stats.recentRecords = records.slice(0, 8).map(function(r) {
+      return {
+        id: r.id,
+        predictTime: r.predictTime,
+        expect: r.expect || '',
+        mainPredictions: r.mainPredictions,
+        backupPredictions: r.backupPredictions,
+        actualResult: r.actualResult ? BusinessGiong._toZodiac(r.actualResult) : null,
+        isHit: r.isHit,
+        hitType: r.hitType
+      };
+    });
+
     return stats;
   }
 };
