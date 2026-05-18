@@ -729,32 +729,14 @@ const Business = {
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
   },
 
-  initGiongTab: () => {
-    var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
+  initGiongTab: function() {
+    var historyData = State.get('historyData') || [];
+    if (!historyData.length) {
+      ViewZodiacPrediction.renderGiongDualChain(null);
+      return;
     }
-    if (!historyData || !historyData.length) return;
-
-    var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
-    ViewZodiacPrediction.renderFrequencyRating(freqResult);
-
-    var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
-    ViewZodiacPrediction.renderZoneAnalysis(patternResult);
-
-    if (freqResult && patternResult) {
-      var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
-      var nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
-      ViewZodiacPrediction.renderZoneRecommend(recommend, nextExpect);
-    }
-
-    ViewZodiacPrediction.renderZoneBacktestEmpty();
-    setTimeout(function() {
-      var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
-      if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
-    }, 150);
+    var result = BusinessGiong.predict(historyData);
+    ViewZodiacPrediction.renderGiongDualChain(result);
   },
 
   initDBAlgorithm: () => {
