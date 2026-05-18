@@ -73,96 +73,71 @@ const ViewZodiacPrediction = {
     ViewZodiacPrediction.initPredSwiper();
   },
 
+  _createSwiper: function(config) {
+    var w = document.getElementById(config.wrapperId);
+    if (!w || !w.offsetWidth) return;
+    if (w.dataset.swiperInit) return;
+    w.dataset.swiperInit = '1';
+    var cards = w.querySelectorAll(config.cardSelector);
+    if (!cards || !cards.length) return;
+    var idx = config.initialIndex || 0;
+    var total = cards.length;
+    var sx = 0, cx = 0, dragging = false, lastT = 0;
+
+    function slide(i, anim) {
+      if (i < 0) i = 0; if (i >= total) i = total - 1;
+      idx = i; w.style.transform = 'translateX(' + (-i * 100) + '%)';
+      if (anim !== false) w.style.transition = '';
+      var dc = document.getElementById(config.dotsId);
+      if (dc) {
+        var dots = dc.querySelectorAll('.' + config.dotClass);
+        dots.forEach(function(d, di) { d.classList.toggle('active', di === idx); });
+      }
+    }
+
+    function start(e) {
+      dragging = true; w.style.transition = 'none';
+      sx = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      cx = sx; lastT = Date.now();
+    }
+
+    function move(e) {
+      if (!dragging) return;
+      cx = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      lastT = Date.now();
+      var d = sx - cx;
+      w.style.transform = 'translateX(' + (-(idx * 100) - (d / w.offsetWidth * 100)) + '%)';
+    }
+
+    function end() {
+      if (!dragging) return; dragging = false; w.style.transition = '';
+      var d = sx - cx, ad = Math.abs(d);
+      var th = w.offsetWidth * 0.15, vel = ad / Math.max(Date.now() - lastT, 1);
+      if (ad > th || (ad > 20 && vel > 0.5)) {
+        if (d > 0 && idx < total - 1) slide(idx + 1);
+        else if (d < 0 && idx > 0) slide(idx - 1);
+        else slide(idx);
+      } else slide(idx);
+    }
+
+    w.addEventListener('touchstart', start, { passive: true });
+    w.addEventListener('touchmove', move, { passive: true });
+    w.addEventListener('touchend', end);
+    w.addEventListener('mousedown', start);
+    w.addEventListener('mousemove', move);
+    w.addEventListener('mouseup', end);
+    w.addEventListener('mouseleave', end);
+
+    if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
+    ViewZodiacPrediction[config.updateRef] = slide;
+    slide(idx);
+  },
+
   initPredSwiper: function() {
-    var wrapper = document.getElementById('zodiacPredSwiperWrapper');
-    if (!wrapper) return;
-
-    var cards = wrapper.querySelectorAll('.zodiac-pred-card');
-    if (!cards || cards.length === 0) return;
-
-    var currentIndex = 0;
-    var totalSlides = cards.length;
-    var startX = 0;
-    var currentX = 0;
-    var isDragging = false;
-
-    var DOTS_CONTAINER_ID = 'zodiacPredSwiperDots';
-    var DOT_CLASS = 'freq-swiper-dot';
-
-    function updateSlide(index, animate) {
-      if (index < 0) index = 0;
-      if (index >= totalSlides) index = totalSlides - 1;
-
-      currentIndex = index;
-      var translateX = -(index * 100);
-      wrapper.style.transform = 'translateX(' + translateX + '%)';
-
-      if (animate !== false) {
-        wrapper.style.transition = '';
-      }
-
-      var dotsContainer = document.getElementById(DOTS_CONTAINER_ID);
-      if (dotsContainer) {
-        var dots = dotsContainer.querySelectorAll('.' + DOT_CLASS);
-        dots.forEach(function(dot, idx) {
-          dot.classList.toggle('active', idx === currentIndex);
-        });
-      }
-    }
-
-    function handleTouchStart(e) {
-      isDragging = true;
-      wrapper.style.transition = 'none';
-      startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      currentX = startX;
-      lastMoveTime = Date.now();
-    }
-
-    var lastMoveTime = 0;
-
-    function handleTouchMove(e) {
-      if (!isDragging) return;
-      currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      lastMoveTime = Date.now();
-      var diff = startX - currentX;
-      var offsetPercent = -(currentIndex * 100) - (diff / wrapper.offsetWidth * 100);
-      wrapper.style.transform = 'translateX(' + offsetPercent + '%)';
-    }
-
-    function handleTouchEnd() {
-      if (!isDragging) return;
-      isDragging = false;
-      wrapper.style.transition = '';
-
-      var diff = startX - currentX;
-      var absDiff = Math.abs(diff);
-      var MIN_DISPLACEMENT = 20;
-      var threshold = wrapper.offsetWidth * 0.15;
-      var velocity = absDiff / Math.max(Date.now() - lastMoveTime, 1);
-
-      if (absDiff > threshold || (absDiff > MIN_DISPLACEMENT && velocity > 0.5)) {
-        if (diff > 0 && currentIndex < totalSlides - 1) {
-          updateSlide(currentIndex + 1);
-        } else if (diff < 0 && currentIndex > 0) {
-          updateSlide(currentIndex - 1);
-        } else {
-          updateSlide(currentIndex);
-        }
-      } else {
-        updateSlide(currentIndex);
-      }
-    }
-
-    wrapper.addEventListener('touchstart', handleTouchStart, { passive: true });
-    wrapper.addEventListener('touchmove', handleTouchMove, { passive: true });
-    wrapper.addEventListener('touchend', handleTouchEnd);
-
-    wrapper.addEventListener('mousedown', handleTouchStart);
-    wrapper.addEventListener('mousemove', handleTouchMove);
-    wrapper.addEventListener('mouseup', handleTouchEnd);
-    wrapper.addEventListener('mouseleave', handleTouchEnd);
-
-    ViewZodiacPrediction.predSwiperUpdate = updateSlide;
+    ViewZodiacPrediction._createSwiper({
+      wrapperId: 'zodiacPredSwiperWrapper', cardSelector: '.zodiac-pred-card',
+      dotsId: 'zodiacPredSwiperDots', dotClass: 'freq-swiper-dot', updateRef: 'predSwiperUpdate'
+    });
   },
 
   renderEmpty: function() {
@@ -351,10 +326,6 @@ const ViewZodiacPrediction = {
       var cachedCount = Storage.get(lastCountKey);
       if (cachedCount) lastCountMap = cachedCount;
 
-      console.log('[Badge颜色] ' + period.label + ' ================================');
-      console.log('[Badge颜色] 上次开出位置:', JSON.stringify(lastAppearPosMap));
-      console.log('[Badge颜色] 上次count:', JSON.stringify(lastCountMap));
-
       var newZoneMap = {};
       var newAppearPosMap = {};
       var newCountMap = {};
@@ -407,15 +378,7 @@ const ViewZodiacPrediction = {
           var missClass = zoneColors[prevZone] || '';
           var badgeClass = zoneColors[appearPosForBadge] || '';
           newZoneMap[item.zodiac] = currentZone;
-          
-          if (item.zodiac === '羊' || item.zodiac === '马' || item.zodiac === '牛' || item.zodiac === '龙') {
-            console.log('[Badge颜色] ' + item.zodiac + ':');
-            console.log('   当前区=' + currentZone + ', 上次渲染区=' + prevZone);
-            console.log('   lastCount=' + lastCount + ', currCount=' + currCount + ', hasNewDraw=' + hasNewDraw);
-            console.log('   上次开出区(lastAppearPos)=' + lastAppearPos + ' → 新值=' + newAppearPosMap[item.zodiac]);
-            console.log('   最终badge颜色=' + badgeClass + '(' + appearPosForBadge + ')');
-          }
-          
+
           var dropArrow = (item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
           html += '<div class="zone-zod-card">';
           html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + dropArrow + '</div>';
@@ -444,9 +407,6 @@ const ViewZodiacPrediction = {
       
       Storage.set(appearPosKey, newAppearPosMap);
       Storage.set(lastCountKey, newCountMap);
-
-      console.log('[Badge颜色] ' + period.label + ' 本次保存的lastAppearPosMap:', JSON.stringify(newAppearPosMap));
-      console.log('[Badge颜色] ' + period.label + ' 本次保存的newCountMap:', JSON.stringify(newCountMap));
       });
 
     html += '</div>';
@@ -479,14 +439,13 @@ const ViewZodiacPrediction = {
     ];
 
     var zoneColors = {
-      '顶峰区': 'zone-peak',
-      '高频区': 'zone-high',
-      '中频区': 'zone-mid',
-      '低平区': 'zone-low',
-      '等待区': 'zone-wait'
-    };
-
-    var zoneLabels = ['等待区', '低频区', '中频区', '高频区', '顶峰区'];
+        '顶峰区': 'zone-peak',
+        '高频区': 'zone-high',
+        '中频区': 'zone-mid',
+        '低频区': 'zone-low',
+        '等待区': 'zone-wait'
+      };
+      var zoneLabels = ['等待区', '低频区', '中频区', '高频区', '顶峰区'];
 
     var html = '';
     html += '<div class="analysis-section-title">历史区域概率分析</div>';
@@ -1177,193 +1136,19 @@ const ViewZodiacPrediction = {
   },
 
   initFreqSwiper: function() {
-    var wrapper = document.getElementById('freqSwiperWrapper');
-    if (!wrapper) return;
-
-    var cards = wrapper.querySelectorAll('.freq-card');
-    if (!cards || cards.length === 0) return;
-
-    var currentIndex = 0;
-    var totalSlides = cards.length;
-    var startX = 0;
-    var currentX = 0;
-    var isDragging = false;
-    var lastMoveTime = 0;
-
-    var DOTS_CONTAINER_ID = 'freqSwiperDots';
-    var DOT_CLASS = 'freq-swiper-dot';
-
-    function updateSlide(index, animate) {
-      if (index < 0) index = 0;
-      if (index >= totalSlides) index = totalSlides - 1;
-
-      currentIndex = index;
-      var translateX = -(index * 100);
-      wrapper.style.transform = 'translateX(' + translateX + '%)';
-
-      if (animate !== false) {
-        wrapper.style.transition = '';
-      }
-
-      var dotsContainer = document.getElementById(DOTS_CONTAINER_ID);
-      if (dotsContainer) {
-        var dots = dotsContainer.querySelectorAll('.' + DOT_CLASS);
-        dots.forEach(function(dot, idx) {
-          dot.classList.toggle('active', idx === currentIndex);
-        });
-      }
-    }
-
-    function handleTouchStart(e) {
-      isDragging = true;
-      wrapper.style.transition = 'none';
-      startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      currentX = startX;
-      lastMoveTime = Date.now();
-    }
-
-    function handleTouchMove(e) {
-      if (!isDragging) return;
-      currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      lastMoveTime = Date.now();
-      var diff = startX - currentX;
-      var offsetPercent = -(currentIndex * 100) - (diff / wrapper.offsetWidth * 100);
-      wrapper.style.transform = 'translateX(' + offsetPercent + '%)';
-    }
-
-    function handleTouchEnd() {
-      if (!isDragging) return;
-      isDragging = false;
-      wrapper.style.transition = '';
-
-      var diff = startX - currentX;
-      var absDiff = Math.abs(diff);
-      var MIN_DISPLACEMENT = 20;
-      var threshold = wrapper.offsetWidth * 0.15;
-      var velocity = absDiff / Math.max(Date.now() - lastMoveTime, 1);
-
-      if (absDiff > threshold || (absDiff > MIN_DISPLACEMENT && velocity > 0.5)) {
-        if (diff > 0 && currentIndex < totalSlides - 1) {
-          updateSlide(currentIndex + 1);
-        } else if (diff < 0 && currentIndex > 0) {
-          updateSlide(currentIndex - 1);
-        } else {
-          updateSlide(currentIndex);
-        }
-      } else {
-        updateSlide(currentIndex);
-      }
-    }
-
-    wrapper.addEventListener('touchstart', handleTouchStart, { passive: true });
-    wrapper.addEventListener('touchmove', handleTouchMove, { passive: true });
-    wrapper.addEventListener('touchend', handleTouchEnd);
-
-    wrapper.addEventListener('mousedown', handleTouchStart);
-    wrapper.addEventListener('mousemove', handleTouchMove);
-    wrapper.addEventListener('mouseup', handleTouchEnd);
-    wrapper.addEventListener('mouseleave', handleTouchEnd);
-
-    wrapper.setAttribute('data-freq-current', '0');
-
-    ViewZodiacPrediction.freqSwiperUpdate = updateSlide;
-
-    updateSlide(0);
+    ViewZodiacPrediction._createSwiper({
+      wrapperId: 'freqSwiperWrapper', cardSelector: '.freq-card',
+      dotsId: 'freqSwiperDots', dotClass: 'freq-swiper-dot',
+      updateRef: 'freqSwiperUpdate', dataAttr: ['data-freq-current', '0']
+    });
   },
 
   initZoneSwiper: function() {
-    var wrapper = document.getElementById('zoneSwiperWrapper');
-    if (!wrapper) return;
-
-    var cards = wrapper.querySelectorAll('.freq-section');
-    if (!cards || cards.length === 0) return;
-
-    var currentIndex = 0;
-    var totalSlides = cards.length;
-    var startX = 0;
-    var currentX = 0;
-    var isDragging = false;
-    var lastMoveTime = 0;
-
-    var DOTS_CONTAINER_ID = 'zoneSwiperDots';
-    var DOT_CLASS = 'zone-swiper-dot';
-
-    function updateSlide(index, animate) {
-      if (index < 0) index = 0;
-      if (index >= totalSlides) index = totalSlides - 1;
-
-      currentIndex = index;
-      var translateX = -(index * 100);
-      wrapper.style.transform = 'translateX(' + translateX + '%)';
-
-      if (animate !== false) {
-        wrapper.style.transition = '';
-      }
-
-      var dotsContainer = document.getElementById(DOTS_CONTAINER_ID);
-      if (dotsContainer) {
-        var dots = dotsContainer.querySelectorAll('.' + DOT_CLASS);
-        dots.forEach(function(dot, idx) {
-          dot.classList.toggle('active', idx === currentIndex);
-        });
-      }
-    }
-
-    function handleTouchStart(e) {
-      isDragging = true;
-      wrapper.style.transition = 'none';
-      startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      currentX = startX;
-      lastMoveTime = Date.now();
-    }
-
-    function handleTouchMove(e) {
-      if (!isDragging) return;
-      currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-      lastMoveTime = Date.now();
-      var diff = startX - currentX;
-      var offsetPercent = -(currentIndex * 100) - (diff / wrapper.offsetWidth * 100);
-      wrapper.style.transform = 'translateX(' + offsetPercent + '%)';
-    }
-
-    function handleTouchEnd() {
-      if (!isDragging) return;
-      isDragging = false;
-      wrapper.style.transition = '';
-
-      var diff = startX - currentX;
-      var absDiff = Math.abs(diff);
-      var MIN_DISPLACEMENT = 20;
-      var threshold = wrapper.offsetWidth * 0.15;
-      var velocity = absDiff / Math.max(Date.now() - lastMoveTime, 1);
-
-      if (absDiff > threshold || (absDiff > MIN_DISPLACEMENT && velocity > 0.5)) {
-        if (diff > 0 && currentIndex < totalSlides - 1) {
-          updateSlide(currentIndex + 1);
-        } else if (diff < 0 && currentIndex > 0) {
-          updateSlide(currentIndex - 1);
-        } else {
-          updateSlide(currentIndex);
-        }
-      } else {
-        updateSlide(currentIndex);
-      }
-    }
-
-    wrapper.addEventListener('touchstart', handleTouchStart, { passive: true });
-    wrapper.addEventListener('touchmove', handleTouchMove, { passive: true });
-    wrapper.addEventListener('touchend', handleTouchEnd);
-
-    wrapper.addEventListener('mousedown', handleTouchStart);
-    wrapper.addEventListener('mousemove', handleTouchMove);
-    wrapper.addEventListener('mouseup', handleTouchEnd);
-    wrapper.addEventListener('mouseleave', handleTouchEnd);
-
-    wrapper.setAttribute('data-zone-current', '0');
-
-    ViewZodiacPrediction.zoneSwiperUpdate = updateSlide;
-
-    updateSlide(0);
+    ViewZodiacPrediction._createSwiper({
+      wrapperId: 'zoneSwiperWrapper', cardSelector: '.freq-section',
+      dotsId: 'zoneSwiperDots', dotClass: 'zone-swiper-dot',
+      updateRef: 'zoneSwiperUpdate', dataAttr: ['data-zone-current', '0']
+    });
   },
 
   zoneSwiperUpdate: null,

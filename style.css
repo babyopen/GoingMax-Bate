@@ -103,25 +103,6 @@
     background: rgba(255, 255, 255, 0.06);
     color: rgba(255, 255, 255, 0.28);
   }
-  .recommend-card.rank-gold {
-    background: #FFF8D0;
-    border-color: #FFE44D;
-  }
-  .recommend-card.rank-gold .recommend-zodiac-name {
-    color: #4A3C00;
-  }
-  .recommend-card.rank-gold .recommend-score-tag {
-    background: rgba(74, 60, 0, 0.1);
-    color: #8B7300;
-  }
-  .recommend-card.rank-silver {
-    background: var(--card);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-  .recommend-card.rank-bronze {
-    background: var(--card);
-    border-color: var(--border);
-  }
   /* DB算法面板暗色适配 */
   .db-card {
     background: rgba(255, 255, 255, 0.08);
@@ -416,17 +397,23 @@ body{
     gap:6px;
   }
 }
+@media (max-width: 360px) {
+  .exclude-grid{
+    grid-template-columns:repeat(6,1fr);
+    gap:5px;
+  }
+}
 @media (max-width: 320px) {
   .exclude-grid{
-    grid-template-columns:repeat(5,1fr);
-    gap:5px;
+    grid-template-columns:repeat(6,1fr);
+    gap:4px;
   }
 }
 @media (orientation:landscape) and (max-height:500px) {
   .exclude-grid{
-    grid-template-columns:repeat(7,1fr);
-    gap:6px;
-    margin:6px 0;
+    grid-template-columns:repeat(10,1fr);
+    gap:5px;
+    margin:4px 0;
   }
   .exclude-tag{
     font-size:11px;
@@ -434,11 +421,12 @@ body{
 }
 @media (orientation:landscape) and (max-height:400px) {
   .exclude-grid{
-    grid-template-columns:repeat(7,1fr);
-    gap:4px;
+    grid-template-columns:repeat(12,1fr);
+    gap:3px;
   }
   .exclude-tag{
-    font-size:10px;
+    font-size:9px;
+    border-radius:8px;
   }
 }
 .exclude-tag{
@@ -452,11 +440,22 @@ body{
   touch-action:manipulation;
   -webkit-user-select:none;
   user-select:none;
-  role:checkbox;
-  tabindex:0;
+  font-size:13px;
 }
 .exclude-tag.excluded{background:var(--danger);color:#FFFFFF}
 .exclude-tag:active{transform:scale(0.95)}
+@supports not (aspect-ratio: 1/1) {
+  .exclude-tag{
+    overflow:hidden;
+  }
+  .exclude-tag::before{
+    content:'';
+    display:block;
+    padding-bottom:100%;
+    grid-row:1;
+    grid-column:1;
+  }
+}
 .exclude-header{
   display:flex;
   justify-content:space-between;
@@ -2348,12 +2347,6 @@ input[type="checkbox"]{
 }
 
 /* 生肖预测评分模块 */
-.zodiac-prediction-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(78px, 22vw, 100px), 1fr));
-  gap: clamp(8px, 2vw, 12px);
-}
-
 .zodiac-prediction-card {
   display: flex;
   flex-direction: column;
@@ -3489,10 +3482,6 @@ input[type="checkbox"]{
   padding: 4px 8px;
   line-height: 1;
   transition: color 0.2s;
-}
-
-.backtest-modal-close:hover {
-  color: var(--text);
 }
 
 .backtest-modal-body {

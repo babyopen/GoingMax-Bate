@@ -88,7 +88,7 @@ const Business = {
     if(typeof GIONGBETA_INPUT_MODAL !== 'undefined' && GIONGBETA_INPUT_MODAL.show){
       GIONGBETA_INPUT_MODAL.show('批量排除号码', '输入要排除的号码，空格/逗号/顿号/引号/竖线/点/横线分隔', '', (input) => {
         if(!input) return;
-        const nums = input.split(/[\s,，、。"'|-]+/).map(Number).filter(num => num >=1 && num <=49);
+        const nums = input.split(/[\s,，、。."'|-]+/).map(Number).filter(num => num >=1 && num <=49);
         if(nums.length === 0) {
           Toast.show('请输入有效的号码');
           return;

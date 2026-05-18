@@ -60,8 +60,9 @@ const EventBinder = {
       customNumCount.addEventListener('input', function() {
         const val = this.value.trim();
         if(val && !isNaN(val) && Number(val) >= 1 && Number(val) <= 49) {
+          const curState = StateManager.getState();
           const newAnalysis = { 
-            ...StateManager._state.analysis, 
+            ...curState.analysis, 
             selectedNumCount: Number(val)
           };
           StateManager.setState({ analysis: newAnalysis }, false);
@@ -118,13 +119,13 @@ const EventBinder = {
     }
 
     // 4. 快捷导航开关
-    if(DOM.navToggle.contains(target)){
+    if(DOM.navToggle && DOM.navToggle.contains(target)){
       Business.toggleQuickNav();
       return;
     }
 
     // 5. 返回顶部
-    if(target === DOM.backTopBtn){
+    if(DOM.backTopBtn && target === DOM.backTopBtn){
       Business.backToTop();
       return;
     }
@@ -139,59 +140,59 @@ const EventBinder = {
       
       // 分组操作
       if(action === CONFIG.ACTIONS.RESET_GROUP) groups.forEach(g => StateManager.resetGroup(g));
-      if(action === CONFIG.ACTIONS.SELECT_GROUP) groups.forEach(g => StateManager.selectGroup(g));
-      if(action === CONFIG.ACTIONS.INVERT_GROUP) groups.forEach(g => StateManager.invertGroup(g));
-      if(action === CONFIG.ACTIONS.CLEAR_GROUP) groups.forEach(g => StateManager.clearGroup(g));
-      if(action === CONFIG.ACTIONS.MARK_GROUP) groups.forEach(g => StateManager.markGroup(g));
-      if(action === CONFIG.ACTIONS.LOCK_GROUP) groups.forEach(g => StateManager.lockGroup(g));
+      else if(action === CONFIG.ACTIONS.SELECT_GROUP) groups.forEach(g => StateManager.selectGroup(g));
+      else if(action === CONFIG.ACTIONS.INVERT_GROUP) groups.forEach(g => StateManager.invertGroup(g));
+      else if(action === CONFIG.ACTIONS.CLEAR_GROUP) groups.forEach(g => StateManager.clearGroup(g));
+      else if(action === CONFIG.ACTIONS.MARK_GROUP) groups.forEach(g => StateManager.markGroup(g));
+      else if(action === CONFIG.ACTIONS.LOCK_GROUP) groups.forEach(g => StateManager.lockGroup(g));
       // 全局操作
-      if(action === CONFIG.ACTIONS.SELECT_ALL) Filter.selectAllFilters();
-      if(action === CONFIG.ACTIONS.CLEAR_ALL) Filter.clearAllFilters();
-      if(action === CONFIG.ACTIONS.SAVE_FILTER) Business.saveFilterPrompt();
-      if(action === CONFIG.ACTIONS.CLEAR_ALL_SAVED) Business.clearAllSavedFilters();
+      else if(action === CONFIG.ACTIONS.SELECT_ALL) Filter.selectAllFilters();
+      else if(action === CONFIG.ACTIONS.CLEAR_ALL) Filter.clearAllFilters();
+      else if(action === CONFIG.ACTIONS.SAVE_FILTER) Business.saveFilterPrompt();
+      else if(action === CONFIG.ACTIONS.CLEAR_ALL_SAVED) Business.clearAllSavedFilters();
       // 排除号码操作
-      if(action === CONFIG.ACTIONS.INVERT_EXCLUDE) Business.invertExclude();
-      if(action === CONFIG.ACTIONS.UNDO_EXCLUDE) Business.undoExclude();
-      if(action === CONFIG.ACTIONS.BATCH_EXCLUDE) Business.batchExcludePrompt();
-      if(action === CONFIG.ACTIONS.CLEAR_EXCLUDE) Business.clearExclude();
+      else if(action === CONFIG.ACTIONS.INVERT_EXCLUDE) Business.invertExclude();
+      else if(action === CONFIG.ACTIONS.UNDO_EXCLUDE) Business.undoExclude();
+      else if(action === CONFIG.ACTIONS.BATCH_EXCLUDE) Business.batchExcludePrompt();
+      else if(action === CONFIG.ACTIONS.CLEAR_EXCLUDE) Business.clearExclude();
       // 方案操作
-      if(action === CONFIG.ACTIONS.TOGGLE_SHOW_ALL) Business.toggleShowAllFilters();
-      if(action === CONFIG.ACTIONS.LOAD_FILTER) Business.loadFilter(Number(index));
-      if(action === CONFIG.ACTIONS.RENAME_FILTER) Business.renameFilter(Number(index));
-      if(action === CONFIG.ACTIONS.COPY_FILTER) Business.copyFilterNums(Number(index));
-      if(action === CONFIG.ACTIONS.TOP_FILTER) Business.topFilter(Number(index));
-      if(action === CONFIG.ACTIONS.DELETE_FILTER) Business.deleteFilter(Number(index));
+      else if(action === CONFIG.ACTIONS.TOGGLE_SHOW_ALL) Business.toggleShowAllFilters();
+      else if(action === CONFIG.ACTIONS.LOAD_FILTER) Business.loadFilter(Number(index));
+      else if(action === CONFIG.ACTIONS.RENAME_FILTER) Business.renameFilter(Number(index));
+      else if(action === CONFIG.ACTIONS.COPY_FILTER) Business.copyFilterNums(Number(index));
+      else if(action === CONFIG.ACTIONS.TOP_FILTER) Business.topFilter(Number(index));
+      else if(action === CONFIG.ACTIONS.DELETE_FILTER) Business.deleteFilter(Number(index));
       // 导航操作
-      if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(actionBtn.dataset.index));
+      else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
-      if(action === 'refreshHistory') Business.refreshHistory();
-      if(action === 'syncAnalyze') Business.syncAnalyze();
-      if(action === 'syncZodiacAnalyze') Business.syncZodiacAnalyze();
-      if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
-      if(action === 'loadMoreHistory') Business.loadMoreHistory();
-      if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
-      if(action === 'toggleDBDetail') ViewZodiacPrediction.toggleDBDetail();
-      if(action === 'showBacktestDetail') {
+      else if(action === 'refreshHistory') Business.refreshHistory();
+      else if(action === 'syncAnalyze') Business.syncAnalyze();
+      else if(action === 'syncZodiacAnalyze') Business.syncZodiacAnalyze();
+      else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
+      else if(action === 'loadMoreHistory') Business.loadMoreHistory();
+      else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
+      else if(action === 'toggleDBDetail') ViewZodiacPrediction.toggleDBDetail();
+      else if(action === 'showBacktestDetail') {
         var modal = document.getElementById('backtestDetailModal');
         if (modal) modal.style.display = 'flex';
       }
-      if(action === 'closeBacktestDetail') {
+      else if(action === 'closeBacktestDetail') {
         var modal = document.getElementById('backtestDetailModal');
         if (modal) modal.style.display = 'none';
       }
-      if(action === 'switchFreqCard') {
+      else if(action === 'switchFreqCard') {
         var freqIndex = Number(actionBtn.dataset.freqIndex);
         if (ViewZodiacPrediction.freqSwiperUpdate) {
           ViewZodiacPrediction.freqSwiperUpdate(freqIndex);
         }
       }
-      if(action === 'switchPredCard') {
+      else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
         if (ViewZodiacPrediction.predSwiperUpdate) {
           ViewZodiacPrediction.predSwiperUpdate(predIndex);
         }
       }
-      if(action === 'switchZoneAnalysis') {
+      else if(action === 'switchZoneAnalysis') {
         var zoneIndex = Number(actionBtn.dataset.zoneIndex);
         if (ViewZodiacPrediction.zoneSwiperUpdate) {
           ViewZodiacPrediction.zoneSwiperUpdate(zoneIndex);
