@@ -82,12 +82,17 @@ const ViewZodiacPrediction = {
     if (!cards || !cards.length) return;
     var idx = config.initialIndex || 0;
     var total = cards.length;
-    var sx = 0, cx = 0, dragging = false, lastT = 0;
+    var sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
 
     function slide(i, anim) {
       if (i < 0) i = 0; if (i >= total) i = total - 1;
-      idx = i; w.style.transform = 'translateX(' + (-i * 100) + '%)';
-      if (anim !== false) w.style.transition = '';
+      idx = i;
+      if (anim !== false) {
+        w.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      } else {
+        w.style.transition = 'none';
+      }
+      w.style.transform = 'translateX(' + (-i * 100) + '%)';
       var dc = document.getElementById(config.dotsId);
       if (dc) {
         var dots = dc.querySelectorAll('.' + config.dotClass);
@@ -99,39 +104,66 @@ const ViewZodiacPrediction = {
 
     function start(e) {
       if (e.type === 'mousedown' && isTouchDevice) return;
-      dragging = true; w.style.transition = 'none';
+      dragging = true;
+      w.style.transition = 'none';
       sx = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-      cx = sx; lastT = Date.now();
+      cx = sx;
+      lastX = sx;
+      lastY = e.type === 'mousedown' ? 0 : e.touches[0].clientY;
+      lastT = Date.now();
     }
 
     function move(e) {
       if (!dragging) return;
-      if (e.type === 'touchmove') e.preventDefault();
+      if (e.type === 'touchmove' && e.cancelable !== false) {
+        var nowX = e.touches[0].clientX;
+        var nowY = e.touches[0].clientY;
+        var dx = Math.abs(nowX - lastX);
+        var dy = Math.abs(nowY - lastY);
+        if (dx > dy) {
+          e.preventDefault();
+        }
+        lastX = nowX;
+        lastY = nowY;
+      }
       cx = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+      lastX = cx;
       lastT = Date.now();
       var d = sx - cx;
       w.style.transform = 'translateX(' + (-(idx * 100) - (d / w.offsetWidth * 100)) + '%)';
     }
 
     function end(e) {
-      if (!dragging) return; dragging = false; w.style.transition = '';
+      if (!dragging) return;
+      dragging = false;
       if (e.type === 'touchend' && e.changedTouches && e.changedTouches.length) {
         cx = e.changedTouches[0].clientX;
       }
       var d = sx - cx, ad = Math.abs(d);
       var cardW = w.offsetWidth / total;
-      var th = cardW * 0.08, vel = ad / Math.max(Date.now() - lastT, 1);
-      if (ad > th || (ad > cardW * 0.04 && vel > 0.3)) {
-        if (d > 0 && idx < total - 1) slide(idx + 1);
-        else if (d < 0 && idx > 0) slide(idx - 1);
-        else slide(idx);
-      } else slide(idx);
+      var now = Date.now();
+      var elapsed = Math.max(now - lastT, 1);
+      var vel = ad / elapsed;
+
+      var swipeThreshold = cardW * 0.04;
+      var velThreshold = 0.15;
+
+      if (ad > swipeThreshold || (ad > cardW * 0.02 && vel > velThreshold)) {
+        w.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        if (d > 0 && idx < total - 1) {
+          idx++;
+        } else if (d < 0 && idx > 0) {
+          idx--;
+        }
+      }
+
+      slide(idx, false);
     }
 
     w.addEventListener('touchstart', start, { passive: true });
     w.addEventListener('touchmove', move, { passive: false });
-    w.addEventListener('touchend', end);
-    w.addEventListener('touchcancel', end);
+    w.addEventListener('touchend', end, { passive: true });
+    w.addEventListener('touchcancel', end, { passive: true });
     if (!isTouchDevice) {
       w.addEventListener('mousedown', start);
       w.addEventListener('mousemove', move);

@@ -47,62 +47,6 @@
     --overlay:rgba(0,0,0,0.85);
     --bg-secondary:#2C2C2E;
   }
-  /* 生肖预测卡片暗色适配 */
-  .zodiac-prediction-card.is-selected {
-    background: #FFF8D0;
-    border-color: #FFE44D;
-    box-shadow: 0 4px 24px rgba(255, 228, 77, 0.35);
-  }
-  .zodiac-prediction-card.is-selected .zodiac-card-zodiac {
-    color: #4A3C00;
-  }
-  .zodiac-prediction-card.is-selected .zodiac-card-score {
-    color: #4A3C00;
-  }
-  .zodiac-card-tag.tag-selected {
-    background: rgba(74, 60, 0, 0.1);
-    color: #4A3C00;
-  }
-  .zodiac-prediction-card.is-featured {
-    background: var(--card);
-    border-color: var(--border);
-  }
-  .zodiac-prediction-card.is-featured .zodiac-card-zodiac,
-  .zodiac-prediction-card.is-featured .zodiac-card-score {
-    color: var(--text);
-  }
-  .zodiac-card-tag.tag-featured {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.25);
-  }
-  .zodiac-prediction-card.is-secondary {
-    background: var(--card);
-    border-color: var(--border);
-  }
-  .zodiac-prediction-card.is-secondary .zodiac-card-zodiac,
-  .zodiac-prediction-card.is-secondary .zodiac-card-score {
-    color: var(--text);
-  }
-  .zodiac-card-tag.tag-secondary-label {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.2);
-  }
-  .zodiac-card-tag.tag-default {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--sub-text);
-  }
-  .zodiac-card-tag.tag-hot {
-    background: rgba(255, 69, 58, 0.18);
-    color: #FF6B5C;
-  }
-  .zodiac-card-tag.tag-warm {
-    background: rgba(255, 179, 80, 0.15);
-    color: #FFB350;
-  }
-  .zodiac-card-tag.tag-cold {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.28);
-  }
   /* DB算法面板暗色适配 */
   .db-card {
     background: rgba(255, 255, 255, 0.08);
@@ -142,20 +86,6 @@
   }
   .db-card-item .db-card-name {
     color: var(--text);
-  }
-  .db-number-circle {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  }
-  .db-main-section .db-number-circle {
-    background: linear-gradient(135deg, #0A84FF, #5856D6);
-  }
-  .db-backup-section .db-number-circle {
-    background: linear-gradient(135deg, rgba(10,132,255,0.25), rgba(88,86,214,0.25));
-    border: 2px solid rgba(0,122,255,0.3);
-    color: #0A84FF;
-  }
-  .db-number-score {
-    color: var(--sub-text);
   }
   .db-divider {
     background: rgba(255,255,255,0.08);
@@ -360,7 +290,6 @@ body{
   align-items:center;
   gap:2px;
   flex-shrink:0;
-  role:listitem;
 }
 .num-ball{
   width:var(--ball-size);
@@ -474,7 +403,6 @@ body{
   background:var(--bg-secondary);
   padding:10px 12px;
   border-radius:12px;
-  role:listitem;
 }
 .filter-row{
   display:flex;
@@ -566,7 +494,6 @@ body{
   touch-action:manipulation;
   -webkit-user-select:none;
   user-select:none;
-  tabindex:0;
 }
 .nav-tab:active{
   background:var(--nav-item-active-bg);
@@ -597,7 +524,6 @@ body{
   touch-action:manipulation;
   -webkit-user-select:none;
   user-select:none;
-  tabindex:0;
 }
 .back-top-btn.show{
   opacity:1;
@@ -696,7 +622,6 @@ body{
     touch-action:manipulation;
     -webkit-user-select:none;
     user-select:none;
-    tabindex:0;
     position:relative;
   }
 .bottom-nav-item span{
@@ -1296,13 +1221,6 @@ input[type="checkbox"]{
   justify-items: center;
 }
 
-.db-number-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
 .db-card-item {
   display: flex;
   flex-direction: column;
@@ -1378,35 +1296,6 @@ input[type="checkbox"]{
   font-weight: 700;
   line-height: 1.2;
   color: var(--text);
-}
-
-.db-number-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
-  box-shadow: var(--shadow-sm);
-}
-
-.db-main-section .db-number-circle {
-  background: linear-gradient(135deg, #007AFF, #5856D6);
-  color: #fff;
-}
-
-.db-backup-section .db-number-circle {
-  background: linear-gradient(135deg, rgba(0,122,255,0.12), rgba(88,86,214,0.12));
-  color: #007AFF;
-  border: 2px solid rgba(0,122,255,0.2);
-}
-
-.db-number-score {
-  font-size: 11px;
-  color: var(--sub-text);
-  font-weight: 500;
 }
 
 .db-divider {
@@ -1651,11 +1540,6 @@ input[type="checkbox"]{
 }
 
 @media (max-width: 375px) {
-  .db-number-circle {
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
-  }
   .db-heat-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
@@ -1682,11 +1566,6 @@ input[type="checkbox"]{
 }
 
 @media (max-width: 320px) {
-  .db-number-circle {
-    width: 42px;
-    height: 42px;
-    font-size: 16px;
-  }
   .db-number-grid {
     gap: 8px;
   }
@@ -1918,16 +1797,6 @@ input[type="checkbox"]{
 
   .db-detail-toggle:active {
     background: rgba(255,255,255,0.06);
-  }
-
-  .db-main-section .db-number-circle {
-    background: var(--primary);
-  }
-
-  .db-backup-section .db-number-circle {
-    background: rgba(10,132,255,0.15);
-    color: var(--primary);
-    border-color: rgba(10,132,255,0.25);
   }
 
   .db-heat-tag.is-hot {
@@ -2544,21 +2413,18 @@ input[type="checkbox"]{
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
-
 .history-item:last-child {
   border-bottom: none;
 }
-
+.history-item .ball-group {
+  justify-content: flex-start;
+  gap: clamp(6px, 1.5vw, 8px);
+}
 .history-expect {
   font-size: 14px;
   color: var(--sub-text);
   margin-bottom: 8px;
   text-align: left;
-}
-
-.history-item .ball-group {
-  justify-content: flex-start;
-  gap: 8px;
 }
 
 /* 生肖关联专用样式 */
@@ -2597,32 +2463,6 @@ input[type="checkbox"]{
   grid-template-columns: repeat(3, 1fr) !important;
 }
 
-.data-item-z {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 10px 6px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text);
-}
-
-.data-item-z.hot {
-  background: rgba(19, 166, 98, 0.1);
-  color: #13a662;
-  font-weight: 700;
-}
-
-.data-item-z.cold {
-  background: rgba(255, 59, 48, 0.1);
-  color: var(--danger);
-  font-weight: 700;
-}
-
-.data-item-z.warm {
-  background: rgba(250, 140, 22, 0.1);
-  color: #fa8c16;
-}
-
 .follow-table-z {
   width: 100%;
   border-collapse: collapse;
@@ -2642,6 +2482,29 @@ input[type="checkbox"]{
   font-weight: 700;
 }
 
+.data-item-z {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text);
+}
+.data-item-z.hot {
+  background: rgba(19, 166, 98, 0.1);
+  color: #13a662;
+  font-weight: 700;
+}
+.data-item-z.cold {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+  font-weight: 700;
+}
+.data-item-z.warm {
+  background: rgba(250, 140, 22, 0.1);
+  color: #fa8c16;
+}
+
 .final-recommend-z {
   background: rgba(19, 166, 98, 0.1);
   border-radius: 12px;
@@ -2653,125 +2516,6 @@ input[type="checkbox"]{
   margin-top: 10px;
   word-break: break-all;
   line-height: 1.6;
-}
-
-/* 生肖预测评分模块 */
-.zodiac-prediction-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  padding: clamp(14px, 3vw, 20px) clamp(6px, 1.5vw, 12px) clamp(10px, 2.2vw, 16px);
-  border: 1px solid var(--border);
-  position: relative;
-  aspect-ratio: 1 / 1.18;
-}
-
-.zodiac-prediction-card.is-selected {
-  background: #FFF8D0;
-  border-color: #FFE44D;
-  box-shadow: 0 4px 24px rgba(255, 228, 77, 0.4);
-}
-
-.zodiac-prediction-card.is-featured {
-  background: var(--card);
-  border-color: var(--border);
-}
-
-.zodiac-prediction-card.is-secondary {
-  background: var(--card);
-  border-color: var(--border);
-}
-
-.zodiac-card-zodiac {
-  font-size: clamp(22px, 5vw, 30px);
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.zodiac-prediction-card.is-selected .zodiac-card-zodiac {
-  color: #4A3C00;
-}
-
-.zodiac-prediction-card.is-featured .zodiac-card-zodiac {
-  color: var(--text);
-}
-
-.zodiac-prediction-card.is-secondary .zodiac-card-zodiac {
-  color: var(--text);
-}
-
-.zodiac-card-score {
-  font-size: clamp(14px, 3vw, 20px);
-  font-weight: 700;
-  color: var(--text);
-  margin: clamp(4px, 1vw, 8px) 0 clamp(6px, 1.5vw, 10px);
-}
-
-.zodiac-prediction-card.is-selected .zodiac-card-score {
-  color: #4A3C00;
-}
-
-.zodiac-prediction-card.is-featured .zodiac-card-score {
-  color: var(--text);
-}
-
-.zodiac-prediction-card.is-secondary .zodiac-card-score {
-  color: var(--text);
-}
-
-.zodiac-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(3px, 0.8vw, 5px);
-  justify-content: center;
-}
-
-.zodiac-card-tag {
-  display: inline-block;
-  padding: clamp(2px, 0.5vw, 4px) clamp(6px, 1.5vw, 10px);
-  border-radius: 20px;
-  font-size: clamp(9px, 1.8vw, 11px);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.zodiac-card-tag.tag-selected {
-  background: rgba(74, 60, 0, 0.08);
-  color: #4A3C00;
-}
-
-.zodiac-card-tag.tag-featured {
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.3);
-}
-
-.zodiac-card-tag.tag-secondary-label {
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.25);
-}
-
-.zodiac-card-tag.tag-default {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--sub-text);
-}
-
-.zodiac-card-tag.tag-hot {
-  background: rgba(255, 69, 58, 0.18);
-  color: #FF453A;
-}
-
-.zodiac-card-tag.tag-warm {
-  background: rgba(255, 149, 0, 0.12);
-  color: #FF9500;
-}
-
-.zodiac-card-tag.tag-cold {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.25);
 }
 
 /* 回测追踪模块 */
@@ -3086,17 +2830,6 @@ input[type="checkbox"]{
 
 .freq-table tr:last-child td {
   border-bottom: none;
-}
-
-.freq-zod {
-  font-size: clamp(13px, 2.5vw, 16px);
-  font-weight: 700;
-}
-
-.freq-count {
-  font-size: clamp(11px, 2vw, 13px);
-  color: var(--primary);
-  font-weight: 600;
 }
 
 .freq-zone-tag {
