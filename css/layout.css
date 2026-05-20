@@ -157,7 +157,7 @@
   body{padding-bottom:calc(70px + var(--safe-bottom))}
   .analysis-item{min-width:clamp(50px,15vw,60px);padding:clamp(6px,2vw,10px) clamp(4px,1.5vw,8px)}
   .btn-mini{padding:4px 8px;font-size:11px}
-  .tag{padding:6px 10px;font-size:13px}
+  .tag{padding:8px 12px;font-size:14px;min-height:36px;min-width:40px}
   .card-body{padding:10px 16px 16px}
   .card-header{padding:14px 16px}
 }
