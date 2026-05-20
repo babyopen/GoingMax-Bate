@@ -193,11 +193,29 @@ const EventBinder = {
           ViewZodiacPrediction.freqSwiperUpdate(freqIndex);
         }
       }
+      else if(action === 'switchFreqTab') {
+        var freqKey = actionBtn.dataset.freqKey;
+        document.querySelectorAll('.freq-tab-btn').forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.freqKey === freqKey);
+        });
+        document.querySelectorAll('.freq-panel').forEach(function(panel) {
+          panel.style.display = panel.dataset.freqPanel === freqKey ? '' : 'none';
+        });
+      }
       else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
         if (ViewZodiacPrediction.predSwiperUpdate) {
           ViewZodiacPrediction.predSwiperUpdate(predIndex);
         }
+      }
+      else if(action === 'switchPredTab') {
+        var predTab = actionBtn.dataset.predTab;
+        document.querySelectorAll('#zodiacPredictionGrid .freq-tab-btn').forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.predTab === predTab);
+        });
+        document.querySelectorAll('#zodiacPredictionGrid .freq-panel').forEach(function(panel) {
+          panel.style.display = panel.dataset.predPanel === predTab ? '' : 'none';
+        });
       }
       else if(action === 'switchZoneAnalysis') {
         var zoneIndex = Number(actionBtn.dataset.zoneIndex);

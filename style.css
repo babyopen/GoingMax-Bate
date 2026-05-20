@@ -1221,6 +1221,12 @@ input[type="checkbox"]{
   justify-items: center;
 }
 
+@media (min-width: 768px) {
+  .db-number-grid {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  }
+}
+
 .db-card-item {
   display: flex;
   flex-direction: column;
@@ -2027,6 +2033,60 @@ input[type="checkbox"]{
 
 .giong-modal-chain {
   margin-bottom: 8px;
+}
+
+.freq-tabs-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 0;
+  justify-content: center;
+}
+
+.freq-tab-btn {
+  flex: 1;
+  max-width: 120px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sub-text);
+  background: rgba(120,120,128,0.08);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.freq-tab-btn.active {
+  color: #fff;
+  background: var(--primary);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .freq-tab-btn {
+    background: rgba(255,255,255,0.06);
+  }
+}
+
+.freq-panels-container {
+  padding-bottom: 0;
+}
+
+.zodiac-prediction-swiper .freq-panels-container,
+#zodiacPredictionGrid .freq-panels-container {
+  padding-bottom: 8px;
+}
+
+.zodiac-pred-tabs {
+  padding-bottom: 0;
+}
+
+#zodiacPredictPanel .card:first-child .card-body {
+  padding: 12px 20px 8px;
+}
+
+.freq-panel {
+  width: 100%;
 }
 
 .giong-chain-desc {
@@ -3028,15 +3088,24 @@ input[type="checkbox"]{
   flex-direction: column;
 }
 
-.zodiac-pred-card .zodiac-pred-grid {
-  flex: 1;
-  min-height: 0;
+.zodiac-pred-grid {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
   gap: clamp(8px, 1.5vw, 12px);
-  width: 100%;
   align-content: center;
+}
+
+@media (min-width: 768px) {
+  .zodiac-pred-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .zodiac-pred-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 
 .freq-swiper-dots {
@@ -3303,8 +3372,8 @@ input[type="checkbox"]{
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
-  min-height: 300px;
+  height: auto;
+  min-height: auto;
 }
 
 #zodiacPredictionGrid .zodiac-static-grid {

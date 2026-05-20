@@ -15,14 +15,13 @@ const ViewZodiacPrediction = {
     }
 
     var html = '';
-    html += '<div class="freq-swiper-container zodiac-prediction-swiper">';
-    html += '<div class="freq-swiper-wrapper" id="zodiacPredSwiperWrapper">';
+
+    html += '<div class="freq-panels-container">';
 
     var top6Cards = allCards.slice(0, 6);
     var bottom6Cards = allCards.slice(6, 12);
 
-    html += '<div class="freq-card zodiac-pred-card">';
-    html += '<div class="freq-card-title">推荐前6名</div>';
+    html += '<div class="freq-panel zodiac-pred-panel" data-pred-panel="top6">';
     html += '<div class="zodiac-pred-grid">';
     top6Cards.forEach(function(card, idx) {
       var rankNum = idx + 1;
@@ -43,8 +42,7 @@ const ViewZodiacPrediction = {
     html += '</div>';
     html += '</div>';
 
-    html += '<div class="freq-card zodiac-pred-card">';
-    html += '<div class="freq-card-title">推荐后6名</div>';
+    html += '<div class="freq-panel zodiac-pred-panel" data-pred-panel="bottom6" style="display:none;">';
     html += '<div class="zodiac-pred-grid">';
     bottom6Cards.forEach(function(card, idx) {
       var rankNum = idx + 7;
@@ -62,15 +60,13 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     html += '</div>';
-    html += '<div class="freq-swiper-dots" id="zodiacPredSwiperDots">';
-    html += '<span class="freq-swiper-dot active" data-pred-index="0" data-action="switchPredCard"></span>';
-    html += '<span class="freq-swiper-dot" data-pred-index="1" data-action="switchPredCard"></span>';
-    html += '</div>';
+
+    html += '<div class="freq-tabs-bar zodiac-pred-tabs">';
+    html += '<button class="freq-tab-btn active" data-pred-tab="top6" data-action="switchPredTab">推荐前6名</button>';
+    html += '<button class="freq-tab-btn" data-pred-tab="bottom6" data-action="switchPredTab">推荐后6名</button>';
     html += '</div>';
 
     grid.innerHTML = html;
-
-    ViewZodiacPrediction.initPredSwiper();
   },
 
   _createSwiper: function(config) {
@@ -368,13 +364,12 @@ const ViewZodiacPrediction = {
 
     var html = '';
 
-    html += '<div class="freq-swiper-container">';
-    html += '<div class="freq-swiper-wrapper" id="freqSwiperWrapper">';
+    html += '<div class="freq-panels-container" id="freqPanelsContainer">';
 
     periods.forEach(function(period) {
       var data = freqResult[period.key];
       if (!data) {
-        html += '<div class="freq-card"><div class="freq-card-title">' + period.label + '</div>';
+        html += '<div class="freq-panel" data-freq-panel="' + period.key + '" style="display:none;">';
         html += '<div class="empty-tip">数据不足</div></div>';
         return;
       }
@@ -406,8 +401,8 @@ const ViewZodiacPrediction = {
         newCountMap[item.zodiac] = item.count;
       });
 
-      html += '<div class="freq-card">';
-      html += '<div class="freq-card-title">' + period.label + '</div>';
+      var display = period.key === 'p12' ? '' : ' style="display:none;"';
+      html += '<div class="freq-panel" data-freq-panel="' + period.key + '"' + display + '>';
 
       zoneOrder.forEach(function(zone) {
         var items = grouped[zone];
@@ -426,9 +421,7 @@ const ViewZodiacPrediction = {
           var currCount = item.count;
           var lastAppearPos = lastAppearPosMap[item.zodiac];
           
-          var hasNewDraw = false;
           if (lastCount !== undefined && currCount > lastCount) {
-            hasNewDraw = true;
             newAppearPosMap[item.zodiac] = prevZone;
           } else if (lastCount === undefined && currCount > 0) {
             newAppearPosMap[item.zodiac] = currentZone;
@@ -476,20 +469,18 @@ const ViewZodiacPrediction = {
       
       Storage.set(appearPosKey, newAppearPosMap);
       Storage.set(lastCountKey, newCountMap);
-      });
+    });
 
     html += '</div>';
-    html += '<div class="freq-swiper-dots" id="freqSwiperDots">';
+
+    html += '<div class="freq-tabs-bar" id="freqTabsBar">';
     periods.forEach(function(period, idx) {
-      var activeClass = idx === 0 ? 'active' : '';
-      html += '<span class="freq-swiper-dot ' + activeClass + '" data-freq-index="' + idx + '" data-action="switchFreqCard"></span>';
+      var activeClass = idx === 0 ? ' active' : '';
+      html += '<button class="freq-tab-btn' + activeClass + '" data-freq-key="' + period.key + '" data-action="switchFreqTab">' + period.label + '</button>';
     });
-    html += '</div>';
     html += '</div>';
 
     grid.innerHTML = html;
-    
-    ViewZodiacPrediction.initFreqSwiper();
   },
 
   renderZoneAnalysis: function(patternResult) {
