@@ -1,0 +1,514 @@
+/* ===================================
+   card.css - 卡片组件样式
+   =================================== */
+
+/* 基础卡片 */
+.card{
+  background:var(--card);border-radius:var(--radius);margin-bottom:12px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.card-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px}
+.card-header h2{font-size:16px;font-weight:600}
+.card-body{padding:12px 20px 20px}
+
+/* 筛选方案列表 */
+.filter-save-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.filter-item{background:var(--bg-secondary);padding:10px 12px;border-radius:12px}
+.filter-row{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.filter-item-name{font-weight:600;font-size:11px;white-space:nowrap}
+.filter-preview{display:flex;gap:5px;max-width:100%;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.filter-preview::-webkit-scrollbar{height:4px}
+.filter-preview::-webkit-scrollbar-thumb{background:var(--sub-text);border-radius:2px;opacity:0.3}
+.filter-item-btns{display:flex;gap:6px;margin-top:8px}
+.filter-item-btns button{
+  flex:1;padding:6px;border-radius:10px;border:none;background:var(--bg);color:var(--primary);
+  font-size:12px;transition:opacity var(--anim-fast);touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+}
+.filter-item-btns button:active{opacity:0.6}
+.filter-item-btns .del{background:rgba(255,59,48,0.1);color:var(--danger)}
+.filter-expand{
+  text-align:center;padding:8px;color:var(--primary);cursor:pointer;font-size:14px;
+  background:var(--bg-secondary);border-radius:10px;margin-top:4px;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.filter-expand:active{opacity:0.6}
+
+/* 分析卡片 */
+.analysis-card{
+  background:var(--card);border-radius:var(--radius);padding:16px;
+  margin-bottom:12px;box-shadow:var(--shadow);
+}
+.analysis-card-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.analysis-card-title{
+  font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;
+}
+.analysis-card-title::before{content:"";width:4px;height:18px;background:var(--danger);border-radius:2px}
+.analysis-refresh-btn{
+  padding:6px 12px;border-radius:10px;border:none;background:var(--primary);color:#fff;
+  font-size:14px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.analysis-refresh-btn:active{opacity:0.7}
+
+/* 倒计时 */
+.countdown-small{text-align:center;font-size:12px;color:var(--danger);margin-top:6px}
+.countdown-small .num{font-family:monospace;font-weight:600;letter-spacing:0.5px}
+
+/* 球组 */
+.ball-group{
+  display:flex;align-items:flex-start;justify-content:center;gap:clamp(4px,2vw,12px);
+  margin:16px 0;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px;
+  -webkit-overflow-scrolling:touch;
+}
+.ball{
+  width:clamp(28px,8vw,44px);height:clamp(28px,8vw,44px);border-radius:50%;color:#fff;
+  font-weight:700;font-size:clamp(12px,4vw,19px);display:flex;align-items:center;
+  justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);
+}
+.ball.red{background:radial-gradient(circle at 30% 30%, #ff4d4f, #cf1322)}
+.ball.blue{background:radial-gradient(circle at 30% 30%, #40a9ff, #096dd9)}
+.ball.green{background:radial-gradient(circle at 30% 30%, #73d13d, #389e0d)}
+.ball-zodiac{font-size:clamp(9px,3vw,13px);color:var(--sub-text);font-weight:600;white-space:nowrap}
+.ball-sep{font-size:clamp(16px,5vw,24px);color:var(--sub-text);line-height:clamp(28px,8vw,44px);padding:0 clamp(2px,1vw,4px);font-weight:700;flex-shrink:0}
+
+/* 热门卡片 */
+.hot-wrap-title{font-size:20px;font-weight:700;color:var(--text);margin:16px 0 16px;letter-spacing:-0.5px}
+.hot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.hot-card{
+  background:var(--card);border-radius:16px;padding:18px 16px;box-shadow:0 2px 16px rgba(0,0,0,0.06);
+  border:0.5px solid var(--border);position:relative;overflow:hidden;
+}
+.hot-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--danger)}
+.hot-card.full{grid-column:span 2;background:var(--card)}
+.hot-card.full::before{background:var(--primary)}
+.hot-card .label{font-size:13px;color:var(--sub-text);font-weight:500;margin-bottom:8px;letter-spacing:-0.2px}
+.hot-card .value{font-weight:700;font-size:18px;color:var(--text);line-height:1.25;letter-spacing:-0.3px}
+.hot-card.full .value{color:var(--primary);font-size:17px}
+
+/* 排行表格 */
+.rank-box{margin-top:14px;background:var(--bg-secondary);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.rank-header{display:flex;padding:6px 0 8px;font-size:11px;color:var(--sub-text);border-bottom:1px solid var(--border)}
+.rank-header .rank-no{width:32px;text-align:center}
+.rank-header .rank-name{flex:1;padding:0 6px}
+.rank-header .rank-count{width:42px;text-align:right}
+.rank-header .rank-rate{width:48px;text-align:right}
+.rank-header .rank-miss{width:48px;text-align:right}
+.rank-row{display:flex;padding:8px 0;font-size:12px;border-bottom:1px solid var(--border);align-items:center;color:var(--text)}
+.rank-row:last-child{border-bottom:none}
+.rank-row .rank-no{width:32px;text-align:center;font-weight:700;color:var(--danger)}
+.rank-row .rank-name{flex:1;padding:0 6px}
+.rank-row .rank-count{width:42px;text-align:right;font-weight:600}
+.rank-row .rank-rate{width:48px;text-align:right;color:var(--sub-text)}
+.rank-row .rank-miss{width:48px;text-align:right;color:var(--sub-text)}
+
+/* 子标题 */
+.analysis-sub-title{
+  font-size:15px;font-weight:700;margin:20px 0 12px;color:var(--text);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.hot-tag{
+  display:inline-block;background:rgba(255,59,48,0.1);color:var(--danger);font-size:11px;
+  font-weight:600;padding:2px 6px;border-radius:6px;margin-left:6px;
+}
+
+/* 分析项 */
+.analysis-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.analysis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+.analysis-item{
+  flex:1;min-width:72px;background:var(--bg-secondary);padding:12px 10px;
+  border-radius:12px;text-align:center;font-size:12px;
+}
+.analysis-item .label{color:var(--sub-text);font-size:11px;margin-bottom:4px}
+.analysis-item .value{font-weight:700;font-size:15px;color:var(--primary)}
+.analysis-item-full{
+  background:var(--bg-secondary);padding:12px 14px;border-radius:12px;margin-bottom:10px;
+  font-size:13px;color:var(--text);display:flex;justify-content:space-between;align-items:center;
+}
+
+/* 生肖统计摘要行 */
+.hot-summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;margin-top:8px}
+.hot-summary-text{font-size:13px;color:var(--text)}
+.hot-zodiac-list{color:var(--danger);font-weight:700}
+.hot-value{color:var(--danger);font-weight:600}
+
+/* 详情盒子 */
+.detail-box{display:none;margin-top:10px;background:var(--bg-secondary);border-radius:12px;padding:14px}
+
+/* 历史记录项 */
+.history-item{padding:14px 0;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-item .ball-group{justify-content:flex-start;gap:clamp(6px,1.5vw,8px)}
+.history-expect{font-size:14px;color:var(--sub-text);margin-bottom:8px;text-align:left}
+
+/* 生肖关联专用样式 */
+.core-conclusion{background:rgba(255,59,48,0.05);border-radius:12px;padding:12px;margin-bottom:16px}
+.conclusion-title{font-size:16px;font-weight:700;color:#13a662;margin-bottom:8px}
+.conclusion-item{font-size:14px;line-height:1.6;color:var(--text)}
+.data-grid-z{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.data-grid-4{grid-template-columns:repeat(4,1fr) !important}
+.data-grid-3{grid-template-columns:repeat(3,1fr) !important}
+.follow-table-z{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;color:var(--text)}
+.follow-table-z th,.follow-table-z td{border:1px solid var(--border);padding:6px 4px;text-align:center}
+.follow-table-z th{background:var(--bg-secondary);font-weight:700}
+.data-item-z{background:var(--bg-secondary);border-radius:8px;padding:10px 6px;text-align:center;font-size:12px;color:var(--text)}
+.data-item-z.hot{background:rgba(19,166,98,0.1);color:#13a662;font-weight:700}
+.data-item-z.cold{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
+.data-item-z.warm{background:rgba(250,140,22,0.1);color:#fa8c16}
+.final-recommend-z{
+  background:rgba(19,166,98,0.1);border-radius:12px;padding:14px;text-align:center;
+  font-size:15px;font-weight:700;color:#13a662;margin-top:10px;word-break:break-all;line-height:1.6;
+}
+
+/* DB算法面板 - iOS17 风格 */
+.db-card{border-radius:16px;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.db-header-left{display:flex;align-items:center;gap:10px}
+.db-badge{
+  font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+  background:linear-gradient(135deg, #FF6B35, #FF3B30);color:#fff;letter-spacing:0.5px;
+}
+.db-intro{margin-bottom:20px}
+.db-intro p{font-size:13px;color:var(--sub-text);margin:0;text-align:center}
+.db-result-container{
+  background:linear-gradient(135deg, rgba(0,122,255,0.04), rgba(175,82,222,0.04));
+  border-radius:20px;padding:16px 12px;margin-bottom:16px;
+}
+.db-section-label{font-size:13px;font-weight:600;color:var(--sub-text);margin-bottom:12px;text-align:center;letter-spacing:1px}
+.db-number-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.5vw,12px);justify-items:center}
+.db-card-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:clamp(16px,4vw,24px);padding:clamp(12px,2.5vw,18px) clamp(6px,1.5vw,14px);
+  border:none;box-shadow:var(--shadow-sm);position:relative;gap:clamp(2px,0.5vw,6px);min-width:0;width:100%;
+}
+.db-card-item.card-rank-1{background:linear-gradient(145deg, #FFE066, #FFD700)}
+.db-card-item.card-rank-2{background:linear-gradient(145deg, #D0D0D0, #B8B8B8)}
+.db-card-item.card-rank-3{background:linear-gradient(145deg, #E8A962, #CD853F)}
+.db-card-item.card-rank-other{background:linear-gradient(145deg, #FAFAFA, #F0F0F0)}
+.db-card-item .db-rank-badge{
+  width:clamp(18px,3.5vw,24px);height:clamp(18px,3.5vw,24px);border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:clamp(10px,1.8vw,13px);font-weight:700;
+  position:absolute;top:clamp(6px,1vw,10px);left:clamp(6px,1.2vw,10px);
+}
+.db-card-item.card-rank-1 .db-rank-badge{background:rgba(0,0,0,0.22);color:#FFFFFF}
+.db-card-item.card-rank-2 .db-rank-badge{background:rgba(0,0,0,0.22);color:#FFFFFF}
+.db-card-item.card-rank-3 .db-rank-badge{background:rgba(255,255,255,0.35);color:#FFFFFF}
+.db-card-item.card-rank-other .db-rank-badge{background:rgba(0,0,0,0.1);color:#888888}
+.db-card-item .db-card-emoji{font-size:clamp(26px,5.5vw,38px);line-height:1}
+.db-card-item .db-card-name{font-size:clamp(14px,3vw,18px);font-weight:700;line-height:1.2;color:var(--text)}
+.db-divider{height:1px;background:var(--border);margin:16px 0}
+.db-detail-toggle{
+  display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-size:13px;
+  color:var(--sub-text);cursor:pointer;border-radius:12px;transition:background var(--anim-fast);
+}
+.db-detail-toggle:active{background:rgba(0,0,0,0.04)}
+.db-heat-panel{margin-top:12px;padding-top:16px;border-top:1px solid var(--border)}
+.db-heat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.db-heat-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;background:var(--bg-secondary)}
+.db-heat-zodiac{font-size:14px;font-weight:600}
+.db-heat-count{font-size:11px;font-weight:500}
+.db-heat-tag{font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px}
+.db-heat-tag.is-hot{background:rgba(255,59,48,0.12);color:var(--danger)}
+.db-heat-tag.is-warm{background:rgba(0,122,255,0.1);color:var(--primary)}
+.db-heat-tag.is-downgrade{background:rgba(255,149,0,0.12);color:var(--danger)}
+.db-heat-tag.is-cold{background:var(--border);color:var(--sub-text)}
+.db-heat-zone{font-size:9px;padding:1px 6px;border-radius:8px;opacity:0.85}
+.db-hit-rate{
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0 12px;
+  margin-bottom:8px;border-bottom:1px solid var(--border);
+}
+.db-hitrate-label{font-size:12px;color:var(--sub-text);font-weight:500}
+.db-hitrate-value{font-size:14px;font-weight:700;padding:2px 10px;border-radius:12px}
+.db-hitrate-value.hitrate-high{background:rgba(52,199,89,0.12);color:var(--green)}
+.db-hitrate-value.hitrate-mid{background:rgba(255,149,0,0.12);color:var(--danger)}
+.db-hitrate-value.hitrate-low{background:rgba(255,59,48,0.12);color:var(--danger)}
+.db-miss-container{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+.db-miss-section-label{font-size:12px;font-weight:600;color:var(--sub-text);text-align:center;margin-bottom:12px;letter-spacing:0.5px}
+.db-miss-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.db-miss-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:10px;background:var(--bg-secondary)}
+.db-miss-zodiac{font-size:13px;font-weight:700}
+.db-miss-count{font-size:10px;color:var(--sub-text)}
+.db-miss-num{font-weight:700;color:var(--primary)}
+.db-miss-tag{font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;margin-top:2px}
+.db-miss-tag.miss-hot{background:rgba(255,59,48,0.12);color:var(--danger)}
+.db-miss-tag.miss-warm{background:rgba(0,122,255,0.1);color:var(--primary)}
+.db-miss-tag.miss-cold{background:var(--border);color:var(--sub-text)}
+.db-miss-tag.miss-deep{background:rgba(175,82,222,0.12);color:#AF52DE}
+.db-miss-tip{font-size:10px;color:#C7C7CC;text-align:center;line-height:1.3;padding:0 2px}
+.db-rules{display:flex;flex-direction:column;gap:12px}
+.db-rule-item{display:flex;gap:12px;align-items:flex-start}
+.db-rule-num{
+  width:24px;height:24px;min-width:24px;border-radius:50%;background:rgba(0,122,255,0.1);
+  color:var(--primary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.db-rule-text{font-size:13px;color:var(--sub-text);line-height:1.5}
+.db-backtest-container{
+  background:var(--bg-secondary);border-radius:20px;padding:16px 12px;margin-top:16px;
+  border:1px solid var(--border);
+}
+.db-backtest-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.db-backtest-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:0.5px}
+.db-backtest-stats{display:flex;gap:12px;flex-wrap:wrap}
+.backstat-item{font-size:12px;color:var(--sub-text);line-height:1.4}
+.backstat-item strong{font-weight:700;color:var(--text)}
+.db-backtest-records{max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.db-backtest-records::-webkit-scrollbar{width:4px}
+.db-backtest-records::-webkit-scrollbar-thumb{background-color:var(--border);border-radius:4px}
+.backtest-empty{text-align:center;color:var(--sub-text);font-size:13px;padding:24px 16px;opacity:0.7}
+.backtest-record-item{
+  background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px;
+  box-shadow:var(--shadow-sm);border:1px solid var(--border);
+}
+.backtest-record-time{font-size:11px;color:var(--sub-text);margin-bottom:8px;font-weight:600;letter-spacing:0.3px}
+.backtest-record-content{display:flex;flex-wrap:wrap;align-items:center;gap:4px;line-height:1.6}
+.backtest-label{font-weight:600;color:var(--sub-text);font-size:12px}
+.backtest-value{font-weight:500;color:var(--text);font-size:13px;letter-spacing:0.5px}
+.main-value{color:var(--text);font-weight:700;letter-spacing:0.3px}
+.backup-value{color:#5AC8FA}
+.backtest-paren{color:var(--sub-text);font-size:12px}
+.backtest-sep{color:var(--sub-text);margin:0 2px;font-size:13px}
+.backtest-actual{color:var(--green);font-weight:700;font-size:13px}
+.backtest-status-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.backtest-status-pending{background:rgba(0,122,255,0.1);color:var(--primary)}
+.backtest-status-hit-main{background:rgba(52,199,89,0.12);color:var(--green)}
+.backtest-status-hit-backup{background:rgba(90,200,250,0.12);color:var(--primary)}
+.backtest-status-miss{background:rgba(255,59,48,0.08);color:var(--danger)}
+
+/* Giong双链算法样式 */
+.giong-latest-info{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;margin-bottom:16px;background:var(--bg-secondary);border-radius:16px}
+.giong-latest-label{font-size:13px;color:var(--sub-text);font-weight:500}
+.giong-latest-num{font-size:28px;font-weight:800;color:var(--primary);line-height:1}
+.giong-latest-zodiac{font-size:22px;font-weight:700;color:var(--text)}
+.giong-chain-label{font-size:15px !important;color:var(--primary) !important;background:rgba(0,122,255,0.08);padding:8px 16px;border-radius:12px;margin-bottom:6px !important}
+.giong-chain-label.giong-chain-old{color:#FF9500 !important;background:rgba(255,149,0,0.08)}
+.giong-chain-label.giong-chain-merged{color:#AF52DE !important;background:rgba(175,82,222,0.08)}
+.db-merged-section{cursor:pointer;position:relative}
+.merged-tap-hint{text-align:center;font-size:11px;color:var(--sub-text);margin-top:12px;opacity:0.6}
+.giong-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center}
+.giong-modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8)}
+.giong-modal-content{
+  position:relative;width:90%;max-width:400px;max-height:80vh;background:#ffffff;
+  border-radius:16px;overflow-y:auto;z-index:10000;box-shadow:0 10px 40px rgba(0,0,0,0.5);
+}
+.giong-modal-header{
+  display:flex;justify-content:space-between;align-items:center;padding:16px 20px;
+  border-bottom:1px solid rgba(0,0,0,0.1);position:sticky;top:0;background:#ffffff;z-index:1;
+}
+.giong-modal-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
+.giong-modal-close{cursor:pointer;font-size:22px;color:#999;padding:4px 8px;line-height:1}
+.giong-modal-body{padding:16px 20px 20px}
+.giong-modal-chain{margin-bottom:8px}
+.giong-chain-desc{font-size:11px;color:var(--sub-text);text-align:center;margin-bottom:16px;letter-spacing:0.5px;opacity:0.8}
+.giong-chain-divider{text-align:center;font-size:13px;font-weight:600;color:var(--sub-text);padding:16px 0 12px;letter-spacing:2px;opacity:0.6}
+.giong-downweight-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 0}
+.giong-downweight-tag{font-size:13px;font-weight:600;padding:4px 14px;border-radius:16px;background:rgba(255,59,48,0.1);color:var(--danger);border:1px solid rgba(255,59,48,0.2)}
+.giong-warning{
+  font-size:12px;font-weight:600;color:#FF9500;text-align:center;padding:10px 14px;margin-top:10px;
+  background:rgba(255,149,0,0.08);border-radius:12px;border:1px solid rgba(255,149,0,0.2);
+}
+.giong-badge-dw{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:6px;background:rgba(255,59,48,0.12);color:var(--danger);margin-left:3px;vertical-align:middle}
+.giong-badge-cz{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:6px;background:var(--border);color:var(--sub-text);margin-left:3px;vertical-align:middle}
+.giong-backtest-card{margin-top:12px}
+.giong-backtest-header{margin-bottom:4px}
+.giong-pending-tip{font-size:11px;color:var(--sub-text);text-align:center;padding:6px 0 10px;opacity:0.7}
+
+/* 频率评级系统 */
+.freq-section{margin-bottom:clamp(14px,2.5vw,20px)}
+.freq-section:last-child{margin-bottom:0}
+.freq-section-title{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--text);margin-bottom:clamp(6px,1.5vw,10px)}
+.freq-table-wrap{border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.freq-table{width:100%;border-collapse:collapse;font-size:clamp(11px,2vw,13px)}
+.freq-table th{
+  padding:clamp(8px,1.5vw,12px) clamp(4px,1vw,8px);text-align:center;font-size:clamp(9px,1.8vw,11px);
+  font-weight:600;color:var(--sub-text);background:var(--bg-secondary);border-bottom:1px solid var(--border);
+}
+.freq-table td{padding:clamp(8px,1.5vw,12px) clamp(4px,1vw,8px);text-align:center;color:var(--text);border-bottom:1px solid var(--border)}
+.freq-table tr:last-child td{border-bottom:none}
+.freq-zone-tag{
+  display:inline-block;padding:clamp(3px,0.6vw,5px) clamp(8px,1.5vw,14px);border-radius:14px;
+  font-size:clamp(10px,2vw,12px);font-weight:700;white-space:nowrap;letter-spacing:0.3px;
+}
+.zone-peak{background:rgba(255,69,58,0.18);color:#FF453A}
+.zone-high{background:rgba(255,149,0,0.15);color:#FF9500}
+.zone-mid{background:rgba(0,122,255,0.12);color:var(--primary)}
+.zone-low{background:rgba(48,209,88,0.12);color:#30D158}
+.zone-wait{background:rgba(175,82,222,0.12);color:#AF52DE}
+
+/* 生肖预测卡片 */
+.zodiac-static-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.2vw,10px);width:100%}
+.zodiac-static-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:16px;padding:clamp(14px,2.5vw,24px) clamp(8px,1.8vw,20px);border:none;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);position:relative;gap:clamp(4px,0.8vw,8px);min-width:0;
+}
+.zodiac-static-card.card-rank-1{background:#FFD700}
+.zodiac-static-card.card-rank-2{background:#B8B8B8}
+.zodiac-static-card.card-rank-3{background:#CD853F}
+.zodiac-static-card.card-rank-other{background:#F0F0F0}
+.zodiac-static-rank{
+  width:clamp(18px,3.5vw,24px);height:clamp(18px,3.5vw,24px);border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:clamp(10px,1.8vw,13px);font-weight:700;
+  position:absolute;top:clamp(6px,1vw,10px);left:clamp(8px,1.5vw,14px);right:auto;transform:none;
+}
+.zodiac-static-card.card-rank-1 .zodiac-static-rank{background:rgba(0,0,0,0.2);color:#FFFFFF}
+.zodiac-static-card.card-rank-2 .zodiac-static-rank{background:rgba(0,0,0,0.2);color:#FFFFFF}
+.zodiac-static-card.card-rank-3 .zodiac-static-rank{background:rgba(255,255,255,0.3);color:#FFFFFF}
+.zodiac-static-card.card-rank-other .zodiac-static-rank{background:rgba(0,0,0,0.12);color:#666666}
+.zodiac-static-emoji{font-size:clamp(32px,7vw,48px);line-height:1}
+.zodiac-static-name{font-size:clamp(15px,3.2vw,20px);font-weight:700;line-height:1.2}
+.zodiac-static-card.card-rank-1 .zodiac-static-name{color:#333333}
+.zodiac-static-card.card-rank-2 .zodiac-static-name{color:#333333}
+.zodiac-static-card.card-rank-3 .zodiac-static-name{color:#FFFFFF}
+.zodiac-static-card.card-rank-other .zodiac-static-name{color:#333333}
+
+/* 频率标签页 */
+.freq-tabs-bar{display:flex;gap:8px;padding:12px 0;justify-content:center}
+.freq-tab-btn{
+  flex:1;max-width:120px;padding:8px 0;font-size:13px;font-weight:500;color:var(--sub-text);
+  background:rgba(120,120,128,0.08);border:none;border-radius:8px;cursor:pointer;transition:all 0.2s;
+}
+.freq-tab-btn.active{color:#fff;background:var(--primary);font-weight:600}
+.freq-panels-container{padding-bottom:0}
+.freq-panel{width:100%}
+.freq-card{
+  background:transparent;border-radius:0;padding:clamp(14px,3vw,20px) clamp(12px,2.5vw,18px);
+  margin-bottom:0;box-shadow:none;border:none;
+}
+.freq-card-title{font-size:clamp(14px,2.5vw,16px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,16px);letter-spacing:-0.2px}
+
+/* 区域滑动容器 */
+.zone-section{margin-bottom:14px}
+.zone-section:last-child{margin-bottom:0}
+.zone-section-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.zone-count-badge{font-size:clamp(9px,1.8vw,11px);font-weight:600;color:var(--sub-text);opacity:0.6}
+.zone-card-list{display:grid;grid-template-columns:repeat(auto-fill, minmax(clamp(46px,10vw,60px), 1fr));gap:clamp(4px,0.8vw,6px)}
+.zone-zod-card{
+  background:var(--bg-secondary);border-radius:12px;padding:clamp(6px,1.2vw,10px) clamp(3px,0.8vw,6px) clamp(5px,1vw,8px);
+  text-align:center;border:1px solid transparent;aspect-ratio:1/1.08;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;position:relative;
+}
+.zod-card-count-badge{
+  position:absolute;top:clamp(3px,0.8vw,6px);left:clamp(3px,0.8vw,6px);
+  font-size:clamp(10px,2vw,13px);font-weight:800;color:var(--primary);line-height:1;
+  min-width:clamp(12px,2vw,16px);text-align:center;
+}
+.zod-card-count-badge.zone-peak{color:#FF453A}
+.zod-card-count-badge.zone-high{color:#FF9500}
+.zod-card-count-badge.zone-mid{color:var(--primary)}
+.zod-card-count-badge.zone-low{color:#30D158}
+.zod-card-count-badge.zone-wait{color:#AF52DE}
+.drop-arrow{color:#FF3B30;font-size:10px;margin-left:2px;line-height:1}
+.zod-card-name{
+  font-size:clamp(13px,2.2vw,17px);font-weight:700;color:var(--text);line-height:1.2;
+  margin-bottom:clamp(4px,0.8vw,7px);letter-spacing:0.5px;
+}
+.zod-card-stats{display:flex;justify-content:center;gap:clamp(4px,0.8vw,6px);font-size:clamp(9px,1.8vw,11px);margin-top:clamp(2px,0.5vw,4px)}
+.zod-card-count{font-weight:700;color:var(--primary);background:rgba(0,122,255,0.08);padding:2px 8px;border-radius:8px}
+.zod-card-miss{
+  font-weight:600;color:var(--sub-text);background:rgba(120,120,128,0.08);
+  padding:clamp(2px,0.4vw,3px) clamp(5px,1vw,8px);border-radius:6px;
+}
+.zod-card-miss.zone-peak{color:#FF453A;background:rgba(255,69,58,0.12)}
+.zod-card-miss.zone-high{color:#FF9500;background:rgba(255,149,0,0.12)}
+.zod-card-miss.zone-mid{color:var(--primary);background:rgba(0,122,255,0.08)}
+.zod-card-miss.zone-low{color:#30D158;background:rgba(48,209,88,0.12)}
+.zod-card-miss.zone-wait{color:#AF52DE;background:rgba(175,82,222,0.12)}
+
+/* 动态策略面板 */
+.strategy-panel{background:var(--bg-secondary);border-radius:clamp(14px,2.5vw,18px);padding:clamp(12px,2.5vw,18px)}
+.strategy-panel-title{font-size:clamp(13px,2.5vw,16px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,14px)}
+.strategy-mode-row{display:flex;align-items:center;gap:clamp(6px,1.5vw,10px);margin-bottom:clamp(8px,2vw,14px)}
+.strategy-mode-label{font-size:clamp(11px,2vw,13px);color:var(--sub-text)}
+.strategy-mode-value{
+  display:inline-block;padding:clamp(3px,0.6vw,5px) clamp(10px,2vw,16px);border-radius:14px;
+  font-size:clamp(12px,2.5vw,15px);font-weight:700;
+}
+.strategy-mode-value.strategy-hot{background:rgba(255,69,58,0.15);color:#FF453A}
+.strategy-mode-value.strategy-cold{background:rgba(90,200,250,0.15);color:#5AC8FA}
+.strategy-mode-value.strategy-balanced{background:rgba(48,209,88,0.15);color:#30D158}
+.strategy-heat-row{display:flex;gap:clamp(12px,2.5vw,18px);font-size:clamp(10px,2vw,12px);color:var(--sub-text);margin-bottom:clamp(12px,2.5vw,18px)}
+.strategy-weights-title{font-size:clamp(11px,2vw,13px);font-weight:600;color:var(--sub-text);margin-bottom:clamp(8px,1.5vw,12px)}
+.strategy-weight-bars{display:flex;flex-direction:column;gap:clamp(8px,1.5vw,12px)}
+.strategy-weight-item{display:flex;flex-direction:column;gap:clamp(3px,0.6vw,5px)}
+.strategy-weight-header{display:flex;justify-content:space-between;font-size:clamp(10px,2vw,12px);color:var(--text)}
+.strategy-weight-track{height:clamp(4px,0.8vw,6px);background:var(--border);border-radius:3px;overflow:hidden}
+.strategy-weight-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
+.bar-high{background:#30D158}
+.bar-mid{background:#FFB350}
+.bar-low{background:#FF453A}
+
+/* 回测追踪模块 */
+.backtest-summary{
+  background:var(--bg-secondary);border-radius:clamp(14px,2.5vw,18px);
+  padding:clamp(12px,2.5vw,18px);margin-bottom:clamp(10px,2vw,16px);
+}
+.backtest-summary-title{font-size:clamp(13px,2.5vw,16px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,14px)}
+.backtest-summary-row{display:flex;gap:clamp(10px,2.5vw,18px);margin-bottom:clamp(10px,2vw,14px)}
+.backtest-stat{flex:1;text-align:center}
+.backtest-stat-label{display:block;font-size:clamp(10px,2vw,12px);color:var(--sub-text);margin-bottom:clamp(3px,0.6vw,6px)}
+.backtest-stat-value{font-size:clamp(16px,3.5vw,22px);font-weight:800;color:var(--text)}
+.backtest-breakdown{display:flex;gap:clamp(8px,2vw,14px);justify-content:center;flex-wrap:wrap}
+.backtest-breakdown-item{font-size:clamp(10px,2vw,12px);color:var(--sub-text)}
+.backtest-records{display:flex;flex-direction:column;gap:clamp(6px,1.5vw,10px)}
+.backtest-record-row{
+  background:var(--bg-secondary);border-radius:12px;padding:clamp(10px,2vw,14px) clamp(12px,2.5vw,16px);
+  border-left:3px solid var(--border);
+}
+.backtest-record-row.backtest-hit{border-left-color:#30D158;background:rgba(48,209,88,0.06)}
+.backtest-record-row.backtest-miss{border-left-color:#FF453A;background:rgba(255,69,58,0.04)}
+.backtest-record-period{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--primary);margin-bottom:clamp(3px,0.6vw,6px)}
+.backtest-record-predict{font-size:clamp(11px,2vw,13px);color:var(--sub-text);margin-bottom:2px}
+.backtest-record-result{font-size:clamp(11px,2vw,13px);color:var(--text)}
+.backtest-miss-analysis{margin-top:10px;padding:10px;background:rgba(255,69,58,0.05);border-radius:8px;border:1px solid rgba(255,69,58,0.15)}
+.backtest-miss-title{font-size:clamp(12px,2vw,14px);font-weight:600;color:#FF453A;margin-bottom:8px}
+.backtest-miss-row{display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,1.8vw,13px);padding:4px 0;color:var(--sub-text)}
+.backtest-miss-row span:first-child{color:var(--text);font-weight:500}
+.backtest-stage-tag{
+  display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;
+  background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;
+  margin-left:6px;vertical-align:middle;font-weight:500;
+}
+.backtest-black-info{
+  display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;
+  background:rgba(255,149,0,0.15);color:#FF9500;margin-left:6px;vertical-align:middle;font-weight:500;
+}
+
+/* 概率条 */
+.prob-bar{display:inline-block;padding:clamp(2px,0.4vw,4px) clamp(6px,1.5vw,10px);border-radius:10px;font-size:clamp(11px,2vw,13px);font-weight:700}
+.prob-high{background:rgba(255,69,58,0.25);color:#FF453A}
+.prob-mid{background:rgba(255,149,0,0.2);color:#FF9500}
+.prob-low{background:rgba(90,200,250,0.2);color:#5AC8FA}
+.prob-mini{background:rgba(255,255,255,0.06);color:var(--sub-text)}
+
+/* 终极算法 */
+.ultimate-expect-display{text-align:left;font-size:13px;color:var(--primary);margin-top:4px;font-weight:600}
+.adaptive-badge{
+  display:inline-block;font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
+  padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:500;
+}
+.backtest-adaptive-info{
+  background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.2);border-radius:8px;
+  padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;
+}
+.adaptive-badge-small{
+  font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
+  padding:2px 6px;border-radius:8px;font-weight:500;
+}
+.backtest-section-group{background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:10px}
+.backtest-section-title{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.backtest-total-highlight{background:linear-gradient(135deg, rgba(52,199,89,0.12), rgba(48,209,88,0.08));border:1px solid rgba(52,199,89,0.25)}
+.backtest-total-highlight .backtest-section-title{color:#34C759}
+.backtest-backup-hit{background:rgba(255,149,0,0.08);border-left:3px solid #FF9500}
+
+/* 弹窗模态框 */
+.backtest-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center}
+.backtest-modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8)}
+.backtest-modal-content{
+  position:relative;width:90%;max-width:400px;max-height:80vh;background:#ffffff;
+  border-radius:16px;overflow-y:auto;z-index:10000;box-shadow:0 10px 40px rgba(0,0,0,0.5);
+}
+.backtest-modal-header{
+  display:flex;justify-content:space-between;align-items:center;padding:16px 20px;
+  border-bottom:1px solid rgba(0,0,0,0.1);position:sticky;top:0;background:#ffffff;z-index:1;
+}
+.backtest-modal-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
+.backtest-modal-close{cursor:pointer;font-size:22px;color:#999;padding:4px 8px;line-height:1;transition:color 0.2s}
+.backtest-modal-body{padding:16px 20px 20px}

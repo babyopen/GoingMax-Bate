@@ -1,0 +1,181 @@
+/* ===================================
+   ios-style.css - iOS适配、安全区、毛玻璃、深色模式
+   =================================== */
+
+/* 底部导航栏 - 毛玻璃效果 */
+:root{
+  --nav-glass-bg:rgba(255,255,255,0.55);
+  --nav-glass-border:rgba(255,255,255,0.35);
+  --nav-glass-shadow:rgba(0,0,0,0.06);
+  --nav-item-bg:rgba(0,0,0,0.04);
+  --nav-item-border:rgba(0,0,0,0.06);
+  --nav-item-text:rgba(0,0,0,0.45);
+  --nav-item-active-text:rgba(0,0,0,0.85);
+  --nav-item-active-bg:rgba(0,0,0,0.08);
+}
+
+/* 固定底部导航栏 */
+.bottom-nav-wrapper{
+  position:fixed;left:0;right:0;bottom:0;z-index:999;
+  display:flex;justify-content:center;align-items:center;
+  padding:0 env(safe-area-inset-left, 0) 16px env(safe-area-inset-right, 0);gap:14px;
+}
+.bottom-nav{
+  display:flex;justify-content:center;align-items:center;
+  background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  border-radius:32px;padding:12px 18px;height:64px;box-sizing:border-box;
+  box-shadow:0 4px 24px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);gap:16px;
+}
+.bottom-nav-toggle{
+  display:flex;justify-content:center;align-items:center;width:54px;height:54px;min-width:54px;
+  border-radius:32px;background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--nav-glass-border);cursor:pointer;touch-action:manipulation;
+  transition:all var(--anim-fast);box-shadow:0 4px 12px var(--nav-glass-shadow);
+  font-size:14px;font-weight:500;color:var(--nav-item-text);padding:0;font-family:inherit;
+  box-sizing:border-box;
+}
+.bottom-nav-toggle.active{
+  background:var(--nav-item-active-bg);border-color:var(--nav-item-active-text);
+  box-shadow:0 4px 16px rgba(255,107,138,0.3);color:var(--nav-item-active-text);font-weight:700;
+}
+.bottom-nav-toggle:active{transform:scale(0.95)}
+.bottom-nav-item{
+  display:flex;align-items:center;justify-content:center;min-width:68px;height:54px;
+  border-radius:32px;padding:0 20px;transition:all var(--anim-fast);cursor:pointer;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;position:relative;
+}
+.bottom-nav-item span{
+  font-size:15px;font-weight:500;color:var(--nav-item-text);
+  transition:color var(--anim-fast), font-weight var(--anim-fast);line-height:1.2;
+}
+.bottom-nav-item.active{background:var(--nav-item-active-bg)}
+.bottom-nav-item.active span{color:var(--nav-item-active-text);font-weight:700}
+.bottom-nav-item:active{transform:scale(0.95)}
+
+/* 快捷导航 - 毛玻璃 */
+.quick-nav{
+  position:fixed;left:16px;right:16px;bottom:calc(70px + var(--safe-bottom));z-index:1000;
+  max-width:calc(100% - 32px);
+  background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  border-radius:24px;
+  box-shadow:0 4px 24px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
+  overflow:hidden;transition:all var(--anim-normal);
+}
+.quick-nav.collapsed{height:0;width:0;padding:0;margin:0;opacity:0;overflow:hidden}
+.quick-nav.expanded{height:auto}
+.nav-tabs{display:flex;gap:8px;padding:10px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;max-height:160px}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  padding:9px 15px;border-radius:14px;background:var(--nav-item-bg);color:var(--nav-item-text);
+  font-size:13px;font-weight:500;border:1px solid var(--nav-item-border);cursor:pointer;flex-shrink:0;
+  transition:all var(--anim-fast);touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.nav-tab:active{background:var(--nav-item-active-bg);color:var(--nav-item-active-text)}
+
+/* 返回顶部按钮 - 毛玻璃 */
+.back-top-btn{
+  position:fixed;right:16px;bottom:calc(90px + var(--safe-bottom));z-index:997;width:44px;height:44px;
+  border-radius:50%;background:rgba(0,122,255,0.9);-webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);color:#FFFFFF;border:none;font-size:18px;cursor:pointer;
+  display:grid;place-items:center;opacity:0;transition:opacity var(--anim-normal);pointer-events:none;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.back-top-btn.show{opacity:1;pointer-events:auto}
+.back-top-btn:active{opacity:0.6}
+
+/* ====================== 深色模式全局适配 ====================== */
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg:#000000;
+    --card:#1C1C1E;
+    --text:#FFFFFF;
+    --sub-text:#98989F;
+    --primary:#0A84FF;
+    --danger:#FF453A;
+    --blue:#0A84FF;
+    --green:#30D158;
+    --border:rgba(255,255,255,0.1);
+    --overlay:rgba(0,0,0,0.85);
+    --bg-secondary:#2C2C2E;
+    /* 导航深色变量 */
+    --nav-glass-bg:rgba(28,28,30,0.55);
+    --nav-glass-border:rgba(255,255,255,0.1);
+    --nav-glass-shadow:rgba(0,0,0,0.3);
+    --nav-item-bg:rgba(255,255,255,0.06);
+    --nav-item-border:rgba(255,255,255,0.12);
+    --nav-item-text:rgba(255,255,255,0.5);
+    --nav-item-active-text:rgba(255,255,255,0.95);
+    --nav-item-active-bg:rgba(255,255,255,0.12);
+  }
+  
+  /* DB算法面板暗色适配 */
+  .db-card{background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .db-result-container{background:linear-gradient(135deg, rgba(0,122,255,0.12), rgba(175,82,222,0.12))}
+  .db-card-item.card-rank-1{background:linear-gradient(145deg, #4A4000, #3A3000)}
+  .db-card-item.card-rank-2{background:linear-gradient(145deg, #505050, #404040)}
+  .db-card-item.card-rank-3{background:linear-gradient(145deg, #4A4030, #3A3020)}
+  .db-card-item.card-rank-other{background:linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))}
+  .db-card-item.card-rank-1 .db-rank-badge{background:rgba(255,255,255,0.25);color:#FFE066}
+  .db-card-item.card-rank-2 .db-rank-badge{background:rgba(255,255,255,0.25);color:#D0D0D0}
+  .db-card-item.card-rank-3 .db-rank-badge{background:rgba(255,255,255,0.15);color:#E8A962}
+  .db-card-item.card-rank-other .db-rank-badge{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)}
+  .db-card-item .db-card-name{color:var(--text)}
+  .db-divider{background:rgba(255,255,255,0.08)}
+  .db-detail-toggle:active{background:rgba(255,255,255,0.08)}
+  .db-heat-panel{border-top:1px solid rgba(255,255,255,0.08)}
+  .db-heat-item{background:rgba(0,0,0,0.2)}
+  .db-hit-rate{border-bottom:1px solid rgba(255,255,255,0.08)}
+  .db-miss-container{border-top:1px solid rgba(255,255,255,0.08)}
+  .db-miss-item{background:rgba(0,0,0,0.2)}
+  .db-rules{background:rgba(0,0,0,0.15);border-radius:12px;padding:12px}
+  .db-rule-item{background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .db-rule-item:last-child{margin-bottom:0}
+  
+  /* DB暗黑模式额外适配 */
+  .db-card{background:var(--card)}
+  .db-result-container{background:var(--bg-secondary)}
+  .db-card-item.card-rank-other{background:var(--bg-secondary)}
+  .db-card-item.card-rank-other .db-rank-badge{background:rgba(255,255,255,0.12);color:var(--sub-text)}
+  .db-detail-toggle:active{background:rgba(255,255,255,0.06)}
+  .db-heat-tag.is-hot{background:rgba(255,69,58,0.16);color:var(--danger)}
+  .db-heat-tag.is-warm{background:rgba(10,132,255,0.14);color:var(--primary)}
+  .db-heat-tag.is-downgrade{background:rgba(255,159,10,0.14);color:#FF9F0A}
+  .db-hitrate-value.hitrate-high{background:rgba(48,209,88,0.14);color:var(--green)}
+  .db-hitrate-value.hitrate-mid{background:rgba(255,159,10,0.14);color:#FF9F0A}
+  .db-hitrate-value.hitrate-low{background:rgba(255,69,58,0.14);color:var(--danger)}
+  .db-miss-tag.miss-hot{background:rgba(255,69,58,0.16);color:var(--danger)}
+  .db-miss-tag.miss-warm{background:rgba(10,132,255,0.14);color:var(--primary)}
+  .db-miss-tag.miss-deep{background:rgba(191,90,242,0.16);color:#BF5AF2}
+  .db-miss-tip{color:var(--sub-text);opacity:0.6}
+  .db-rule-num{background:rgba(10,132,255,0.16);color:var(--primary)}
+  .db-backtest-container{background:var(--bg-secondary);border-color:var(--border)}
+  .backup-value{color:var(--primary)}
+  .backtest-status-pending{background:rgba(10,132,255,0.14);color:var(--primary)}
+  .backtest-status-hit-main{background:rgba(48,209,88,0.14);color:var(--green)}
+  .backtest-status-hit-backup{background:rgba(10,132,255,0.14);color:var(--primary)}
+  .backtest-status-miss{background:rgba(255,69,58,0.12);color:var(--danger)}
+  
+  /* Giong双链算法 - 黑暗模式适配 */
+  .giong-latest-info{background:var(--bg-secondary)}
+  .giong-chain-label{color:var(--primary) !important;background:rgba(10,132,255,0.12)}
+  .giong-chain-label.giong-chain-old{color:#FFB340 !important;background:rgba(255,179,64,0.1)}
+  .giong-downweight-tag{background:rgba(255,69,58,0.14);color:var(--danger);border-color:rgba(255,69,58,0.25)}
+  .giong-warning{color:#FFB340;background:rgba(255,179,64,0.1);border-color:rgba(255,179,64,0.22)}
+  .giong-badge-dw{background:rgba(255,69,58,0.16);color:var(--danger)}
+  .giong-badge-cz{background:rgba(255,255,255,0.06);color:var(--sub-text)}
+  
+  /* 弹窗深色适配 */
+  .giong-modal-content{background:#1c1c1e}
+  .giong-modal-header{background:#1c1c1e;border-bottom-color:rgba(255,255,255,0.1)}
+  .backtest-modal-content{background:#1c1c1e}
+  .backtest-modal-header{background:#1c1c1e;border-bottom-color:rgba(255,255,255,0.1)}
+  
+  /* 频率标签深色适配 */
+  .freq-tab-btn{background:rgba(255,255,255,0.06)}
+}

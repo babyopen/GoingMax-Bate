@@ -1,0 +1,152 @@
+/* ===================================
+   global.css - 全局CSS变量、重置、基础组件
+   =================================== */
+
+/* 全局CSS变量（主题配置，一键修改样式） */
+:root{
+  /* 浅色主题 */
+  --bg:#F2F2F7;
+  --card:#FFFFFF;
+  --text:#000000;
+  --sub-text:#8E8E93;
+  --primary:#007AFF;
+  --danger:#FF3B30;
+  --blue:#007AFF;
+  --green:#34C759;
+  --border:rgba(0,0,0,0.08);
+  --overlay:rgba(0,0,0,0.75);
+  --bg-secondary:#F8F8F8;
+  /* 通用样式变量 */
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
+  --shadow:0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm:10px;
+  --radius:16px;
+  --radius-lg:20px;
+  --ball-size:28px;
+  /* 安全区变量 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* 动画时长变量 */
+  --anim-fast:0.15s;
+  --anim-normal:0.3s;
+  --anim-slow:0.5s;
+  /* 布局常量 */
+  --top-card-height:210px;
+  --top-offset:240px;
+  --preview-max-count:8;
+}
+
+/* 全局重置与基础样式 */
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  padding-bottom: calc(80px + var(--safe-bottom));
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+  min-height:100vh;
+}
+
+/* 加载遮罩 */
+.loading-mask{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:var(--bg);z-index:1001;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  transition:opacity var(--anim-normal);
+}
+.loading-mask.hide{opacity:0;pointer-events:none}
+.loading-spinner{
+  width:40px;height:40px;
+  border:3px solid var(--bg-secondary);border-top-color:var(--primary);border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--sub-text)}
+
+/* 按钮组件 */
+.btn-group{display:flex;gap:6px;flex-wrap:wrap}
+.btn-mini{
+  padding:6px 10px;font-size:12px;border:none;border-radius:10px;min-width:50px;text-align:center;
+  background:var(--bg-secondary);color:var(--primary);cursor:pointer;
+  transition:opacity var(--anim-fast);touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+}
+.btn-mini:active{opacity:0.6}
+.btn-mini.red{background:rgba(255,59,48,0.1);color:var(--danger)}
+.btn-bar{display:flex;gap:8px;margin-bottom:12px}
+.btn-line{
+  flex:1;padding:10px 14px;border:none;border-radius:10px;background:var(--primary);color:#FFFFFF;
+  cursor:pointer;font-weight:500;transition:opacity var(--anim-fast);touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+}
+.btn-line:active{opacity:0.7}
+
+/* 标签组件 */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag{
+  padding:8px 12px;border-radius:10px;position:relative;background:var(--bg-secondary);border:none;
+  font-size:14px;cursor:pointer;transition:all var(--anim-fast);touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+}
+.tag.active{background:var(--primary);color:#FFFFFF}
+.tag.locked{background:rgba(255,59,48,0.12);color:var(--danger);cursor:default}
+.tag.locked:active{transform:none}
+.tag:active{transform:scale(0.96)}
+.mark-dot{position:absolute;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:1}
+
+/* 号码球组件 */
+.num-item{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.num-ball{
+  width:var(--ball-size);height:var(--ball-size);border-radius:50%;color:#FFFFFF;
+  display:grid;place-items:center;font-size:13px;font-weight:500;
+  -webkit-user-select:text;user-select:text;
+}
+.红色{background:var(--danger)}
+.蓝色{background:var(--blue)}
+.绿色{background:var(--green)}
+.tag-zodiac{font-size:9px;color:var(--sub-text)}
+
+/* 排除号码网格 */
+.exclude-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:10px 0;width:100%;
+  max-width:100%;min-height:0;overflow:hidden;box-sizing:border-box;
+}
+.exclude-tag{
+  aspect-ratio:1/1;display:grid;place-items:center;background:var(--bg-secondary);
+  border-radius:12px;cursor:pointer;transition:all var(--anim-fast);touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;font-size:13px;
+}
+.exclude-tag.excluded{background:var(--danger);color:#FFFFFF}
+.exclude-tag:active{transform:scale(0.95)}
+@supports not (aspect-ratio: 1/1) {
+  .exclude-tag{overflow:hidden}
+  .exclude-tag::before{content:'';display:block;padding-bottom:100%;grid-row:1;grid-column:1}
+}
+.exclude-header{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px}
+
+/* 轻提示Toast组件 */
+.toast{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;
+  padding:12px 24px;background:var(--overlay);-webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);color:#FFFFFF;border-radius:12px;font-size:15px;
+  opacity:0;visibility:hidden;transition:all var(--anim-normal);pointer-events:none;
+  max-width:80%;text-align:center;
+}
+.toast.show{opacity:1;visibility:visible}
+
+/* 免责声明 */
+.disclaimer{text-align:center;font-size:12px;color:var(--sub-text);margin:20px 0;padding-bottom:10px}
+input[type="checkbox"]{transform:scale(0.9);margin-right:4px;touch-action:manipulation}
+
+/* 空状态提示 */
+.empty-tip{text-align:center;padding:clamp(18px,4vw,28px) 0;color:var(--sub-text);font-size:clamp(12px,2.5vw,14px)}
+
+/* 加载更多 */
+.load-more{
+  text-align:center;padding:12px;background:var(--bg-secondary);border-radius:12px;
+  color:var(--primary);font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+.load-more:active{opacity:0.7}
