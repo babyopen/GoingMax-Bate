@@ -128,8 +128,20 @@ const ViewFilter = {
   showBatchModal: (groups) => {
     const modal = document.getElementById('batchModal');
     const input = document.getElementById('batchModalInput');
+    const title = document.getElementById('batchModalTitle');
+    const hint = modal?.querySelector('.batch-modal-hint');
     if (!modal || !input) return;
     ViewFilter._batchTargetGroups = groups ? groups.split(',') : [];
+    // 排除组特殊提示
+    if (ViewFilter._batchTargetGroups[0] === 'exclude') {
+      if (title) title.textContent = '批量排除号码';
+      if (hint) hint.textContent = '输入要排除的号码，用逗号、空格或换行分隔';
+      input.placeholder = '例如：1 2 3 10 25';
+    } else {
+      if (title) title.textContent = '批量选择';
+      if (hint) hint.textContent = '输入要选择的名称，用逗号、空格或换行分隔多个名称';
+      input.placeholder = '例如：马 牛 虎';
+    }
     modal.classList.add('show');
     input.value = '';
     setTimeout(() => input.focus(), 300);
@@ -155,7 +167,33 @@ const ViewFilter = {
       Toast.show('请输入要选择的名称');
       return;
     }
-    // 用逗号、空格、换行分割
+    // 号码排除组特殊处理
+    const groups = ViewFilter._batchTargetGroups;
+    if (groups.length === 1 && groups[0] === 'exclude') {
+      // 提取号码
+      const nums = raw.split(/[,，\s\n]+/).map(Number).filter(n => n >= 1 && n <= 49);
+      if (nums.length === 0) {
+        Toast.show('请输入有效的号码(1-49)');
+        return;
+      }
+      const state = StateManager._state;
+      if (state.lockExclude) {
+        ViewFilter.closeBatchModal();
+        Toast.show('已锁定排除号码');
+        return;
+      }
+      const newExcluded = [...state.excluded];
+      const newHistory = [...state.excludeHistory];
+      let count = 0;
+      nums.forEach(num => {
+        if (!newExcluded.includes(num)) { newExcluded.push(num); newHistory.push([num, 'in']); count++; }
+      });
+      StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
+      ViewFilter.closeBatchModal();
+      Toast.show(`已排除 ${count} 个号码`);
+      return;
+    }
+    // 普通标签组处理
     const names = raw.split(/[,，\s\n]+/).filter(Boolean);
     if (names.length === 0) {
       Toast.show('未识别到有效名称');
@@ -163,17 +201,14 @@ const ViewFilter = {
     }
     // 对每个目标组执行批量选择
     ViewFilter._batchTargetGroups.forEach(group => {
-      // 收集该组所有有效tag值
       const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
       const lockedSet = new Set(StateManager._state.locked[group] || []);
-      // 匹配用户输入的名称
       const matched = allTags
         .map(tag => Utils.formatTagValue(tag.dataset.value, group))
         .filter(v => {
           if (lockedSet.has(v)) return false;
           return names.some(n => v.includes(n) || n.includes(v));
         });
-      // 更新选中状态
       const newSelected = { ...StateManager._state.selected };
       newSelected[group] = matched;
       StateManager.setState({ selected: newSelected });
