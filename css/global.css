@@ -67,7 +67,7 @@ body{
 
 /* 按钮组件 */
 .btn-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.icon-btn-group{gap:4px !important}
+.icon-btn-group{gap:2px !important}
 .btn-mini{
   padding:6px 10px;font-size:12px;border:none;border-radius:10px;min-width:50px;text-align:center;
   background:var(--bg-secondary);color:var(--primary);cursor:pointer;
@@ -78,8 +78,9 @@ body{
 .btn-mini.red{background:rgba(255,59,48,0.1);color:var(--danger)}
 /* 图标按钮（紧凑版） */
 .btn-icon{
-  min-width:32px;width:32px;height:32px;padding:0;display:grid;place-items:center;border-radius:8px;font-size:14px;
+  min-width:36px;width:36px;height:36px;padding:0;display:grid;place-items:center;border-radius:10px;font-size:15px;
   background:var(--bg-secondary);color:var(--primary);
+  border:2px solid transparent;
 }
 .btn-icon-red{background:rgba(255,59,48,0.1) !important;color:var(--danger) !important}
 .btn-bar{display:flex;gap:8px;margin-bottom:12px}
