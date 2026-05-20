@@ -53,6 +53,22 @@ const Business = {
   /**
    * 撤销上一次排除操作
    */
+  /**
+   * 标记当前排除号码（显示标记点）
+   */
+  markExclude: () => {
+    const state = StateManager._state;
+    if (!state.excluded.length) {
+      Toast.show('暂无排除号码可标记');
+      return;
+    }
+    const count = state.excluded.length;
+    Toast.show(`已标记 ${count} 个排除号码`);
+  },
+
+  /**
+   * 撤销最后一次排除操作
+   */
   undoExclude: () => {
     const state = StateManager._state;
     if(state.lockExclude || !state.excludeHistory.length) return;
