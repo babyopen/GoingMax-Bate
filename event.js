@@ -152,7 +152,7 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.CLEAR_ALL_SAVED) Business.clearAllSavedFilters();
       // 排除号码操作
       else if(action === CONFIG.ACTIONS.INVERT_EXCLUDE) Business.invertExclude();
-      else if(action === CONFIG.ACTIONS.UNDO_EXCLUDE) Business.markExclude();
+      else if(action === CONFIG.ACTIONS.UNDO_EXCLUDE) Business.undoExclude();
       else if(action === CONFIG.ACTIONS.BATCH_EXCLUDE) Business.batchExcludePrompt();
       else if(action === CONFIG.ACTIONS.CLEAR_EXCLUDE) Business.clearExclude();
       // 方案操作
