@@ -14,11 +14,23 @@ const BusinessGiong = {
     });
   },
 
-  OLD_CHAIN: [1, 5, 7, 9, 4, 10],
+  OLD_CHAIN: [1, 5, 7, 9, 4],
   NEW_CHAIN: [1, 4, 5, 7, 9],
 
   ATTACH_MAP: {
     10: 4
+  },
+
+  COLD_NUMS: [2, 3, 8, 10, 11],
+
+  SUCCEED_MAP: {
+    1: [5, 6, 12, 9],
+    5: [7],
+    7: [1, 6],
+    9: [4],
+    6: [1, 7],
+    12: [5],
+    4: [1]
   },
 
   PIVOT_NUM: 6,
@@ -154,71 +166,102 @@ const BusinessGiong = {
   calcOldChainRecommend: function(numArray, latestNum, blResult) {
     var blackList = blResult.blackList;
     var periods = blResult.periods;
-    var self = this;
     var chain = this.OLD_CHAIN;
 
-    var mainCandidates = [];
-    var idx = this.getChainPosition(latestNum, chain);
+    var priorityList = [];
+    var succeedList = this.SUCCEED_MAP[latestNum] || [];
 
-    if (idx !== -1) {
-      for (var i = 1; i <= 4; i++) {
-        var nextIdx = (idx + i) % chain.length;
-        mainCandidates.push(chain[nextIdx]);
+    succeedList.forEach(function(num) {
+      if (this.COLD_NUMS.indexOf(num) === -1 && blackList.indexOf(num) === -1) {
+        var isHot = (periods.c12[num] || 0) > 1;
+        var priority = isHot ? 1 : 2;
+        priorityList.push({ num: num, priority: priority });
       }
-    } else {
-      for (var j = 0; j < 4; j++) {
-        mainCandidates.push(chain[j % chain.length]);
+    }.bind(this));
+
+    if (priorityList.length === 0 || latestNum === 1) {
+      var chainNext = [];
+      var idx = this.getChainPosition(latestNum, chain);
+      if (idx !== -1) {
+        for (var i = 1; i <= 3; i++) {
+          chainNext.push(chain[(idx + i) % chain.length]);
+        }
+      } else {
+        chainNext = chain.slice(0, 3);
       }
+
+      chainNext.forEach(function(num) {
+        if (!priorityList.some(function(p) { return p.num === num; })) {
+          if (this.COLD_NUMS.indexOf(num) === -1 && blackList.indexOf(num) === -1) {
+            var isHot = (periods.c12[num] || 0) > 1;
+            priorityList.push({ num: num, priority: isHot ? 1 : 2 });
+          }
+        }
+      }.bind(this));
     }
+
+    if (!priorityList.some(function(p) { return p.num === 5; }) &&
+        blackList.indexOf(5) === -1 && this.COLD_NUMS.indexOf(5) === -1) {
+      priorityList.push({ num: 5, priority: 1 });
+    }
+
+    if (!priorityList.some(function(p) { return p.num === 7; }) &&
+        blackList.indexOf(7) === -1 && this.COLD_NUMS.indexOf(7) === -1) {
+      priorityList.push({ num: 7, priority: 1 });
+    }
+
+    if (!priorityList.some(function(p) { return p.num === 6; }) &&
+        blackList.indexOf(6) === -1 && this.COLD_NUMS.indexOf(6) === -1) {
+      priorityList.push({ num: 6, priority: 2 });
+    }
+
+    priorityList.sort(function(a, b) { return a.priority - b.priority; });
 
     var main = [];
     var backup = [];
 
-    mainCandidates.forEach(function(num) {
-      if (blackList.indexOf(num) === -1) {
-        if ((periods.c12[num] || 0) > 1) {
-          main.push(num);
-        } else {
-          backup.push(num);
+    priorityList.forEach(function(p) {
+      if (main.length < 4) {
+        if (main.indexOf(p.num) === -1) {
+          main.push(p.num);
+        }
+      } else {
+        if (backup.indexOf(p.num) === -1) {
+          backup.push(p.num);
         }
       }
     });
 
-    if (main.length < 3) {
-      backup = backup.concat(main);
-      main = [];
-      mainCandidates.forEach(function(num) {
-        if (blackList.indexOf(num) === -1 && main.indexOf(num) === -1) {
-          main.push(num);
-        }
-      });
-    }
-
     while (main.length < 4) {
-      var fallbackNum = backup.shift();
-      if (fallbackNum !== undefined && main.indexOf(fallbackNum) === -1) {
-        main.push(fallbackNum);
-      } else {
-        for (var k = 1; k <= 12; k++) {
-          if (main.indexOf(k) === -1 && blackList.indexOf(k) === -1) {
-            main.push(k);
-            break;
-          }
+      for (var n = 1; n <= 12; n++) {
+        if (main.indexOf(n) === -1 && backup.indexOf(n) === -1 &&
+            blackList.indexOf(n) === -1 && this.COLD_NUMS.indexOf(n) === -1) {
+          main.push(n);
+          break;
         }
       }
+      if (main.length >= 4) break;
+      var bNum = backup.shift();
+      if (bNum !== undefined) main.push(bNum);
+      else break;
     }
 
     main = main.slice(0, 4);
 
-    var oldBackup = [10, 6].filter(function(n) {
+    var oldBackup = [9, 4].filter(function(n) {
       return main.indexOf(n) === -1 && blackList.indexOf(n) === -1;
     });
+    if (oldBackup.length === 0) {
+      oldBackup = [6, 12].filter(function(n) {
+        return main.indexOf(n) === -1 && blackList.indexOf(n) === -1;
+      });
+    }
 
     return {
       main: main,
       backup: oldBackup.slice(0, 2),
       chainName: '旧版经典链',
-      chainDesc: '01→05→07→09→04→10→01',
+      chainDesc: '01→05→07→09→04→01',
       style: 'conservative'
     };
   },
@@ -325,6 +368,104 @@ const BusinessGiong = {
     };
   },
 
+  calcMergedRecommend: function(oldResult, newResult, periods, blackList) {
+    var oldMain = oldResult.main || [];
+    var newMain = newResult.main || [];
+    var oldBackup = oldResult.backup || [];
+    var newBackup = newResult.backup || [];
+
+    var intersection = [];
+    oldMain.forEach(function(n) {
+      if (newMain.indexOf(n) !== -1) {
+        intersection.push(n);
+      }
+    });
+
+    var priorityList = [];
+    var added = {};
+    intersection.forEach(function(n) {
+      if (blackList.indexOf(n) === -1) {
+        priorityList.push({ num: n, priority: 0, reason: '双链交集' });
+        added[n] = true;
+      }
+    });
+
+    if (newMain.length > 0) {
+      newMain.forEach(function(n) {
+        if (!added[n] && blackList.indexOf(n) === -1) {
+          priorityList.push({ num: n, priority: 1, reason: '新版高顺位' });
+          added[n] = true;
+        }
+      });
+    }
+
+    if (oldMain.length > 0) {
+      oldMain.forEach(function(n) {
+        if (!added[n] && blackList.indexOf(n) === -1) {
+          priorityList.push({ num: n, priority: 2, reason: '旧版高顺位' });
+          added[n] = true;
+        }
+      });
+    }
+
+    if (!added[6] && blackList.indexOf(6) === -1) {
+      priorityList.push({ num: 6, priority: 3, reason: '变盘兜底' });
+    }
+
+    priorityList.sort(function(a, b) { return a.priority - b.priority; });
+
+    var main = [];
+    var backup = [];
+
+    priorityList.forEach(function(p) {
+      var isCold = (periods.c12[p.num] || 0) <= 1;
+      if (main.length < 4 && !isCold) {
+        main.push(p.num);
+      } else {
+        backup.push(p.num);
+      }
+    });
+
+    if (main.length < 4) {
+      priorityList.forEach(function(p) {
+        if (main.indexOf(p.num) === -1) {
+          main.push(p.num);
+        }
+      });
+    }
+
+    while (main.length < 4) {
+      for (var n = 1; n <= 12 && main.length < 4; n++) {
+        if (main.indexOf(n) === -1 && blackList.indexOf(n) === -1) {
+          main.push(n);
+        }
+      }
+      break;
+    }
+
+    main = main.slice(0, 4);
+
+    if (backup.length === 0) {
+      var backupCandidates = [];
+      oldBackup.forEach(function(n) { if (backupCandidates.indexOf(n) === -1) backupCandidates.push(n); });
+      newBackup.forEach(function(n) { if (backupCandidates.indexOf(n) === -1) backupCandidates.push(n); });
+      backupCandidates.push(10);
+      backupCandidates.forEach(function(n) {
+        if (main.indexOf(n) === -1 && blackList.indexOf(n) === -1 && backup.indexOf(n) === -1) {
+          backup.push(n);
+        }
+      });
+    }
+
+    return {
+      main: main,
+      backup: backup.slice(0, 2),
+      chainName: '双链融合推荐',
+      chainDesc: '交集优先 + 顺位互补',
+      style: 'merged'
+    };
+  },
+
   generateFullResult: function(numArray) {
     if (!numArray || numArray.length < 12) {
       return { insufficient: true, message: '数据不足，需至少12期历史数据' };
@@ -336,6 +477,7 @@ const BusinessGiong = {
 
     var oldResult = this.calcOldChainRecommend(numArray, latestNum, blResult);
     var newResult = this.calcNewChainRecommend(numArray, latestNum, blResult);
+    var mergedResult = this.calcMergedRecommend(oldResult, newResult, periods, blResult.blackList);
 
     var heatMap = {};
     for (var num = 1; num <= 12; num++) {
@@ -356,6 +498,7 @@ const BusinessGiong = {
       latestZodiac: this._toZodiac(latestNum),
       oldResult: oldResult,
       newResult: newResult,
+      mergedResult: mergedResult,
       downWeightList: blResult.blackList,
       heatMap: heatMap,
       isCongestion: this.checkHighCongestion(periods),
@@ -393,6 +536,17 @@ const BusinessGiong = {
         chainDesc: result.newResult.chainDesc,
         style: result.newResult.style
       },
+      mergedResult: result.mergedResult ? {
+        main: result.mergedResult.main.map(function(n) {
+          return { num: n, zodiac: self._toZodiac(n) };
+        }),
+        backup: result.mergedResult.backup.map(function(n) {
+          return { num: n, zodiac: self._toZodiac(n) };
+        }),
+        chainName: result.mergedResult.chainName,
+        chainDesc: result.mergedResult.chainDesc,
+        style: result.mergedResult.style
+      } : null,
       downWeightList: result.downWeightList.map(function(n) {
         return { num: n, zodiac: self._toZodiac(n) };
       }),

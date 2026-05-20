@@ -1469,22 +1469,15 @@ const Business = {
   saveGiongBacktestRecord: (giongData, currentNum, expect) => {
     if (!giongData || giongData.insufficient) return;
 
-    var newMain = giongData.newResult.main.map(function(item) { return item.zodiac; });
-    var newBackup = giongData.newResult.backup.map(function(item) { return item.zodiac; });
-    var oldMain = giongData.oldResult.main.map(function(item) { return item.zodiac; });
-    var oldBackup = giongData.oldResult.backup.map(function(item) { return item.zodiac; });
+    var mainPredictions = giongData.mergedResult ? giongData.mergedResult.main.map(function(item) { return item.zodiac; }) : [];
+    var backupPredictions = giongData.mergedResult ? giongData.mergedResult.backup.map(function(item) { return item.zodiac; }) : [];
 
-    var allMain = newMain.slice();
-    var allBackup = newBackup.concat(oldMain).concat(oldBackup);
-
-    var seen = {};
-    var dedupedBackup = [];
-    allBackup.forEach(function(z) {
-      if (allMain.indexOf(z) === -1 && !seen[z]) {
-        seen[z] = true;
-        dedupedBackup.push(z);
-      }
-    });
+    if (mainPredictions.length === 0) {
+      var newMain = giongData.newResult.main.map(function(item) { return item.zodiac; });
+      var newBackup = giongData.newResult.backup.map(function(item) { return item.zodiac; });
+      mainPredictions = newMain;
+      backupPredictions = newBackup;
+    }
 
     var records = Storage.getGiongBacktestRecords();
     records = Business._deduplicateByExpect(records);
@@ -1517,11 +1510,11 @@ const Business = {
       var existingIndex = records.findIndex(function(r) { return r.expect === expect; });
       if (existingIndex !== -1) {
         var exist = records[existingIndex];
-        var sameMain = JSON.stringify(exist.mainPredictions) === JSON.stringify(allMain);
-        var sameBackup = JSON.stringify(exist.backupPredictions) === JSON.stringify(dedupedBackup);
+        var sameMain = JSON.stringify(exist.mainPredictions) === JSON.stringify(mainPredictions);
+        var sameBackup = JSON.stringify(exist.backupPredictions) === JSON.stringify(backupPredictions);
         if (!sameMain || !sameBackup) {
-          exist.mainPredictions = allMain.slice();
-          exist.backupPredictions = dedupedBackup.slice();
+          exist.mainPredictions = mainPredictions.slice();
+          exist.backupPredictions = backupPredictions.slice();
           exist.currentNum = currentNum;
         }
         Storage.saveGiongBacktestRecords(records);
@@ -1548,8 +1541,8 @@ const Business = {
       id: now.getTime(),
       predictTime: now.toISOString(),
       expect: expect || '',
-      mainPredictions: allMain.slice(),
-      backupPredictions: dedupedBackup.slice(),
+      mainPredictions: mainPredictions.slice(),
+      backupPredictions: backupPredictions.slice(),
       currentNum: currentNum,
       actualResult: null,
       isHit: null,

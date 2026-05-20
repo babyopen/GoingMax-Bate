@@ -875,6 +875,8 @@ const ViewZodiacPrediction = {
     var dbPanel = document.getElementById('zodiacDBPanel');
     if (!dbPanel) return;
 
+    ViewZodiacPrediction._cachedGiongData = data;
+
     if (!data || data.insufficient) {
       ViewZodiacPrediction._renderGiongEmpty(dbPanel, data ? data.message : '暂无数据');
       return;
@@ -899,77 +901,43 @@ const ViewZodiacPrediction = {
 
     html += '<div class="db-result-container">';
 
-    html += '<div class="db-main-section">';
-    html += '<div class="db-section-label giong-chain-label">' + data.newResult.chainName + '（主力）</div>';
-    html += '<div class="giong-chain-desc">' + data.newResult.chainDesc + '</div>';
-    html += '<div class="db-section-label">主推 4 码</div>';
-    html += '<div class="db-number-grid">';
-    data.newResult.main.forEach(function(item, idx) {
-      var rank = idx + 1;
-      var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
-      var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
-      html += '<div class="db-card-item ' + rankClass + '">';
-      html += '<div class="db-rank-badge">' + rank + '</div>';
-      html += '<div class="db-card-emoji">' + emoji + '</div>';
-      html += '<div class="db-card-name">' + item.zodiac + '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    if (data.newResult.backup && data.newResult.backup.length) {
-      html += '<div class="db-divider"></div>';
-      html += '<div class="db-backup-section">';
-      html += '<div class="db-section-label">备选 ' + data.newResult.backup.length + ' 码</div>';
+    if (data.mergedResult) {
+      html += '<div class="db-main-section db-merged-section" data-action="showGiongDetail">';
+      html += '<div class="db-section-label giong-chain-label giong-chain-merged">' + data.mergedResult.chainName + '</div>';
+      html += '<div class="giong-chain-desc">' + data.mergedResult.chainDesc + '</div>';
+      html += '<div class="db-section-label">主推 4 码</div>';
       html += '<div class="db-number-grid">';
-      data.newResult.backup.forEach(function(item, idx) {
+      data.mergedResult.main.forEach(function(item, idx) {
         var rank = idx + 1;
+        var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
         var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
-        html += '<div class="db-card-item">';
+        html += '<div class="db-card-item ' + rankClass + '">';
         html += '<div class="db-rank-badge">' + rank + '</div>';
         html += '<div class="db-card-emoji">' + emoji + '</div>';
         html += '<div class="db-card-name">' + item.zodiac + '</div>';
         html += '</div>';
       });
-      html += '</div></div>';
-    }
-    html += '</div>';
-
-    html += '<div class="giong-chain-divider">━━ 双链对照 ━━</div>';
-
-    html += '<div class="db-main-section">';
-    html += '<div class="db-section-label giong-chain-label giong-chain-old">' + data.oldResult.chainName + '（防守）</div>';
-    html += '<div class="giong-chain-desc">' + data.oldResult.chainDesc + '</div>';
-    html += '<div class="db-section-label">主推 4 码</div>';
-    html += '<div class="db-number-grid">';
-    data.oldResult.main.forEach(function(item, idx) {
-      var rank = idx + 1;
-      var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
-      var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
-      html += '<div class="db-card-item ' + rankClass + '">';
-      html += '<div class="db-rank-badge">' + rank + '</div>';
-      html += '<div class="db-card-emoji">' + emoji + '</div>';
-      html += '<div class="db-card-name">' + item.zodiac + '</div>';
       html += '</div>';
-    });
-    html += '</div>';
 
-    if (data.oldResult.backup && data.oldResult.backup.length) {
-      html += '<div class="db-divider"></div>';
-      html += '<div class="db-backup-section">';
-      html += '<div class="db-section-label">备选 ' + data.oldResult.backup.length + ' 码</div>';
-      html += '<div class="db-number-grid">';
-      data.oldResult.backup.forEach(function(item, idx) {
-        var rank = idx + 1;
-        var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
-        html += '<div class="db-card-item">';
-        html += '<div class="db-rank-badge">' + rank + '</div>';
-        html += '<div class="db-card-emoji">' + emoji + '</div>';
-        html += '<div class="db-card-name">' + item.zodiac + '</div>';
-        html += '</div>';
-      });
-      html += '</div></div>';
+      if (data.mergedResult.backup && data.mergedResult.backup.length) {
+        html += '<div class="db-divider"></div>';
+        html += '<div class="db-backup-section">';
+        html += '<div class="db-section-label">备选 ' + data.mergedResult.backup.length + ' 码</div>';
+        html += '<div class="db-number-grid">';
+        data.mergedResult.backup.forEach(function(item, idx) {
+          var rank = idx + 1;
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          html += '<div class="db-card-item">';
+          html += '<div class="db-rank-badge">' + rank + '</div>';
+          html += '<div class="db-card-emoji">' + emoji + '</div>';
+          html += '<div class="db-card-name">' + item.zodiac + '</div>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
+      html += '<div class="merged-tap-hint">点击展开双链详情</div>';
+      html += '</div>';
     }
-    html += '</div>';
 
     html += '</div>';
 
@@ -1008,19 +976,6 @@ const ViewZodiacPrediction = {
     });
     html += '</div></div></div>';
 
-    html += '<div class="card db-card">';
-    html += '<div class="card-header"><h2>算法规则</h2></div>';
-    html += '<div class="card-body">';
-    html += '<div class="db-rules">';
-    html += '<div class="db-rule-item"><div class="db-rule-num">①</div><div class="db-rule-text">旧版经典主链：01→05→07→09→04→10→01（马→虎→鼠→狗→兔→鸡→马）</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">②</div><div class="db-rule-text">新版实测主链：01→04→05→07→09→01（马→兔→虎→鼠→狗→马）</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">③</div><div class="db-rule-text">10(鸡)挂靠04(兔)，06(牛)为变盘专属号→01/07</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">④</div><div class="db-rule-text">12期内出现≥3次→降权；11期回落=2次→解除降权</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">⑤</div><div class="db-rule-text">冷门四区：蛇(02)、猪(08)、猴(11)、羊(12)永不进主推</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">⑥</div><div class="db-rule-text">高热拥堵(≥3次号码>3个)：普通2次号暂停推荐</div></div>';
-    html += '<div class="db-rule-item"><div class="db-rule-num">⑦</div><div class="db-rule-text">06热度达标(2次+)可顶替链内冷号进主推</div></div>';
-    html += '</div></div></div>';
-
     if (backtestStats) {
       html += ViewZodiacPrediction._renderGiongBacktestCard(backtestStats);
     }
@@ -1030,6 +985,71 @@ const ViewZodiacPrediction = {
 
   _renderGiongEmpty: function(dbPanel, message) {
     dbPanel.innerHTML = '<div class="card db-card"><div class="card-body"><div class="empty-tip">' + (message || '数据不足，无法生成Giong预测') + '</div></div></div>';
+  },
+
+  showGiongDetailModal: function(data) {
+    if (!data) return;
+
+    function renderChainSection(result, chainClass, title) {
+      var html = '<div class="giong-modal-chain">';
+      html += '<div class="db-section-label giong-chain-label ' + chainClass + '">' + title + '</div>';
+      html += '<div class="giong-chain-desc">' + result.chainDesc + '</div>';
+      html += '<div class="db-section-label">主推 4 码</div>';
+      html += '<div class="db-number-grid">';
+      result.main.forEach(function(item, idx) {
+        var rank = idx + 1;
+        var rankClass = rank === 1 ? 'card-rank-1' : (rank === 2 ? 'card-rank-2' : (rank === 3 ? 'card-rank-3' : 'card-rank-other'));
+        var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+        html += '<div class="db-card-item ' + rankClass + '">';
+        html += '<div class="db-rank-badge">' + rank + '</div>';
+        html += '<div class="db-card-emoji">' + emoji + '</div>';
+        html += '<div class="db-card-name">' + item.zodiac + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      if (result.backup && result.backup.length) {
+        html += '<div class="db-divider"></div>';
+        html += '<div class="db-backup-section">';
+        html += '<div class="db-section-label">备选 ' + result.backup.length + ' 码</div>';
+        html += '<div class="db-number-grid">';
+        result.backup.forEach(function(item, idx) {
+          var rank = idx + 1;
+          var emoji = ZodiacPrediction.getZodiacEmoji(item.zodiac);
+          html += '<div class="db-card-item">';
+          html += '<div class="db-rank-badge">' + rank + '</div>';
+          html += '<div class="db-card-emoji">' + emoji + '</div>';
+          html += '<div class="db-card-name">' + item.zodiac + '</div>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    var html = '';
+    html += '<div id="giongDetailModal" class="giong-detail-modal">';
+    html += '<div class="giong-modal-overlay" data-action="closeGiongDetail"></div>';
+    html += '<div class="giong-modal-content">';
+    html += '<div class="giong-modal-header">';
+    html += '<h3>双链对照详情</h3>';
+    html += '<span class="giong-modal-close" data-action="closeGiongDetail">✕</span>';
+    html += '</div>';
+    html += '<div class="giong-modal-body">';
+
+    html += renderChainSection(data.newResult, 'giong-chain-label', data.newResult.chainName + '（主力）');
+    html += '<div class="giong-chain-divider">━━ 双链对照 ━━</div>';
+    html += renderChainSection(data.oldResult, 'giong-chain-label giong-chain-old', data.oldResult.chainName + '（防守）');
+
+    html += '</div></div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  closeGiongDetailModal: function() {
+    var modal = document.getElementById('giongDetailModal');
+    if (modal) modal.remove();
   },
 
   _renderGiongBacktestCard: function(stats) {

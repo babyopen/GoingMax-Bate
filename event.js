@@ -180,6 +180,13 @@ const EventBinder = {
         var modal = document.getElementById('backtestDetailModal');
         if (modal) modal.style.display = 'none';
       }
+      else if(action === 'showGiongDetail') {
+        var giongData = ViewZodiacPrediction._cachedGiongData;
+        if (giongData) ViewZodiacPrediction.showGiongDetailModal(giongData);
+      }
+      else if(action === 'closeGiongDetail') {
+        ViewZodiacPrediction.closeGiongDetailModal();
+      }
       else if(action === 'switchFreqCard') {
         var freqIndex = Number(actionBtn.dataset.freqIndex);
         if (ViewZodiacPrediction.freqSwiperUpdate) {
