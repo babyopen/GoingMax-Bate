@@ -172,6 +172,9 @@ const EventBinder = {
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
       else if(action === 'toggleDBDetail') ViewZodiacPrediction.toggleDBDetail();
+      else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
+      else if(action === 'closeBatchModal') ViewFilter.closeBatchModal();
+      else if(action === 'confirmBatchSelect') ViewFilter.confirmBatchSelect();
       else if(action === 'showBacktestDetail') {
         var modal = document.getElementById('backtestDetailModal');
         if (modal) modal.style.display = 'flex';

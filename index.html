@@ -74,12 +74,13 @@
     <div class="card" id="mod-zodiac">
       <div class="card-header">
         <h2>生肖</h2>
-        <div class="btn-group" role="group" aria-label="生肖操作">
-          <button class="btn-mini" data-action="lockGroup" data-group="zodiac">锁定</button>
-          <button class="btn-mini" data-action="markGroup" data-group="zodiac">标记</button>
-          <button class="btn-mini" data-action="selectGroup" data-group="zodiac">全选</button>
-          <button class="btn-mini" data-action="invertGroup" data-group="zodiac">反选</button>
-          <button class="btn-mini red" data-action="clearGroup" data-group="zodiac">清除</button>
+        <div class="btn-group icon-btn-group" role="group" aria-label="生肖操作">
+          <button class="btn-mini btn-icon" data-action="lockGroup" data-group="zodiac" title="锁定"><i class="fa-solid fa-lock"></i></button>
+          <button class="btn-mini btn-icon" data-action="markGroup" data-group="zodiac" title="标记"><i class="fa-solid fa-bookmark"></i></button>
+          <button class="btn-mini btn-icon" data-action="selectGroup" data-group="zodiac" title="全选"><i class="fa-solid fa-circle-check"></i></button>
+          <button class="btn-mini btn-icon" data-action="invertGroup" data-group="zodiac" title="反选"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+          <button class="btn-mini btn-icon btn-icon-red" data-action="clearGroup" data-group="zodiac" title="清除"><i class="fa-solid fa-xmark"></i></button>
+          <button class="btn-mini btn-icon" data-action="batchSelectGroup" data-group="zodiac" title="批量选择"><i class="fa-solid fa-list-check"></i></button>
         </div>
       </div>
       <div class="card-body">
@@ -801,6 +802,22 @@
 <!-- 轻提示 -->
 <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
+<!-- 批量选择弹窗 -->
+<div class="batch-modal" id="batchModal">
+  <div class="batch-modal-overlay" data-action="closeBatchModal"></div>
+  <div class="batch-modal-content">
+    <div class="batch-modal-header">
+      <h3 id="batchModalTitle">批量选择</h3>
+      <span class="batch-modal-close" data-action="closeBatchModal">&times;</span>
+    </div>
+    <div class="batch-modal-body">
+      <p class="batch-modal-hint">输入要选择的名称，用逗号、空格或换行分隔多个名称</p>
+      <input class="batch-modal-input" id="batchModalInput" type="text" placeholder="例如：马 牛 虎" autocomplete="off">
+      <button class="batch-modal-btn" data-action="confirmBatchSelect">确认选择</button>
+    </div>
+  </div>
+</div>
+
 <!-- 平台层：模态框（APP切换只需替换此文件夹） -->
 <script src="platform/web/input-modal.js"></script>
 <script src="platform/web/confirm-modal.js"></script>
@@ -843,5 +860,6 @@
 
 <!-- 入口层：初始化应用 -->
 <script src="app.js"></script>
+
 </body>
 </html>

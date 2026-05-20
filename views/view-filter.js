@@ -114,5 +114,77 @@ const ViewFilter = {
   cleanupPageEvents: (scrollHandler, unloadHandler) => {
     window.removeEventListener('scroll', scrollHandler);
     window.removeEventListener('beforeunload', unloadHandler);
+  },
+
+  /**
+   * 批量选择弹窗相关状态
+   */
+  _batchTargetGroups: [],
+
+  /**
+   * 显示批量选择弹窗
+   * @param {string} groups - 逗号分隔的组名
+   */
+  showBatchModal: (groups) => {
+    const modal = document.getElementById('batchModal');
+    const input = document.getElementById('batchModalInput');
+    if (!modal || !input) return;
+    ViewFilter._batchTargetGroups = groups ? groups.split(',') : [];
+    modal.classList.add('show');
+    input.value = '';
+    setTimeout(() => input.focus(), 300);
+  },
+
+  /**
+   * 关闭批量选择弹窗
+   */
+  closeBatchModal: () => {
+    const modal = document.getElementById('batchModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+  },
+
+  /**
+   * 确认批量选择
+   */
+  confirmBatchSelect: () => {
+    const input = document.getElementById('batchModalInput');
+    if (!input) return;
+    const raw = input.value.trim();
+    if (!raw) {
+      Toast.show('请输入要选择的名称');
+      return;
+    }
+    // 用逗号、空格、换行分割
+    const names = raw.split(/[,，\s\n]+/).filter(Boolean);
+    if (names.length === 0) {
+      Toast.show('未识别到有效名称');
+      return;
+    }
+    // 对每个目标组执行批量选择
+    ViewFilter._batchTargetGroups.forEach(group => {
+      // 收集该组所有有效tag值
+      const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+      const lockedSet = new Set(StateManager._state.locked[group] || []);
+      // 匹配用户输入的名称
+      const matched = allTags
+        .map(tag => Utils.formatTagValue(tag.dataset.value, group))
+        .filter(v => {
+          if (lockedSet.has(v)) return false;
+          return names.some(n => v.includes(n) || n.includes(v));
+        });
+      // 更新选中状态
+      const newSelected = { ...StateManager._state.selected };
+      newSelected[group] = matched;
+      StateManager.setState({ selected: newSelected });
+    });
+    // 触发对应组的渲染更新
+    ViewFilter._batchTargetGroups.forEach(group => {
+      if (group === 'zodiac') Business.renderZodiacGroup();
+      else if (group === 'color') Business.renderColorGroup();
+      else if (group === 'colorsx') Business.renderColorsxGroup();
+    });
+    ViewFilter.closeBatchModal();
+    Toast.show(`已选择 ${names.length} 个名称`);
   }
 };
