@@ -118,38 +118,34 @@ const ViewZodiacPrediction = {
       animTimer = setTimeout(function() { animating = false; }, 320);
     }
 
-    var isTouchDevice = 'ontouchstart' in window;
-
     function start(e) {
-      if (e.type === 'mousedown' && isTouchDevice) return;
+      if (e.type === 'mousedown' && e.pointerType === 'touch') return;
+      var touch = e.type === 'mousedown' ? null : (e.touches && e.touches[0]);
+      if (!touch && e.type !== 'mousedown') return;
       var ww = getWidth();
       if (!ww) return;
       dragging = true;
       w.style.transition = 'none';
       if (animTimer) clearTimeout(animTimer);
       animating = false;
-      sx = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+      sx = touch ? touch.clientX : e.clientX;
       cx = sx;
       lastX = sx;
-      lastY = e.type === 'mousedown' ? 0 : e.touches[0].clientY;
+      lastY = touch ? touch.clientY : 0;
       lastT = Date.now();
     }
 
     var moveHandler = function(e) {
       if (!dragging) return;
-      var nowX, nowY;
-      if (e.type === 'mousemove') {
-        nowX = e.clientX;
-        nowY = 0;
-      } else {
-        nowX = e.touches[0].clientX;
-        nowY = e.touches[0].clientY;
-      }
+      var touch = e.type === 'mousemove' ? null : (e.touches && e.touches[0]);
+      if (!touch && e.type !== 'mousemove') return;
+      var nowX = touch ? touch.clientX : e.clientX;
+      var nowY = touch ? touch.clientY : lastY;
       
       var dx = Math.abs(nowX - lastX);
       var dy = Math.abs(nowY - lastY);
       
-      if (e.type === 'touchmove' && e.cancelable !== false && dx > dy) {
+      if (e.type === 'touchmove' && e.cancelable !== false && dx > 2 && dx > dy) {
         e.preventDefault();
       }
       
@@ -196,12 +192,10 @@ const ViewZodiacPrediction = {
     w.addEventListener('touchmove', moveHandler, { passive: false });
     w.addEventListener('touchend', end, { passive: true });
     w.addEventListener('touchcancel', end, { passive: true });
-    if (!isTouchDevice) {
-      w.addEventListener('mousedown', start);
-      w.addEventListener('mousemove', moveHandler);
-      w.addEventListener('mouseup', end);
-      w.addEventListener('mouseleave', end);
-    }
+    w.addEventListener('mousedown', start);
+    w.addEventListener('mousemove', moveHandler);
+    w.addEventListener('mouseup', end);
+    w.addEventListener('mouseleave', end);
 
     if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
     ViewZodiacPrediction[config.updateRef] = slide;
