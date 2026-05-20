@@ -87,16 +87,16 @@
       </div>
     </div>
 
-    <!-- 波色筛选模块 -->
+    <!-- 波色筛选模块（合并：基础波色 + 波色单双） -->
     <div class="card" id="mod-color">
       <div class="card-header">
         <h2>波色</h2>
         <div class="btn-group" role="group" aria-label="波色操作">
-          <button class="btn-mini" data-action="lockGroup" data-group="color">锁定</button>
-          <button class="btn-mini" data-action="markGroup" data-group="color">标记</button>
-          <button class="btn-mini" data-action="selectGroup" data-group="color">全选</button>
-          <button class="btn-mini" data-action="invertGroup" data-group="color">反选</button>
-          <button class="btn-mini red" data-action="clearGroup" data-group="color">清除</button>
+          <button class="btn-mini" data-action="lockGroup" data-group="color,colorsx">锁定</button>
+          <button class="btn-mini" data-action="markGroup" data-group="color,colorsx">标记</button>
+          <button class="btn-mini" data-action="selectGroup" data-group="color,colorsx">全选</button>
+          <button class="btn-mini" data-action="invertGroup" data-group="color,colorsx">反选</button>
+          <button class="btn-mini red" data-action="clearGroup" data-group="color,colorsx">清除</button>
         </div>
       </div>
       <div class="card-body">
@@ -105,23 +105,7 @@
           <div class="tag" data-value="蓝" data-group="color">蓝</div>
           <div class="tag" data-value="绿" data-group="color">绿</div>
         </div>
-      </div>
-    </div>
-
-    <!-- 波色筛选模块 -->
-    <div class="card" id="mod-colorsx">
-      <div class="card-header">
-        <h2>波色</h2>
-        <div class="btn-group" role="group" aria-label="波色操作">
-          <button class="btn-mini" data-action="lockGroup" data-group="colorsx">锁定</button>
-          <button class="btn-mini" data-action="markGroup" data-group="colorsx">标记</button>
-          <button class="btn-mini" data-action="selectGroup" data-group="colorsx">全选</button>
-          <button class="btn-mini" data-action="invertGroup" data-group="colorsx">反选</button>
-          <button class="btn-mini red" data-action="clearGroup" data-group="colorsx">清除</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="tags" data-group="colorsx" role="group" aria-label="波色选项">
+        <div class="tags" data-group="colorsx" role="group" aria-label="波色单双选项" style="margin-top:10px;">
           <div class="tag" data-value="红单" data-group="colorsx">红单</div>
           <div class="tag" data-value="红双" data-group="colorsx">红双</div>
           <div class="tag" data-value="蓝单" data-group="colorsx">蓝单</div>
@@ -782,7 +766,6 @@
     <button class="nav-tab" data-target="mod-saved" role="tab">我的方案</button>
     <button class="nav-tab" data-target="mod-zodiac" role="tab">生肖</button>
     <button class="nav-tab" data-target="mod-color" role="tab">波色</button>
-    <button class="nav-tab" data-target="mod-colorsx" role="tab">波色</button>
     <button class="nav-tab" data-target="mod-type" role="tab">属性</button>
     <button class="nav-tab" data-target="mod-element" role="tab">五行</button>
     <button class="nav-tab" data-target="mod-head" role="tab">头数</button>
