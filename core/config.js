@@ -1,9 +1,9 @@
 const CONFIG = Object.freeze({
   VERSION: 'Beta2',
   DATA_VERSION: 1, // 数据版本号，用于后续数据迁移
-  // API配置（Vercel部署时使用相对路径走rewrite代理，本地开发时可切换为完整URL）
+  // API配置（GitHub Pages/Vercel均使用完整URL直连外部API）
   API: Object.freeze({
-    HISTORY: '/api/history/'
+    HISTORY: 'https://history.macaumarksix.com/history/macaujc2/y/'
   }),
   // 动画配置
   TOAST_DURATION: 2000,

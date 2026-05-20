@@ -350,11 +350,7 @@ const Business = {
 
     try {
       const year = new Date().getFullYear();
-      // 本地开发使用完整URL，Vercel部署使用相对路径走rewrite代理
-      const apiBase = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-        ? 'https://history.macaumarksix.com/history/macaujc2/y/'
-        : CONFIG.API.HISTORY;
-      const res = await fetch(apiBase + year);
+      const res = await fetch(CONFIG.API.HISTORY + year);
       const data = await res.json();
       let rawData = data.data || [];
 

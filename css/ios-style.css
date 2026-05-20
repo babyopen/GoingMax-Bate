@@ -18,7 +18,7 @@
 .bottom-nav-wrapper{
   position:fixed;left:0;right:0;bottom:0;z-index:999;
   display:flex;justify-content:center;align-items:center;
-  padding:0 clamp(8px,2vw,16px) clamp(12px,2vw,16px) clamp(8px,2vw,16px);gap:clamp(8px,2vw,14px);
+  padding:0 clamp(10px,2.5vw,16px) clamp(14px,2.5vw,18px) clamp(10px,2.5vw,16px);gap:clamp(10px,2.5vw,14px);
   width:100%;box-sizing:border-box;
 }
 .bottom-nav{
@@ -26,25 +26,25 @@
   background:var(--nav-glass-bg);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   backdrop-filter:blur(20px) saturate(180%);
-  border-radius:clamp(24px,5vw,32px);
-  padding:clamp(6px,1.5vw,12px) clamp(8px,2vw,18px);
-  height:clamp(48px,8vw,64px);
+  border-radius:clamp(28px,5vw,32px);
+  padding:clamp(8px,2vw,14px) clamp(10px,2.5vw,20px);
+  height:clamp(54px,9vw,70px);
   box-sizing:border-box;
   box-shadow:0 4px 24px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
-  gap:clamp(6px,1.5vw,16px);
-  max-width:calc(100% - clamp(16px,4vw,32px));
+  gap:clamp(8px,2vw,16px);
+  max-width:calc(100% - clamp(20px,5vw,32px));
   width:auto;
 }
 .bottom-nav-toggle{
   display:flex;justify-content:center;align-items:center;
-  width:clamp(40px,8vw,54px);height:clamp(40px,8vw,54px);
-  min-width:clamp(40px,8vw,54px);
-  border-radius:clamp(24px,5vw,32px);background:var(--nav-glass-bg);
+  width:clamp(48px,9vw,58px);height:clamp(48px,9vw,58px);
+  min-width:clamp(48px,9vw,58px);
+  border-radius:clamp(28px,5vw,32px);background:var(--nav-glass-bg);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   backdrop-filter:blur(20px) saturate(180%);
   border:1px solid var(--nav-glass-border);cursor:pointer;touch-action:manipulation;
   transition:all var(--anim-fast);box-shadow:0 4px 12px var(--nav-glass-shadow);
-  font-size:clamp(11px,2.5vw,14px);font-weight:500;color:var(--nav-item-text);padding:0;font-family:inherit;
+  font-size:clamp(13px,2.8vw,15px);font-weight:500;color:var(--nav-item-text);padding:0;font-family:inherit;
   box-sizing:border-box;
 }
 .bottom-nav-toggle.active{
@@ -55,14 +55,14 @@
 .bottom-nav-item{
   display:flex;align-items:center;justify-content:center;
   flex:1;min-width:0;
-  height:clamp(40px,7vw,54px);
-  border-radius:clamp(24px,5vw,32px);
-  padding:0 clamp(8px,2vw,20px);
+  height:clamp(46px,8vw,58px);
+  border-radius:clamp(28px,5vw,32px);
+  padding:0 clamp(10px,2.5vw,22px);
   transition:all var(--anim-fast);cursor:pointer;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;position:relative;
 }
 .bottom-nav-item span{
-  font-size:clamp(12px,2.5vw,15px);font-weight:500;color:var(--nav-item-text);
+  font-size:clamp(14px,3vw,16px);font-weight:500;color:var(--nav-item-text);
   transition:color var(--anim-fast), font-weight var(--anim-fast);line-height:1.2;
   white-space:nowrap;
 }
