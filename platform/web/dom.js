@@ -10,6 +10,8 @@ const DOM = {
   lockExclude: document.getElementById('lockExclude'),
   // 方案列表
   filterList: document.getElementById('filterList'),
+  // 号码选择标签
+  numTags: document.getElementById('numTags'),
   // 生肖标签
   zodiacTags: document.getElementById('zodiacTags'),
   // 快捷导航

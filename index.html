@@ -271,17 +271,36 @@
       </div>
     </div>
 
+    <!-- 号码选择模块 -->
+    <div class="card" id="mod-num">
+      <div class="card-header">
+        <h2>号码选择</h2>
+        <div class="btn-group icon-btn-group" role="group" aria-label="号码选择操作">
+          <button class="btn-mini btn-icon" data-action="lockGroup" data-group="num" title="锁定"><i class="fa-solid fa-lock"></i></button>
+          <button class="btn-mini btn-icon" data-action="markGroup" data-group="num" title="标记"><i class="fa-solid fa-bookmark"></i></button>
+          <button class="btn-mini btn-icon" data-action="selectGroup" data-group="num" title="全选"><i class="fa-solid fa-circle-check"></i></button>
+          <button class="btn-mini btn-icon" data-action="invertGroup" data-group="num" title="反选"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+          <button class="btn-mini btn-icon" data-action="batchSelectGroup" data-group="num" title="批量选择"><i class="fa-solid fa-list-check"></i></button>
+          <button class="btn-mini btn-icon btn-icon-red" data-action="clearGroup" data-group="num" title="清除"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="numTags" class="tags num-tags" data-group="num" role="group" aria-label="号码选择选项"></div>
+      </div>
+    </div>
+
     <!-- 号码排除模块 -->
     <div class="card" id="mod-exclude">
-      <div class="card-header">
+      <div class="card-header collapsible collapsed" data-target="excludeBody">
         <h2>号码排除</h2>
         <div class="btn-group icon-btn-group" role="group" aria-label="号码排除操作">
+          <button class="btn-mini btn-icon btn-toggle" data-action="toggleCollapse" title="折叠"><i class="fa-solid fa-chevron-up"></i></button>
           <button class="btn-mini btn-icon" data-action="invertExclude" title="反选"><i class="fa-solid fa-arrow-rotate-left"></i></button>
           <button class="btn-mini btn-icon" data-action="batchSelectGroup" data-group="exclude" title="批量选择"><i class="fa-solid fa-list-check"></i></button>
           <button class="btn-mini btn-icon btn-icon-red" data-action="clearExclude" title="清空"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
-      <div class="card-body">
+      <div class="card-body collapsed" id="excludeBody">
         <div class="exclude-header">
           <div>已排除：<b id="excludeCount" aria-live="polite">0</b> 个</div>
           <label><input type="checkbox" id="lockExclude" data-action="toggleExcludeLock"> 锁定排除</label>
@@ -773,6 +792,7 @@
     <button class="nav-tab" data-target="mod-tail" role="tab">尾数</button>
     <button class="nav-tab" data-target="mod-sum" role="tab">尾合</button>
     <button class="nav-tab" data-target="mod-bs" role="tab">大小</button>
+    <button class="nav-tab" data-target="mod-num" role="tab">号码选择</button>
     <button class="nav-tab" data-target="mod-exclude" role="tab">号码排除</button>
   </div>
 </div>
@@ -811,7 +831,7 @@
       <span class="batch-modal-close" data-action="closeBatchModal">&times;</span>
     </div>
     <div class="batch-modal-body">
-      <p class="batch-modal-hint">输入要选择的名称，用逗号、空格或换行分隔多个名称</p>
+      <p class="batch-modal-hint">支持多种分隔符：逗号、空格、换行、点号、斜杠、连字符(-)</p>
       <input class="batch-modal-input" id="batchModalInput" type="text" placeholder="例如：马 牛 虎" autocomplete="off">
       <button class="batch-modal-btn" data-action="confirmBatchSelect">确认选择</button>
     </div>

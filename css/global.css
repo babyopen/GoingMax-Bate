@@ -117,6 +117,18 @@ body{
 .绿色{background:var(--green)}
 .tag-zodiac{font-size:9px;color:var(--sub-text)}
 
+/* 号码选择标签网格 */
+.num-tags{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:10px 0;width:100%;
+  max-width:100%;min-height:0;overflow:hidden;box-sizing:border-box;
+}
+.num-tags .tag{
+  aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:12px;font-size:14px;font-weight:700;
+  padding:0;min-height:0;min-width:0;
+}
+.num-tags .tag.active{background:var(--primary);color:#FFFFFF}
+
 /* 排除号码网格 */
 .exclude-grid{
   display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:10px 0;width:100%;

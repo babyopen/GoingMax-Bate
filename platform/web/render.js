@@ -144,6 +144,32 @@ const Render = {
   },
 
   /**
+   * 渲染号码选择标签（1-49）
+   */
+  renderNumTags: () => {
+    try {
+      const nums = [];
+      for(let i = 1; i <= 49; i++) {
+        nums.push(i);
+      }
+      const fragment = Utils.createFragment(nums, (num) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tag';
+        wrapper.dataset.value = String(num);
+        wrapper.dataset.group = 'num';
+        wrapper.setAttribute('role', 'checkbox');
+        wrapper.setAttribute('tabindex', '0');
+        wrapper.innerText = num.toString().padStart(2, '0');
+        return wrapper;
+      });
+
+      DOM.numTags.innerHTML = '';
+      DOM.numTags.appendChild(fragment);
+    } catch(e) {
+    }
+  },
+
+  /**
    * 渲染方案列表
    */
   renderFilterList: () => {

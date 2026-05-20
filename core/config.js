@@ -29,7 +29,7 @@ const CONFIG = Object.freeze({
   // 分类配置
   JIAQIN: Object.freeze(['马','牛','羊','鸡','狗','猪']),
   YESHOU: Object.freeze(['鼠','虎','兔','龙','蛇','猴']),
-  NUMBER_GROUPS: Object.freeze(['head','tail','sum']), // 数字类型的分组
+  NUMBER_GROUPS: Object.freeze(['head','tail','sum','num']), // 数字类型的分组
   // 号码规则配置
   COLOR_MAP: Object.freeze({
     '红':[1,2,7,8,12,13,18,19,23,24,29,30,34,35,40,45,46],

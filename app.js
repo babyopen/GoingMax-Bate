@@ -8,22 +8,24 @@ async function initApp() {
     DataQuery.init();
     // 4. 渲染生肖标签
     Render.renderZodiacTags();
-    // 5. 渲染排除号码网格
+    // 5. 渲染号码选择标签
+    Render.renderNumTags();
+    // 6. 渲染排除号码网格
     Render.renderExcludeGrid();
-    // 6. 加载本地存储的方案
+    // 7. 加载本地存储的方案
     Storage.loadSavedFilters();
-    // 7. 加载历史记录缓存
+    // 8. 加载历史记录缓存
     Business.loadHistoryCache();
-    // 8. 渲染方案列表
+    // 9. 渲染方案列表
     Render.renderFilterList();
-    // 9. 初始化事件绑定
+    // 10. 初始化事件绑定
     EventBinder.init();
-    // 10. 启动分析页面倒计时和自动刷新检查
+    // 11. 启动分析页面倒计时和自动刷新检查
     Business.startCountdown();
     Business.checkDrawTimeLoop();
-    // 11. 后台静默更新历史数据
+    // 12. 后台静默更新历史数据
     Business.refreshHistory(true);
-    // 12. 隐藏加载遮罩
+    // 13. 隐藏加载遮罩
     Render.hideLoading();
     
     console.log(`GiongBeta v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);

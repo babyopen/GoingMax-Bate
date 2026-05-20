@@ -130,17 +130,25 @@
 }
 @media (max-width: 360px) {
   .exclude-grid{grid-template-columns:repeat(6,1fr);gap:5px}
+  .num-tags{grid-template-columns:repeat(6,1fr);gap:5px}
+  .num-tags .tag{font-size:13px}
 }
 @media (max-width: 320px) {
   .exclude-grid{grid-template-columns:repeat(6,1fr);gap:4px}
+  .num-tags{grid-template-columns:repeat(5,1fr);gap:4px}
+  .num-tags .tag{font-size:12px;border-radius:8px}
 }
 @media (orientation:landscape) and (max-height:500px) {
   .exclude-grid{grid-template-columns:repeat(10,1fr);gap:5px;margin:4px 0}
   .exclude-tag{font-size:11px}
+  .num-tags{grid-template-columns:repeat(10,1fr);gap:5px;margin:4px 0}
+  .num-tags .tag{font-size:12px}
 }
 @media (orientation:landscape) and (max-height:400px) {
   .exclude-grid{grid-template-columns:repeat(12,1fr);gap:3px}
   .exclude-tag{font-size:9px;border-radius:8px}
+  .num-tags{grid-template-columns:repeat(12,1fr);gap:3px}
+  .num-tags .tag{font-size:10px;border-radius:8px}
 }
 
 /* 横屏适配 */

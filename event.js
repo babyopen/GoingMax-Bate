@@ -175,6 +175,17 @@ const EventBinder = {
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
       else if(action === 'closeBatchModal') ViewFilter.closeBatchModal();
       else if(action === 'confirmBatchSelect') ViewFilter.confirmBatchSelect();
+      else if(action === 'toggleCollapse') {
+        const header = actionBtn.closest('.card-header.collapsible');
+        if(header){
+          const targetId = header.dataset.target;
+          const body = targetId ? document.getElementById(targetId) : header.nextElementSibling;
+          if(body && body.classList.contains('card-body')){
+            const isCollapsed = header.classList.toggle('collapsed');
+            body.classList.toggle('collapsed', isCollapsed);
+          }
+        }
+      }
       else if(action === 'showBacktestDetail') {
         var modal = document.getElementById('backtestDetailModal');
         if (modal) modal.style.display = 'flex';

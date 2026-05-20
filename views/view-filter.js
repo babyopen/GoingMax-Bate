@@ -135,11 +135,11 @@ const ViewFilter = {
     // 排除组特殊提示
     if (ViewFilter._batchTargetGroups[0] === 'exclude') {
       if (title) title.textContent = '批量排除号码';
-      if (hint) hint.textContent = '输入要排除的号码，用逗号、空格或换行分隔';
+      if (hint) hint.textContent = '输入要排除的号码，支持多种分隔符';
       input.placeholder = '例如：1 2 3 10 25';
     } else {
       if (title) title.textContent = '批量选择';
-      if (hint) hint.textContent = '输入要选择的名称，用逗号、空格或换行分隔多个名称';
+      if (hint) hint.textContent = '输入要选择的名称，支持多种分隔符';
       input.placeholder = '例如：马 牛 虎';
     }
     modal.classList.add('show');
@@ -170,8 +170,8 @@ const ViewFilter = {
     // 号码排除组特殊处理
     const groups = ViewFilter._batchTargetGroups;
     if (groups.length === 1 && groups[0] === 'exclude') {
-      // 提取号码
-      const nums = raw.split(/[,，\s\n]+/).map(Number).filter(n => n >= 1 && n <= 49);
+      // 提取号码，支持多种分隔符：逗号、空格、换行、点号、斜杠、连字符
+      const nums = raw.split(/[,，\s\n.。\/／\\-]+/).map(Number).filter(n => n >= 1 && n <= 49);
       if (nums.length === 0) {
         Toast.show('请输入有效的号码(1-49)');
         return;
@@ -194,7 +194,7 @@ const ViewFilter = {
       return;
     }
     // 普通标签组处理
-    const names = raw.split(/[,，\s\n]+/).filter(Boolean);
+    const names = raw.split(/[,，\s\n.。\/／\\-]+/).filter(Boolean);
     if (names.length === 0) {
       Toast.show('未识别到有效名称');
       return;
@@ -203,10 +203,18 @@ const ViewFilter = {
     ViewFilter._batchTargetGroups.forEach(group => {
       const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
       const lockedSet = new Set(StateManager._state.locked[group] || []);
+      const isNumGroup = CONFIG.NUMBER_GROUPS.includes(group);
       const matched = allTags
         .map(tag => Utils.formatTagValue(tag.dataset.value, group))
         .filter(v => {
           if (lockedSet.has(v)) return false;
+          if (isNumGroup) {
+            const numVal = Number(v);
+            return names.some(n => {
+              const targetNum = Number(n);
+              return !isNaN(targetNum) && targetNum === numVal;
+            });
+          }
           return names.some(n => v.includes(n) || n.includes(v));
         });
       const newSelected = { ...StateManager._state.selected };

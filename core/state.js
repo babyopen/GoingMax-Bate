@@ -6,7 +6,8 @@ const StateManager = {
   _state: {
     selected: {
       zodiac:[], color:[], colorsx:[], type:[], element:[],
-      head:[], tail:[], sum:[], sumOdd:[], sumSize:[], tailSize:[], bs:[], hot:[]
+      head:[], tail:[], sum:[], sumOdd:[], sumSize:[], tailSize:[], bs:[], hot:[],
+      num:[]
     },
     excluded: [],
     excludeHistory: [],

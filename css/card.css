@@ -512,3 +512,8 @@
 .backtest-modal-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
 .backtest-modal-close{cursor:pointer;font-size:22px;color:#999;padding:4px 8px;line-height:1;transition:color 0.2s}
 .backtest-modal-body{padding:16px 20px 20px}
+
+/* 卡片折叠功能 */
+.card-body.collapsed{display:none}
+.btn-toggle .fa-chevron-up{transition:transform var(--anim-normal)}
+.card-header.collapsed .btn-toggle .fa-chevron-up{transform:rotate(180deg)}
