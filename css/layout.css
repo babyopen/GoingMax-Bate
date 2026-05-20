@@ -171,22 +171,12 @@
 
 /* 430px 断点：大屏手机 */
 @media (max-width: 430px) {
-  .bottom-nav-wrapper{padding:0 env(safe-area-inset-left, 0) 14px env(safe-area-inset-right, 0);gap:12px}
-  .bottom-nav{height:54px;padding:8px 14px;gap:12px}
-  .bottom-nav-item{min-width:60px;height:46px;padding:0 14px}
-  .bottom-nav-item span{font-size:14px}
-  .bottom-nav-toggle{width:46px;height:46px;min-width:46px;font-size:13px}
   .quick-nav{left:12px;right:12px;max-width:calc(100% - 24px)}
   .nav-tab{padding:8px 13px;font-size:12px}
 }
 
 /* 375px 断点：经典小屏 */
 @media (max-width: 375px) {
-  .bottom-nav-wrapper{padding:0 env(safe-area-inset-left, 0) 12px env(safe-area-inset-right, 0);gap:10px}
-  .bottom-nav{height:48px;padding:5px 12px;border-radius:24px;gap:8px}
-  .bottom-nav-item{min-width:56px;height:44px;border-radius:24px;padding:0 12px}
-  .bottom-nav-item span{font-size:13px}
-  .bottom-nav-toggle{width:44px;height:44px;min-width:44px;border-radius:24px;font-size:12px;padding:0}
   .quick-nav{left:10px;right:10px;max-width:calc(100% - 20px);border-radius:20px}
   .nav-tab{padding:7px 11px;font-size:11px}
   .db-heat-grid{grid-template-columns:repeat(4,1fr);gap:6px}
@@ -210,22 +200,12 @@
 
 /* 360px 断点：常见安卓小屏 */
 @media (max-width: 360px) {
-  .bottom-nav-wrapper{padding:0 env(safe-area-inset-left, 0) 10px env(safe-area-inset-right, 0);gap:8px}
-  .bottom-nav{height:44px;padding:4px 10px;gap:8px}
-  .bottom-nav-item{min-width:52px;height:40px;padding:0 10px}
-  .bottom-nav-item span{font-size:12px}
-  .bottom-nav-toggle{width:40px;height:40px;min-width:40px;font-size:11px}
   .quick-nav{left:8px;right:8px;max-width:calc(100% - 16px)}
   .nav-tab{padding:6px 10px;font-size:11px}
 }
 
 /* 320px 断点：极小屏 */
 @media (max-width: 320px) {
-  .bottom-nav-wrapper{padding:0 env(safe-area-inset-left, 0) 8px env(safe-area-inset-right, 0);gap:6px}
-  .bottom-nav{height:40px;padding:4px 8px;border-radius:20px;gap:6px}
-  .bottom-nav-item{min-width:46px;height:36px;border-radius:20px;padding:0 8px}
-  .bottom-nav-item span{font-size:12px}
-  .bottom-nav-toggle{width:36px;height:36px;min-width:36px;border-radius:20px;font-size:11px;padding:0}
   .quick-nav{left:6px;right:6px;max-width:calc(100% - 12px);border-radius:16px}
   .nav-tabs{padding:6px;gap:4px}
   .nav-tab{padding:5px 9px;font-size:10px;border-radius:12px}
