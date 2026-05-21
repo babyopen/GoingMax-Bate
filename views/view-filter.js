@@ -127,19 +127,14 @@ const ViewFilter = {
   adjustModalPosition: () => {
     const modal = document.getElementById('batchModal');
     const container = modal?.querySelector('.batch-modal-content');
-    const input = document.getElementById('batchModalInput');
-    if (!modal?.classList.contains('show')) return;
-    if (!container || !input) return;
+    if (!modal?.classList.contains('show') || !container) return;
 
-    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const inputRect = input.getBoundingClientRect();
-    const inputBottom = inputRect.bottom;
+    const screenHeight = window.innerHeight;
+    const viewportHeight = window.visualViewport?.height || screenHeight;
+    const keyboardHeight = screenHeight - viewportHeight;
 
-    if (inputBottom > viewportHeight - 20) {
-      const offset = inputBottom - (viewportHeight - 20);
-      const maxOffset = container.offsetHeight * 0.6;
-      const translateY = -Math.min(offset, maxOffset);
-      container.style.transform = `translateY(${translateY}px)`;
+    if (keyboardHeight > 50) {
+      container.style.transform = `translateY(${-keyboardHeight}px)`;
     } else {
       container.style.transform = 'translateY(0)';
     }

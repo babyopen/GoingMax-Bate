@@ -49,6 +49,7 @@ const EventBinder = {
     window.addEventListener('resize', onViewportChange);
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', onViewportChange);
+      window.visualViewport.addEventListener('scroll', onViewportChange);
     }
     
     // 分析页面：特码生肖关联选择器change事件
