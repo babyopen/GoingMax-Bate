@@ -11,7 +11,7 @@
 .top-nums::-webkit-scrollbar-thumb{background:var(--sub-text);border-radius:2px;opacity:0.3}
 
 /* 主体内容区 */
-.body-box{margin-top:calc(var(--top-offset) + var(--safe-top));padding:0 16px}
+.body-box{margin-top:calc(var(--top-offset) + var(--safe-top));padding:0 16px;padding-bottom:calc(80px + var(--safe-bottom))}
 
 /* 分析面板 */
 .analysis-tab-panel{display:none}

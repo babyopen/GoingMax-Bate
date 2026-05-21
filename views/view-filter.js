@@ -156,8 +156,6 @@ const ViewFilter = {
     const hint = modal?.querySelector('.batch-modal-hint');
     const container = modal?.querySelector('.batch-modal-content');
     if (!modal || !input) return;
-    // 禁止页面滚动
-    document.body.style.overflow = 'hidden';
     ViewFilter._batchTargetGroups = groups ? groups.split(',') : [];
     // 根据分组设置不同的提示
     const group = ViewFilter._batchTargetGroups[0];
@@ -204,8 +202,6 @@ const ViewFilter = {
     if (input) input.blur();
     if (modal) modal.classList.remove('show');
     if (container) container.style.transform = 'translateY(0)';
-    // 恢复页面滚动
-    document.body.style.overflow = '';
   },
 
   /**
