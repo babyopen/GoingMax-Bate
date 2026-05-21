@@ -135,15 +135,35 @@ const StateManager = {
   },
 
   /**
-   * 清除分组：清除选中 + 清除标记
+   * 清除分组：仅清除选中项，保留标记
    * @param {string} group - 分组名
    */
   clearGroup: (group) => {
     const newSelected = { ...StateManager._state.selected };
     newSelected[group] = [];
+    StateManager.setState({ selected: newSelected });
+  },
+
+  /**
+   * 清除分组的所有标记（仅清除标记，保留选中项）
+   * @param {string} group - 分组名（支持多分组用逗号分隔）
+   */
+  clearGroupMarks: (group) => {
+    const groups = group.split(',');
     const newMarked = { ...StateManager._state.marked };
-    delete newMarked[group];
-    StateManager.setState({ selected: newSelected, marked: newMarked });
+    const newMarkCount = { ...StateManager._state.markCount };
+    groups.forEach(g => {
+      delete newMarked[g];
+      delete newMarkCount[g];
+    });
+    StateManager.setState({ marked: newMarked, markCount: newMarkCount });
+  },
+
+  /**
+   * 清除所有分组的所有标记
+   */
+  clearAllMarks: () => {
+    StateManager.setState({ marked: {}, markCount: {} });
   },
 
   /**

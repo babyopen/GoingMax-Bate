@@ -79,37 +79,6 @@ const Business = {
   },
 
   /**
-   * 批量排除号码弹窗
-   */
-  batchExcludePrompt: () => {
-    const state = StateManager._state;
-    if(state.lockExclude) return;
-
-    if(typeof GIONGBETA_INPUT_MODAL !== 'undefined' && GIONGBETA_INPUT_MODAL.show){
-      GIONGBETA_INPUT_MODAL.show('批量排除号码', '输入要排除的号码，空格/逗号/顿号/引号/竖线/点/横线分隔', '', (input) => {
-        if(!input) return;
-        const nums = input.split(/[\s,，、。."'|-]+/).map(Number).filter(num => num >=1 && num <=49);
-        if(nums.length === 0) {
-          Toast.show('请输入有效的号码');
-          return;
-        }
-        const newExcluded = [...state.excluded];
-        const newHistory = [...state.excludeHistory];
-        let addCount = 0;
-        nums.forEach(num => {
-          if(!newExcluded.includes(num)){
-            newExcluded.push(num);
-            newHistory.push([num, 'in']);
-            addCount++;
-          }
-        });
-        StateManager.setState({ excluded: newExcluded, excludeHistory: newHistory });
-        Toast.show(addCount > 0 ? `已添加${addCount}个排除号码` : '号码已在排除列表中');
-      });
-    }
-  },
-
-  /**
    * 切换排除锁定状态
    */
   toggleExcludeLock: () => {

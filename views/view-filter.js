@@ -132,15 +132,31 @@ const ViewFilter = {
     const hint = modal?.querySelector('.batch-modal-hint');
     if (!modal || !input) return;
     ViewFilter._batchTargetGroups = groups ? groups.split(',') : [];
-    // 排除组特殊提示
-    if (ViewFilter._batchTargetGroups[0] === 'exclude') {
+    // 根据分组设置不同的提示
+    const group = ViewFilter._batchTargetGroups[0];
+    const groupPlaceholders = {
+      'num': '例如：01 02 03 或 1-5',
+      'zodiac': '例如：马 牛 虎 或 龙 蛇',
+      'color,colorsx': '例如：红 蓝 绿 或 红单 蓝双',
+      'type': '例如：家禽 野兽',
+      'element': '例如：金 木 水 火 土',
+      'head': '例如：0 1 2 3 4',
+      'tail': '例如：0 1 2 3 4 5 6 7 8 9',
+      'sum': '例如：01 02 03 04 05',
+      'bs,sumOdd,sumSize,tailSize': '例如：大单 小双 合单 合大',
+      'hot': '例如：热号 温号 冷号',
+      'exclude': '例如：1 2 3 或 01-10'
+    };
+    // 排除组特殊处理
+    if (group === 'exclude') {
       if (title) title.textContent = '批量排除号码';
       if (hint) hint.textContent = '输入要排除的号码，支持多种分隔符';
-      input.placeholder = '例如：1 2 3 10 25';
+      input.placeholder = groupPlaceholders['exclude'];
     } else {
+      const placeholder = groupPlaceholders[group] || '例如：马 牛 虎';
       if (title) title.textContent = '批量选择';
       if (hint) hint.textContent = '输入要选择的名称，支持多种分隔符';
-      input.placeholder = '例如：马 牛 虎';
+      input.placeholder = placeholder;
     }
     modal.classList.add('show');
     input.value = '';
@@ -170,8 +186,8 @@ const ViewFilter = {
     // 号码排除组特殊处理
     const groups = ViewFilter._batchTargetGroups;
     if (groups.length === 1 && groups[0] === 'exclude') {
-      // 提取号码，支持多种分隔符：逗号、空格、换行、点号、斜杠、连字符
-      const nums = raw.split(/[,，\s\n.。\/／\\-]+/).map(Number).filter(n => n >= 1 && n <= 49);
+      // 提取号码，支持多种分隔符
+      const nums = raw.split(/[,，\s\n.。\/／\\\-、；;'""''\[\]【】]+/).map(Number).filter(n => n >= 1 && n <= 49);
       if (nums.length === 0) {
         Toast.show('请输入有效的号码(1-49)');
         return;
@@ -194,12 +210,14 @@ const ViewFilter = {
       return;
     }
     // 普通标签组处理
-    const names = raw.split(/[,，\s\n.。\/／\\-]+/).filter(Boolean);
+    const names = raw.split(/[,，\s\n.。\/／\\\-、；;'""''\[\]【】]+/).filter(Boolean);
     if (names.length === 0) {
       Toast.show('未识别到有效名称');
       return;
     }
     // 对每个目标组执行批量选择
+    let totalMatched = 0;
+    const unmatchedNames = [];
     ViewFilter._batchTargetGroups.forEach(group => {
       const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
       const lockedSet = new Set(StateManager._state.locked[group] || []);
@@ -217,12 +235,36 @@ const ViewFilter = {
           }
           return names.some(n => v.includes(n) || n.includes(v));
         });
+      totalMatched = matched.length;
       const newSelected = { ...StateManager._state.selected };
       newSelected[group] = matched;
       StateManager.setState({ selected: newSelected });
     });
+    // 检查未匹配的名称
+    const allTagValues = [];
+    ViewFilter._batchTargetGroups.forEach(group => {
+      const tags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+      tags.forEach(tag => {
+        const val = Utils.formatTagValue(tag.dataset.value, group);
+        allTagValues.push(String(val));
+      });
+    });
+    names.forEach(name => {
+      const nameStr = String(name).trim();
+      const isMatched = allTagValues.some(tagVal => 
+        tagVal.includes(nameStr) || nameStr.includes(tagVal) ||
+        (CONFIG.NUMBER_GROUPS.includes(ViewFilter._batchTargetGroups[0]) && Number(nameStr) === Number(tagVal))
+      );
+      if (!isMatched && nameStr) {
+        unmatchedNames.push(nameStr);
+      }
+    });
     // 关闭弹窗并提示
     ViewFilter.closeBatchModal();
-    Toast.show(`已选择 ${names.length} 个名称`);
+    if (unmatchedNames.length > 0) {
+      Toast.show(`已选择 ${totalMatched} 个，无法识别：${unmatchedNames.join(', ')}`);
+    } else {
+      Toast.show(`已选择 ${names.length} 个名称`);
+    }
   }
 };

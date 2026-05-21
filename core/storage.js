@@ -11,7 +11,8 @@ const Storage = {
     HISTORY_TIMESTAMP: 'historyTimestamp',
     ZODIAC_BACKTEST: 'zodiacBacktest',
     DB_BACKTEST_RECORDS: 'dbBacktestRecords',
-    GIONG_BACKTEST_RECORDS: 'giongBacktestRecords'
+    GIONG_BACKTEST_RECORDS: 'giongBacktestRecords',
+    MARK_HINT_SHOWN: 'markHintShown'
   }),
 
   /**

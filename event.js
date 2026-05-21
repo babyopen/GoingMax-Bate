@@ -73,13 +73,24 @@ const EventBinder = {
   },
 
   /**
-   * 全局双击处理（标签锁定/解锁）
+   * 全局双击处理（标签锁定/解锁、标记按钮清除标记）
    * @param {MouseEvent} e - 双击事件
    */
   handleDoubleClick: (e) => {
     const target = e.target;
+    // 标记按钮双击：清空该分组所有标记（支持多分组按钮）
+    const markBtn = target.closest('.btn-mini[data-action="markGroup"]');
+    if (markBtn) {
+      const groupAttr = markBtn.dataset.group;
+      if (groupAttr) {
+        const groups = groupAttr.split(',');
+        groups.forEach(g => StateManager.clearGroupMarks(g));
+        Toast.show('已清除所有标记');
+      }
+      return;
+    }
+    // 标签双击：锁定/解锁
     const tag = target.closest('.tag[data-group]');
-
     if (tag) {
       const group = tag.dataset.group;
       const value = Utils.formatTagValue(tag.dataset.value, group);
@@ -143,7 +154,15 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.SELECT_GROUP) groups.forEach(g => StateManager.selectGroup(g));
       else if(action === CONFIG.ACTIONS.INVERT_GROUP) groups.forEach(g => StateManager.invertGroup(g));
       else if(action === CONFIG.ACTIONS.CLEAR_GROUP) groups.forEach(g => StateManager.clearGroup(g));
-      else if(action === CONFIG.ACTIONS.MARK_GROUP) groups.forEach(g => StateManager.markGroup(g));
+      else if(action === CONFIG.ACTIONS.MARK_GROUP) {
+        // 检查是否首次点击标记按钮
+        const hasShownHint = Storage.get(Storage.KEYS.MARK_HINT_SHOWN, false);
+        if (!hasShownHint) {
+          Toast.show('双击可清空所有标记');
+          Storage.set(Storage.KEYS.MARK_HINT_SHOWN, true);
+        }
+        groups.forEach(g => StateManager.markGroup(g));
+      }
       else if(action === CONFIG.ACTIONS.LOCK_GROUP) groups.forEach(g => StateManager.lockGroup(g));
       // 全局操作
       else if(action === CONFIG.ACTIONS.SELECT_ALL) Filter.selectAllFilters();
@@ -153,7 +172,6 @@ const EventBinder = {
       // 排除号码操作
       else if(action === CONFIG.ACTIONS.INVERT_EXCLUDE) Business.invertExclude();
       else if(action === CONFIG.ACTIONS.UNDO_EXCLUDE) Business.undoExclude();
-      else if(action === CONFIG.ACTIONS.BATCH_EXCLUDE) Business.batchExcludePrompt();
       else if(action === CONFIG.ACTIONS.CLEAR_EXCLUDE) Business.clearExclude();
       // 方案操作
       else if(action === CONFIG.ACTIONS.TOGGLE_SHOW_ALL) Business.toggleShowAllFilters();

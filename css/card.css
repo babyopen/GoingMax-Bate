@@ -60,6 +60,9 @@
   margin:16px 0;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px;
   -webkit-overflow-scrolling:touch;
 }
+.ball-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;
+}
 .ball{
   width:clamp(28px,8vw,44px);height:clamp(28px,8vw,44px);border-radius:50%;color:#fff;
   font-weight:700;font-size:clamp(12px,4vw,19px);display:flex;align-items:center;
@@ -68,7 +71,7 @@
 .ball.red{background:radial-gradient(circle at 30% 30%, #ff4d4f, #cf1322)}
 .ball.blue{background:radial-gradient(circle at 30% 30%, #40a9ff, #096dd9)}
 .ball.green{background:radial-gradient(circle at 30% 30%, #73d13d, #389e0d)}
-.ball-zodiac{font-size:clamp(9px,3vw,13px);color:var(--sub-text);font-weight:600;white-space:nowrap}
+.ball-zodiac{font-size:clamp(9px,3vw,13px);color:var(--sub-text);font-weight:600;white-space:nowrap;text-align:center}
 .ball-sep{font-size:clamp(16px,5vw,24px);color:var(--sub-text);line-height:clamp(28px,8vw,44px);padding:0 clamp(2px,1vw,4px);font-weight:700;flex-shrink:0}
 
 /* 热门卡片 */
