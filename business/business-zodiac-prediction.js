@@ -1073,8 +1073,8 @@ const ZodiacPrediction = {
       });
 
       for (var i = 1; i <= followLen; i++) {
-        var nextIdx = target.index + i;
-        if (nextIdx >= historyData.length) break;
+        var nextIdx = target.index - i;
+        if (nextIdx < 0 || nextIdx >= historyData.length) break;
 
         var nextItem = historyData[nextIdx];
         var nextSpecial = ZodiacPrediction._getSpecial(nextItem);

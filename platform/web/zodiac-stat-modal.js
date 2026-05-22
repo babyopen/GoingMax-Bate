@@ -116,6 +116,39 @@ const ZodiacStatModal = {
         #zodiac-stat-confirm {
           background: #0A84FF !important;
         }
+        #zodiac-stat-content > div > div {
+          background: rgba(255,255,255,0.06) !important;
+        }
+        #zodiac-stat-content [style*="background: #f5f5f5"] {
+          background: rgba(255,255,255,0.06) !important;
+        }
+        #zodiac-stat-content [style*="background: rgba(255,255,255,0.5)"] {
+          background: rgba(255,255,255,0.08) !important;
+        }
+        #zodiac-stat-content [style*="background: rgba(0,122,255,0.1)"] {
+          background: rgba(0,122,255,0.2) !important;
+        }
+        #zodiac-stat-content [style*="background: rgba(0,122,255,0.08)"] {
+          background: rgba(0,122,255,0.15) !important;
+        }
+        #zodiac-stat-content [style*="background: rgba(0,122,255,0.12)"] {
+          background: rgba(0,122,255,0.18) !important;
+        }
+        #zodiac-stat-content [style*="color: #007aff"] {
+          color: #0A84FF !important;
+        }
+        #zodiac-stat-content [style*="color: #999"] {
+          color: #98989F !important;
+        }
+        #zodiac-stat-content [style*="color: #666"] {
+          color: #8E8E93 !important;
+        }
+        #zodiac-stat-content [style*="color: #ccc"] {
+          color: #636366 !important;
+        }
+        #zodiac-stat-content [style*="font-weight: 600"] {
+          color: #FFFFFF !important;
+        }
       }
     `;
     document.head.appendChild(darkStyle);

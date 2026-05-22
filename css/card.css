@@ -588,6 +588,22 @@
   color: #999;
 }
 
+#zodiac-stat-modal .zone-stat-item {
+  background: #f5f5f5;
+}
+
+@media (prefers-color-scheme: dark) {
+  #zodiac-stat-modal .zone-stat-item {
+    background: rgba(255,255,255,0.06);
+  }
+  #zodiac-stat-modal .zone-stat-period {
+    background: rgba(255,255,255,0.06);
+  }
+  #zodiac-stat-modal .zone-stat-section {
+    color: #ffffff;
+  }
+}
+
 .latest-follow-card {
   padding: 0;
 }
