@@ -1208,6 +1208,9 @@ const Business = {
     var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
     ViewZodiacPrediction.renderFrequencyRating(freqResult);
 
+    var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
+    ViewZodiacPrediction.renderLatestFollowStats(latestFollowStats);
+
     var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
 
     if (freqResult && patternResult) {

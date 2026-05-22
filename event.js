@@ -135,10 +135,22 @@ const EventBinder = {
     }
 
     // 3. 快捷导航跳转
-    const navTab = target.closest('.nav-tab[data-target]');
+    const navTab = target.closest('.nav-tab');
     if(navTab){
-      const targetId = navTab.dataset.target;
-      Business.scrollToModule(targetId);
+      const navType = navTab.dataset.navType;
+      if (navType === 'scroll') {
+        const targetId = navTab.dataset.target;
+        if (targetId) Business.scrollToModule(targetId);
+      } else if (navType === 'tab') {
+        const page = navTab.dataset.page;
+        const tabName = navTab.dataset.tabName;
+        if (page === 'analysis') {
+          Business.switchAnalysisTab(tabName);
+        } else if (page === 'random') {
+          Business.switchZodiacTab(tabName);
+        }
+      }
+      Business.toggleQuickNav(false);
       return;
     }
 
@@ -231,6 +243,39 @@ const EventBinder = {
       }
       else if(action === 'closeGiongDetail') {
         ViewZodiacPrediction.closeGiongDetailModal();
+      }
+      else if(action === 'showZodiacStat') {
+        var zodiac = actionBtn.dataset.zodiac;
+        if (zodiac && ViewZodiacPrediction._cachedFreqResult) {
+          var freqResult = ViewZodiacPrediction._cachedFreqResult;
+          var data = null;
+          var periods = ['p12', 'p24', 'p36'];
+          for (var i = 0; i < periods.length; i++) {
+            var periodData = freqResult[periods[i]];
+            if (periodData) {
+              for (var j = 0; j < periodData.length; j++) {
+                if (periodData[j].zodiac === zodiac) {
+                  data = periodData[j];
+                  break;
+                }
+              }
+              if (data) break;
+            }
+          }
+          
+          var missHistory = null;
+          var followStats = null;
+          var state = StateManager._state;
+          var historyData = state.analysis.historyData;
+          if (historyData && historyData.length) {
+            missHistory = ZodiacPrediction.calcZodiacMissHistory(historyData, zodiac);
+            followStats = ZodiacPrediction.calcZodiacFollowers(historyData, zodiac, 4, 20);
+          }
+          
+          if (data) {
+            ZodiacStatModal.show(zodiac, data, freqResult, missHistory, followStats);
+          }
+        }
       }
       else if(action === 'switchFreqCard') {
         var freqIndex = Number(actionBtn.dataset.freqIndex);

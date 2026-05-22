@@ -520,3 +520,170 @@
 .card-body.collapsed{display:none}
 .btn-toggle .fa-chevron-up{transition:transform var(--anim-normal)}
 .card-header.collapsed .btn-toggle .fa-chevron-up{transform:rotate(180deg)}
+
+/* 生肖遗漏统计弹窗 */
+#zodiac-stat-modal .zone-stat-section {
+  margin-bottom: 16px;
+}
+
+#zodiac-stat-modal .zone-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#zodiac-stat-modal .zone-stat-item {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+#zodiac-stat-modal .zone-stat-item-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+#zodiac-stat-modal .zone-stat-item-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#zodiac-stat-modal .zone-stat-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+#zodiac-stat-modal .zone-stat-period {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+#zodiac-stat-modal .zone-stat-period-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#zodiac-stat-modal .zone-stat-period-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 12px;
+}
+
+#zodiac-stat-modal .zone-stat-period-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+#zodiac-stat-modal .zone-stat-period-label {
+  color: #999;
+}
+
+.latest-follow-card {
+  padding: 0;
+}
+
+.latest-follow-header {
+  margin-bottom: 12px;
+}
+
+.latest-follow-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.latest-follow-subtitle {
+  font-size: 12px;
+  color: var(--sub-text);
+}
+
+.latest-follow-content {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.latest-follow-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.latest-zodiac {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0,122,255,0.12);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+.follow-arrow {
+  font-size: 13px;
+  color: #999;
+}
+
+.follow-zodiac {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(0,0,0,0.05);
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.latest-follow-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.latest-follow-item {
+  background: rgba(255,255,255,0.8);
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.latest-follow-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.latest-follow-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.latest-follow-percent {
+  font-size: 10px;
+  color: var(--sub-text);
+}
+
+.latest-follow-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--sub-text);
+  font-size: 13px;
+}
+

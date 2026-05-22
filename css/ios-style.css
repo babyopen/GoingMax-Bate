@@ -189,6 +189,27 @@
   .giong-modal-header{background:#1c1c1e;border-bottom-color:rgba(255,255,255,0.1)}
   .backtest-modal-content{background:#1c1c1e}
   .backtest-modal-header{background:#1c1c1e;border-bottom-color:rgba(255,255,255,0.1)}
+  #zodiac-stat-modal > div{background:#1c1c1e}
+  #zodiac-stat-modal > div > div:first-child{border-bottom-color:rgba(255,255,255,0.1)}
+  #zodiac-stat-title{color:#ffffff}
+  #zodiac-stat-close{color:#ffffff}
+  #zodiac-stat-modal .zone-stat-item{background:rgba(255,255,255,0.06)}
+  #zodiac-stat-modal .zone-stat-item-value{color:#ffffff}
+  #zodiac-stat-modal .zone-stat-title{color:#98989f;border-bottom-color:rgba(255,255,255,0.1)}
+  #zodiac-stat-modal .zone-stat-period{background:rgba(255,255,255,0.06)}
+  #zodiac-stat-modal .zone-stat-period-title{color:#ffffff}
+  #zodiac-stat-modal .zone-stat-period-item{color:#ffffff}
+  
+  /* 最新一期跟随统计深色适配 */
+  .latest-follow-card{color:#ffffff}
+  .latest-follow-title{color:#ffffff}
+  .latest-follow-subtitle{color:#98989f}
+  .latest-follow-content{background:rgba(255,255,255,0.06)}
+  .latest-follow-chain{border-bottom-color:rgba(255,255,255,0.1)}
+  .latest-zodiac{background:rgba(10,132,255,0.2);color:#0A84FF}
+  .follow-zodiac{background:rgba(255,255,255,0.08);color:#ffffff}
+  .latest-follow-item{background:rgba(255,255,255,0.06)}
+  .latest-follow-name{color:#ffffff}
   
   /* 频率标签深色适配 */
   .freq-tab-btn{background:rgba(255,255,255,0.06)}

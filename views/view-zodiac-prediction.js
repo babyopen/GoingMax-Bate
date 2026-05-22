@@ -340,6 +340,8 @@ const ViewZodiacPrediction = {
   renderFrequencyRating: function(freqResult) {
     var grid = document.getElementById('giongFreqGrid');
     if (!grid) return;
+    
+    ViewZodiacPrediction._cachedFreqResult = freqResult;
 
     if (!freqResult) {
       grid.innerHTML = '<div class="empty-tip">数据不足（需至少12期历史数据）</div>';
@@ -397,7 +399,7 @@ const ViewZodiacPrediction = {
           var badgeClass = zoneColors[item.zone] || '';
 
           var dropArrow = (item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
-          html += '<div class="zone-zod-card">';
+          html += '<div class="zone-zod-card" data-action="showZodiacStat" data-zodiac="' + item.zodiac + '">';
           html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + dropArrow + '</div>';
           html += '<div class="zod-card-name">' + item.zodiac + '</div>';
           html += '<div class="zod-card-stats">';
@@ -422,6 +424,52 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     grid.innerHTML = html;
+  },
+
+  renderLatestFollowStats: function(latestData) {
+    var container = document.getElementById('latestFollowStatsPanel');
+    if (!container) return;
+
+    if (!latestData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var html = '';
+    html += '<div class="latest-follow-card">';
+    html += '<div class="latest-follow-header">';
+    html += '<div class="latest-follow-subtitle">第' + latestData.expect + '期 <strong>' + latestData.zodiac + '</strong> 出现后的跟随情况</div>';
+    html += '</div>';
+    
+    if (latestData.topFollowers && latestData.topFollowers.length > 0) {
+      html += '<div class="latest-follow-content">';
+      html += '<div class="latest-follow-chain">';
+      html += '<span class="latest-zodiac">' + latestData.zodiac + '</span>';
+      
+      latestData.topFollowers.forEach(function(item, idx) {
+        html += '<span class="follow-arrow">→</span>';
+        html += '<span class="follow-zodiac">' + item.zodiac + '</span>';
+      });
+      
+      html += '</div>';
+      
+      html += '<div class="latest-follow-stats">';
+      latestData.topFollowers.forEach(function(item) {
+        html += '<div class="latest-follow-item">';
+        html += '<div class="latest-follow-name">' + item.zodiac + '</div>';
+        html += '<div class="latest-follow-count">' + item.count + '次</div>';
+        html += '<div class="latest-follow-percent">' + item.percentage + '%</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    } else {
+      html += '<div class="latest-follow-empty">暂无跟随数据</div>';
+    }
+    
+    html += '</div>';
+    
+    container.innerHTML = html;
   },
 
 
