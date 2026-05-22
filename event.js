@@ -330,6 +330,13 @@ const EventBinder = {
       Business.switchZodiacTab(zodiacTabBtn.dataset.zodiacTab);
       return;
     }
+
+    // 10. 更多功能开发中点击跳转
+    const emptyTip = target.closest('.empty-tip');
+    if(emptyTip && emptyTip.textContent.includes('更多功能开发中')){
+      window.location.href = 'https://aebhwxjgna.00512dh1.app:3728/00512.html';
+      return;
+    }
   },
 
   /**
