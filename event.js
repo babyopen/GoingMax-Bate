@@ -18,21 +18,38 @@ const EventBinder = {
     // 全局错误捕获
     window.addEventListener('error', EventBinder.handleGlobalError);
     
-    // 分析页面：全维度分析选择器change事件
+    // 分析页面：全维度分析选择器change事件（符合分层规范：事件层负责DOM查询）
     const analyzeSelect = document.getElementById('analyzeSelect');
     if(analyzeSelect) {
       analyzeSelect.addEventListener('change', function() {
-        Business.syncAnalyze();
+        const customNumEl = document.getElementById('customNum');
+        const domValues = {
+          custom: customNumEl ? customNumEl.value.trim() : '',
+          selectVal: analyzeSelect.value
+        };
+        Business.syncAnalyze(domValues);
       });
       analyzeSelect.addEventListener('input', function() {
-        Business.syncAnalyze();
+        const customNumEl = document.getElementById('customNum');
+        const domValues = {
+          custom: customNumEl ? customNumEl.value.trim() : '',
+          selectVal: analyzeSelect.value
+        };
+        Business.syncAnalyze(domValues);
       });
     }
-    
-    // 分析页面：自定义期数输入事件（防抖优化）
+
+    // 分析页面：自定义期数输入事件（防抖优化，符合分层规范）
     const customNum = document.getElementById('customNum');
     if(customNum) {
-      const debouncedSync = Utils.debounce(() => Business.syncAnalyze(), 300);
+      const debouncedSync = Utils.debounce(() => {
+        const analyzeSelectEl = document.getElementById('analyzeSelect');
+        const domValues = {
+          custom: customNum.value.trim(),
+          selectVal: analyzeSelectEl ? analyzeSelectEl.value : '12'
+        };
+        Business.syncAnalyze(domValues);
+      }, 300);
       customNum.addEventListener('input', function() {
         debouncedSync();
       });
@@ -51,21 +68,38 @@ const EventBinder = {
       window.visualViewport.addEventListener('resize', onViewportChange);
     }
     
-    // 分析页面：特码生肖关联选择器change事件
+    // 分析页面：特码生肖关联选择器change事件（符合分层规范：事件层负责DOM查询）
     const zodiacAnalyzeSelect = document.getElementById('zodiacAnalyzeSelect');
     if(zodiacAnalyzeSelect) {
       zodiacAnalyzeSelect.addEventListener('change', function() {
-        Business.syncZodiacAnalyze();
+        const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
+        const numCountSelectEl = document.getElementById('numCountSelect');
+        const customNumCountEl = document.getElementById('customNumCount');
+        const domValues = {
+          customPeriod: zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '',
+          selectPeriodVal: zodiacAnalyzeSelect.value,
+          countVal: numCountSelectEl ? numCountSelectEl.value : '5',
+          customCount: customNumCountEl ? customNumCountEl.value.trim() : ''
+        };
+        Business.syncZodiacAnalyze(domValues);
       });
     }
     
-    // 分析页面：号码数量选择器change事件
+    // 分析页面：号码数量选择器change事件（符合分层规范）
     const numCountSelect = document.getElementById('numCountSelect');
     const customNumCount = document.getElementById('customNumCount');
     
     if(numCountSelect) {
       numCountSelect.addEventListener('change', function() {
-        Business.syncZodiacAnalyze();
+        const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
+        const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
+        const domValues = {
+          customPeriod: zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '',
+          selectPeriodVal: zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36',
+          countVal: numCountSelect.value,
+          customCount: customNumCount ? customNumCount.value.trim() : ''
+        };
+        Business.syncZodiacAnalyze(domValues);
       });
     }
     
@@ -174,10 +208,22 @@ const EventBinder = {
       const groups = group ? group.split(',') : [];
       const index = actionBtn.dataset.index;
       
-      // 分组操作
+      // 分组操作（符合分层规范：事件层负责DOM查询，核心层只处理数据）
       if(action === CONFIG.ACTIONS.RESET_GROUP) groups.forEach(g => StateManager.resetGroup(g));
-      else if(action === CONFIG.ACTIONS.SELECT_GROUP) groups.forEach(g => StateManager.selectGroup(g));
-      else if(action === CONFIG.ACTIONS.INVERT_GROUP) groups.forEach(g => StateManager.invertGroup(g));
+      else if(action === CONFIG.ACTIONS.SELECT_GROUP) {
+        groups.forEach(g => {
+          const allTags = [...document.querySelectorAll(`.tag[data-group="${g}"]`)];
+          const allValues = allTags.map(tag => Utils.formatTagValue(tag.dataset.value, g));
+          StateManager.selectGroup(g, allValues);
+        });
+      }
+      else if(action === CONFIG.ACTIONS.INVERT_GROUP) {
+        groups.forEach(g => {
+          const allTags = [...document.querySelectorAll(`.tag[data-group="${g}"]`)];
+          const allValues = allTags.map(tag => Utils.formatTagValue(tag.dataset.value, g));
+          StateManager.invertGroup(g, allValues);
+        });
+      }
       else if(action === CONFIG.ACTIONS.CLEAR_GROUP) groups.forEach(g => StateManager.clearGroup(g));
       else if(action === CONFIG.ACTIONS.MARK_GROUP) {
         // 检查是否首次点击标记按钮
@@ -215,6 +261,18 @@ const EventBinder = {
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
       else if(action === 'toggleDBDetail') ViewZodiacPrediction.toggleDBDetail();
+      // V5.3算法操作
+      else if(action === 'runV53Engine') EventBinder._runV53Engine();
+      else if(action === 'toggleV53DetailToggle') EventBinder._toggleV53Detail();
+      else if(action === 'showV53Detail') EventBinder._showV53Detail(actionBtn);
+      // 大小回测操作
+      else if(action === 'showSizeBacktest') EventBinder._showSizeBacktest();
+      // 单双回测操作
+      else if(action === 'showOddEvenBacktest') EventBinder._showOddEvenBacktest();
+      // 五行回测操作
+      else if(action === 'showWuxingBacktest') EventBinder._showWuxingBacktest();
+      // 波色回测操作
+      else if(action === 'showColorBacktest') EventBinder._showColorBacktest();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
       else if(action === 'closeBatchModal') ViewFilter.closeBatchModal();
       else if(action === 'confirmBatchSelect') ViewFilter.confirmBatchSelect();
@@ -230,12 +288,10 @@ const EventBinder = {
         }
       }
       else if(action === 'showBacktestDetail') {
-        var modal = document.getElementById('backtestDetailModal');
-        if (modal) modal.style.display = 'flex';
+        ViewZodiacPrediction.toggleBacktestDetailModal(true);
       }
       else if(action === 'closeBacktestDetail') {
-        var modal = document.getElementById('backtestDetailModal');
-        if (modal) modal.style.display = 'none';
+        ViewZodiacPrediction.toggleBacktestDetailModal(false);
       }
       else if(action === 'showGiongDetail') {
         var giongData = ViewZodiacPrediction._cachedGiongData;
@@ -285,12 +341,7 @@ const EventBinder = {
       }
       else if(action === 'switchFreqTab') {
         var freqKey = actionBtn.dataset.freqKey;
-        document.querySelectorAll('.freq-tab-btn').forEach(function(btn) {
-          btn.classList.toggle('active', btn.dataset.freqKey === freqKey);
-        });
-        document.querySelectorAll('.freq-panel').forEach(function(panel) {
-          panel.style.display = panel.dataset.freqPanel === freqKey ? '' : 'none';
-        });
+        ViewZodiacPrediction.switchFreqTabUI(freqKey);
       }
       else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
@@ -300,12 +351,7 @@ const EventBinder = {
       }
       else if(action === 'switchPredTab') {
         var predTab = actionBtn.dataset.predTab;
-        document.querySelectorAll('#zodiacPredictionGrid .freq-tab-btn').forEach(function(btn) {
-          btn.classList.toggle('active', btn.dataset.predTab === predTab);
-        });
-        document.querySelectorAll('#zodiacPredictionGrid .freq-panel').forEach(function(panel) {
-          panel.style.display = panel.dataset.predPanel === predTab ? '' : 'none';
-        });
+        ViewZodiacPrediction.switchPredTabUI(predTab);
       }
       return;
     }
@@ -375,5 +421,184 @@ const EventBinder = {
   handleGlobalError: (e) => {
     console.error('全局错误', e.error);
     Toast.show('页面出现异常，请刷新重试');
+  },
+
+  // ========== V5.3 算法事件处理方法 ==========
+
+  /**
+   * 运行V5.3引擎
+   */
+  _runV53Engine: function() {
+    var historyData = StateManager._state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Toast.show('暂无历史数据，请等待数据加载');
+      return;
+    }
+
+    Toast.show('正在运行V5.3算法...');
+
+    // 使用 setTimeout 避免阻塞UI
+    setTimeout(function() {
+      var result = BusinessV53Engine.run(historyData);
+
+      if (result.error) {
+        Toast.show('V5.3计算失败: ' + result.message);
+        return;
+      }
+
+      ViewV53Prediction.renderMainPanel(result);
+      ViewV53Prediction.renderWarnings(result.warnings);
+
+      // 更新状态（不触发全量渲染）
+      StateManager.setState({
+        v53: {
+          enabled: true,
+          lastResult: result,
+          computeTime: result.computeTime
+        }
+      }, false);
+
+      Toast.show('V5.3算法完成! 耗时' + result.computeTime + 'ms');
+    }, 50);
+  },
+
+  /**
+   * 切换详细评分面板展开/收起（符合分层规范：委托视图层处理渲染）
+   */
+  _toggleV53Detail: function() {
+    ViewV53Prediction.toggleDetail();
+  },
+
+  /**
+   * 显示单个号码的详情（简易实现）
+   */
+  _showV53Detail: function(btn) {
+    var num = parseInt(btn.dataset.num);
+    if (!num) return;
+
+    var result = BusinessV53Engine.getLastResult();
+    if (!result || result.error) {
+      Toast.show('请先运行V5.3算法');
+      return;
+    }
+
+    var zodiac = BusinessV53Utils.numToZodiac(num);
+    var score = result.scores[num] || 0;
+    var state = result.dynamicStates[num];
+    var zone = result.zoneClass[num] || '-';
+    var zoneLabels = { peak: '顶峰区', down: '降权区', rotate: '轮动区', wait: '等待区', silent: '静默区' };
+
+    var statusLabel = state ? ViewV53Prediction._statusLabel(state.status) : '未知';
+
+    var msg = zodiac + '(' + num + '号) | ' +
+              '最终分: ' + score.toFixed(1) + ' | ' +
+              '分区: ' + (zoneLabels[zone] || zone) + ' | ' +
+              '状态: ' + statusLabel;
+
+    Toast.show(msg, 3000);
+  },
+
+  /**
+   * 显示大小回测追踪弹窗
+   */
+  _showSizeBacktest: function() {
+    try {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+
+      if (!historyData || !historyData.length) {
+        Toast.show('暂无历史数据');
+        return;
+      }
+
+      var backtestData = ZodiacPrediction.runSizeBacktest(historyData, 15);
+
+      if (!backtestData) {
+        Toast.show('数据不足，无法回测');
+        return;
+      }
+
+      ViewZodiacPrediction.showSizeBacktestModal(backtestData);
+    } catch (e) {
+      console.error('大小回测出错:', e);
+      Toast.show('回测计算出错，请重试');
+    }
+  },
+
+  /**
+   * 显示单双回测追踪弹窗
+   */
+  _showOddEvenBacktest: function() {
+    try {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+
+      if (!historyData || !historyData.length) {
+        Toast.show('暂无历史数据');
+        return;
+      }
+
+      var backtestData = ZodiacPrediction.runOddEvenBacktest(historyData, 15);
+
+      if (!backtestData) {
+        Toast.show('数据不足，无法回测');
+        return;
+      }
+
+      ViewZodiacPrediction.showOddEvenBacktestModal(backtestData);
+    } catch (e) {
+      console.error('单双回测出错:', e);
+      Toast.show('回测计算出错，请重试');
+    }
+  },
+
+  /**
+   * 显示五行回测追踪弹窗
+   */
+  _showWuxingBacktest: function() {
+    try {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+
+      if (!historyData || !historyData.length) {
+        Toast.show('暂无历史数据');
+        return;
+      }
+
+      var backtestData = ZodiacPrediction.runWuxingBacktest(historyData, 15);
+
+      if (!backtestData) {
+        Toast.show('数据不足，无法回测');
+        return;
+      }
+
+      ViewZodiacPrediction.showWuxingBacktestModal(backtestData);
+    } catch (e) {
+      console.error('五行回测出错:', e);
+      Toast.show('回测计算出错，请重试');
+    }
+  },
+
+  _showColorBacktest: function() {
+    try {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+
+      if (!historyData || !historyData.length) {
+        Toast.show('暂无历史数据');
+        return;
+      }
+
+      var backtestData = ZodiacPrediction.runColorBacktest(historyData, 12);
+      if (!backtestData) {
+        Toast.show('数据不足，无法回测');
+        return;
+      }
+
+      ViewZodiacPrediction.showColorBacktestModal(backtestData);
+    } catch (e) {
+      console.error('波色回测出错:', e);
+      Toast.show('回测计算出错，请重试');
+    }
   }
 };

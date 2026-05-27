@@ -472,6 +472,519 @@ const ViewZodiacPrediction = {
     container.innerHTML = html;
   },
 
+  renderLatestSizeStats: function(sizeData) {
+    var container = document.getElementById('latestSizeStatsPanel');
+    if (!container) return;
+
+    if (!sizeData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var html = '';
+    html += '<div class="size-analysis-card">';
+    html += '<div class="size-analysis-header">';
+    html += '<div class="size-analysis-title">最近' + sizeData.period + '期大小分析</div>';
+    html += '</div>';
+
+    html += '<div class="size-analysis-content">';
+
+    html += '<div class="size-sequence-row">';
+    var reversedSequence = sizeData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var sizeClass = item.size === '大' ? 'size-big' : 'size-small';
+      html += '<span class="size-seq-item ' + sizeClass + '">' + item.size + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="size-stats-grid">';
+    html += '<div class="size-stat-item size-stat-big">';
+    html += '<div class="size-stat-label">大 (25-49)</div>';
+    html += '<div class="size-stat-value">' + sizeData.bigCount + '期</div>';
+    html += '<div class="size-stat-percent">' + sizeData.bigPercent + '%</div>';
+    html += '</div>';
+    html += '<div class="size-stat-item size-stat-small">';
+    html += '<div class="size-stat-label">小 (1-24)</div>';
+    html += '<div class="size-stat-value">' + sizeData.smallCount + '期</div>';
+    html += '<div class="size-stat-percent">' + sizeData.smallPercent + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (sizeData.patterns && sizeData.patterns.length > 0) {
+      html += '<div class="size-patterns-section">';
+      html += '<div class="size-patterns-title">规律特征</div>';
+      html += '<div class="size-patterns-list">';
+      sizeData.patterns.forEach(function(pattern) {
+        html += '<div class="size-pattern-tag ' + (pattern.type.indexOf('连') !== -1 ? 'pattern-streak' : 'pattern-alternate') + '">';
+        html += pattern.type;
+        if (pattern.count > 1) {
+          html += '<span class="pattern-count">' + pattern.count + '次</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
+    if (sizeData.trend && sizeData.trend.prediction !== '-') {
+      html += '<div class="size-trend-section" data-action="showSizeBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
+      html += '<div class="size-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
+      html += '<div class="size-trend-prediction">';
+      var trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
+      html += '<span class="trend-result ' + trendClass + '">' + sizeData.trend.prediction + '</span>';
+      html += '<span class="trend-confidence">' + sizeData.trend.confidence + '%可信度</span>';
+      html += '</div>';
+      if (sizeData.trend.reason) {
+        html += '<div class="size-trend-reason">' + sizeData.trend.reason + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  renderLatestOddEvenStats: function(oddEvenData) {
+    var container = document.getElementById('latestOddEvenStatsPanel');
+    if (!container) return;
+
+    if (!oddEvenData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var html = '';
+    html += '<div class="oddeven-analysis-card">';
+    html += '<div class="oddeven-analysis-header">';
+    html += '<div class="oddeven-analysis-title">最近' + oddEvenData.period + '期单双分析</div>';
+    html += '</div>';
+
+    html += '<div class="oddeven-analysis-content">';
+
+    html += '<div class="oddeven-sequence-row">';
+    var reversedSequence = oddEvenData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var typeClass = item.type === '单' ? 'type-odd' : 'type-even';
+      html += '<span class="oddeven-seq-item ' + typeClass + '">' + item.type + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="oddeven-stats-grid">';
+    html += '<div class="oddeven-stat-item oddeven-stat-odd">';
+    html += '<div class="oddeven-stat-label">单 (奇数)</div>';
+    html += '<div class="oddeven-stat-value">' + oddEvenData.oddCount + '期</div>';
+    html += '<div class="oddeven-stat-percent">' + oddEvenData.oddPercent + '%</div>';
+    html += '</div>';
+    html += '<div class="oddeven-stat-item oddeven-stat-even">';
+    html += '<div class="oddeven-stat-label">双 (偶数)</div>';
+    html += '<div class="oddeven-stat-value">' + oddEvenData.evenCount + '期</div>';
+    html += '<div class="oddeven-stat-percent">' + oddEvenData.evenPercent + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (oddEvenData.patterns && oddEvenData.patterns.length > 0) {
+      html += '<div class="oddeven-patterns-section">';
+      html += '<div class="oddeven-patterns-title">规律特征</div>';
+      html += '<div class="oddeven-patterns-list">';
+      oddEvenData.patterns.forEach(function(pattern) {
+        html += '<div class="oddeven-pattern-tag ' + (pattern.type.indexOf('连') !== -1 ? 'pattern-streak-oddeven' : 'pattern-alternate-oddeven') + '">';
+        html += pattern.type;
+        if (pattern.count > 1) {
+          html += '<span class="pattern-count">' + pattern.count + '次</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
+    if (oddEvenData.trend && oddEvenData.trend.prediction !== '-') {
+      html += '<div class="oddeven-trend-section" data-action="showOddEvenBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
+      html += '<div class="oddeven-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
+      html += '<div class="oddeven-trend-prediction">';
+      var trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
+      html += '<span class="trend-result ' + trendClass + '">' + oddEvenData.trend.prediction + '</span>';
+      html += '<span class="trend-confidence">' + oddEvenData.trend.confidence + '%可信度</span>';
+      html += '</div>';
+      if (oddEvenData.trend.reason) {
+        html += '<div class="oddeven-trend-reason">' + oddEvenData.trend.reason + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  showSizeBacktestModal: function(backtestData) {
+    var existingModal = document.getElementById('sizeBacktestModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'sizeBacktestModal';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
+
+    var html = '';
+    html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<h3 style="font-size:17px;font-weight:700;color:var(--text);margin:0;">📊 大小回测追踪</h3>';
+    html += '<button id="closeSizeBacktestBtn" style="background:none;border:none;font-size:24px;color:var(--sub-text);cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>';
+    html += '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">';
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">总测试</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--text);">' + backtestData.totalTests + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(48,209,88,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:#30D158;">' + backtestData.totalHits + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(10,132,255,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中率</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--primary);">' + backtestData.totalHitRate + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (backtestData.currentStreak > 0) {
+      html += '<div style="background:linear-gradient(135deg, rgba(255,159,10,0.15), rgba(255,159,10,0.08));border-left:3px solid #FF9F0A;padding:10px 12px;border-radius:8px;margin-bottom:16px;">';
+      html += '<div style="font-size:12px;color:var(--sub-text);">当前连中</div>';
+      html += '<div style="font-size:22px;font-weight:700;color:#FF9F0A;">' + backtestData.currentStreak + ' 期 🔥</div>';
+      html += '</div>';
+    }
+
+    html += '<div style="margin-bottom:12px;">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近 ' + backtestData.recentTests + ' 期详情</div>';
+
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    backtestData.details.forEach(function(item) {
+      var hitClass = item.isHit ? 'background:rgba(48,209,88,0.12);color:#30D158;' : 'background:rgba(255,69,58,0.12);color:#FF453A;';
+      var hitIcon = item.isHit ? '✓' : '✗';
+      var predClass = item.predictedSize === '大' ? 'color:#cf1322;' : 'color:#096dd9;';
+      var actualClass = item.actualSize === '大' ? 'color:#cf1322;' : 'color:#096dd9;';
+
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;' + hitClass + '">';
+      html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
+      html += '<span style="font-size:14px;font-weight:700;">' + item.actualNumber + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;' + predClass + '">预测:' + item.predictedSize + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;' + actualClass + '">实际:' + item.actualSize + '</span>';
+      html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:8px;margin-top:12px;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);line-height:1.5;">';
+    html += '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>';
+    html += '• 基于大小趋势预测算法回测<br>';
+    html += '• 数据仅供参考，不构成投资建议';
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    overlay.innerHTML = html;
+
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById('closeSizeBacktestBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      });
+    }
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      }
+    });
+
+    if (!document.getElementById('sizeBacktestAnimations')) {
+      var styleSheet = document.createElement('style');
+      styleSheet.id = 'sizeBacktestAnimations';
+      styleSheet.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.95)}to{transform:scale(1)}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
+      document.head.appendChild(styleSheet);
+    }
+  },
+
+  showOddEvenBacktestModal: function(backtestData) {
+    var existingModal = document.getElementById('oddEvenBacktestModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'oddEvenBacktestModal';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
+
+    var html = '';
+    html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<h3 style="font-size:17px;font-weight:700;color:var(--text);margin:0;">📊 单双回测追踪</h3>';
+    html += '<button id="closeOddEvenBacktestBtn" style="background:none;border:none;font-size:24px;color:var(--sub-text);cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>';
+    html += '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">';
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">总测试</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--text);">' + backtestData.totalTests + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(191,90,242,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:#BF5AF2;">' + backtestData.totalHits + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(10,132,255,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中率</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--primary);">' + backtestData.totalHitRate + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (backtestData.currentStreak > 0) {
+      html += '<div style="background:linear-gradient(135deg, rgba(191,90,242,0.15), rgba(191,90,242,0.08));border-left:3px solid #BF5AF2;padding:10px 12px;border-radius:8px;margin-bottom:16px;">';
+      html += '<div style="font-size:12px;color:var(--sub-text);">当前连中</div>';
+      html += '<div style="font-size:22px;font-weight:700;color:#BF5AF2;">' + backtestData.currentStreak + ' 期 🔥</div>';
+      html += '</div>';
+    }
+
+    html += '<div style="margin-bottom:12px;">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近 ' + backtestData.recentTests + ' 期详情</div>';
+
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    backtestData.details.forEach(function(item) {
+      var hitClass = item.isHit ? 'background:rgba(191,90,242,0.12);color:#BF5AF2;' : 'background:rgba(255,69,58,0.12);color:#FF453A;';
+      var hitIcon = item.isHit ? '✓' : '✗';
+      var predClass = item.predictedType === '单' ? 'color:#9333EA;' : 'color:#EA580C;';
+      var actualClass = item.actualType === '单' ? 'color:#9333EA;' : 'color:#EA580C;';
+
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;' + hitClass + '">';
+      html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
+      html += '<span style="font-size:14px;font-weight:700;">' + item.actualNumber + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;' + predClass + '">预测:' + item.predictedType + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;' + actualClass + '">实际:' + item.actualType + '</span>';
+      html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:8px;margin-top:12px;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);line-height:1.5;">';
+    html += '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>';
+    html += '• 基于单双趋势预测算法回测<br>';
+    html += '• 数据仅供参考，不构成投资建议';
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    overlay.innerHTML = html;
+
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById('closeOddEvenBacktestBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      });
+    }
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      }
+    });
+  },
+
+  renderLatestWuxingStats: function(wuxingData) {
+    var container = document.getElementById('latestWuxingStatsPanel');
+    if (!container) return;
+
+    if (!wuxingData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var wuxingColors = {
+      '金': { bg: 'linear-gradient(135deg, #FFD700, #FFA500)', text: '#B8860B', light: 'rgba(255,215,0,0.12)' },
+      '木': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D', light: 'rgba(34,197,94,0.12)' },
+      '水': { bg: 'linear-gradient(135deg, #0EA5E9, #06B6D4)', text: '#0369A1', light: 'rgba(14,165,233,0.12)' },
+      '火': { bg: 'linear-gradient(135deg, #EF4444, #DC2626)', text: '#B91C1C', light: 'rgba(239,68,68,0.12)' },
+      '土': { bg: 'linear-gradient(135deg, #A78BFA, #8B5CF6)', text: '#7C3AED', light: 'rgba(167,139,250,0.12)' }
+    };
+
+    var html = '';
+    html += '<div class="wuxing-analysis-card">';
+    html += '<div class="wuxing-analysis-header">';
+    html += '<div class="wuxing-analysis-title">最近' + wuxingData.period + '期五行分析</div>';
+    html += '</div>';
+
+    html += '<div class="wuxing-analysis-content">';
+
+    html += '<div class="wuxing-sequence-row">';
+    var reversedSequence = wuxingData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var wxColor = wuxingColors[item.wuxing] || wuxingColors['金'];
+      html += '<span class="wuxing-seq-item" style="background:' + wxColor.bg + ';color:#fff;">' + item.wuxing + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="wuxing-stats-grid">';
+    var wuxingOrder = ['金', '木', '水', '火', '土'];
+    wuxingOrder.forEach(function(wx) {
+      var count = wuxingData.count[wx] || 0;
+      var percent = Math.round((count / wuxingData.period) * 100);
+      var wxColor = wuxingColors[wx];
+      html += '<div class="wuxing-stat-item">';
+      html += '<div class="wuxing-stat-header" style="color:' + wxColor.text + ';border-left:3px solid ' + wxColor.text + ';">';
+      html += '<span class="wuxing-stat-name">' + wx + '</span>';
+      html += '<span class="wuxing-stat-count">' + count + '期</span>';
+      html += '</div>';
+      html += '<div class="wuxing-stat-bar-bg">';
+      html += '<div class="wuxing-stat-bar-fill" style="width:' + percent + '%;background:' + wxColor.bg + ';"></div>';
+      html += '</div>';
+      html += '<div class="wuxing-stat-percent" style="color:' + wxColor.text + ';">' + percent + '%</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    if (wuxingData.patterns && wuxingData.patterns.length > 0) {
+      html += '<div class="wuxing-patterns-section">';
+      html += '<div class="wuxing-patterns-title">规律特征</div>';
+      html += '<div class="wuxing-patterns-list">';
+      wuxingData.patterns.forEach(function(pattern) {
+        var patternWx = pattern.type.charAt(0);
+        var wxColor = wuxingColors[patternWx] || { bg: '#666' };
+        html += '<div class="wuxing-pattern-tag" style="background:' + wxColor.bg + ';">';
+        html += pattern.type;
+        if (pattern.count > 1) {
+          html += '<span class="pattern-count">' + pattern.count + '次</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
+    if (wuxingData.trend && wuxingData.trend.prediction !== '-') {
+      var predWx = wuxingData.trend.prediction;
+      var predColor = wuxingColors[predWx] || wuxingColors['金'];
+      html += '<div class="wuxing-trend-section" data-action="showWuxingBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
+      html += '<div class="wuxing-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
+      html += '<div class="wuxing-trend-prediction">';
+      html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predWx + '</span>';
+      html += '<span class="trend-confidence">' + wuxingData.trend.confidence + '%可信度</span>';
+      html += '</div>';
+      if (wuxingData.trend.reason) {
+        html += '<div class="wuxing-trend-reason">' + wuxingData.trend.reason + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  showWuxingBacktestModal: function(backtestData) {
+    var existingModal = document.getElementById('wuxingBacktestModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'wuxingBacktestModal';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
+
+    var html = '';
+    html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<h3 style="font-size:17px;font-weight:700;color:var(--text);margin:0;">📊 五行回测追踪</h3>';
+    html += '<button id="closeWuxingBacktestBtn" style="background:none;border:none;font-size:24px;color:var(--sub-text);cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>';
+    html += '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">';
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">总测试</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--text);">' + backtestData.totalTests + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(167,139,250,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:#A78BFA;">' + backtestData.totalHits + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(10,132,255,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中率</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--primary);">' + backtestData.totalHitRate + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    if (backtestData.currentStreak > 0) {
+      html += '<div style="background:linear-gradient(135deg, rgba(167,139,250,0.15), rgba(167,139,250,0.08));border-left:3px solid #A78BFA;padding:10px 12px;border-radius:8px;margin-bottom:16px;">';
+      html += '<div style="font-size:12px;color:var(--sub-text);">当前连中</div>';
+      html += '<div style="font-size:22px;font-weight:700;color:#A78BFA;">' + backtestData.currentStreak + ' 期 🔥</div>';
+      html += '</div>';
+    }
+
+    html += '<div style="margin-bottom:12px;">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近 ' + backtestData.recentTests + ' 期详情</div>';
+
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    backtestData.details.forEach(function(item) {
+      var hitClass = item.isHit ? 'background:rgba(167,139,250,0.12);color:#A78BFA;' : 'background:rgba(255,69,58,0.12);color:#FF453A;';
+      var hitIcon = item.isHit ? '✓' : '✗';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;' + hitClass + '">';
+      html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
+      html += '<span style="font-size:14px;font-weight:700;">' + item.actualNumber + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;">预测:' + item.predictedWuxing + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;">实际:' + item.actualWuxing + '</span>';
+      html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:8px;margin-top:12px;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);line-height:1.5;">';
+    html += '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>';
+    html += '• 基于五行趋势预测算法回测<br>';
+    html += '• 数据仅供参考，不构成投资建议';
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    overlay.innerHTML = html;
+
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById('closeWuxingBacktestBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      });
+    }
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      }
+    });
+  },
+
 
 
   renderZoneRecommend: function(zodiacList, nextExpect) {
@@ -1366,6 +1879,428 @@ const ViewZodiacPrediction = {
     });
   },
 
+  renderLatestColorStats: function(colorData) {
+    var container = document.getElementById('latestColorStatsPanel');
+    if (!container) return;
+
+    if (!colorData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var colorColors = {
+      '红': { bg: 'linear-gradient(135deg, #EF4444, #DC2626)', text: '#B91C1C', light: 'rgba(239,68,68,0.12)' },
+      '蓝': { bg: 'linear-gradient(135deg, #3B82F6, #2563EB)', text: '#1D4ED8', light: 'rgba(59,130,246,0.12)' },
+      '绿': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D', light: 'rgba(34,197,94,0.12)' }
+    };
+
+    var html = '';
+    html += '<div class="color-analysis-card">';
+    html += '<div class="color-analysis-header">';
+    html += '<div class="color-analysis-title">最近' + colorData.period + '期波色分析</div>';
+    html += '</div>';
+
+    html += '<div class="color-analysis-content">';
+
+    html += '<div class="color-sequence-row">';
+    var reversedSequence = colorData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var clColor = colorColors[item.color] || colorColors['红'];
+      html += '<span class="color-seq-item" style="background:' + clColor.bg + ';color:#fff;">' + item.color + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="color-stats-grid">';
+    var colorOrder = ['红', '蓝', '绿'];
+    colorOrder.forEach(function(cl) {
+      var count = colorData.count[cl] || 0;
+      var percent = colorData.period > 0 ? Math.round((count / colorData.period) * 100) : 0;
+      var clColor = colorColors[cl];
+      html += '<div class="color-stat-item">';
+      html += '<div class="color-stat-header" style="color:' + clColor.text + ';border-left:3px solid ' + clColor.text + ';">';
+      html += '<span class="color-stat-name">' + cl + '</span>';
+      html += '<span class="color-stat-count">' + count + '期</span>';
+      html += '</div>';
+      html += '<div class="color-stat-bar-bg">';
+      html += '<div class="color-stat-bar-fill" style="width:' + percent + '%;background:' + clColor.bg + ';"></div>';
+      html += '</div>';
+      html += '<div class="color-stat-percent" style="color:' + clColor.text + ';">' + percent + '%</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    if (colorData.patterns && colorData.patterns.length > 0) {
+      html += '<div class="color-patterns-section">';
+      html += '<div class="color-patterns-title">规律特征</div>';
+      html += '<div class="color-patterns-list">';
+      colorData.patterns.forEach(function(pattern) {
+        var patternCl = pattern.type.charAt(0);
+        var clColor = colorColors[patternCl] || { bg: '#666' };
+        html += '<div class="color-pattern-tag" style="background:' + clColor.bg + ';">';
+        html += pattern.type;
+        if (pattern.count > 1) {
+          html += '<span class="pattern-count">' + pattern.count + '次</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    }
+
+    if (colorData.trend && colorData.trend.prediction !== '-') {
+      var predCl = colorData.trend.prediction;
+      var predColor = colorColors[predCl] || colorColors['红'];
+      html += '<div class="color-trend-section" data-action="showColorBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
+      html += '<div class="color-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
+      html += '<div class="color-trend-prediction">';
+      html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predCl + '</span>';
+      html += '<span class="trend-confidence">' + colorData.trend.confidence + '%可信度</span>';
+      html += '</div>';
+      if (colorData.trend.reason) {
+        html += '<div class="color-trend-reason">' + colorData.trend.reason + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  showColorBacktestModal: function(backtestData) {
+    var existingModal = document.getElementById('colorBacktestModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'colorBacktestModal';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
+
+    var colorColors = {
+      '红': { bg: '#EF4444', text: '#fff' },
+      '蓝': { bg: '#3B82F6', text: '#fff' },
+      '绿': { bg: '#22C55E', text: '#fff' }
+    };
+
+    var html = '';
+    html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<h3 style="font-size:17px;font-weight:700;color:var(--text);margin:0;">📊 波色回测追踪</h3>';
+    html += '<button id="closeColorBacktestBtn" style="background:none;border:none;font-size:24px;color:var(--sub-text);cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>';
+    html += '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">';
+    html += '<div style="background:rgba(239,68,68,0.1);padding:10px;border-radius:8px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">总测试</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:var(--text);">' + backtestData.totalTests + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(34,197,94,0.1);padding:10px;border-radius:8px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:#16a34a;">' + backtestData.totalHits + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(59,130,246,0.1);padding:10px;border-radius:8px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中率</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:#2563eb;">' + backtestData.totalHitRate + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div style="display:flex;gap:10px;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:8px;">';
+    html += '<div style="flex:1;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);">近10期</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:var(--text);">' + backtestData.recentHitRate + '%</div>';
+    html += '</div>';
+    html += '<div style="flex:1;text-align:center;border-left:1px solid var(--border);">';
+    html += '<div style="font-size:11px;color:var(--sub-text);">连续命中</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#16a34a;">' + backtestData.currentStreak + '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">详细记录</div>';
+    html += '<div style="max-height:300px;overflow-y:auto;">';
+    backtestData.details.forEach(function(detail) {
+      var actualClColor = colorColors[detail.actualColor] || { bg: '#666', text: '#fff' };
+      var predClColor = colorColors[detail.predictedColor] || { bg: '#666', text: '#fff' };
+      var hitBg = detail.isHit ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.08)';
+      var hitText = detail.isHit ? '#16a34a' : '#dc2626';
+      var hitLabel = detail.isHit ? '✓ 命中' : '✗ 未中';
+
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:6px;background:var(--bg-secondary);border-radius:6px;">';
+      html += '<div style="flex:1;font-size:12px;color:var(--sub-text);">' + detail.expect + '</div>';
+      html += '<div style="font-size:14px;font-weight:700;color:var(--text);min-width:28px;text-align:center;">' + detail.actualNumber + '</div>';
+      html += '<span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;background:' + actualClColor.bg + ';color:' + actualClColor.text + ';">' + detail.actualColor + '</span>';
+      html += '<span style="font-size:10px;color:var(--sub-text);">→</span>';
+      html += '<span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;background:' + predClColor.bg + ';color:' + predClColor.text + ';">' + detail.predictedColor + '</span>';
+      html += '<span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + hitBg + ';color:' + hitText + ';">' + hitLabel + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '</div>';
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+
+    document.getElementById('closeColorBacktestBtn').addEventListener('click', function() {
+      overlay.style.animation = 'fadeOut 0.2s ease forwards';
+      setTimeout(function() { overlay.remove(); }, 200);
+    });
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        overlay.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(function() { overlay.remove(); }, 200);
+      }
+    });
+  },
+
+  renderCombinedAnalysis: function(sizeData, oddEvenData, wuxingData, colorData) {
+    var container = document.getElementById('combinedAnalysisPanel');
+    if (!container) return;
+
+    if (!sizeData && !oddEvenData && !wuxingData && !colorData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var html = '';
+    html += '<div class="combined-analysis-card">';
+    
+    html += '<div class="combined-tabs">';
+    html += '<div class="combined-tab active" data-tab="size">大小</div>';
+    html += '<div class="combined-tab" data-tab="oddeven">单双</div>';
+    html += '<div class="combined-tab" data-tab="wuxing">五行</div>';
+    html += '<div class="combined-tab" data-tab="color">波色</div>';
+    html += '</div>';
+
+    html += '<div class="combined-content">';
+
+    html += '<div class="combined-panel active" id="panel-size">';
+    html += ViewZodiacPrediction._renderSizeContent(sizeData);
+    html += '</div>';
+
+    html += '<div class="combined-panel" id="panel-oddeven">';
+    html += ViewZodiacPrediction._renderOddEvenContent(oddEvenData);
+    html += '</div>';
+
+    html += '<div class="combined-panel" id="panel-wuxing">';
+    html += ViewZodiacPrediction._renderWuxingContent(wuxingData);
+    html += '</div>';
+
+    html += '<div class="combined-panel" id="panel-color">';
+    html += ViewZodiacPrediction._renderColorContent(colorData);
+    html += '</div>';
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.combined-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        container.querySelectorAll('.combined-tab').forEach(function(t) { t.classList.remove('active'); });
+        container.querySelectorAll('.combined-panel').forEach(function(p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        var panelId = 'panel-' + tab.getAttribute('data-tab');
+        document.getElementById(panelId).classList.add('active');
+      });
+    });
+  },
+
+  _renderSizeContent: function(sizeData) {
+    if (!sizeData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
+
+    var html = '';
+    html += '<div class="combined-sequence-row">';
+    var reversedSequence = sizeData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var sizeClass = item.size === '大' ? 'size-big' : 'size-small';
+      html += '<span class="combined-seq-item ' + sizeClass + '">' + item.size + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="combined-stats-row">';
+    html += '<div class="combined-stat"><span class="stat-label stat-big">大</span><span class="stat-value">' + (sizeData.bigCount || 0) + '</span><span class="stat-percent">' + (sizeData.bigPercent || 0) + '%</span></div>';
+    html += '<div class="combined-stat"><span class="stat-label stat-small">小</span><span class="stat-value">' + (sizeData.smallCount || 0) + '</span><span class="stat-percent">' + (sizeData.smallPercent || 0) + '%</span></div>';
+    html += '</div>';
+
+    if (sizeData.patterns && sizeData.patterns.length > 0) {
+      html += '<div class="combined-patterns">';
+      sizeData.patterns.forEach(function(p) { html += '<span class="pattern-tag">' + p.type.replace('大小', '') + p.count + '</span>'; });
+      html += '</div>';
+    }
+
+    if (sizeData.trend && sizeData.trend.prediction !== '-') {
+      var trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
+      html += '<div class="combined-trend" data-action="showSizeBacktest" style="cursor:pointer;">';
+      html += '<span class="trend-predict ' + trendClass + '">' + sizeData.trend.prediction + '</span>';
+      html += '<span class="trend-conf">' + sizeData.trend.confidence + '%</span>';
+      if (sizeData.trend.reason) html += '<span class="trend-reason">' + sizeData.trend.reason + '</span>';
+      html += '</div>';
+    }
+
+    return html;
+  },
+
+  _renderOddEvenContent: function(oddEvenData) {
+    if (!oddEvenData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
+
+    var html = '';
+    html += '<div class="combined-sequence-row">';
+    var reversedSequence = oddEvenData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var typeClass = item.type === '单' ? 'type-odd' : 'type-even';
+      html += '<span class="combined-seq-item oddeven-' + typeClass + '">' + item.type + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="combined-stats-row">';
+    html += '<div class="combined-stat"><span class="stat-label stat-odd">单</span><span class="stat-value">' + (oddEvenData.oddCount || 0) + '</span><span class="stat-percent">' + (oddEvenData.oddPercent || 0) + '%</span></div>';
+    html += '<div class="combined-stat"><span class="stat-label stat-even">双</span><span class="stat-value">' + (oddEvenData.evenCount || 0) + '</span><span class="stat-percent">' + (oddEvenData.evenPercent || 0) + '%</span></div>';
+    html += '</div>';
+
+    if (oddEvenData.patterns && oddEvenData.patterns.length > 0) {
+      html += '<div class="combined-patterns">';
+      oddEvenData.patterns.forEach(function(p) { html += '<span class="pattern-tag">' + p.type.replace('单双', '') + p.count + '</span>'; });
+      html += '</div>';
+    }
+
+    if (oddEvenData.trend && oddEvenData.trend.prediction !== '-') {
+      var trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
+      html += '<div class="combined-trend" data-action="showOddEvenBacktest" style="cursor:pointer;">';
+      html += '<span class="trend-predict ' + trendClass + '">' + oddEvenData.trend.prediction + '</span>';
+      html += '<span class="trend-conf">' + oddEvenData.trend.confidence + '%</span>';
+      if (oddEvenData.trend.reason) html += '<span class="trend-reason">' + oddEvenData.trend.reason + '</span>';
+      html += '</div>';
+    }
+
+    return html;
+  },
+
+  _renderWuxingContent: function(wuxingData) {
+    if (!wuxingData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
+
+    var wuxingColors = { '金': '#FFD700', '木': '#22C55E', '水': '#0EA5E9', '火': '#EF4444', '土': '#A78BFA' };
+
+    var html = '';
+    html += '<div class="combined-sequence-row">';
+    var reversedSequence = wuxingData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var wxColor = wuxingColors[item.wuxing] || '#999';
+      html += '<span class="combined-seq-item wx-item" style="background:' + wxColor + ';color:#fff;">' + item.wuxing + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="combined-stats-grid">';
+    ['金','木','水','火','土'].forEach(function(wx) {
+      var count = wuxingData.count[wx] || 0;
+      var percent = wuxingData.period > 0 ? Math.round((count / wuxingData.period) * 100) : 0;
+      var color = wuxingColors[wx];
+      html += '<div class="wx-stat"><span class="wx-name" style="color:' + color + '">' + wx + '</span><span class="wx-count">' + count + '</span><span class="wx-bar-bg"><span class="wx-bar-fill" style="width:' + percent + '%;background:' + color + ';"></span></span><span class="wx-pct">' + percent + '%</span></div>';
+    });
+    html += '</div>';
+
+    if (wuxingData.patterns && wuxingData.patterns.length > 0) {
+      html += '<div class="combined-patterns">';
+      wuxingData.patterns.forEach(function(p) { 
+        var pColor = wuxingColors[p.type.charAt(0)] || '#666';
+        html += '<span class="pattern-tag" style="background:' + pColor + ';color:#fff;">' + p.type + p.count + '</span>'; 
+      });
+      html += '</div>';
+    }
+
+    if (wuxingData.trend && wuxingData.trend.prediction !== '-') {
+      var predColor = wuxingColors[wuxingData.trend.prediction] || '#999';
+      html += '<div class="combined-trend" data-action="showWuxingBacktest" style="cursor:pointer;">';
+      html += '<span class="trend-predict wx-predict" style="background:' + predColor + ';color:#fff;">' + wuxingData.trend.prediction + '</span>';
+      html += '<span class="trend-conf">' + wuxingData.trend.confidence + '%</span>';
+      if (wuxingData.trend.reason) html += '<span class="trend-reason">' + wuxingData.trend.reason + '</span>';
+      html += '</div>';
+    }
+
+    return html;
+  },
+
+  _renderColorContent: function(colorData) {
+    if (!colorData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
+
+    var colorColors = { '红': '#EF4444', '蓝': '#3B82F6', '绿': '#22C55E' };
+
+    var html = '';
+    html += '<div class="combined-sequence-row">';
+    var reversedSequence = colorData.sequence.slice().reverse();
+    reversedSequence.forEach(function(item) {
+      var clColor = colorColors[item.color] || '#999';
+      html += '<span class="combined-seq-item cl-item" style="background:' + clColor + ';color:#fff;">' + item.color + '</span>';
+    });
+    html += '</div>';
+
+    html += '<div class="combined-stats-grid">';
+    ['红','蓝','绿'].forEach(function(cl) {
+      var count = colorData.count[cl] || 0;
+      var percent = colorData.period > 0 ? Math.round((count / colorData.period) * 100) : 0;
+      var color = colorColors[cl];
+      html += '<div class="cl-stat"><span class="cl-name" style="color:' + color + '">' + cl + '</span><span class="cl-count">' + count + '</span><span class="cl-bar-bg"><span class="cl-bar-fill" style="width:' + percent + '%;background:' + color + ';"></span></span><span class="cl-pct">' + percent + '%</span></div>';
+    });
+    html += '</div>';
+
+    if (colorData.patterns && colorData.patterns.length > 0) {
+      html += '<div class="combined-patterns">';
+      colorData.patterns.forEach(function(p) { 
+        var pColor = colorColors[p.type.charAt(0)] || '#666';
+        html += '<span class="pattern-tag" style="background:' + pColor + ';color:#fff;">' + p.type + p.count + '</span>'; 
+      });
+      html += '</div>';
+    }
+
+    if (colorData.trend && colorData.trend.prediction !== '-') {
+      var predColor = colorColors[colorData.trend.prediction] || '#999';
+      html += '<div class="combined-trend" data-action="showColorBacktest" style="cursor:pointer;">';
+      html += '<span class="trend-predict cl-predict" style="background:' + predColor + ';color:#fff;">' + colorData.trend.prediction + '</span>';
+      html += '<span class="trend-conf">' + colorData.trend.confidence + '%</span>';
+      if (colorData.trend.reason) html += '<span class="trend-reason">' + colorData.trend.reason + '</span>';
+      html += '</div>';
+    }
+
+    return html;
+  },
+
   predSwiperUpdate: null,
-  freqSwiperUpdate: null
+  freqSwiperUpdate: null,
+
+  /**
+   * 切换频率面板标签（符合分层规范：视图层负责DOM渲染）
+   * @param {string} freqKey - 频率key
+   */
+  switchFreqTabUI: function(freqKey) {
+    document.querySelectorAll('.freq-tab-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.freqKey === freqKey);
+    });
+    document.querySelectorAll('.freq-panel').forEach(function(panel) {
+      panel.style.display = panel.dataset.freqPanel === freqKey ? '' : 'none';
+    });
+  },
+
+  /**
+   * 切换预测面板标签（符合分层规范：视图层负责DOM渲染）
+   * @param {string} predTab - 预测tab
+   */
+  switchPredTabUI: function(predTab) {
+    document.querySelectorAll('#zodiacPredictionGrid .freq-tab-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.predTab === predTab);
+    });
+    document.querySelectorAll('#zodiacPredictionGrid .freq-panel').forEach(function(panel) {
+      panel.style.display = panel.dataset.predPanel === predTab ? '' : 'none';
+    });
+  },
+
+  /**
+   * 切换回测详情弹窗显示状态（符合分层规范：视图层负责DOM渲染）
+   * @param {boolean} show - 是否显示
+   */
+  toggleBacktestDetailModal: function(show) {
+    var modal = document.getElementById('backtestDetailModal');
+    if (modal) modal.style.display = show ? 'flex' : 'none';
+  }
 };

@@ -29,6 +29,12 @@ const StateManager = {
       showCount: 20,
       currentTab: 'history',
       autoRefreshTimer: null
+    },
+    // V5.3 算法状态
+    v53: {
+      enabled: false,
+      lastResult: null,
+      computeTime: 0
     }
   },
 
@@ -39,20 +45,56 @@ const StateManager = {
   getState: () => Utils.deepClone(StateManager._state),
 
   /**
-   * 统一更新状态入口
-   * @param {Object} partialState - 要更新的部分状态
-   * @param {boolean} needRender - 是否自动触发渲染
+   * 渲染队列：批量处理连续更新，避免频繁重渲染
+   * @private
    */
-  setState: (partialState, needRender = true) => {
+  _renderQueue: null,
+  _renderTimer: null,
+
+  /**
+   * 统一更新状态入口（性能优化版）
+   * @param {Object} partialState - 要更新的部分状态
+   * @param {boolean} needRender - 是否自动触发渲染（默认true）
+   * @param {boolean} immediate - 是否立即渲染（默认false，使用防抖优化）
+   */
+  setState: (partialState, needRender = true, immediate = false) => {
     try {
       StateManager._state = {
         ...StateManager._state,
         ...partialState
       };
-      if(needRender) Render.renderAll();
+
+      if(needRender) {
+        if(immediate) {
+          Render.renderAll();
+        } else {
+          if(!StateManager._renderQueue) StateManager._renderQueue = [];
+          StateManager._renderQueue.push(Date.now());
+
+          if(StateManager._renderTimer) clearTimeout(StateManager._renderTimer);
+          StateManager._renderTimer = setTimeout(() => {
+            Render.renderAll();
+            StateManager._renderQueue = null;
+          }, 16); // 约60fps，合并同一帧内的多次更新
+        }
+      }
     } catch(e) {
       console.error('状态更新失败', e);
       Toast.show('操作失败，请刷新重试');
+    }
+  },
+
+  /**
+   * 强制立即渲染（清空渲染队列）
+   */
+  flushRender: () => {
+    if(StateManager._renderTimer) {
+      clearTimeout(StateManager._renderTimer);
+      StateManager._renderTimer = null;
+    }
+    if(StateManager._renderQueue && StateManager._renderQueue.length > 0) {
+      Render.renderAll();
+      StateManager._renderQueue = null;
     }
   },
 
@@ -224,40 +266,57 @@ const StateManager = {
   /**
    * 全选分组
    * @param {string} group - 分组名
+   * @param {Array} [allValues] - 可选：从视图层传入的所有标签值数组（符合分层规范）
    */
-  selectGroup: (group) => {
-    const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+  selectGroup: (group, allValues) => {
     const lockedSet = new Set(StateManager._state.locked[group] || []);
-    const allValues = allTags
-      .map(tag => Utils.formatTagValue(tag.dataset.value, group))
-      .filter(v => !lockedSet.has(v));
+    let values;
+    if (allValues && Array.isArray(allValues)) {
+      values = allValues.filter(v => !lockedSet.has(v));
+    } else {
+      const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+      values = allTags
+        .map(tag => Utils.formatTagValue(tag.dataset.value, group))
+        .filter(v => !lockedSet.has(v));
+    }
     const newSelected = { ...StateManager._state.selected };
-    newSelected[group] = allValues;
+    newSelected[group] = values;
     StateManager.setState({ selected: newSelected });
   },
 
   /**
    * 反选分组
    * @param {string} group - 分组名
+   * @param {Array} [allValues] - 可选：从视图层传入的所有标签值数组（符合分层规范）
    */
-  invertGroup: (group) => {
+  invertGroup: (group, allValues) => {
     const state = StateManager._state;
     const lockedSet = new Set(state.locked[group] || []);
-    const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
-    const allValues = allTags
-      .map(tag => Utils.formatTagValue(tag.dataset.value, group))
-      .filter(v => !lockedSet.has(v));
+    let values;
+    if (allValues && Array.isArray(allValues)) {
+      values = allValues.filter(v => !lockedSet.has(v));
+    } else {
+      const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+      values = allTags
+        .map(tag => Utils.formatTagValue(tag.dataset.value, group))
+        .filter(v => !lockedSet.has(v));
+    }
     const newSelected = { ...state.selected };
-    newSelected[group] = allValues.filter(v => !state.selected[group].includes(v));
+    newSelected[group] = values.filter(v => !state.selected[group].includes(v));
     StateManager.setState({ selected: newSelected });
   },
 
   /**
-   * 清理所有定时器，避免内存泄漏
+   * 清理所有定时器，避免内存泄漏（包含渲染队列清理）
    */
   clearAllTimers: () => {
     const state = StateManager._state;
     if(state.scrollTimer) clearTimeout(state.scrollTimer);
+    if(StateManager._renderTimer) {
+      clearTimeout(StateManager._renderTimer);
+      StateManager._renderTimer = null;
+      StateManager._renderQueue = null;
+    }
     Toast.clearTimer();
   }
 };

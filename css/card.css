@@ -602,21 +602,194 @@
   #zodiac-stat-modal .zone-stat-section {
     color: #ffffff;
   }
+
+  /* 大小分析卡片 - 黑暗模式适配 */
+  .size-analysis-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .size-sequence-row {
+    border-bottom-color: var(--border);
+  }
+
+  .size-seq-arrow {
+    opacity: 0.6;
+  }
+
+  .size-seq-item.size-big {
+    color: #ff7875;
+    background: rgba(255,77,79,0.15);
+  }
+
+  .size-seq-item.size-small {
+    color: #69c0ff;
+    background: rgba(24,144,255,0.15);
+  }
+
+  .size-stat-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .size-patterns-section {
+    border-top-color: var(--border);
+  }
+
+  .size-trend-section {
+    background: rgba(255,255,255,0.04);
+    border-left-color: var(--primary);
+  }
+
+  .pattern-streak {
+    background: linear-gradient(135deg, #d48806, #b87404);
+  }
+
+  .pattern-alternate {
+    background: linear-gradient(135deg, #389e0d, #278424);
+  }
+
+  /* 跟随统计卡片 - 黑暗模式适配 */
+  .latest-follow-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .latest-follow-chain {
+    border-bottom-color: var(--border);
+  }
+
+  .follow-arrow {
+    opacity: 0.6;
+  }
+
+  .latest-follow-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* 单双分析卡片 - 黑暗模式适配 */
+  .oddeven-analysis-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .oddeven-sequence-row {
+    border-bottom-color: var(--border);
+  }
+
+  .oddeven-seq-arrow {
+    opacity: 0.6;
+  }
+
+  .oddeven-seq-item.type-odd {
+    color: #C084FC;
+    background: rgba(191,90,242,0.15);
+  }
+
+  .oddeven-seq-item.type-even {
+    color: #FDBA74;
+    background: rgba(255,159,10,0.15);
+  }
+
+  .oddeven-stat-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .oddeven-patterns-section {
+    border-top-color: var(--border);
+  }
+
+  .oddeven-trend-section {
+    background: rgba(255,255,255,0.04);
+    border-left-color: #BF5AF2;
+  }
+
+  .pattern-streak-oddeven {
+    background: linear-gradient(135deg, #9333EA, #7C3AED);
+  }
+
+  .pattern-alternate-oddeven {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+  }
+
+  /* 五行分析卡片 - 黑暗模式适配 */
+  .wuxing-analysis-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .wuxing-sequence-row {
+    border-bottom-color: var(--border);
+  }
+
+  .wuxing-seq-arrow {
+    opacity: 0.6;
+  }
+
+  .wuxing-seq-item {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .wuxing-stat-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .wuxing-stat-bar-bg {
+    background: rgba(255,255,255,0.08);
+  }
+
+  .wuxing-patterns-section {
+    border-top-color: var(--border);
+  }
+
+  .wuxing-trend-section {
+    background: rgba(255,255,255,0.04);
+    border-left-color: #A78BFA;
+  }
+
+  /* 波色分析卡片 - 黑暗模式适配 */
+  .color-analysis-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .color-sequence-row {
+    border-bottom-color: var(--border);
+  }
+
+  .color-seq-item {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .color-stat-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .color-stat-bar-bg {
+    background: rgba(255,255,255,0.08);
+  }
+
+  .color-patterns-section {
+    border-top-color: var(--border);
+  }
+
+  .color-trend-section {
+    background: rgba(255,255,255,0.04);
+    border-left-color: #EF4444;
+  }
 }
 
 .latest-follow-card {
   padding: 0;
+  margin-bottom: 12px;
 }
 
 .latest-follow-header {
   margin-bottom: 12px;
-}
-
-.latest-follow-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
 }
 
 .latest-follow-subtitle {
@@ -701,5 +874,959 @@
   padding: 20px;
   color: var(--sub-text);
   font-size: 13px;
+}
+
+/* 大小分析卡片 */
+.size-analysis-card {
+  padding: 0;
+  margin-top: 12px;
+}
+
+.size-analysis-header {
+  margin-bottom: 12px;
+}
+
+.size-analysis-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  padding-left: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+.size-analysis-content {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.size-sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.size-seq-item {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.size-seq-item.size-big {
+  color: #cf1322;
+  background: rgba(255,77,79,0.12);
+}
+
+.size-seq-item.size-small {
+  color: #096dd9;
+  background: rgba(24,144,255,0.12);
+}
+
+.size-seq-arrow {
+  font-size: 11px;
+  color: var(--sub-text);
+  padding: 0 1px;
+}
+
+.size-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.size-stat-item {
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.size-stat-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.size-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.size-stat-big .size-stat-value {
+  color: #cf1322;
+}
+
+.size-stat-small .size-stat-value {
+  color: #096dd9;
+}
+
+.size-stat-percent {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.size-patterns-section {
+  margin-bottom: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.size-patterns-title {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.size-patterns-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.size-pattern-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pattern-streak {
+  background: linear-gradient(135deg, #faad14, #d48806);
+}
+
+.pattern-alternate {
+  background: linear-gradient(135deg, #52c41a, #389e0d);
+}
+
+.pattern-count {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.size-trend-section {
+  background: rgba(255,255,255,0.06);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+.size-trend-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.size-trend-prediction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.trend-result {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.trend-big {
+  background: linear-gradient(135deg, #ff4d4f, #cf1322);
+}
+
+.trend-small {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+}
+
+.trend-confidence {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.size-trend-reason {
+  font-size: 11px;
+  color: var(--sub-text);
+  line-height: 1.4;
+}
+
+/* 单双分析卡片 */
+.oddeven-analysis-card {
+  padding: 0;
+  margin-top: 12px;
+}
+
+.oddeven-analysis-header {
+  margin-bottom: 12px;
+}
+
+.oddeven-analysis-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  padding-left: 8px;
+  border-left: 3px solid #BF5AF2;
+}
+
+.oddeven-analysis-content {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.oddeven-sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.oddeven-seq-item {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.oddeven-seq-item.type-odd {
+  color: #9333EA;
+  background: rgba(191,90,242,0.12);
+}
+
+.oddeven-seq-item.type-even {
+  color: #EA580C;
+  background: rgba(255,159,10,0.12);
+}
+
+.oddeven-seq-arrow {
+  font-size: 11px;
+  color: var(--sub-text);
+  padding: 0 1px;
+}
+
+.oddeven-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.oddeven-stat-item {
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.oddeven-stat-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.oddeven-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.oddeven-stat-odd .oddeven-stat-value {
+  color: #9333EA;
+}
+
+.oddeven-stat-even .oddeven-stat-value {
+  color: #EA580C;
+}
+
+.oddeven-stat-percent {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.oddeven-patterns-section {
+  margin-bottom: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.oddeven-patterns-title {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.oddeven-patterns-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.oddeven-pattern-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.pattern-streak-oddeven {
+  background: linear-gradient(135deg, #A855F7, #7C3AED);
+}
+
+.pattern-alternate-oddeven {
+  background: linear-gradient(135deg, #F97316, #DC2626);
+}
+
+.oddeven-trend-section {
+  background: rgba(255,255,255,0.06);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 3px solid #BF5AF2;
+}
+
+.oddeven-trend-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.oddeven-trend-prediction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.oddeven-trend-prediction .trend-result {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.trend-odd {
+  background: linear-gradient(135deg, #BF5AF2, #9333EA);
+}
+
+.trend-even {
+  background: linear-gradient(135deg, #FF9F0A, #EA580C);
+}
+
+.oddeven-trend-confidence {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.oddeven-trend-reason {
+  font-size: 11px;
+  color: var(--sub-text);
+  line-height: 1.4;
+}
+
+/* 五行分析卡片 */
+.wuxing-analysis-card {
+  padding: 0;
+  margin-top: 12px;
+}
+
+.wuxing-analysis-header {
+  margin-bottom: 12px;
+}
+
+.wuxing-analysis-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  padding-left: 8px;
+  border-left: 3px solid #A78BFA;
+}
+
+.wuxing-analysis-content {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.wuxing-sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wuxing-seq-item {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.wuxing-seq-arrow {
+  font-size: 11px;
+  color: var(--sub-text);
+  padding: 0 1px;
+}
+
+.wuxing-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.wuxing-stat-item {
+  background: rgba(255,255,255,0.08);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.wuxing-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.wuxing-stat-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.wuxing-stat-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.wuxing-stat-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.wuxing-stat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.wuxing-stat-percent {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.wuxing-patterns-section {
+  margin-bottom: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.wuxing-patterns-title {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.wuxing-patterns-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wuxing-pattern-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.wuxing-trend-section {
+  background: rgba(255,255,255,0.06);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 3px solid #A78BFA;
+}
+
+.wuxing-trend-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.wuxing-trend-prediction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.wuxing-trend-confidence {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.wuxing-trend-reason {
+  font-size: 11px;
+  color: var(--sub-text);
+  line-height: 1.4;
+}
+
+/* 波色分析卡片 */
+.color-analysis-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.color-analysis-header {
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.color-analysis-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.color-analysis-content {
+  padding: 12px 14px;
+}
+
+.color-sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.color-seq-item {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.color-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.color-stat-item {
+  background: rgba(255,255,255,0.08);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.color-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.color-stat-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.color-stat-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.color-stat-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.color-stat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.color-stat-percent {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 3px;
+  text-align: right;
+}
+
+.color-patterns-section {
+  margin-bottom: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.color-patterns-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub-text);
+  margin-bottom: 8px;
+}
+
+.color-patterns-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-pattern-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: #fff;
+}
+
+.color-trend-section {
+  background: rgba(255,255,255,0.04);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #EF4444;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.color-trend-label {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.color-trend-prediction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.color-trend-confidence {
+  font-size: 12px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.color-trend-reason {
+  font-size: 11px;
+  color: var(--sub-text);
+  line-height: 1.4;
+}
+
+/* 综合分析面板 - 融合四个统计模块 */
+.combined-analysis-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.combined-tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+}
+
+.combined-tab {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sub-text);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.combined-tab:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+
+.combined-tab.active {
+  color: #9333EA;
+  border-bottom-color: #9333EA;
+  background: rgba(147,51,234,0.06);
+}
+
+.combined-content {
+  padding: 12px;
+  position: relative;
+}
+
+.combined-panel {
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.combined-panel.active {
+  display: block;
+}
+
+.combined-sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.combined-seq-item {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  line-height: 1.3;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* 大小样式 */
+.combined-seq-item.size-big { color: #cf1322; background: rgba(255,77,79,0.12); border-color: rgba(207,19,34,0.25); }
+
+.combined-seq-item.size-small { color: #096dd9; background: rgba(24,144,255,0.12); border-color: rgba(9,109,217,0.25); }
+
+/* 单双样式 */
+.combined-seq-item.oddeven-type-odd { color: #9333EA; background: rgba(191,90,242,0.12); border-color: rgba(147,51,234,0.25); }
+.combined-seq-item.oddeven-type-even { color: #EA580C; background: rgba(255,159,10,0.12); border-color: rgba(234,88,12,0.25); }
+
+/* 五行/波色样式 */
+.combined-seq-item.wx-item,
+.combined-seq-item.cl-item { 
+  color: #fff; 
+  border-radius: 3px; 
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* 统计行 - 大小/单双（两列） */
+.combined-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.combined-stat {
+  background: rgba(255,255,255,0.05);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.stat-label {
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.stat-label.stat-big { color: #cf1322; background: rgba(255,77,79,0.12); }
+.stat-label.stat-small { color: #096dd9; background: rgba(24,144,255,0.12); }
+.stat-label.stat-odd { color: #9333EA; background: rgba(191,90,242,0.12); }
+.stat-label.stat-even { color: #EA580C; background: rgba(255,159,10,0.12); }
+
+.stat-value {
+  font-weight: 700;
+  color: var(--text);
+  min-width: 20px;
+}
+
+.stat-percent {
+  color: var(--sub-text);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* 统计网格 - 五行/波色（多列） */
+.combined-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.wx-stat,
+.cl-stat {
+  background: rgba(255,255,255,0.05);
+  padding: 5px 8px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.wx-name,
+.cl-name {
+  font-weight: 700;
+  min-width: 16px;
+}
+
+.wx-count,
+.cl-count {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 14px;
+}
+
+.wx-bar-bg,
+.cl-bar-bg {
+  flex: 1;
+  height: 4px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wx-bar-fill,
+.cl-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.wx-pct,
+.cl-pct {
+  color: var(--sub-text);
+  font-size: 10px;
+  min-width: 26px;
+  text-align: right;
+}
+
+/* 规律标签 */
+.combined-patterns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.pattern-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(147,51,234,0.12);
+  color: #9333EA;
+}
+
+/* 趋势预测 */
+.combined-trend {
+  background: rgba(147,51,234,0.06);
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #9333EA;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.trend-predict {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 4px;
+}
+
+.trend-predict.trend-big { color: #cf1322; background: rgba(255,77,79,0.15); }
+.trend-predict.trend-small { color: #096dd9; background: rgba(24,144,255,0.15); }
+.trend-predict.trend-odd { color: #9333EA; background: rgba(191,90,242,0.15); }
+.trend-predict.trend-even { color: #EA580C; background: rgba(255,159,10,0.15); }
+
+.trend-conf {
+  font-size: 11px;
+  color: var(--sub-text);
+  font-weight: 600;
+}
+
+.trend-reason {
+  font-size: 10px;
+  color: var(--sub-text);
+  opacity: 0.8;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 

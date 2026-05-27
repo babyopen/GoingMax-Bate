@@ -33,6 +33,7 @@ const Render = {
       DOM.resultCount.innerText = filteredList.length;
       DOM.excludeCount.innerText = state.excluded.length;
     } catch(e) {
+      console.error('[Render.renderResult] 渲染筛选结果失败:', e);
     }
   },
 
@@ -94,6 +95,7 @@ const Render = {
         }
       });
     } catch(e) {
+      console.error('[Render.renderTagStatus] 渲染标签状态失败:', e);
     }
   },
 
@@ -117,6 +119,7 @@ const Render = {
       DOM.excludeGrid.innerHTML = '';
       DOM.excludeGrid.appendChild(fragment);
     } catch(e) {
+      console.error('[Render.renderExcludeGrid] 渲染排除号码网格失败:', e);
     }
   },
 
@@ -140,6 +143,7 @@ const Render = {
       DOM.zodiacTags.innerHTML = '';
       DOM.zodiacTags.appendChild(fragment);
     } catch(e) {
+      console.error('[Render.renderZodiacTags] 渲染生肖标签失败:', e);
     }
   },
 
@@ -166,6 +170,7 @@ const Render = {
       DOM.numTags.innerHTML = '';
       DOM.numTags.appendChild(fragment);
     } catch(e) {
+      console.error('[Render.renderNumTags] 渲染号码标签失败:', e);
     }
   },
 
@@ -226,6 +231,7 @@ const Render = {
       DOM.filterList.innerHTML = '';
       DOM.filterList.appendChild(fragment);
     } catch(e) {
+      console.error('[Render.renderFilterList] 渲染方案列表失败:', e);
     }
   },
 

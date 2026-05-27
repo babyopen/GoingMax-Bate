@@ -404,25 +404,13 @@ const Business = {
    * @param {Object} item - 历史数据项
    * @returns {Object} 特码信息
    */
+  /**
+   * 获取特码信息（使用公共计算器，消除重复代码）
+   * @param {Object} item - 历史数据项
+   * @returns {Object} 特码信息
+   */
   getSpecial: (item) => {
-    const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
-    const zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
-    const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
-    const te = Math.max(0, Number(codeArr[6]));
-    
-    return {
-      te,
-      tail: te % 10,
-      head: Math.floor(te / 10),
-      wave: Business.getColor(te),
-      colorName: Business.getColorName(te),
-      zod: zodArr[6] || '-',
-      odd: te % 2 === 1,
-      big: te >= 25,
-      animal: CONFIG.ANALYSIS.HOME_ZODIAC.includes(zodArr[6]) ? '家禽' : '野兽',
-      wuxing: Business.getWuxing(te),
-      fullZodArr: zodArr
-    };
+    return Utils.SpecialCalculator.getSpecial(item);
   },
 
   /**
@@ -908,12 +896,19 @@ const Business = {
 
   /**
    * 同步全维度分析
+   * @param {Object} [domValues] - 可选：从事件层传入的DOM值对象（符合分层规范）
    */
-  syncAnalyze: () => {
-    const customNumEl = document.getElementById('customNum');
-    const analyzeSelectEl = document.getElementById('analyzeSelect');
-    const custom = customNumEl ? customNumEl.value.trim() : '';
-    const selectVal = analyzeSelectEl ? analyzeSelectEl.value : '12';
+  syncAnalyze: (domValues) => {
+    let custom, selectVal;
+    if (domValues && typeof domValues === 'object') {
+      custom = domValues.custom || '';
+      selectVal = domValues.selectVal || '12';
+    } else {
+      const customNumEl = document.getElementById('customNum');
+      const analyzeSelectEl = document.getElementById('analyzeSelect');
+      custom = customNumEl ? customNumEl.value.trim() : '';
+      selectVal = analyzeSelectEl ? analyzeSelectEl.value : '12';
+    }
     const historyData = StateManager._state.analysis.historyData;
 
     let newLimit;
@@ -941,15 +936,26 @@ const Business = {
 
   /**
    * 同步生肖关联分析
+   * @param {Object} [domValues] - 可选：从事件层传入的DOM值对象（符合分层规范）
    */
-  syncZodiacAnalyze: () => {
-    const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
-    const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
-    const numCountSelectEl = document.getElementById('numCountSelect');
-    const customNumCountEl = document.getElementById('customNumCount');
+  syncZodiacAnalyze: (domValues) => {
+    let customPeriod, selectPeriodVal, countVal, customCount;
+    if (domValues && typeof domValues === 'object') {
+      customPeriod = domValues.customPeriod || '';
+      selectPeriodVal = domValues.selectPeriodVal || '36';
+      countVal = domValues.countVal || '5';
+      customCount = domValues.customCount || '';
+    } else {
+      const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
+      const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
+      const numCountSelectEl = document.getElementById('numCountSelect');
+      const customNumCountEl = document.getElementById('customNumCount');
 
-    const customPeriod = zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '';
-    const selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36';
+      customPeriod = zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '';
+      selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36';
+      countVal = numCountSelectEl ? numCountSelectEl.value : '5';
+      customCount = customNumCountEl ? customNumCountEl.value.trim() : '';
+    }
     const historyData = StateManager._state.analysis.historyData;
 
     let newLimit;
@@ -966,8 +972,6 @@ const Business = {
       newLimit = Number(selectPeriodVal);
     }
 
-    const countVal = numCountSelectEl ? numCountSelectEl.value : '5';
-    const customCount = customNumCountEl ? customNumCountEl.value.trim() : '';
     let finalCount = 5;
 
     if(countVal === 'custom') {
@@ -1021,12 +1025,16 @@ const Business = {
   },
 
   /**
-   * 开始倒计时
+   * 开始倒计时（使用统一定时器管理器）
    */
   startCountdown: () => {
     const state = StateManager._state;
-    if(state.analysis.countdownTimer) clearInterval(state.analysis.countdownTimer);
-    const timer = setInterval(() => {
+    if(state.analysis.countdownTimer) {
+      clearInterval(state.analysis.countdownTimer);
+      Utils.TimerManager.clearInterval('countdown');
+    }
+
+    const timer = Utils.TimerManager.setInterval('countdown', () => {
       const now = new Date();
       const target = new Date();
       target.setHours(21, 32, 32, 0);
@@ -1037,6 +1045,7 @@ const Business = {
       const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
       ViewAnalysis.updateCountdown(h + ':' + m + ':' + s);
     }, 1000);
+
     const newAnalysis = { ...state.analysis, countdownTimer: timer };
     StateManager.setState({ analysis: newAnalysis }, false);
   },
@@ -1053,17 +1062,20 @@ const Business = {
   },
 
   /**
-   * 开始自动刷新
+   * 开始自动刷新（使用统一定时器管理器）
    */
   startAutoRefresh: () => {
     const state = StateManager._state;
-    if(state.analysis.autoRefreshTimer) clearInterval(state.analysis.autoRefreshTimer);
+    if(state.analysis.autoRefreshTimer) {
+      clearInterval(state.analysis.autoRefreshTimer);
+      Utils.TimerManager.clearInterval('autoRefresh');
+    }
 
-    const newTimer = setInterval(() => {
+    const newTimer = Utils.TimerManager.setInterval('autoRefresh', () => {
       if(Business.isInDrawTime()) {
         Business.refreshHistory();
       } else {
-        clearInterval(state.analysis.autoRefreshTimer);
+        Utils.TimerManager.clearInterval('autoRefresh');
         const newAnalysis = {
           ...StateManager._state.analysis,
           autoRefreshTimer: null
@@ -1080,16 +1092,21 @@ const Business = {
   },
 
   /**
-   * 检查开奖时间循环
+   * 检查开奖时间循环（使用统一定时器管理器）
    */
   checkDrawTimeLoop: () => {
     const state = StateManager._state;
-    if(state.analysis.drawTimeLoopTimer) clearInterval(state.analysis.drawTimeLoopTimer);
-    const timer = setInterval(() => {
+    if(state.analysis.drawTimeLoopTimer) {
+      clearInterval(state.analysis.drawTimeLoopTimer);
+      Utils.TimerManager.clearInterval('drawTimeLoop');
+    }
+
+    const timer = Utils.TimerManager.setInterval('drawTimeLoop', () => {
       if(Business.isInDrawTime() && !StateManager._state.analysis.autoRefreshTimer) {
         Business.startAutoRefresh();
       }
     }, 60000);
+
     const newAnalysis = { ...state.analysis, drawTimeLoopTimer: timer };
     StateManager.setState({ analysis: newAnalysis }, false);
   },
@@ -1138,10 +1155,11 @@ const Business = {
   }, CONFIG.SCROLL_THROTTLE_DELAY),
 
   /**
-   * 页面卸载清理，避免内存泄漏
+   * 页面卸载清理，避免内存泄漏（使用统一定时器管理器）
    */
   handlePageUnload: () => {
     StateManager.clearAllTimers();
+    Utils.TimerManager.clearAll(); // 清理所有通过TimerManager管理的定时器
     ViewFilter.cleanupPageEvents(Business.handleScroll, Business.handlePageUnload);
   },
 
@@ -1211,6 +1229,13 @@ const Business = {
     var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
     ViewZodiacPrediction.renderLatestFollowStats(latestFollowStats);
 
+    var latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12);
+    var latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12);
+    var latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12);
+    var latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12);
+
+    ViewZodiacPrediction.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
+
     var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
 
     if (freqResult && patternResult) {
@@ -1227,6 +1252,7 @@ const Business = {
   },
 
   initDBAlgorithm: () => {
+    // 使用V5.3引擎替代旧逻辑
     var state = StateManager._state;
     var historyData = state.analysis.historyData;
     if (!historyData || !historyData.length) {
@@ -1234,21 +1260,18 @@ const Business = {
       historyData = StateManager._state.analysis.historyData;
     }
     if (!historyData || !historyData.length) {
-      ViewZodiacPrediction.renderDBAlgorithm(null, null, null);
       return;
     }
 
-    var numArray = BusinessGiong.historyDataToNumArray(historyData);
-    var result = BusinessGiong.generateFullResult(numArray);
-    var displayData = BusinessGiong.formatResultForDisplay(result);
-
-    var expect = historyData[0] ? historyData[0].expect : '';
-    var currentNum = numArray[0] || 0;
-    Business.saveGiongBacktestRecord(displayData, currentNum, expect);
-
-    var backtestStats = Business.calculateGiongBacktestStats(expect);
-
-    ViewZodiacPrediction.renderGiongAlgorithm(displayData, backtestStats);
+    // 运行V5.3引擎并渲染结果
+    var result = BusinessV53Engine.run(historyData);
+    if (!result.error) {
+      ViewV53Prediction.renderMainPanel(result);
+      ViewV53Prediction.renderWarnings(result.warnings);
+      StateManager.setState({
+        v53: { enabled: true, lastResult: result, computeTime: result.computeTime }
+      }, false);
+    }
   },
 
   initUltimateAlgorithm: () => {

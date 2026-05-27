@@ -39,7 +39,22 @@ const ViewFilter = {
 
     var quickNav = document.getElementById('quickNav');
     if(quickNav) {
-      quickNav.style.display = index === 0 ? 'block' : 'none';
+      if (index === 0 || index === 1 || index === 2) {
+        quickNav.style.display = 'block';
+      } else {
+        quickNav.style.display = 'none';
+      }
+    }
+
+    if (index === 0) {
+      ViewFilter.refreshQuickNav('filter');
+    } else if (index === 1) {
+      ViewFilter.refreshQuickNav('analysis');
+    } else if (index === 2) {
+      ViewFilter.refreshQuickNav('random');
+    } else {
+      var navTabs = document.getElementById('navTabs');
+      if (navTabs) navTabs.innerHTML = '';
     }
   },
 
@@ -49,10 +64,15 @@ const ViewFilter = {
    */
   scrollToModule: (targetId) => {
     var targetEl = document.getElementById(targetId);
-    if(targetEl){
+    if (!targetEl) return;
+    var scrollContainer = document.querySelector('.page-scroll');
+    if (scrollContainer) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
       var offset = CONFIG.TOP_OFFSET + Utils.getSafeTop();
-      window.scrollTo({top: targetEl.offsetTop - offset, behavior: 'smooth'});
+      window.scrollTo({ top: targetEl.offsetTop - offset, behavior: 'smooth' });
     }
+    Business.toggleQuickNav(false);
   },
 
   /**
@@ -120,6 +140,36 @@ const ViewFilter = {
    * 批量选择弹窗相关状态
    */
   _batchTargetGroups: [],
+
+  /**
+   * 快捷导航配置
+   */
+  _navConfigs: {
+    filter: [
+      { id: 'mod-saved', label: '我的方案', type: 'scroll' },
+      { id: 'mod-zodiac', label: '生肖', type: 'scroll' },
+      { id: 'mod-color', label: '波色', type: 'scroll' },
+      { id: 'mod-type', label: '属性', type: 'scroll' },
+      { id: 'mod-element', label: '五行', type: 'scroll' },
+      { id: 'mod-head', label: '头数', type: 'scroll' },
+      { id: 'mod-tail', label: '尾数', type: 'scroll' },
+      { id: 'mod-sum', label: '尾合', type: 'scroll' },
+      { id: 'mod-bs', label: '大小', type: 'scroll' },
+      { id: 'mod-num', label: '号码选择', type: 'scroll' },
+      { id: 'mod-exclude', label: '号码排除', type: 'scroll' }
+    ],
+    analysis: [
+      { label: '历史记录', type: 'tab', page: 'analysis', tabName: 'history' },
+      { label: '维度分析', type: 'tab', page: 'analysis', tabName: 'analysis' },
+      { label: '生肖关联', type: 'tab', page: 'analysis', tabName: 'zodiac' }
+    ],
+    random: [
+      { label: '终极算法', type: 'tab', page: 'random', tabName: 'ultimate' },
+      { label: '生肖预测', type: 'tab', page: 'random', tabName: 'predict' },
+      { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' },
+      { label: 'DB算法', type: 'tab', page: 'random', tabName: 'db' }
+    ]
+  },
 
   /**
    * 调整弹窗位置（避开键盘）
@@ -312,5 +362,34 @@ const ViewFilter = {
     } else {
       Toast.show(`已选择 ${names.length} 个名称`);
     }
+  },
+
+  /**
+   * 刷新快捷导航栏内容（根据当前页面）
+   * @param {string} pageKey - 'filter', 'analysis', 'random'
+   */
+  refreshQuickNav: (pageKey) => {
+    const navTabs = document.getElementById('navTabs');
+    if (!navTabs) return;
+    const configs = ViewFilter._navConfigs[pageKey];
+    if (!configs) return;
+
+    const fragment = document.createDocumentFragment();
+    configs.forEach(cfg => {
+      const btn = document.createElement('button');
+      btn.className = 'nav-tab';
+      if (cfg.type === 'scroll') {
+        btn.dataset.target = cfg.id;
+        btn.dataset.navType = 'scroll';
+      } else if (cfg.type === 'tab') {
+        btn.dataset.navType = 'tab';
+        btn.dataset.page = cfg.page;
+        btn.dataset.tabName = cfg.tabName;
+      }
+      btn.textContent = cfg.label;
+      fragment.appendChild(btn);
+    });
+    navTabs.innerHTML = '';
+    navTabs.appendChild(fragment);
   }
 };

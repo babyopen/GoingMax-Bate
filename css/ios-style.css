@@ -35,6 +35,22 @@
   max-width:calc(100% - clamp(20px,5vw,32px));
   width:auto;
 }
+
+/* 低端设备降级：降低模糊强度以提升滚动性能 */
+@media (max-width: 375px), (max-height: 667px) {
+  .bottom-nav{
+    -webkit-backdrop-filter:blur(10px) saturate(150%);
+    backdrop-filter:blur(10px) saturate(150%);
+  }
+  .bottom-nav-toggle{
+    -webkit-backdrop-filter:blur(8px) saturate(150%);
+    backdrop-filter:blur(8px) saturate(150%);
+  }
+  .quick-nav{
+    -webkit-backdrop-filter:blur(8px) saturate(150%);
+    backdrop-filter:blur(8px) saturate(150%);
+  }
+}
 .bottom-nav-toggle{
   display:flex;justify-content:center;align-items:center;
   width:clamp(48px,9vw,58px);height:clamp(48px,9vw,58px);
@@ -202,7 +218,6 @@
   
   /* 最新一期跟随统计深色适配 */
   .latest-follow-card{color:#ffffff}
-  .latest-follow-title{color:#ffffff}
   .latest-follow-subtitle{color:#98989f}
   .latest-follow-content{background:rgba(255,255,255,0.06)}
   .latest-follow-chain{border-bottom-color:rgba(255,255,255,0.1)}

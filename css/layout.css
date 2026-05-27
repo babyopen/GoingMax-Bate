@@ -62,8 +62,9 @@
   -webkit-overflow-scrolling:touch;
 }
 .freq-swiper-wrapper{
-  display:flex;flex:1;min-height:0;will-change:transform;touch-action:pan-x pan-y pinch-zoom;
-  overscroll-behavior-x:contain;user-select:none;-webkit-user-select:none;
+  display:flex;flex:1;min-height:0;
+  touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
+  user-select:none;-webkit-user-select:none;
   transform:translateZ(0);backface-visibility:hidden;-webkit-overflow-scrolling:touch;
 }
 .freq-swiper-wrapper .freq-card{
@@ -85,7 +86,8 @@
   touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
 }
 .zone-swiper-wrapper{
-  display:flex;will-change:transform;touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
+  display:flex;
+  touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
   user-select:none;-webkit-user-select:none;transform:translateZ(0);backface-visibility:hidden;
   -webkit-overflow-scrolling:touch;
 }

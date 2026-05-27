@@ -467,8 +467,17 @@ const BusinessGiong = {
   },
 
   generateFullResult: function(numArray) {
-    if (!numArray || numArray.length < 12) {
+    if (!numArray || !Array.isArray(numArray)) {
+      return { insufficient: true, message: '无效输入：数据必须是数组' };
+    }
+
+    if (numArray.length < 12) {
       return { insufficient: true, message: '数据不足，需至少12期历史数据' };
+    }
+
+    var validation = Utils.Validator.validateNumber(numArray[0]);
+    if (!validation.valid || numArray[0] < 1 || numArray[0] > 12) {
+      return { insufficient: true, message: '无效的起始号码（必须在1-12之间）' };
     }
 
     var latestNum = numArray[0];

@@ -38,14 +38,28 @@
 
 /* 全局重置与基础样式 */
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
+html{
+  scroll-behavior:smooth;
+  height:100%;
+  overflow:hidden; /* 防止html级别滚动 */
+}
 body{
-  background:var(--bg);color:var(--text);position:fixed;top:0;left:0;right:0;bottom:0;
+  background:var(--bg);color:var(--text);
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  overflow:hidden; /* 禁止body滚动，由page-scroll接管 */
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  -webkit-overflow-scrolling:none; /* 禁用iOS弹性滚动(在body上) */
+  overscroll-behavior:none; /* 防止过度滚动 */
 }
 .page-scroll{
   position:absolute;top:0;left:0;right:0;bottom:0;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; /* iOS弹性滚动 */
+  overscroll-behavior-y:contain; /* 防止过度滚动传递到父元素 */
+  touch-action:pan-y; /* 明确声明只允许垂直滚动 */
+  -webkit-transform:translateZ(0); /* GPU加速 */
+  transform:translateZ(0);
+  will-change:scroll-position; /* 提示浏览器这个元素会滚动 */
 }
 
 /* 加载遮罩 */
@@ -209,3 +223,34 @@ input[type="checkbox"]{transform:scale(0.9);margin-right:4px;touch-action:manipu
   touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
 .load-more:active{opacity:0.7}
+
+/* 快捷导航跳转目标元素的滚动边距（避开固定顶部栏） */
+#mod-saved, #mod-zodiac, #mod-color, #mod-type, #mod-element,
+#mod-head, #mod-tail, #mod-sum, #mod-bs, #mod-num, #mod-exclude {
+  scroll-margin-top: calc(var(--top-offset) + var(--safe-top) + 10px);
+}
+
+/* ===================================
+   低端设备性能优化模式
+   由 scroll-performance.js 自动启用
+   =================================== */
+body.low-performance-mode *{
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+}
+
+body.low-performance-mode .bottom-nav,
+body.low-performance-mode .quick-nav,
+body.low-performance-mode .bottom-nav-toggle{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  background:rgba(255,255,255,0.95) !important;
+}
+
+body.low-performance-mode .card,
+body.low-performance-mode .top-card,
+body.low-performance-mode .btn-mini,
+body.low-performance-mode .tag,
+body.low-performance-mode .exclude-tag{
+  box-shadow:none !important;
+}
