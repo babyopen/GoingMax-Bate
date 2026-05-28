@@ -557,7 +557,7 @@ const EventBinder = {
       var daxianFrame = document.getElementById('daxianFrame');
       var daxianLoading = document.getElementById('daxianLoading');
       if (daxianFrame && !daxianFrame.src) {
-        daxianFrame.src = 'https://01492026.com';
+        daxianFrame.src = 'https://rk3lx78d.66660149m.app:2026/66660149.app#66660149://01492026.com';
         daxianFrame.style.display = 'block';
         daxianLoading.style.display = 'none';
       }
