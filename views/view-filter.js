@@ -148,7 +148,7 @@ const ViewFilter = {
    */
   _navConfigs: {
     filter: [
-      { id: 'mod-saved', label: '我的方案', type: 'scroll' },
+      { id: 'mod-saved', label: '方案', type: 'scroll' },
       { id: 'mod-zodiac', label: '生肖', type: 'scroll' },
       { id: 'mod-color', label: '波色', type: 'scroll' },
       { id: 'mod-type', label: '属性', type: 'scroll' },
