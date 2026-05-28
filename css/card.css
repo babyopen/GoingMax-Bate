@@ -162,15 +162,8 @@
   font-size:15px;font-weight:700;color:#13a662;margin-top:10px;word-break:break-all;line-height:1.6;
 }
 
-/* DB算法面板 - iOS17 风格 */
+/* 生肖卡片通用样式 */
 .db-card{border-radius:16px;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.db-header-left{display:flex;align-items:center;gap:10px}
-.db-badge{
-  font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
-  background:linear-gradient(135deg, #FF6B35, #FF3B30);color:#fff;letter-spacing:0.5px;
-}
-.db-intro{margin-bottom:20px}
-.db-intro p{font-size:13px;color:var(--sub-text);margin:0;text-align:center}
 .db-result-container{
   background:linear-gradient(135deg, rgba(0,122,255,0.04), rgba(175,82,222,0.04));
   border-radius:20px;padding:16px 12px;margin-bottom:16px;
@@ -198,120 +191,18 @@
 .db-card-item .db-card-emoji{font-size:clamp(26px,5.5vw,38px);line-height:1}
 .db-card-item .db-card-name{font-size:clamp(14px,3vw,18px);font-weight:700;line-height:1.2;color:var(--text)}
 .db-divider{height:1px;background:var(--border);margin:16px 0}
-.db-detail-toggle{
-  display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-size:13px;
-  color:var(--sub-text);cursor:pointer;border-radius:12px;transition:background var(--anim-fast);
-}
-.db-detail-toggle:active{background:rgba(0,0,0,0.04)}
-.db-heat-panel{margin-top:12px;padding-top:16px;border-top:1px solid var(--border)}
-.db-heat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.db-heat-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;background:var(--bg-secondary)}
-.db-heat-zodiac{font-size:14px;font-weight:600}
-.db-heat-count{font-size:11px;font-weight:500}
-.db-heat-tag{font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px}
-.db-heat-tag.is-hot{background:rgba(255,59,48,0.12);color:var(--danger)}
-.db-heat-tag.is-warm{background:rgba(0,122,255,0.1);color:var(--primary)}
-.db-heat-tag.is-downgrade{background:rgba(255,149,0,0.12);color:var(--danger)}
-.db-heat-tag.is-cold{background:var(--border);color:var(--sub-text)}
-.db-heat-zone{font-size:9px;padding:1px 6px;border-radius:8px;opacity:0.85}
-.db-hit-rate{
-  display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0 12px;
-  margin-bottom:8px;border-bottom:1px solid var(--border);
-}
-.db-hitrate-label{font-size:12px;color:var(--sub-text);font-weight:500}
-.db-hitrate-value{font-size:14px;font-weight:700;padding:2px 10px;border-radius:12px}
-.db-hitrate-value.hitrate-high{background:rgba(52,199,89,0.12);color:var(--green)}
-.db-hitrate-value.hitrate-mid{background:rgba(255,149,0,0.12);color:var(--danger)}
-.db-hitrate-value.hitrate-low{background:rgba(255,59,48,0.12);color:var(--danger)}
 .db-miss-container{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
 .db-miss-section-label{font-size:12px;font-weight:600;color:var(--sub-text);text-align:center;margin-bottom:12px;letter-spacing:0.5px}
 .db-miss-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .db-miss-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:10px;background:var(--bg-secondary)}
 .db-miss-zodiac{font-size:13px;font-weight:700}
 .db-miss-count{font-size:10px;color:var(--sub-text)}
-.db-miss-num{font-weight:700;color:var(--primary)}
 .db-miss-tag{font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;margin-top:2px}
 .db-miss-tag.miss-hot{background:rgba(255,59,48,0.12);color:var(--danger)}
 .db-miss-tag.miss-warm{background:rgba(0,122,255,0.1);color:var(--primary)}
 .db-miss-tag.miss-cold{background:var(--border);color:var(--sub-text)}
 .db-miss-tag.miss-deep{background:rgba(175,82,222,0.12);color:#AF52DE}
-.db-miss-tip{font-size:10px;color:#C7C7CC;text-align:center;line-height:1.3;padding:0 2px}
-.db-rules{display:flex;flex-direction:column;gap:12px}
-.db-rule-item{display:flex;gap:12px;align-items:flex-start}
-.db-rule-num{
-  width:24px;height:24px;min-width:24px;border-radius:50%;background:rgba(0,122,255,0.1);
-  color:var(--primary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
-}
-.db-rule-text{font-size:13px;color:var(--sub-text);line-height:1.5}
-.db-backtest-container{
-  background:var(--bg-secondary);border-radius:20px;padding:16px 12px;margin-top:16px;
-  border:1px solid var(--border);
-}
-.db-backtest-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.db-backtest-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:0.5px}
-.db-backtest-stats{display:flex;gap:12px;flex-wrap:wrap}
-.backstat-item{font-size:12px;color:var(--sub-text);line-height:1.4}
-.backstat-item strong{font-weight:700;color:var(--text)}
-.db-backtest-records{max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.db-backtest-records::-webkit-scrollbar{width:4px}
-.db-backtest-records::-webkit-scrollbar-thumb{background-color:var(--border);border-radius:4px}
-.backtest-empty{text-align:center;color:var(--sub-text);font-size:13px;padding:24px 16px;opacity:0.7}
-.backtest-record-item{
-  background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px;
-  box-shadow:var(--shadow-sm);border:1px solid var(--border);
-}
-.backtest-record-time{font-size:11px;color:var(--sub-text);margin-bottom:8px;font-weight:600;letter-spacing:0.3px}
-.backtest-record-content{display:flex;flex-wrap:wrap;align-items:center;gap:4px;line-height:1.6}
-.backtest-label{font-weight:600;color:var(--sub-text);font-size:12px}
-.backtest-value{font-weight:500;color:var(--text);font-size:13px;letter-spacing:0.5px}
-.main-value{color:var(--text);font-weight:700;letter-spacing:0.3px}
-.backup-value{color:#5AC8FA}
-.backtest-paren{color:var(--sub-text);font-size:12px}
-.backtest-sep{color:var(--sub-text);margin:0 2px;font-size:13px}
-.backtest-actual{color:var(--green);font-weight:700;font-size:13px}
-.backtest-status-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
-.backtest-status-pending{background:rgba(0,122,255,0.1);color:var(--primary)}
-.backtest-status-hit-main{background:rgba(52,199,89,0.12);color:var(--green)}
-.backtest-status-hit-backup{background:rgba(90,200,250,0.12);color:var(--primary)}
-.backtest-status-miss{background:rgba(255,59,48,0.08);color:var(--danger)}
 
-/* Giong双链算法样式 */
-.giong-latest-info{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;margin-bottom:16px;background:var(--bg-secondary);border-radius:16px}
-.giong-latest-label{font-size:13px;color:var(--sub-text);font-weight:500}
-.giong-latest-num{font-size:28px;font-weight:800;color:var(--primary);line-height:1}
-.giong-latest-zodiac{font-size:22px;font-weight:700;color:var(--text)}
-.giong-chain-label{font-size:15px !important;color:var(--primary) !important;background:rgba(0,122,255,0.08);padding:8px 16px;border-radius:12px;margin-bottom:6px !important}
-.giong-chain-label.giong-chain-old{color:#FF9500 !important;background:rgba(255,149,0,0.08)}
-.giong-chain-label.giong-chain-merged{color:#AF52DE !important;background:rgba(175,82,222,0.08)}
-.db-merged-section{cursor:pointer;position:relative}
-.merged-tap-hint{text-align:center;font-size:11px;color:var(--sub-text);margin-top:12px;opacity:0.6}
-.giong-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center}
-.giong-modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8)}
-.giong-modal-content{
-  position:relative;width:90%;max-width:400px;max-height:80vh;background:#ffffff;
-  border-radius:16px;overflow-y:auto;z-index:10000;box-shadow:0 10px 40px rgba(0,0,0,0.5);
-}
-.giong-modal-header{
-  display:flex;justify-content:space-between;align-items:center;padding:16px 20px;
-  border-bottom:1px solid rgba(0,0,0,0.1);position:sticky;top:0;background:#ffffff;z-index:1;
-}
-.giong-modal-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
-.giong-modal-close{cursor:pointer;font-size:22px;color:#999;padding:4px 8px;line-height:1}
-.giong-modal-body{padding:16px 20px 20px}
-.giong-modal-chain{margin-bottom:8px}
-.giong-chain-desc{font-size:11px;color:var(--sub-text);text-align:center;margin-bottom:16px;letter-spacing:0.5px;opacity:0.8}
-.giong-chain-divider{text-align:center;font-size:13px;font-weight:600;color:var(--sub-text);padding:16px 0 12px;letter-spacing:2px;opacity:0.6}
-.giong-downweight-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 0}
-.giong-downweight-tag{font-size:13px;font-weight:600;padding:4px 14px;border-radius:16px;background:rgba(255,59,48,0.1);color:var(--danger);border:1px solid rgba(255,59,48,0.2)}
-.giong-warning{
-  font-size:12px;font-weight:600;color:#FF9500;text-align:center;padding:10px 14px;margin-top:10px;
-  background:rgba(255,149,0,0.08);border-radius:12px;border:1px solid rgba(255,149,0,0.2);
-}
-.giong-badge-dw{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:6px;background:rgba(255,59,48,0.12);color:var(--danger);margin-left:3px;vertical-align:middle}
-.giong-badge-cz{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:6px;background:var(--border);color:var(--sub-text);margin-left:3px;vertical-align:middle}
-.giong-backtest-card{margin-top:12px}
-.giong-backtest-header{margin-bottom:4px}
-.giong-pending-tip{font-size:11px;color:var(--sub-text);text-align:center;padding:6px 0 10px;opacity:0.7}
 
 /* 频率评级系统 */
 .freq-section{margin-bottom:clamp(14px,2.5vw,20px)}
@@ -448,6 +339,9 @@
 .backtest-stat{flex:1;text-align:center}
 .backtest-stat-label{display:block;font-size:clamp(10px,2vw,12px);color:var(--sub-text);margin-bottom:clamp(3px,0.6vw,6px)}
 .backtest-stat-value{font-size:clamp(16px,3.5vw,22px);font-weight:800;color:var(--text)}
+.backtest-rate-high{color:#30D158}
+.backtest-rate-mid{color:#FF9500}
+.backtest-rate-low{color:#FF453A}
 .backtest-breakdown{display:flex;gap:clamp(8px,2vw,14px);justify-content:center;flex-wrap:wrap}
 .backtest-breakdown-item{font-size:clamp(10px,2vw,12px);color:var(--sub-text)}
 .backtest-records{display:flex;flex-direction:column;gap:clamp(6px,1.5vw,10px)}
@@ -473,20 +367,6 @@
   display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;
   background:rgba(255,149,0,0.15);color:#FF9500;margin-left:6px;vertical-align:middle;font-weight:500;
 }
-
-/* 概率条 */
-.prob-bar{display:inline-block;padding:clamp(2px,0.4vw,4px) clamp(6px,1.5vw,10px);border-radius:10px;font-size:clamp(11px,2vw,13px);font-weight:700}
-.prob-high{background:rgba(255,69,58,0.25);color:#FF453A}
-.prob-mid{background:rgba(255,149,0,0.2);color:#FF9500}
-.prob-low{background:rgba(90,200,250,0.2);color:#5AC8FA}
-.prob-mini{background:rgba(255,255,255,0.06);color:var(--sub-text)}
-
-/* 终极算法 */
-.ultimate-expect-display{text-align:left;font-size:13px;color:var(--primary);margin-top:4px;font-weight:600}
-.adaptive-badge{
-  display:inline-block;font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
-  padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:500;
-}
 .backtest-adaptive-info{
   background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.2);border-radius:8px;
   padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;
@@ -501,7 +381,7 @@
 .backtest-total-highlight .backtest-section-title{color:#34C759}
 .backtest-backup-hit{background:rgba(255,149,0,0.08);border-left:3px solid #FF9500}
 
-/* 弹窗模态框 */
+/* 回测弹窗模态框 */
 .backtest-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center}
 .backtest-modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8)}
 .backtest-modal-content{
@@ -516,6 +396,19 @@
 .backtest-modal-close{cursor:pointer;font-size:22px;color:#999;padding:4px 8px;line-height:1;transition:color 0.2s}
 .backtest-modal-body{padding:16px 20px 20px}
 
+/* 概率条 */
+.prob-bar{display:inline-block;padding:clamp(2px,0.4vw,4px) clamp(6px,1.5vw,10px);border-radius:10px;font-size:clamp(11px,2vw,13px);font-weight:700}
+.prob-high{background:rgba(255,69,58,0.25);color:#FF453A}
+.prob-mid{background:rgba(255,149,0,0.2);color:#FF9500}
+.prob-low{background:rgba(90,200,250,0.2);color:#5AC8FA}
+.prob-mini{background:rgba(255,255,255,0.06);color:var(--sub-text)}
+
+/* 终极算法 */
+.ultimate-expect-display{text-align:left;font-size:13px;color:var(--primary);margin-top:4px;font-weight:600}
+.adaptive-badge{
+  display:inline-block;font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
+  padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:500;
+}
 /* 卡片折叠功能 */
 .card-body.collapsed{display:none}
 .btn-toggle .fa-chevron-up{transition:transform var(--anim-normal)}

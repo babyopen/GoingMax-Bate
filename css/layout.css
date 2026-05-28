@@ -189,26 +189,14 @@
 @media (max-width: 375px) {
   .quick-nav{left:10px;right:10px;max-width:calc(100% - 20px);border-radius:20px}
   .nav-tab{padding:7px 11px;font-size:11px}
-  .db-heat-grid{grid-template-columns:repeat(4,1fr);gap:6px}
-  .db-miss-grid{grid-template-columns:repeat(4,1fr);gap:4px}
   .db-card-item{padding:clamp(10px,2.2vw,14px) clamp(4px,1vw,10px);border-radius:clamp(14px,3.5vw,20px)}
   .db-card-item .db-card-emoji{font-size:clamp(22px,5vw,30px)}
   .db-card-item .db-card-name{font-size:clamp(13px,2.8vw,16px)}
   .db-card-item .db-rank-badge{width:clamp(16px,3vw,20px);height:clamp(16px,3vw,20px);font-size:clamp(9px,1.6vw,11px)}
-  .giong-latest-num{font-size:24px}
-  .giong-latest-zodiac{font-size:18px}
-  .giong-chain-label{font-size:13px !important}
-  .giong-chain-divider{font-size:11px;padding:12px 0 8px}
-  .db-backtest-container{padding:12px 10px}
-  .backtest-record-item{padding:10px 12px}
-  .backtest-record-content{gap:2px;font-size:12px}
-  .backtest-value{font-size:12px}
-  .backtest-status-badge{font-size:10px;padding:1px 6px}
-  .db-backtest-stats{gap:8px}
-  .backstat-item{font-size:11px}
+  .db-miss-grid{grid-template-columns:repeat(4,1fr);gap:4px}
 }
 
-/* 360px 断点：常见安卓小屏 */
+/* 360px 断点：超小屏 */
 @media (max-width: 360px) {
   .quick-nav{left:8px;right:8px;max-width:calc(100% - 16px)}
   .nav-tab{padding:6px 10px;font-size:11px}
@@ -220,7 +208,6 @@
   .nav-tabs{padding:6px;gap:4px}
   .nav-tab{padding:5px 9px;font-size:10px;border-radius:12px}
   .db-number-grid{gap:8px}
-  .db-heat-grid{grid-template-columns:repeat(3,1fr);gap:4px}
   .db-miss-grid{grid-template-columns:repeat(3,1fr);gap:3px}
 }
 

@@ -1,0 +1,471 @@
+1. 项目定位与技术选型
+
+定位：纯前端单页应用（SPA），离线可用，支持数据导入、自动分析、可视化推演。
+核心用户：对历史数据走势分析有需求的个人用户。
+
+层级	技术选型	说明
+框架	React 18 + TypeScript	生态丰富，适合复杂状态与交互
+状态管理	Zustand	轻量、无模板代码，适合中小型项目
+UI 组件	shadcn/ui + Tailwind CSS	高质量、可定制、响应式
+可视化	ECharts (力导向图、热力图) + Recharts (柱状图、折线图)	覆盖全部图表需求
+数据持久化	Dexie.js (IndexedDB 封装)	本地存储历史数据、缓存分析结果
+构建工具	Vite	极速 HMR，开箱即用
+部署	Vercel / Netlify	免费静态站点托管
+2. 数据模型设计
+
+typescript
+// 单期开奖
+interface Draw {
+  id?: number;            // 自增主键（IndexedDB）
+  issue: string;          // 期号 "2026136"
+  number: number;         // 原始号码 1-12
+  mappedNumber: number;   // 挂靠映射后的主链节点 1/4/5/7/9
+  timestamp: number;      // 录入时间戳
+}
+
+// 对子统计（映射后）
+interface PairStat {
+  from: number;           // 映射后前导号
+  to: number;             // 候选号
+  count: number;          // 出现次数
+  issues: string[];       // 起始期号列表
+}
+
+// 三步链
+interface ThreeStepChain {
+  steps: [number, number, number]; // 映射后序列
+  count: number;
+  issues: string[];
+}
+
+// 循环链
+interface LoopChain {
+  x: number;
+  y: number;
+  count: number;
+}
+
+// 窗口分析结果
+interface WindowAnalysis {
+  count12: number;
+  count11: number;
+  count24: number;
+  hasConsecutive: boolean;
+  consecutivePosition: 'front' | 'back' | null;
+  missing: number;        // 当前遗漏期数
+  isDeepColdBreak: boolean;
+}
+
+// 候选号码评分卡
+interface CandidateScore {
+  number: number;
+  score: number;
+  details: {
+    chainPosition: number;     // 链位置分
+    group: number;             // 属性分
+    trend11: number;           // 11期趋势分
+    consecutive: number;       // 连开分
+    coldBreak: number;         // 破冰分
+    heat24: number;            // 24期热度分
+    multiHot: number;          // 多热压制分
+    pairHeat: number;          // 对子热度分
+    tripleChain: number;       // 三步链分
+    loopChain: number;         // 循环链分
+  };
+}
+
+// 最终推演结果
+interface Prediction {
+  priority: 'main' | 'backup' | 'excluded';
+  numbers: CandidateScore[];
+  globalPattern: string;
+  triggerRules: string[];     // 触发的规则列表
+}
+3. 核心算法模块设计
+
+3.1 挂靠映射引擎
+
+typescript
+const MAPPING: Record<number, number> = {
+  2: 5, 3: 1, 6: 0, 8: 4, 10: 4, 11: 7, 12: 5
+};
+// 6 特殊处理：变盘核心，映射后保留原值并标记为变盘号
+
+function mapNumber(n: number): number {
+  return MAPPING[n] ?? n;
+}
+
+function mapDraw(draw: Draw): Draw {
+  return { ...draw, mappedNumber: mapNumber(draw.number) };
+}
+3.2 对子/三步链/循环链统计（映射后）
+
+所有统计均以 mappedNumber 为准：
+
+遍历已排序的 Draw[]，取相邻两期映射值构建对子。
+三步链取连续三期映射值。
+循环链检测 draw[i-2].mappedNumber === draw[i].mappedNumber，记录中间数字。
+3.3 滑动窗口计算器
+
+typescript
+function getWindowCounts(draws: Draw[], endIndex: number, windowSize: number): Map<number, number> {
+  const start = Math.max(0, endIndex - windowSize + 1);
+  const counts = new Map<number, number>();
+  for (let i = start; i <= endIndex; i++) {
+    const num = draws[i].number; // 原始号码用于频次，映射号用于链
+    counts.set(num, (counts.get(num) || 0) + 1);
+  }
+  return counts;
+}
+
+function checkConsecutive(draws: Draw[], start: number, end: number, num: number): { has: boolean, position: 'front'|'back'|null } {
+  // 扫描窗口内 num 的连续出现
+  // 标记位置在窗口前半(早期6期)或后半(近6期)
+}
+3.4 降权过滤器
+
+typescript
+function filterDowngraded(candidates: number[], window12: Map<number,number>, window11: Map<number,number>): number[] {
+  return candidates.filter(num => {
+    const c12 = window12.get(num) || 0;
+    if (c12 >= 3) {
+      const c11 = window11.get(num) || 0;
+      return c11 === 2; // 仅当11期=2解除降权
+    }
+    return true;
+  });
+}
+3.5 综合评分器
+
+typescript
+function scoreCandidate(
+  num: number,
+  context: {
+    chainPos: { newChain: number[]; oldChain: number[] };
+    group: 'strong'|'oscillate'|'cold';
+    window12: Map<number,number>;
+    window11: Map<number,number>;
+    window24: Map<number,number>;
+    consecutive: { has: boolean; position: string|null };
+    missing: number;
+    deepColdBreak: boolean;
+    multiHotTrigger: boolean;
+    mappedPrev: number;         // 映射(上期)
+    mappedPrevPrev: number;     // 映射(两期前)
+    pairStats: Map<string, number>;
+    tripleStats: Map<string, number>;
+    loopStats: Map<string, number>;
+  }
+): CandidateScore {
+  // 按5.1~5.10逐项累加，返回总分与明细
+}
+4. 组件树与页面结构
+
+text
+App
+├── Layout
+│   ├── Sidebar (导航)
+│   ├── Header (期号状态显示)
+│   └── Main Content
+│
+├── DataImportPage (数据管理)
+│   ├── TextArea 粘贴
+│   ├── FileUpload (CSV/TXT)
+│   └── DataTable (预览、编辑、删除)
+│
+├── DashboardPage (总览仪表盘)
+│   ├── GlobalStats (总期数、热门对子、异常标识)
+│   ├── WindowBarChart (12期/24期频次柱状图)
+│   ├── PairHeatmap (12x12对子热力图，映射后)
+│   └── ChainForceGraph (主链衔接力导向图)
+│
+├── ChainAnalysisPage (组合链深度分析)
+│   ├── ThreeStepChainList (三步重复链表格)
+│   ├── LoopChainList (循环链列表)
+│   └── CustomChainBuilder (自定义起点看链)
+│
+├── NumberDetailPage (单号码深度剖析)
+│   ├── NumberSelector (01-12 点击切换)
+│   ├── OutgoingStats (出门统计，映射后)
+│   ├── IncomingStats (进门统计，映射后)
+│   ├── HistoryTimeline (出现时间轴)
+│   └── ColdHeatIndicator (24期冷热条)
+│
+└── PredictionPage (智能推演 - 核心)
+    ├── CurrentStateCard (当前窗口快照 + 起点标识)
+    ├── FunnelSteps (漏斗筛选步骤可视化)
+    │   ├── Step1: 双链顺位展示
+    │   ├── Step2: 降权过滤状态
+    │   ├── Step3: 评分明细表（可展开）
+    │   └── Step4: 冷热替换提示
+    └── PredictionResult (最终推荐卡片)
+        ├── Main4Cards (主推4码，绿色渐变)
+        ├── Backup2Cards (备选2码，灰色)
+        └── ExcludedList (排除号码 + 原因)
+5. 状态管理设计（Zustand Store）
+
+typescript
+interface AppStore {
+  // 数据
+  draws: Draw[];
+  pairStats: PairStat[];
+  threeChains: ThreeStepChain[];
+  loopChains: LoopChain[];
+  latestIndex: number;
+  
+  // 窗口缓存
+  window12: Map<number,number>;
+  window11: Map<number,number>;
+  window24: Map<number,number>;
+  
+  // 推演结果
+  prediction: Prediction | null;
+  predictionHistory: Prediction[];   // 可追溯历史推演记录
+  
+  // 动作
+  importData: (raw: string) => Promise<void>;
+  addDraw: (issue: string, num: number) => void;
+  deleteDraw: (id: number) => void;
+  recomputeAll: () => void;
+  runPrediction: () => void;
+  getNumberDetail: (num: number) => NumberDetail;
+}
+数据导入时自动触发 recomputeAll()，计算所有统计量并缓存。
+
+6. UI/UX 设计要点
+
+数据导入页：大文本框 + 示例数据一键填充。粘贴后实时解析并预览前5行，确认无误后入库。
+仪表盘：卡片式布局，关键数字（总期数、12期内≥3次数、破冰号数量）高亮显示。对子热力图可点击跳转至详细对子列表。
+力导向图：节点为12个号码（主链高亮），连线粗细代表映射后对子频次，支持拖拽、缩放、悬停显示次数。
+智能推演页：
+顶部醒目显示 “当前期号: 2026137 | 开奖号: 02 → 映射为 05”。
+漏斗步骤以垂直Steps组件展示，每步有图标（✅/⚠️/❌）表示状态。
+评分明细表可展开，每一评分项可悬浮查看解释。
+主推4码以大卡片 + 加粗分数展示，备选2码小卡片，排除号码以删除线灰字显示。
+响应式：移动端隐藏侧边栏，改为底部导航，卡片堆叠。
+7. 数据流与性能优化
+
+离线优先：所有数据存 IndexedDB，首次加载后无需网络。
+计算缓存：仅当数据变更时重新统计对子/链/窗口，结果存入内存Map。
+Web Worker：当历史数据量极大（>10万期）时，将统计计算移入 Worker 避免阻塞 UI。
+虚拟滚动：数据列表超长时使用 react-window 渲染。
+8. 开发路线图（约7周）
+
+阶段	任务	产出
+W1	初始化项目，配置 TS、Tailwind、shadcn/ui，数据模型定义	骨架项目
+W2	数据导入/编辑/删除，IndexedDB 集成	数据管理页完成
+W3	挂靠映射、对子/三步链/循环链统计引擎	核心算法模块
+W4	窗口分析、降权过滤、综合评分器	推演引擎完成
+W5	仪表盘可视化（热力图、力导向图、柱状图）	可视化模块
+W6	智能推演页面、漏斗步骤、结果展示	推演页面完成
+W7	测试、移动适配、部署上线	可访问的在线应用
+9. 可扩展性预留
+
+数字范围可配置：将 01~12 设为变量，支持其他玩法（如 01~20）。
+多链支持：双链闭环结构以配置文件定义，可扩展为三链。
+评分权重自定义：高级用户可调整各项评分分值。
+对外 API：未来可封装为 NPM 包，供后端服务调用。
+
+
+
+--------------------------------------------------------------------
+ 数字对子链多维分析体系 · 完整逻辑融合
+
+第一层：数据基础层
+
+1.1 原始数据格式
+
+text
+期号 + 开奖数字（01~12）
+相邻两期构成一个“对子” (前→后)
+1.2 基础统计产出
+
+统计项	说明
+全量对子次数	所有 A→B 的出现次数
+热门对子	≥3次
+冷门对子	0次（从未出现）
+循环对子	X→Y→X 模式
+第二层：对子链结构层
+
+2.1 三步重复链
+
+完全相同 A→B→C 在历史中出现 ≥2次
+已验证：07→12→05、05→01→05、05→02→08、12→02→03
+2.2 循环回弹链
+
+X→Y→X 模式出现 ≥2次
+已验证：06⇄01、07⇄01、04⇄06、06⇄08、10⇄09、12⇄05
+2.3 强惯性拼接链
+
+每步取该数字的历史最热出路，拼接成预测长链
+代表链：01→05→02→06、07→12→02→06、12→01→05→02
+2.4 全局衔接图
+
+每个数字只画最强出路（≥2次），形成概率网络
+最大汇集点：01（5条入箭）、02（4条入箭）
+唯一自循环：10→10
+第三层：12/11期双窗口热度层
+
+3.1 铁律一号（核心过滤器）
+
+条件	判定	动作
+12期=3次 + 无连开	虚热凑数	🔴 直接排除
+12期=3次 + 有连开	实热成型	🟢 进入候选池
+12期=3次→回落至2次 + 11期仍3次	近态热度未散	🟢 继续跟进
+相邻窗口同号次数浮动	仅 -1/0/+1	无跳变，稳定可参考
+3.2 11期辅助窗口
+
+11期 vs 12期	判定
+11期 > 12期	后程发力，优先主攻
+11期 < 12期	热度靠往期堆积，近期走弱，放弃
+11期 = 12期	热度稳定，中性
+3.3 双窗口同步判定
+
+12期	11期	连开	判定
+3次	3次	有	🥇 最强稳出组合
+3次	2次	—	🟡 热度已衰退，谨慎
+2次	3次	—	🥈 热度回流，绝佳伏击
+第四层：连开结构深层规律
+
+4.1 连开长度决定上限
+
+连开情况	能量上限
+12期内连开2次	最高冲到4次罕见区，到顶易回调
+12期内连开3次	爆发力最强，稳进罕见区，可高位横盘1-2期
+仅间隔出、无任何2连	最多卡在3次降权区，永不上罕见区
+4.2 连开位置决定后劲
+
+连开位置	后续走势
+12期窗口前半段	热度提前释放，后半段走冷，后劲不足
+12期窗口后半段	惯性最强，下期延续概率极高
+第五层：属性分组固化层
+
+5.1 强势爆发组（04、05、10）
+
+2→3次速度快，3→4次突破无压力
+连开是常态，断开只是短暂休整
+回落至2次极易二次回暖
+少见长期深冷，冷周期短
+5.2 震荡临界组（01、02、06、07、12）
+
+容易快速摸到3次，但90%无有效连开
+到3次立刻断号回落，几乎冲不上罕见区
+适合短周期抓一波，不可长期死跟
+11期校验回暖成功率偏低
+5.3 天生冷态组（03、08、09、11）
+
+极少出现2连开，最多零散单出
+终生难稳定站稳3次，即使到也瞬间回落
+无法形成持续热度，只适合防冷补缺
+双窗口同时达标热门条件概率极低
+第六层：分区轮转节奏层
+
+6.1 固定轮转优先级
+
+text
+等待区 → 穿插区 → 驱动区(2次) → 降权区(3次) → 罕见区(≥4次) → 逐级回落
+6.2 核心规则
+
+规则	说明
+升温	绝不跨区跳跃，只逐级上行
+降温	可跳级回落，罕见区可直接跌到驱动区
+核心拐点	2次驱动区是启动信号，3次降权区是生死分水岭
+过关	能过3次 + 带连开 = 走主热
+熄火	到3次无连开 = 直接熄火
+第七层：冷热对冲总量层
+
+7.1 盘面格局判断
+
+格局	特征	策略
+一热多冷	单个号码≥4次，压制其他出号	停止追热
+热度分流	2-3个号码卡在3次降权区	谁都难突破，集体震荡
+均衡轮出	多数号码1-2次	均衡选号
+7.2 总量约束
+
+12期总次数固定=12次
+一个号码占4次以上，必然挤压其他号码空间
+第八层：窗口滑动进退层
+
+机制	规则
+剔除旧号	窗口前滑，去掉最早一期 = 该号次数-1，热度自然下滑
+纳入新号	最新一期开出 = 该号次数+1，顺势升温
+实战判断	上期刚开出的号码，新窗口次数必上浮，天然热度加分
+第九层：周期休眠与破冰层
+
+9.1 休眠规律
+
+号码走完罕见区大热后 → 进入 2-3个12期窗口休眠降温 → 期间最多走到2次驱动区
+长期冷号连续两期上涨（0→1→2）→ 休眠结束、正式启动信号
+9.2 深冷破冰规律（新增第八类）
+
+条件	判定
+遗漏 >25期后首次开出	深冷破冰
+破冰后1-3期	大概率二次开出，形成“回踩确认”
+强势组破冰	二次开出概率极高，易顺势连开
+震荡组破冰	二次概率中等，间隔再出
+冷态组破冰	罕见，即使破冰也难有二次
+第十层：综合实战筛选漏斗（最终融合）
+
+按顺序执行：
+
+text
+第一步：划出当前12期窗口，统计频次
+        ↓
+第二步：铁律一号过滤
+        ├── 12期=3次+无连开 → 🔴 直接排除
+        └── 12期=3次+有连开 → 🟢 进入候选池
+        ↓
+第三步：对子链约束（以上期开奖号为前导）
+        ├── 查历史对子频次
+        ├── 热门出路(≥3次)优先
+        └── 冷门禁区(0次)直接排除
+        ↓
+第四步：11期辅助窗口校验
+        ├── 11期>12期 → 加分
+        ├── 11期<12期 → 降级
+        └── 双窗口同步3次+连开 → 最强信号
+        ↓
+第五步：连开位置与后劲判定
+        ├── 后半段连开/单出 → 惯性最强
+        └── 前半段连开 → 后劲不足
+        ↓
+第六步：属性分组加减分
+        ├── 强势组 → 加分
+        ├── 震荡组 → 中性，注意3次天花板
+        └── 冷态组 → 降级，需等启动信号
+        ↓
+第七步：遗漏破冰判定
+        ├── 深冷破冰号 → 1-3期内二次惯性加分
+        └── 普通号 → 无额外加分
+        ↓
+第八步：盘面对冲格局
+        ├── 有≥4次罕见区 → 停止追热
+        ├── 多号卡3次降权 → 集体震荡
+        └── 多数1-2次 → 均衡选号
+        ↓
+第九步：分区轮转校验
+        ├── 当前处于哪个区？
+        ├── 上行是否符合逐级规则？
+        └── 3次降权区是否有连开护身？
+        ↓
+第十步：综合排序输出
+        🥇 首选 / 🥈 次选 / 🥉 防守 / ⚪ 观望 / 🔴 排除
+📊 当前体系完整性评估
+
+层级	内容	状态
+基础统计	对子频次、冷热组合	✅ 完整
+链结构	三步链、循环链、衔接图	✅ 完整
+双窗口	12期+11期频次判定	✅ 完整
+连开结构	长度+位置判定	✅ 完整
+属性分组	强势/震荡/冷态	✅ 完整
+分区轮转	逐级上行/跳级回落	✅ 完整
+冷热对冲	盘面格局判断	✅ 完整
+窗口滑动	剔除/纳入机制	✅ 完整
+周期休眠	休眠/启动信号	✅ 完整
+深冷破冰	遗漏>25期惯性	✅ 已补充
+历史遗漏数据	所有号码完整遗漏	⚠️ 仅知12和02
+⚠️ 待补充项
+
+缺口	影响	建议
+所有号码的完整遗漏数据	无法判断当前还有哪些深冷号即将破冰	补充01-12每个号码的当前遗漏期数
+更早期的完整历史数据	可验证更多重复链、长周期规律	如有可提供

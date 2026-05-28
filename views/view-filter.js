@@ -39,7 +39,7 @@ const ViewFilter = {
 
     var quickNav = document.getElementById('quickNav');
     if(quickNav) {
-      if (index === 0 || index === 1 || index === 2) {
+      if (index === 0 || index === 1 || index === 2 || index === 3) {
         quickNav.style.display = 'block';
       } else {
         quickNav.style.display = 'none';
@@ -52,6 +52,8 @@ const ViewFilter = {
       ViewFilter.refreshQuickNav('analysis');
     } else if (index === 2) {
       ViewFilter.refreshQuickNav('random');
+    } else if (index === 3) {
+      ViewFilter.refreshQuickNav('profile');
     } else {
       var navTabs = document.getElementById('navTabs');
       if (navTabs) navTabs.innerHTML = '';
@@ -168,6 +170,12 @@ const ViewFilter = {
       { label: '生肖预测', type: 'tab', page: 'random', tabName: 'predict' },
       { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' },
       { label: 'DB算法', type: 'tab', page: 'random', tabName: 'db' }
+    ],
+    profile: [
+      { label: '我的', type: 'tab', page: 'profile', tabName: 'mine' },
+      { label: '官方', type: 'tab', page: 'profile', tabName: 'official' },
+      { label: '凤凰', type: 'tab', page: 'profile', tabName: 'phoenix' },
+      { label: '大仙', type: 'tab', page: 'profile', tabName: 'daxian' }
     ]
   },
 

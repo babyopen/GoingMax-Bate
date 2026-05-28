@@ -285,7 +285,6 @@ const Business = {
       Business.renderZodiacPrediction();
       Business.initZodiacBacktest();
       Business.initGiongTab();
-      Business.initDBAlgorithm();
       ViewAnalysis.updateLoadMoreBtn(
         StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
       );
@@ -349,7 +348,6 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
-        Business.initDBAlgorithm();
         const latestItem = sortedData[0];
         if(latestItem) Business.renderLatest(latestItem);
         Business.renderHistory();
@@ -362,7 +360,6 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
-        Business.initDBAlgorithm();
         const latestItem2 = cache.data[0];
         if(latestItem2) Business.renderLatest(latestItem2);
         Business.renderHistory();
@@ -379,7 +376,6 @@ const Business = {
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
         Business.initGiongTab();
-        Business.initDBAlgorithm();
         const latestItem3 = cache.data[0];
         if(latestItem3) Business.renderLatest(latestItem3);
         Business.renderHistory();
@@ -1210,7 +1206,6 @@ const Business = {
     ViewZodiacPrediction.switchTabUI(tab);
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
-    if (tab === 'db') Business.initDBAlgorithm();
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
   },
 
@@ -1249,29 +1244,6 @@ const Business = {
       var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
       if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
     }, 150);
-  },
-
-  initDBAlgorithm: () => {
-    // 使用V5.3引擎替代旧逻辑
-    var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-    }
-    if (!historyData || !historyData.length) {
-      return;
-    }
-
-    // 运行V5.3引擎并渲染结果
-    var result = BusinessV53Engine.run(historyData);
-    if (!result.error) {
-      ViewV53Prediction.renderMainPanel(result);
-      ViewV53Prediction.renderWarnings(result.warnings);
-      StateManager.setState({
-        v53: { enabled: true, lastResult: result, computeTime: result.computeTime }
-      }, false);
-    }
   },
 
   initUltimateAlgorithm: () => {

@@ -29,12 +29,6 @@ const StateManager = {
       showCount: 20,
       currentTab: 'history',
       autoRefreshTimer: null
-    },
-    // V5.3 算法状态
-    v53: {
-      enabled: false,
-      lastResult: null,
-      computeTime: 0
     }
   },
 

@@ -182,6 +182,8 @@ const EventBinder = {
           Business.switchAnalysisTab(tabName);
         } else if (page === 'random') {
           Business.switchZodiacTab(tabName);
+        } else if (page === 'profile') {
+          EventBinder._switchProfileTab(tabName);
         }
       }
       Business.toggleQuickNav(false);
@@ -260,11 +262,6 @@ const EventBinder = {
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
-      else if(action === 'toggleDBDetail') ViewZodiacPrediction.toggleDBDetail();
-      // V5.3算法操作
-      else if(action === 'runV53Engine') EventBinder._runV53Engine();
-      else if(action === 'toggleV53DetailToggle') EventBinder._toggleV53Detail();
-      else if(action === 'showV53Detail') EventBinder._showV53Detail(actionBtn);
       // 大小回测操作
       else if(action === 'showSizeBacktest') EventBinder._showSizeBacktest();
       // 单双回测操作
@@ -292,13 +289,6 @@ const EventBinder = {
       }
       else if(action === 'closeBacktestDetail') {
         ViewZodiacPrediction.toggleBacktestDetailModal(false);
-      }
-      else if(action === 'showGiongDetail') {
-        var giongData = ViewZodiacPrediction._cachedGiongData;
-        if (giongData) ViewZodiacPrediction.showGiongDetailModal(giongData);
-      }
-      else if(action === 'closeGiongDetail') {
-        ViewZodiacPrediction.closeGiongDetailModal();
       }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
@@ -423,81 +413,6 @@ const EventBinder = {
     Toast.show('页面出现异常，请刷新重试');
   },
 
-  // ========== V5.3 算法事件处理方法 ==========
-
-  /**
-   * 运行V5.3引擎
-   */
-  _runV53Engine: function() {
-    var historyData = StateManager._state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Toast.show('暂无历史数据，请等待数据加载');
-      return;
-    }
-
-    Toast.show('正在运行V5.3算法...');
-
-    // 使用 setTimeout 避免阻塞UI
-    setTimeout(function() {
-      var result = BusinessV53Engine.run(historyData);
-
-      if (result.error) {
-        Toast.show('V5.3计算失败: ' + result.message);
-        return;
-      }
-
-      ViewV53Prediction.renderMainPanel(result);
-      ViewV53Prediction.renderWarnings(result.warnings);
-
-      // 更新状态（不触发全量渲染）
-      StateManager.setState({
-        v53: {
-          enabled: true,
-          lastResult: result,
-          computeTime: result.computeTime
-        }
-      }, false);
-
-      Toast.show('V5.3算法完成! 耗时' + result.computeTime + 'ms');
-    }, 50);
-  },
-
-  /**
-   * 切换详细评分面板展开/收起（符合分层规范：委托视图层处理渲染）
-   */
-  _toggleV53Detail: function() {
-    ViewV53Prediction.toggleDetail();
-  },
-
-  /**
-   * 显示单个号码的详情（简易实现）
-   */
-  _showV53Detail: function(btn) {
-    var num = parseInt(btn.dataset.num);
-    if (!num) return;
-
-    var result = BusinessV53Engine.getLastResult();
-    if (!result || result.error) {
-      Toast.show('请先运行V5.3算法');
-      return;
-    }
-
-    var zodiac = BusinessV53Utils.numToZodiac(num);
-    var score = result.scores[num] || 0;
-    var state = result.dynamicStates[num];
-    var zone = result.zoneClass[num] || '-';
-    var zoneLabels = { peak: '顶峰区', down: '降权区', rotate: '轮动区', wait: '等待区', silent: '静默区' };
-
-    var statusLabel = state ? ViewV53Prediction._statusLabel(state.status) : '未知';
-
-    var msg = zodiac + '(' + num + '号) | ' +
-              '最终分: ' + score.toFixed(1) + ' | ' +
-              '分区: ' + (zoneLabels[zone] || zone) + ' | ' +
-              '状态: ' + statusLabel;
-
-    Toast.show(msg, 3000);
-  },
-
   /**
    * 显示大小回测追踪弹窗
    */
@@ -599,6 +514,53 @@ const EventBinder = {
     } catch (e) {
       console.error('波色回测出错:', e);
       Toast.show('回测计算出错，请重试');
+    }
+  },
+
+  /**
+   * 我的页面标签切换（符合分层规范：事件层负责DOM操作）
+   * @param {string} tab - 标签名称：mine / official / phoenix / daxian
+   */
+  _switchProfileTab: function(tab) {
+    // 更新标签按钮激活状态
+    document.querySelectorAll('#profilePage .zodiac-tab-btn[data-profile-tab]').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.profileTab === tab);
+    });
+    // 切换面板显示
+    var panelMap = {
+      mine: 'profileMinePanel',
+      official: 'profileOfficialPanel',
+      phoenix: 'profilePhoenixPanel',
+      daxian: 'profileDaxianPanel'
+    };
+    document.querySelectorAll('#profilePage .zodiac-tab-panel').forEach(function(panel) {
+      panel.classList.toggle('active', panel.id === panelMap[tab]);
+    });
+    // 懒加载iframe
+    if (tab === 'official') {
+      var officialFrame = document.getElementById('officialFrame');
+      var officialLoading = document.getElementById('officialLoading');
+      if (officialFrame && !officialFrame.src) {
+        officialFrame.src = 'https://sjz-xl2.09567k.app:7022/#dh2/';
+        officialFrame.style.display = 'block';
+        officialLoading.style.display = 'none';
+      }
+    } else if (tab === 'phoenix') {
+      var phoenixFrame = document.getElementById('phoenixFrame');
+      var phoenixLoading = document.getElementById('phoenixLoading');
+      if (phoenixFrame && !phoenixFrame.src) {
+        phoenixFrame.src = 'https://176744.com';
+        phoenixFrame.style.display = 'block';
+        phoenixLoading.style.display = 'none';
+      }
+    } else if (tab === 'daxian') {
+      var daxianFrame = document.getElementById('daxianFrame');
+      var daxianLoading = document.getElementById('daxianLoading');
+      if (daxianFrame && !daxianFrame.src) {
+        daxianFrame.src = 'https://01492026.com';
+        daxianFrame.style.display = 'block';
+        daxianLoading.style.display = 'none';
+      }
     }
   }
 };
