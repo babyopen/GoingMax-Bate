@@ -53,6 +53,28 @@
 .zodiac-tab-panel.active{display:block}
 .zodiac-tab-btn[data-zodiac-tab="db"].active{background:#007AFF;color:#fff}
 
+/* 我的页面iframe面板 - 移动端适配 */
+#profilePage .zodiac-tab-panel{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  width:100vw;height:100vh;
+  overflow:hidden;
+  z-index:100;
+  background:var(--bg);
+}
+#profilePage .zodiac-tab-panel iframe{
+  width:100%;height:100%;
+  border:none;display:block;
+  overflow-x:hidden;
+  overscroll-behavior:none;
+}
+#profilePage .zodiac-tab-panel .empty-tip{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100%;
+  text-align:center;
+}
+
 /* 频率Swiper容器 */
 .zodiac-prediction-swiper{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;touch-action:pan-y}
 .freq-swiper-container{
