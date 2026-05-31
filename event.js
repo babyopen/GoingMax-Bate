@@ -343,6 +343,9 @@ const EventBinder = {
         var predTab = actionBtn.dataset.predTab;
         ViewZodiacPrediction.switchPredTabUI(predTab);
       }
+      else if(action === 'showOverlap') {
+        ViewFilter.showOverlapModal();
+      }
       return;
     }
 

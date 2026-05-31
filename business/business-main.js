@@ -251,6 +251,48 @@ const Business = {
     Render.renderFilterList();
   },
 
+  // ====================== 重叠号码相关 ======================
+  /**
+   * 计算所有保存方案中的重叠号码
+   * @returns {Object} { overlapNums: Array<{num, s, color, zodiac, count: number, schemes: string[]}>, totalSchemes: number }
+   */
+  calcOverlapNumbers: () => {
+    const state = StateManager._state;
+    const savedFilters = state.savedFilters;
+    
+    if (!savedFilters || savedFilters.length === 0) {
+      return { overlapNums: [], totalSchemes: 0 };
+    }
+
+    const numMap = {};
+    
+    savedFilters.forEach((scheme, index) => {
+      const filteredList = Filter.getFilteredList(scheme.selected, scheme.excluded);
+      
+      filteredList.forEach(item => {
+        const numKey = item.num;
+        if (!numMap[numKey]) {
+          numMap[numKey] = {
+            num: item.num,
+            s: item.s,
+            color: item.color,
+            zodiac: item.zodiac,
+            count: 0,
+            schemes: []
+          };
+        }
+        numMap[numKey].count++;
+        numMap[numKey].schemes.push(scheme.name);
+      });
+    });
+
+    const overlapNums = Object.values(numMap)
+      .filter(item => item.count > 1)
+      .sort((a, b) => b.count - a.count);
+
+    return { overlapNums, totalSchemes: savedFilters.length };
+  },
+
   // ====================== 导航相关 ======================
   /**
    * 切换底部导航
