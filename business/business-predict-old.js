@@ -1,3 +1,23 @@
+/**
+ * ⚠️ 废弃警告 (DEPRECATED) ⚠️
+ * 
+ * 本文件为旧版 DB 算法实现，已被 business-ultimate.js（终极算法）和
+ * business-giong.js（Giong 双链算法）替代。
+ * 
+ * 当前引用情况：
+ * - business-main.js 的 saveDBBacktestRecord() 中 4 处引用了 _toZodiac()
+ * - 但 saveDBBacktestRecord() 函数本身从未被实际调用
+ * - DB 算法面板 (#zodiacDBPanel) 已清空，不再使用
+ * - Storage.DB_BACKTEST_RECORDS 永远为空数组
+ * 
+ * 实际状态：半死代码（文件被加载，但功能实际未使用）
+ * 
+ * 保留原因：遵守项目宪法"禁止删除原有正常运行的代码"
+ * 后续清理：需用户明确授权后才能安全删除
+ * 
+ * 废弃时间：2026-05-31
+ * 废弃原因：DB 算法已被终极算法 + Giong 双链算法完全替代
+ */
 const BusinessPredictOld = {
 
   // 规则：生肖映射表（马=1，蛇=2，龙=3，兔=4，虎=5，牛=6，鼠=7，猪=8，狗=9，鸡=10，猴=11，羊=12）
