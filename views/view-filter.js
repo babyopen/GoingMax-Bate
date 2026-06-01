@@ -168,8 +168,7 @@ const ViewFilter = {
     random: [
       { label: '终极算法', type: 'tab', page: 'random', tabName: 'ultimate' },
       { label: '生肖预测', type: 'tab', page: 'random', tabName: 'predict' },
-      { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' },
-      { label: 'DB算法', type: 'tab', page: 'random', tabName: 'db' }
+      { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' }
     ],
     profile: [
       { label: '我的', type: 'tab', page: 'profile', tabName: 'mine' },

@@ -332,7 +332,7 @@ const ViewZodiacPrediction = {
     });
     document.querySelectorAll('.zodiac-tab-panel').forEach(function(panel) {
       var panelId = panel.id;
-      var panelMap = { predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', db: 'zodiacDBPanel', ultimate: 'zodiacUltimatePanel' };
+      var panelMap = { predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', ultimate: 'zodiacUltimatePanel' };
       panel.classList.toggle('active', panelId === panelMap[tab]);
     });
   },

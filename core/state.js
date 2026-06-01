@@ -196,13 +196,6 @@ const StateManager = {
   },
 
   /**
-   * 清除所有分组的所有标记
-   */
-  clearAllMarks: () => {
-    StateManager.setState({ marked: {}, markCount: {} });
-  },
-
-  /**
    * 锁定/解锁分组：选中项→锁定(变红，不参与筛选)；已锁定时→解锁
    * @param {string} group - 分组名
    */

@@ -113,34 +113,6 @@ const Utils = {
   },
 
   /**
-   * 缓存计算结果，避免重复计算
-   * @param {string} key - 缓存键
-   * @param {Function} fn - 计算函数
-   * @param {Object} cache - 缓存对象
-   * @returns {any} 计算结果
-   */
-  memoize: (key, fn, cache) => {
-    if(cache[key] !== undefined) return cache[key];
-    const result = fn();
-    cache[key] = result;
-    return result;
-  },
-
-  /**
-   * 批量检查数组元素是否存在
-   * @param {Array} arr - 源数组
-   * @param {Array} values - 要检查的值
-   * @returns {Object} 存在性映射
-   */
-  buildLookupMap: (arr) => {
-    const map = {};
-    for(let i = 0; i < arr.length; i++) {
-      map[arr[i]] = true;
-    }
-    return map;
-  },
-
-  /**
    * 获取数组前N个元素
    * @param {Array} arr - 数组
    * @param {number} n - 数量

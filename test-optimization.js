@@ -308,8 +308,8 @@ test('4.3 selectGroup 接收参数模式(新路径)', () => {
 
 test('4.4 invertGroup 反选功能', () => {
   StateManager.resetGroup('num');
-  StateManager.toggleTag('num', '1');
-  StateManager.toggleTag('num', '2');
+  StateManager.updateSelected('num', 1);
+  StateManager.updateSelected('num', 2);
 
   const allValues = ['1', '2', '3'];
   StateManager.invertGroup('num', allValues);
