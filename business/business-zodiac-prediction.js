@@ -1897,7 +1897,7 @@ _predictOddEvenTrend: function(sequence) {
     var hitCount = results.filter(function(r) { return r.isHit; }).length;
     var hitRate = Math.round((hitCount / results.length) * 100);
 
-    var recentResults = results.slice(0, 10).reverse();
+    var recentResults = results.slice(0, 10);
     var recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
     var recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
 
