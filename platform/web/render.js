@@ -62,24 +62,21 @@ const Render = {
           tag.classList.toggle('locked', isLocked);
           tag.setAttribute('aria-checked', isActive);
 
-          // 处理标记圆点（6个固定槽位：左上→左中→左下→右上→右中→右下）
+          // 处理标记数字徽章（数字=重复标记次数，颜色按次数固定对应 6 色）
           const key = String(tagValue);
           const slotIndices = markedMap[key] || [];
-          tag.querySelectorAll('.mark-dot').forEach(d => d.remove());
+          tag.querySelectorAll('.mark-dot, .mark-badge').forEach(d => d.remove());
 
-          slotIndices.forEach(idx => {
-            const slot = StateManager.MARK_SLOTS[idx];
-            if (!slot) return;
-            const dot = document.createElement('span');
-            dot.className = 'mark-dot';
-            dot.style.backgroundColor = slot.color;
-            if (slot.left) dot.style.left = slot.left;
-            if (slot.right) dot.style.right = slot.right;
-            if (slot.top) dot.style.top = slot.top;
-            if (slot.bottom) dot.style.bottom = slot.bottom;
-            if (slot.marginTop) dot.style.marginTop = slot.marginTop;
-            tag.appendChild(dot);
-          });
+          if (slotIndices.length > 0) {
+            const slot = StateManager.MARK_SLOTS[slotIndices.length - 1];
+            if (slot) {
+              const badge = document.createElement('span');
+              badge.className = 'mark-badge';
+              badge.textContent = String(slotIndices.length);
+              badge.style.backgroundColor = slot.color;
+              tag.appendChild(badge);
+            }
+          }
         });
 
         // 更新锁定按钮样式
