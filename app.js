@@ -18,14 +18,16 @@ async function initApp() {
     Business.loadHistoryCache();
     // 9. 渲染方案列表
     Render.renderFilterList();
-    // 10. 初始化事件绑定
+    // 10. 初始化快捷导航（主页默认 filter 页签）
+    ViewFilter.refreshQuickNav('filter');
+    // 11. 初始化事件绑定
     EventBinder.init();
-    // 11. 启动分析页面倒计时和自动刷新检查
+    // 12. 启动分析页面倒计时和自动刷新检查
     Business.startCountdown();
     Business.checkDrawTimeLoop();
-    // 12. 后台静默更新历史数据
+    // 13. 后台静默更新历史数据
     Business.refreshHistory(true);
-    // 13. 隐藏加载遮罩
+    // 14. 隐藏加载遮罩
     Render.hideLoading();
     
     console.log(`GiongBeta v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);
