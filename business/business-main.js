@@ -1333,6 +1333,11 @@ const Business = {
     });
 
     // 渲染未推荐生肖卡片（直接从三个推荐源 DOM 中读取，不依赖业务层）
+    // 兜底：若 v2 卡片尚未渲染（如用户直接进入终极 tab），先触发一次
+    var giongPanel = document.getElementById('giongRecommendPanel');
+    if (giongPanel && !giongPanel.querySelector('.zodiac-static-card')) {
+      Business.initGiongTab();
+    }
     ViewZodiacPrediction.renderUnrecommendedZodiacs(null);
 
     if (ultimateHistory.length >= 25) {

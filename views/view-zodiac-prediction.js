@@ -1344,7 +1344,7 @@ const ViewZodiacPrediction = {
     });
 
     function renderChip(z) {
-      return '<span class="unrec-chip">' + (ZODIAC_EMOJI[z] || '❓') + z + '</span>';
+      return '<span class="unrec-chip">' + z + '</span>';
     }
 
     var html = '<div class="unrec-card">';
@@ -2077,8 +2077,8 @@ const ViewZodiacPrediction = {
       html += '<div class="zone-change-item ' + changeClass + hiddenClass + '">';
       html += '<span class="zone-change-expect">' + r.expect + '期</span>';
       html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
-      // 遗漏间隔
-      var missText = r.missInterval > 0 ? '隔' + r.missInterval + '期' : (r.missInterval === -1 ? '首现' : '连开');
+      // 遗漏间隔：-1=首次出现，>=1=距离上次出现的期数
+      var missText = r.missInterval === -1 ? '首现' : '隔' + r.missInterval + '期';
       html += '<span class="zone-change-miss">' + missText + '</span>';
       html += '<span class="zone-change-zone-tag ' + (zoneColors[r.prevZone] || '') + '">' + r.prevZone + '</span>';
       html += '<span class="zone-change-arrow">' + arrow + '</span>';
