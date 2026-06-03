@@ -1138,24 +1138,6 @@ const ViewZodiacPrediction = {
     var html = '';
     html += '<div class="db-result-container">';
 
-    // 收集所有推荐生肖（主推+备选），用于复制
-    var copyZodiacs = [];
-    if (data.numbers && data.numbers.length) {
-      data.numbers.forEach(function(item) { copyZodiacs.push(item.zodiac); });
-    }
-    if (data.alternative && data.alternative.length) {
-      data.alternative.forEach(function(item) { copyZodiacs.push(item.zodiac); });
-    }
-    var copyText = copyZodiacs.join(' ');
-
-    // 复制按钮（标签式，固定右上角）
-    if (copyText) {
-      html += '<div class="db-copy-btn" data-action="copyZodiacList" data-copy-text="' + copyText + '">';
-      html += '<span class="db-copy-icon">📋</span>';
-      html += '<span class="db-copy-text">复制</span>';
-      html += '</div>';
-    }
-
     var adaptiveInfo = data.adaptiveInfo || {};
     var mainCount = adaptiveInfo.mainCount || 5;
     var backupCount = adaptiveInfo.backupCount || 3;
@@ -1264,6 +1246,50 @@ const ViewZodiacPrediction = {
     html += '</div></div>';
 
     if (resultContainer) resultContainer.innerHTML = html;
+  },
+
+  /**
+   * 渲染未推荐生肖卡片（综合 v1/v2/终极 三方推荐后剩下的生肖）
+   * 挂载到 #ultimateResultContainer 所在 .card-body 末尾
+   * @param {Array} unrecommended - 未推荐生肖列表 [{zodiac, emoji}, ...]
+   */
+  renderUnrecommendedZodiacs: function(unrecommended) {
+    // 找到终极算法卡的 .card-body（不修改 index.html 已有的 DOM，动态挂载）
+    var ultimateResultContainer = document.getElementById('ultimateResultContainer');
+    if (!ultimateResultContainer) return;
+    var cardBody = ultimateResultContainer.parentNode; // .card-body
+    if (!cardBody) return;
+
+    // 复用同一个容器，避免重复创建
+    var panel = document.getElementById('unrecommendedZodiacPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'unrecommendedZodiacPanel';
+      cardBody.appendChild(panel);
+    }
+
+    if (!unrecommended || !unrecommended.length) {
+      // 全部被推荐或无数据
+      panel.innerHTML =
+        '<div class="unrec-card unrec-empty">' +
+          '<div class="unrec-title">综合未推荐生肖</div>' +
+          '<div class="unrec-empty-tip">全部生肖均被推荐（或数据不足）</div>' +
+        '</div>';
+      return;
+    }
+
+    var html = '<div class="unrec-card">';
+    html += '<div class="unrec-title">综合未推荐生肖（' + unrecommended.length + '个）</div>';
+    html += '<div class="unrec-grid">';
+    unrecommended.forEach(function(item) {
+      var emoji = item.emoji || ZodiacPrediction.getZodiacEmoji(item.zodiac);
+      html += '<div class="unrec-item">';
+      html += '<span class="unrec-emoji">' + emoji + '</span>';
+      html += '<span class="unrec-name">' + item.zodiac + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    panel.innerHTML = html;
   },
 
   renderUltimateBacktest: function(summary, currentBackupCount) {

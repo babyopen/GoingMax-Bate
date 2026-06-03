@@ -2156,5 +2156,48 @@ _predictOddEvenTrend: function(sequence) {
     if (count >= thresholds[4]) return 2; // 活跃区
     if (count >= thresholds[5]) return 1; // 穿插区
     return 0;                              // 冷号区
+  },
+
+  /**
+   * 综合三个推荐源，计算未被推荐的所有生肖
+   * @param {Array} v1List - v1 推荐列表 [{zodiac}, ...]
+   * @param {Array} v2List - v2 推荐列表 [{zodiac}, ...]
+   * @param {Array} ultimateList - 终极推荐列表 [{zodiac}, ...] (主推+备选)
+   * @returns {Array} 未推荐生肖列表 [{zodiac, emoji, sources:[v1,v2,ultimate]}, ...]
+   */
+  calcUnrecommendedZodiacs: function(v1List, v2List, ultimateList) {
+    var all = ZodiacPrediction.ZODIAC_ORDER;
+    var sources = {
+      v1: {},
+      v2: {},
+      ultimate: {}
+    };
+
+    // 记录各推荐源已推荐生肖
+    function markSource(list, srcKey) {
+      if (!list || !list.length) return;
+      list.forEach(function(item) {
+        var z = typeof item === 'string' ? item : item.zodiac;
+        if (z && all.indexOf(z) !== -1) sources[srcKey][z] = true;
+      });
+    }
+    markSource(v1List, 'v1');
+    markSource(v2List, 'v2');
+    markSource(ultimateList, 'ultimate');
+
+    // 找未被任一源推荐的生肖
+    var unrecommended = [];
+    all.forEach(function(z) {
+      var inV1 = !!sources.v1[z];
+      var inV2 = !!sources.v2[z];
+      var inUlt = !!sources.ultimate[z];
+      if (!inV1 && !inV2 && !inUlt) {
+        unrecommended.push({
+          zodiac: z,
+          emoji: ZodiacPrediction.getZodiacEmoji(z)
+        });
+      }
+    });
+    return unrecommended;
   }
 };
