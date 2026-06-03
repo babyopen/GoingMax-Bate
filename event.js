@@ -290,6 +290,16 @@ const EventBinder = {
       else if(action === 'closeBacktestDetail') {
         ViewZodiacPrediction.toggleBacktestDetailModal(false);
       }
+      // 复制推荐生肖列表
+      else if(action === 'copyZodiacList') {
+        var copyText = actionBtn.dataset.copyText || '';
+        if (!copyText) return;
+        EventBinder._copyToClipboard(copyText).then(function() {
+          Toast.show('复制成功');
+        }).catch(function() {
+          Toast.show('复制失败，请手动复制');
+        });
+      }
       // 区域变动追踪展开/折叠
       else if(action === 'toggleZoneChangeList') {
         var list = actionBtn.closest('.zone-change-list');
@@ -610,5 +620,53 @@ const EventBinder = {
     var historyData = StateManager._state.analysis.historyData;
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
     ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
-  }, 200)
+  }, 200),
+
+  /**
+   * 跨浏览器复制文本到剪贴板（兼容 Chrome/Firefox/Safari/Edge）
+   * @param {string} text - 要复制的文本
+   * @returns {Promise<boolean>}
+   */
+  _copyToClipboard: function(text) {
+    return new Promise(function(resolve, reject) {
+      // 现代浏览器：使用 Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() {
+          resolve(true);
+        }).catch(function() {
+          EventBinder._fallbackCopy(text) ? resolve(true) : reject(new Error('copy failed'));
+        });
+        return;
+      }
+      // 旧浏览器降级方案
+      EventBinder._fallbackCopy(text) ? resolve(true) : reject(new Error('copy failed'));
+    });
+  },
+
+  /**
+   * 降级复制方案：使用 textarea + document.execCommand
+   * @param {string} text - 要复制的文本
+   * @returns {boolean} 是否成功
+   */
+  _fallbackCopy: function(text) {
+    try {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      // 避免滚动跳动
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.width = '1px';
+      textarea.style.height = '1px';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
 };

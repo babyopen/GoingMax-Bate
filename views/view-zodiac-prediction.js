@@ -1138,6 +1138,24 @@ const ViewZodiacPrediction = {
     var html = '';
     html += '<div class="db-result-container">';
 
+    // 收集所有推荐生肖（主推+备选），用于复制
+    var copyZodiacs = [];
+    if (data.numbers && data.numbers.length) {
+      data.numbers.forEach(function(item) { copyZodiacs.push(item.zodiac); });
+    }
+    if (data.alternative && data.alternative.length) {
+      data.alternative.forEach(function(item) { copyZodiacs.push(item.zodiac); });
+    }
+    var copyText = copyZodiacs.join(' ');
+
+    // 复制按钮（标签式，固定右上角）
+    if (copyText) {
+      html += '<div class="db-copy-btn" data-action="copyZodiacList" data-copy-text="' + copyText + '">';
+      html += '<span class="db-copy-icon">📋</span>';
+      html += '<span class="db-copy-text">复制</span>';
+      html += '</div>';
+    }
+
     var adaptiveInfo = data.adaptiveInfo || {};
     var mainCount = adaptiveInfo.mainCount || 5;
     var backupCount = adaptiveInfo.backupCount || 3;

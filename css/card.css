@@ -167,7 +167,29 @@
 .db-result-container{
   background:linear-gradient(135deg, rgba(0,122,255,0.04), rgba(175,82,222,0.04));
   border-radius:20px;padding:16px 12px;margin-bottom:16px;
+  position:relative;
 }
+.db-copy-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 10px;
+  font-size:11px;
+  color:var(--primary);
+  background:rgba(10,132,255,0.1);
+  border:1px solid rgba(10,132,255,0.25);
+  border-radius:12px;
+  cursor:pointer;
+  user-select:none;
+  z-index:5;
+  transition:background 0.2s;
+}
+.db-copy-btn:active{background:rgba(10,132,255,0.25)}
+.db-copy-icon{font-size:12px;line-height:1}
+.db-copy-text{font-size:11px;font-weight:600}
 .db-section-label{font-size:13px;font-weight:600;color:var(--sub-text);margin-bottom:12px;text-align:center;letter-spacing:1px}
 .db-number-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.5vw,12px);justify-items:center}
 .db-card-item{
