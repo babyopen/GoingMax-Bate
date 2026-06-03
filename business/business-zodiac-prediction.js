@@ -599,8 +599,8 @@ const ZodiacPrediction = {
     return Storage.get('zodiacStrategyTuned', null);
   },
 
-  ZONE_MAP: { 0: '等待区', 1: '低频区', 2: '中频区', 3: '高频区', 4: '顶峰区' },
-  ZONE_ORDER: ['等待区', '低频区', '中频区', '高频区', '顶峰区'],
+  ZONE_MAP: { 0: '冷号区', 1: '穿插区', 2: '活跃区', 3: '热号区', 4: '过热区', 5: '降权区', 6: '封顶区' },
+  ZONE_ORDER: ['冷号区', '穿插区', '活跃区', '热号区', '过热区', '降权区', '封顶区'],
 
   calcFrequencyRating: function(historyData) {
     if (!historyData || historyData.length < 12) return null;
@@ -645,17 +645,47 @@ const ZodiacPrediction = {
       var rated = [];
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
         var count = freq[z];
-        var level = count >= 4 ? 4 : count;
+        // 按窗口大小使用不同的分区阈值（7级分区）
+        var level;
+        if (w === 24) {
+          if (count >= 8)       level = 6;
+          else if (count >= 6)  level = 5;
+          else if (count >= 5)  level = 4;
+          else if (count >= 4)  level = 3;
+          else if (count >= 3)  level = 2;
+          else if (count >= 2)  level = 1;
+          else                  level = 0;
+        } else if (w === 36) {
+          if (count >= 12)      level = 6;
+          else if (count >= 9)  level = 5;
+          else if (count >= 7)  level = 4;
+          else if (count >= 5)  level = 3;
+          else if (count >= 3)  level = 2;
+          else if (count >= 2)  level = 1;
+          else                  level = 0;
+        } else {
+          // 12期窗口：跳过活跃区(2)和过热区(4)
+          if (count >= 4)       level = 6;
+          else if (count >= 3)  level = 5;
+          else if (count >= 2)  level = 3;
+          else if (count >= 1)  level = 1;
+          else                  level = 0;
+        }
         var zone = ZodiacPrediction.ZONE_MAP[level];
         var miss = Utils.calcMiss(missLastIdx[z], missScope, missLatest, missList);
         
         var positions = posMap[z];
         var earliestPos = positions.length > 0 ? Math.max.apply(null, positions) : -1;
         var willDrop = false;
-        if (count > 0 && earliestPos >= w - 1) {
-          willDrop = true;
+        var willDowngrade = false;
+        if (count > 0) {
+          if (earliestPos >= w - 1) {
+            willDrop = true;
+          } else if (earliestPos === w - 2) {
+            willDowngrade = true;
+          }
         }
-        
+
         rated.push({
           zodiac: z,
           count: count,
@@ -663,7 +693,8 @@ const ZodiacPrediction = {
           zoneLevel: level,
           miss: miss,
           earliestPos: earliestPos,
-          willDrop: willDrop
+          willDrop: willDrop,
+          willDowngrade: willDowngrade
         });
       });
 
@@ -681,8 +712,8 @@ const ZodiacPrediction = {
     var result = {};
 
     windows.forEach(function(w) {
-      var zoneRecords = { '等待区': [], '低频区': [], '中频区': [], '高频区': [], '顶峰区': [] };
-      var zoneHits = { '等待区': 0, '低频区': 0, '中频区': 0, '高频区': 0, '顶峰区': 0 };
+      var zoneRecords = { '冷号区': [], '穿插区': [], '活跃区': [], '热号区': [], '过热区': [], '降权区': [], '封顶区': [] };
+      var zoneHits = { '冷号区': 0, '穿插区': 0, '活跃区': 0, '热号区': 0, '过热区': 0, '降权区': 0, '封顶区': 0 };
 
       var maxOffset = historyData.length - w - 1;
       for (var offset = 0; offset < Math.min(maxOffset, 60); offset++) {
@@ -2022,5 +2053,125 @@ _predictOddEvenTrend: function(sequence) {
       confidenceRange: 28,
       fallbackConfidence: 40
     });
+  },
+
+  /**
+   * 区域变动追踪：统计每期开出生肖的原区域，并分析最近12期区域变动情况
+   * @param {Array} historyData - 历史数据（倒序，[0]为最新）
+   * @param {number} [windowSize=12] - 滑动窗口大小（12/24/36）
+   * @returns {Object|null} { records, sourceZoneCount, topZone, topCount, windowSize }
+   */
+  calcZoneChangeTracking: function(historyData, windowSize) {
+    windowSize = windowSize || 12;
+    var minData = windowSize + 1;
+    if (!historyData || historyData.length < minData) return null;
+
+    var ZONE_MAP = ZodiacPrediction.ZONE_MAP;
+    var ZONE_ORDER = ZodiacPrediction.ZONE_ORDER;
+    var ZODIAC_ORDER = ZodiacPrediction.ZODIAC_ORDER;
+
+    // 根据窗口大小确定分区分区逻辑（与calcFrequencyRating一致）
+    function getZoneLevel(count) {
+      if (windowSize === 24) {
+        if (count >= 8)      return 6;
+        else if (count >= 6) return 5;
+        else if (count >= 5) return 4;
+        else if (count >= 4) return 3;
+        else if (count >= 3) return 2;
+        else if (count >= 2) return 1;
+        else                 return 0;
+      } else if (windowSize === 36) {
+        if (count >= 12)     return 6;
+        else if (count >= 9) return 5;
+        else if (count >= 7) return 4;
+        else if (count >= 5) return 3;
+        else if (count >= 3) return 2;
+        else if (count >= 2) return 1;
+        else                 return 0;
+      } else {
+        if (count >= 4)      return 6;
+        else if (count >= 3) return 5;
+        else if (count >= 2) return 3;
+        else if (count >= 1) return 1;
+        else                 return 0;
+      }
+    }
+
+    // 统计最近12期各原区域"输出"次数
+    var sourceZoneCount = {};
+    ZONE_ORDER.forEach(function(z) { sourceZoneCount[z] = 0; });
+
+    var records = [];
+    var maxRecords = Math.min(12, historyData.length - windowSize);
+
+    for (var i = 0; i < maxRecords; i++) {
+      var curItem = historyData[i];
+      var curSpecial = ZodiacPrediction._getSpecial(curItem);
+      var zodiac = curSpecial.zod;
+
+      if (ZODIAC_ORDER.indexOf(zodiac) === -1) continue;
+
+      // 开出前的窗口（不含当期）
+      var prevWindow = historyData.slice(i + 1, i + 1 + windowSize);
+
+      var prevCount = 0;
+      prevWindow.forEach(function(item) {
+        var s = ZodiacPrediction._getSpecial(item);
+        if (s.zod === zodiac) prevCount++;
+      });
+
+      var prevLevel = getZoneLevel(prevCount);
+      var prevZone = ZONE_MAP[prevLevel];
+
+      // 开出后的窗口（含当期）
+      var curWindow = historyData.slice(i, i + windowSize);
+
+      var curCount = 0;
+      curWindow.forEach(function(item) {
+        var s = ZodiacPrediction._getSpecial(item);
+        if (s.zod === zodiac) curCount++;
+      });
+
+      var curLevel = getZoneLevel(curCount);
+      var curZone = ZONE_MAP[curLevel];
+
+      // 计算遗漏间隔：距离上一次出现该生肖的期数
+      var missInterval = -1;
+      for (var j = i + 1; j < historyData.length; j++) {
+        var prevS = ZodiacPrediction._getSpecial(historyData[j]);
+        if (prevS.zod === zodiac) { missInterval = j - i; break; }
+      }
+
+      records.push({
+        expect: Number(curItem.expect || 0),
+        zodiac: zodiac,
+        prevZone: prevZone,
+        prevCount: prevCount,
+        curZone: curZone,
+        curCount: curCount,
+        changed: prevZone !== curZone,
+        missInterval: missInterval
+      });
+
+      sourceZoneCount[prevZone]++;
+    }
+
+    // 找出变动最多的原区域
+    var topZone = '';
+    var topCount = 0;
+    Object.keys(sourceZoneCount).forEach(function(zone) {
+      if (sourceZoneCount[zone] > topCount) {
+        topCount = sourceZoneCount[zone];
+        topZone = zone;
+      }
+    });
+
+    return {
+      records: records,
+      sourceZoneCount: sourceZoneCount,
+      topZone: topZone,
+      topCount: topCount,
+      windowSize: windowSize
+    };
   }
 };

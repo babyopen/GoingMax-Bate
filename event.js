@@ -290,6 +290,16 @@ const EventBinder = {
       else if(action === 'closeBacktestDetail') {
         ViewZodiacPrediction.toggleBacktestDetailModal(false);
       }
+      // 区域变动追踪展开/折叠
+      else if(action === 'toggleZoneChangeList') {
+        var list = actionBtn.closest('.zone-change-list');
+        if (!list) return;
+        var isExpanded = list.classList.toggle('expanded');
+        var toggleText = list.querySelector('.zone-change-toggle-text');
+        var toggleIcon = list.querySelector('.zone-change-toggle-icon');
+        if (toggleText) toggleText.textContent = isExpanded ? '收起' : '展开更多';
+        if (toggleIcon) toggleIcon.textContent = isExpanded ? '▲' : '▼';
+      }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
         if (zodiac && ViewZodiacPrediction._cachedFreqResult) {
@@ -332,6 +342,11 @@ const EventBinder = {
       else if(action === 'switchFreqTab') {
         var freqKey = actionBtn.dataset.freqKey;
         ViewZodiacPrediction.switchFreqTabUI(freqKey);
+        // 区域变动追踪联动切换窗口
+        var wSize = parseInt(freqKey.replace('p', '')) || 12;
+        var historyData = StateManager._state.analysis.historyData;
+        var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
+        ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
       }
       else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
@@ -401,8 +416,8 @@ const EventBinder = {
    * @param {MouseEvent} e - 点击事件
    */
   handleClickOutside: (e) => {
-    if(DOM.navToggle.contains(e.target)) return;
-    if(!DOM.quickNav.contains(e.target) && DOM.quickNav.classList.contains('expanded')){
+    if(DOM.navToggle && DOM.navToggle.contains(e.target)) return;
+    if(DOM.quickNav && !DOM.quickNav.contains(e.target) && DOM.quickNav.classList.contains('expanded')){
       Business.toggleQuickNav(false);
     }
   },
@@ -429,10 +444,15 @@ const EventBinder = {
         return;
       }
 
+      if (historyData.length < 10) {
+        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
+        return;
+      }
+
       var backtestData = ZodiacPrediction.runSizeBacktest(historyData, 15);
 
       if (!backtestData) {
-        Toast.show('数据不足，无法回测');
+        Toast.show('回测执行失败，请重试');
         return;
       }
 
@@ -456,10 +476,15 @@ const EventBinder = {
         return;
       }
 
+      if (historyData.length < 10) {
+        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
+        return;
+      }
+
       var backtestData = ZodiacPrediction.runOddEvenBacktest(historyData, 15);
 
       if (!backtestData) {
-        Toast.show('数据不足，无法回测');
+        Toast.show('回测执行失败，请重试');
         return;
       }
 
@@ -483,10 +508,15 @@ const EventBinder = {
         return;
       }
 
+      if (historyData.length < 10) {
+        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
+        return;
+      }
+
       var backtestData = ZodiacPrediction.runWuxingBacktest(historyData, 15);
 
       if (!backtestData) {
-        Toast.show('数据不足，无法回测');
+        Toast.show('回测执行失败，请重试');
         return;
       }
 
@@ -507,9 +537,14 @@ const EventBinder = {
         return;
       }
 
+      if (historyData.length < 10) {
+        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
+        return;
+      }
+
       var backtestData = ZodiacPrediction.runColorBacktest(historyData, 12);
       if (!backtestData) {
-        Toast.show('数据不足，无法回测');
+        Toast.show('回测执行失败，请重试');
         return;
       }
 

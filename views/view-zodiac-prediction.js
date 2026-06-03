@@ -355,14 +355,16 @@ const ViewZodiacPrediction = {
     ];
 
     var zoneColors = {
-      '顶峰区': 'zone-peak',
-      '高频区': 'zone-high',
-      '中频区': 'zone-mid',
-      '低频区': 'zone-low',
-      '等待区': 'zone-wait'
+      '封顶区': 'zone-peak',
+      '降权区': 'zone-high',
+      '过热区': 'zone-ovht',
+      '热号区': 'zone-mid',
+      '活跃区': 'zone-active',
+      '穿插区': 'zone-low',
+      '冷号区': 'zone-wait'
     };
 
-    var zoneOrder = ['顶峰区', '高频区', '中频区', '低频区', '等待区'];
+    var zoneOrder = ['封顶区', '降权区', '过热区', '热号区', '活跃区', '穿插区', '冷号区'];
 
     var html = '';
 
@@ -398,9 +400,14 @@ const ViewZodiacPrediction = {
         items.forEach(function(item) {
           var badgeClass = zoneColors[item.zone] || '';
 
-          var dropArrow = (item.willDrop) ? '<span class="drop-arrow">▼</span>' : '';
+          var droppedArrow = '';
+          if (item.willDrop) {
+            droppedArrow = '<span class="drop-arrow">▼</span>';
+          } else if (item.willDowngrade) {
+            droppedArrow = '<span class="drop-arrow drop-arrow-yellow">▼</span>';
+          }
           html += '<div class="zone-zod-card" data-action="showZodiacStat" data-zodiac="' + item.zodiac + '">';
-          html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + dropArrow + '</div>';
+          html += '<div class="zod-card-count-badge ' + badgeClass + '">' + item.count + droppedArrow + '</div>';
           html += '<div class="zod-card-name">' + item.zodiac + '</div>';
           html += '<div class="zod-card-stats">';
           html += '<span class="zod-card-miss">' + item.miss + '期</span>';
@@ -1831,5 +1838,105 @@ const ViewZodiacPrediction = {
   toggleBacktestDetailModal: function(show) {
     var modal = document.getElementById('backtestDetailModal');
     if (modal) modal.style.display = show ? 'flex' : 'none';
+  },
+
+  /**
+   * 渲染区域变动追踪卡片
+   * 显示每期开出生肖来自哪个区域，以及区域变动统计
+   * @param {Object} changeData - calcZoneChangeTracking 返回的数据
+   */
+  renderZoneChangeTracking: function(changeData) {
+    // 确保容器存在，动态注入到 giongFreqGrid 下方
+    var container = document.getElementById('giongZoneChangePanel');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'giongZoneChangePanel';
+      var freqGrid = document.getElementById('giongFreqGrid');
+      if (freqGrid && freqGrid.parentNode) {
+        freqGrid.parentNode.appendChild(container);
+      }
+    }
+
+    if (!changeData || !changeData.records || !changeData.records.length) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var zoneColors = {
+      '封顶区': 'zone-peak',
+      '降权区': 'zone-high',
+      '过热区': 'zone-ovht',
+      '热号区': 'zone-mid',
+      '活跃区': 'zone-active',
+      '穿插区': 'zone-low',
+      '冷号区': 'zone-wait'
+    };
+
+    var html = '';
+    html += '<div class="zone-change-card">';
+
+    // 头部
+    var wsLabel = (changeData.windowSize === 24) ? '24期' : (changeData.windowSize === 36 ? '36期' : '12期');
+    html += '<div class="zone-change-header">';
+    html += '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>';
+    if (changeData.topZone && changeData.topCount > 0) {
+      html += '<span class="zone-change-top-info">';
+      html += '变动最多：<span class="freq-zone-tag ' + (zoneColors[changeData.topZone] || '') + '">' + changeData.topZone + '</span>';
+      html += '<span class="zone-change-top-count">×' + changeData.topCount + '</span>';
+      html += '</span>';
+    }
+    html += '</div>';
+
+    // 区域统计条
+    html += '<div class="zone-change-stats">';
+    var statZones = [];
+    Object.keys(changeData.sourceZoneCount).forEach(function(z) {
+      statZones.push({ zone: z, count: changeData.sourceZoneCount[z] });
+    });
+    statZones.sort(function(a, b) { return b.count - a.count; });
+    var total = statZones.reduce(function(s, item) { return s + item.count; }, 0);
+    statZones.forEach(function(item) {
+      if (item.count === 0) return;
+      var pct = total > 0 ? Math.round(item.count / total * 100) : 0;
+      html += '<div class="zone-change-stat-item">';
+      html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
+      html += '<div class="zone-change-bar-track">';
+      html += '<div class="zone-change-bar-fill ' + (zoneColors[item.zone] || '') + '" style="width:' + pct + '%;"></div>';
+      html += '</div>';
+      html += '<span class="zone-change-stat-val">' + item.count + '次</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // 变动记录列表（默认只显示2期，可展开/折叠）
+    html += '<div class="zone-change-list">';
+    var visibleCount = 2;
+    changeData.records.forEach(function(r, idx) {
+      var changeClass = r.changed ? 'zone-changed' : 'zone-unchanged';
+      var arrow = r.changed ? '↗' : '→';
+      var hiddenClass = idx >= visibleCount ? ' zone-change-hidden' : '';
+      html += '<div class="zone-change-item ' + changeClass + hiddenClass + '">';
+      html += '<span class="zone-change-expect">' + r.expect + '期</span>';
+      html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
+      // 遗漏间隔
+      var missText = r.missInterval > 0 ? '隔' + r.missInterval + '期' : (r.missInterval === -1 ? '首现' : '连开');
+      html += '<span class="zone-change-miss">' + missText + '</span>';
+      html += '<span class="zone-change-zone-tag ' + (zoneColors[r.prevZone] || '') + '">' + r.prevZone + '</span>';
+      html += '<span class="zone-change-arrow">' + arrow + '</span>';
+      html += '<span class="zone-change-zone-tag ' + (zoneColors[r.curZone] || '') + '">' + r.curZone + '</span>';
+      html += '</div>';
+    });
+    // 展开/折叠按钮（超过2条时显示）
+    if (changeData.records.length > visibleCount) {
+      html += '<div class="zone-change-toggle" data-action="toggleZoneChangeList">';
+      html += '<span class="zone-change-toggle-text">展开更多（共' + changeData.records.length + '期）</span>';
+      html += '<span class="zone-change-toggle-icon">▼</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '</div>';
+
+    container.innerHTML = html;
   }
 };

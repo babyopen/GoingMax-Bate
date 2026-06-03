@@ -1286,6 +1286,10 @@ const Business = {
       var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
       if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
     }, 150);
+
+    // 区域变动追踪
+    var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
+    ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
   },
 
   initUltimateAlgorithm: () => {
