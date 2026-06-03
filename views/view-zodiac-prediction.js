@@ -332,7 +332,7 @@ const ViewZodiacPrediction = {
     });
     document.querySelectorAll('.zodiac-tab-panel').forEach(function(panel) {
       var panelId = panel.id;
-      var panelMap = { predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', ultimate: 'zodiacUltimatePanel' };
+      var panelMap = { main: 'zodiacMainPanel', predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', ultimate: 'zodiacUltimatePanel' };
       panel.classList.toggle('active', panelId === panelMap[tab]);
     });
   },
@@ -2099,5 +2099,140 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     container.innerHTML = html;
+  },
+
+  // ====================== 主推标签页（滑动窗口预测） ======================
+
+  /**
+   * 渲染主推标签页：滑动窗口预测结果
+   * @param {Object} data - BusinessSlidingWindow.predict() 的返回结果
+   */
+  renderSlidingWindowPrediction: function(data) {
+    // 隐藏所有内容卡片
+    var headerCard = document.getElementById('mainPredictHeaderCard');
+    var candidatesCard = document.getElementById('mainCandidatesCard');
+    var scoreTableCard = document.getElementById('mainScoreTableCard');
+    var zoneOverviewCard = document.getElementById('mainZoneOverviewCard');
+    var emptyCard = document.getElementById('mainEmptyCard');
+
+    if (!data || !data.candidates || !data.candidates.length) {
+      if (headerCard) headerCard.style.display = 'none';
+      if (candidatesCard) candidatesCard.style.display = 'none';
+      if (scoreTableCard) scoreTableCard.style.display = 'none';
+      if (zoneOverviewCard) zoneOverviewCard.style.display = 'none';
+      if (emptyCard) {
+        emptyCard.style.display = '';
+        var emptyTip = document.getElementById('mainEmptyTip');
+        if (emptyTip) emptyTip.textContent = '数据不足（需至少12期历史数据），请先刷新数据';
+      }
+      return;
+    }
+
+    // 显示内容卡片，隐藏空状态
+    if (emptyCard) emptyCard.style.display = 'none';
+    if (headerCard) headerCard.style.display = '';
+    if (candidatesCard) candidatesCard.style.display = '';
+    if (scoreTableCard) scoreTableCard.style.display = '';
+    if (zoneOverviewCard) zoneOverviewCard.style.display = '';
+
+    // 1. 渲染标题
+    var titleEl = document.getElementById('mainPredictTitle');
+    if (titleEl) {
+      titleEl.textContent = '第' + data.nextExpect + '期 主推生肖（滑动窗口算法）';
+    }
+
+    // 2. 渲染候选卡片（前6名）
+    var candidatesGrid = document.getElementById('mainCandidatesGrid');
+    if (candidatesGrid) {
+      var cardHtml = '<div class="zodiac-pred-grid">';
+      data.candidates.forEach(function(item, idx) {
+        var rankNum = idx + 1;
+        var cardClass = '';
+        if (rankNum === 1) cardClass = 'card-rank-1';
+        else if (rankNum === 2) cardClass = 'card-rank-2';
+        else if (rankNum === 3) cardClass = 'card-rank-3';
+        else cardClass = 'card-rank-other';
+
+        var scoreColor = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
+
+        cardHtml += '<div class="zodiac-static-card ' + cardClass + '">';
+        cardHtml += '<div class="zodiac-static-rank">' + rankNum + '</div>';
+        cardHtml += '<div class="zodiac-static-emoji">' + item.emoji + '</div>';
+        cardHtml += '<div class="zodiac-static-name">' + item.shengxiao + '</div>';
+        cardHtml += '<div class="zodiac-static-sub" style="font-size:11px;' + scoreColor + '">评分:' + item.score + '</div>';
+        cardHtml += '</div>';
+      });
+      cardHtml += '</div>';
+      candidatesGrid.innerHTML = cardHtml;
+    }
+
+    // 3. 渲染评分详细表格（所有12生肖）
+    var scoreTable = document.getElementById('mainScoreTable');
+    if (scoreTable) {
+      var tableHtml = '<div class="sw-table-wrapper" style="overflow-x:auto;">';
+      tableHtml += '<table class="sw-score-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
+      tableHtml += '<thead><tr style="background:var(--bg-secondary);">';
+      tableHtml += '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">生肖</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">12期</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">24期</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">36期</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">评分</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">信号</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">遗漏</th>';
+      tableHtml += '</tr></thead><tbody>';
+
+      var allScores = data.allScores || [];
+      allScores.forEach(function(item) {
+        var isTop6 = data.candidates.some(function(c) { return c.shengxiao === item.shengxiao; });
+        var rowBg = isTop6 ? 'background:rgba(48,209,88,0.06);' : '';
+        var scoreStyle = item.score >= 60 ? 'color:#30D158;font-weight:700;' : (item.score >= 30 ? 'color:#FF9F0A;font-weight:600;' : 'color:var(--sub-text);');
+
+        var zoneClass12 = ViewZodiacPrediction._getZoneClass(item.zone12);
+        var zoneClass24 = ViewZodiacPrediction._getZoneClass(item.zone24);
+        var zoneClass36 = ViewZodiacPrediction._getZoneClass(item.zone36);
+
+        tableHtml += '<tr style="' + rowBg + 'border-bottom:1px solid var(--border);">';
+        tableHtml += '<td style="padding:6px 8px;font-weight:600;">' + item.shengxiao + '</td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window12 + ' <span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window24 + ' <span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window36 + ' <span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;' + scoreStyle + '">' + item.score + '</td>';
+        tableHtml += '<td style="padding:6px 8px;font-size:11px;">' + (item.signals ? item.signals.join('；') : '—') + '</td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + (item.miss !== undefined ? item.miss + '期' : '—') + '</td>';
+        tableHtml += '</tr>';
+      });
+
+      tableHtml += '</tbody></table></div>';
+      scoreTable.innerHTML = tableHtml;
+    }
+
+    // 4. 渲染算法版本信息
+    if (zoneOverviewCard) {
+      var summary = data.summary || {};
+      var footerHtml = '<div style="font-size:11px;color:var(--sub-text);margin-top:8px;text-align:right;">';
+      footerHtml += '算法版本：' + (data.algorithm || '滑动窗口V1.0');
+      footerHtml += ' | 12窗最大：' + (summary.max12 || 0) + '次';
+      footerHtml += ' | 24窗最大：' + (summary.max24 || 0) + '次';
+      footerHtml += ' | 36窗最大：' + (summary.max36 || 0) + '次';
+      footerHtml += '</div>';
+      zoneOverviewCard.querySelector('.card-body').insertAdjacentHTML('beforeend', footerHtml);
+    }
+  },
+
+  /**
+   * 获取区域对应的CSS class（内部辅助方法）
+   * @private
+   */
+  _getZoneClass: function(zone) {
+    var map = {
+      '封顶区': 'zone-peak',
+      '降权区': 'zone-high',
+      '过热区': 'zone-ovht',
+      '热号区': 'zone-mid',
+      '活跃区': 'zone-active',
+      '穿插区': 'zone-low',
+      '冷号区': 'zone-wait'
+    };
+    return map[zone] || 'zone-wait';
   }
 };

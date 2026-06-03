@@ -2163,7 +2163,7 @@ _predictOddEvenTrend: function(sequence) {
    * @param {Array} v1List - v1 推荐列表 [{zodiac}, ...]
    * @param {Array} v2List - v2 推荐列表 [{zodiac}, ...]
    * @param {Array} ultimateList - 终极推荐列表 [{zodiac}, ...] (主推+备选)
-   * @returns {Array} 未推荐生肖列表 [{zodiac, emoji, sources:[v1,v2,ultimate]}, ...]
+   * @returns {Object} { v1, v2, ultimate, allRecommended: string[], unrecommended: [{zodiac, emoji}] }
    */
   calcUnrecommendedZodiacs: function(v1List, v2List, ultimateList) {
     var all = ZodiacPrediction.ZODIAC_ORDER;
@@ -2185,19 +2185,31 @@ _predictOddEvenTrend: function(sequence) {
     markSource(v2List, 'v2');
     markSource(ultimateList, 'ultimate');
 
+    // 合并去重的所有已推荐生肖
+    var allRecommended = [];
+    all.forEach(function(z) {
+      if (sources.v1[z] || sources.v2[z] || sources.ultimate[z]) {
+        allRecommended.push(z);
+      }
+    });
+
     // 找未被任一源推荐的生肖
     var unrecommended = [];
     all.forEach(function(z) {
-      var inV1 = !!sources.v1[z];
-      var inV2 = !!sources.v2[z];
-      var inUlt = !!sources.ultimate[z];
-      if (!inV1 && !inV2 && !inUlt) {
+      if (!sources.v1[z] && !sources.v2[z] && !sources.ultimate[z]) {
         unrecommended.push({
           zodiac: z,
           emoji: ZodiacPrediction.getZodiacEmoji(z)
         });
       }
     });
-    return unrecommended;
+
+    return {
+      v1: Object.keys(sources.v1),
+      v2: Object.keys(sources.v2),
+      ultimate: Object.keys(sources.ultimate),
+      allRecommended: allRecommended,
+      unrecommended: unrecommended
+    };
   }
 };

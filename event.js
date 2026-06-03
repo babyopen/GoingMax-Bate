@@ -290,16 +290,6 @@ const EventBinder = {
       else if(action === 'closeBacktestDetail') {
         ViewZodiacPrediction.toggleBacktestDetailModal(false);
       }
-      // 复制推荐生肖列表
-      else if(action === 'copyZodiacList') {
-        var copyText = actionBtn.dataset.copyText || '';
-        if (!copyText) return;
-        EventBinder._copyToClipboard(copyText).then(function() {
-          Toast.show('复制成功');
-        }).catch(function() {
-          Toast.show('复制失败，请手动复制');
-        });
-      }
       // 区域变动追踪展开/折叠
       else if(action === 'toggleZoneChangeList') {
         var list = actionBtn.closest('.zone-change-list');
@@ -610,63 +600,24 @@ const EventBinder = {
   },
 
   /**
-   * 切换频率Tab（防抖处理，避免快速切换导致渲染竞态）
+   * 切换频率Tab（UI 立即响应，区域变动追踪重计算做防抖避免快速切换浪费）
    * @param {string} freqKey - 频率key（p12/p24/p36）
    */
-  _handleSwitchFreqTab: Utils.debounce(function(freqKey) {
+  _handleSwitchFreqTab: function(freqKey) {
+    // UI 切换立即执行，用户感知零延迟
     ViewZodiacPrediction.switchFreqTabUI(freqKey);
-    // 区域变动追踪联动切换窗口
+    // 重计算用防抖，避免快速来回切换
+    EventBinder._renderZoneChangeDebounced(freqKey);
+  },
+
+  /**
+   * 渲染区域变动追踪（防抖，200ms 内多次切换只算最后一次）
+   * @param {string} freqKey - 频率key（p12/p24/p36）
+   */
+  _renderZoneChangeDebounced: Utils.debounce(function(freqKey) {
     var wSize = parseInt(freqKey.replace('p', '')) || 12;
     var historyData = StateManager._state.analysis.historyData;
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
     ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
-  }, 200),
-
-  /**
-   * 跨浏览器复制文本到剪贴板（兼容 Chrome/Firefox/Safari/Edge）
-   * @param {string} text - 要复制的文本
-   * @returns {Promise<boolean>}
-   */
-  _copyToClipboard: function(text) {
-    return new Promise(function(resolve, reject) {
-      // 现代浏览器：使用 Clipboard API
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(function() {
-          resolve(true);
-        }).catch(function() {
-          EventBinder._fallbackCopy(text) ? resolve(true) : reject(new Error('copy failed'));
-        });
-        return;
-      }
-      // 旧浏览器降级方案
-      EventBinder._fallbackCopy(text) ? resolve(true) : reject(new Error('copy failed'));
-    });
-  },
-
-  /**
-   * 降级复制方案：使用 textarea + document.execCommand
-   * @param {string} text - 要复制的文本
-   * @returns {boolean} 是否成功
-   */
-  _fallbackCopy: function(text) {
-    try {
-      var textarea = document.createElement('textarea');
-      textarea.value = text;
-      // 避免滚动跳动
-      textarea.style.position = 'fixed';
-      textarea.style.top = '0';
-      textarea.style.left = '0';
-      textarea.style.width = '1px';
-      textarea.style.height = '1px';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      var ok = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      return ok;
-    } catch (e) {
-      return false;
-    }
-  }
+  }, 200)
 };

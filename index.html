@@ -594,9 +594,46 @@
   <!-- 资料页面 -->
   <div class="page" id="randomPage" style="display:none">
     <div class="zodiac-tab-bar">
+      <button class="zodiac-tab-btn" data-zodiac-tab="main">主推</button>
       <button class="zodiac-tab-btn active" data-zodiac-tab="ultimate">终极算法</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="predict">生肖预测</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
+    </div>
+
+    <!-- 主推面板（滑动窗口预测算法） -->
+    <div class="zodiac-tab-panel" id="zodiacMainPanel">
+      <!-- 预测标题 -->
+      <div class="card" id="mainPredictHeaderCard" style="display:none;">
+        <div class="card-body">
+          <div class="analysis-section-title" id="mainPredictTitle"></div>
+        </div>
+      </div>
+      <!-- 主推候选卡片 -->
+      <div class="card" id="mainCandidatesCard" style="display:none;">
+        <div class="card-body">
+          <div id="mainCandidatesGrid"></div>
+        </div>
+      </div>
+      <!-- 评分详细表格 -->
+      <div class="card" id="mainScoreTableCard" style="display:none;">
+        <div class="card-body">
+          <div class="analysis-section-title">详细评分</div>
+          <div id="mainScoreTable"></div>
+        </div>
+      </div>
+      <!-- 窗口区域分布 -->
+      <div class="card" id="mainZoneOverviewCard" style="display:none;">
+        <div class="card-body">
+          <div class="analysis-section-title">窗口区域分布</div>
+          <div id="mainZoneOverview"></div>
+        </div>
+      </div>
+      <!-- 空状态 -->
+      <div class="card" id="mainEmptyCard">
+        <div class="card-body">
+          <div class="empty-tip" id="mainEmptyTip">暂无开奖数据，请先刷新历史数据</div>
+        </div>
+      </div>
     </div>
 
     <!-- 生肖预测面板 -->
@@ -826,6 +863,7 @@
 <script src="business/business-zodiac-prediction.js"></script>
 <script src="business/business-ultimate.js"></script>
 <script src="business/business-giong.js"></script>
+<script src="business/business-sliding-window.js"></script>
 
 <!-- 视图层 -->
 

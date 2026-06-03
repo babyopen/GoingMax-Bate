@@ -1250,9 +1250,33 @@ const Business = {
 
   switchZodiacTab: (tab) => {
     ViewZodiacPrediction.switchTabUI(tab);
+    if (tab === 'main') Business.initMainTab();
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
+  },
+
+  /**
+   * 初始化主推标签页（滑动窗口预测算法）
+   */
+  initMainTab: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+
+    // 尝试加载缓存
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+
+    if (!historyData || !historyData.length) {
+      ViewZodiacPrediction.renderSlidingWindowPrediction(null);
+      return;
+    }
+
+    // 调用滑动窗口预测算法
+    var result = BusinessSlidingWindow.predict(historyData);
+    ViewZodiacPrediction.renderSlidingWindowPrediction(result);
   },
 
   initGiongTab: () => {
