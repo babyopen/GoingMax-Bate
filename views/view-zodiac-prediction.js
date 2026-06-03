@@ -1858,7 +1858,15 @@ const ViewZodiacPrediction = {
     }
 
     if (!changeData || !changeData.records || !changeData.records.length) {
-      container.innerHTML = '';
+      // 数据不足时显示空状态
+      var wsLabel = (changeData && changeData.windowSize === 24) ? '24期' : (changeData && changeData.windowSize === 36 ? '36期' : '12期');
+      container.innerHTML =
+        '<div class="zone-change-card zone-change-empty">' +
+          '<div class="zone-change-header">' +
+            '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>' +
+          '</div>' +
+          '<div class="zone-change-empty-tip">数据不足（需至少' + (changeData && changeData.windowSize || 12) + '期）</div>' +
+        '</div>';
       return;
     }
 
@@ -1909,12 +1917,14 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     // 变动记录列表（默认只显示2期，可展开/折叠）
-    html += '<div class="zone-change-list">';
+    var preferExpanded = Storage.getZoneChangeExpanded();
+    var listClass = preferExpanded ? 'zone-change-list expanded' : 'zone-change-list';
+    html += '<div class="' + listClass + '">';
     var visibleCount = 2;
     changeData.records.forEach(function(r, idx) {
       var changeClass = r.changed ? 'zone-changed' : 'zone-unchanged';
       var arrow = r.changed ? '↗' : '→';
-      var hiddenClass = idx >= visibleCount ? ' zone-change-hidden' : '';
+      var hiddenClass = (idx >= visibleCount && !preferExpanded) ? ' zone-change-hidden' : '';
       html += '<div class="zone-change-item ' + changeClass + hiddenClass + '">';
       html += '<span class="zone-change-expect">' + r.expect + '期</span>';
       html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
@@ -1928,9 +1938,11 @@ const ViewZodiacPrediction = {
     });
     // 展开/折叠按钮（超过2条时显示）
     if (changeData.records.length > visibleCount) {
+      var toggleLabel = preferExpanded ? '收起' : '展开更多（共' + changeData.records.length + '期）';
+      var toggleIconChar = preferExpanded ? '▲' : '▼';
       html += '<div class="zone-change-toggle" data-action="toggleZoneChangeList">';
-      html += '<span class="zone-change-toggle-text">展开更多（共' + changeData.records.length + '期）</span>';
-      html += '<span class="zone-change-toggle-icon">▼</span>';
+      html += '<span class="zone-change-toggle-text">' + toggleLabel + '</span>';
+      html += '<span class="zone-change-toggle-icon">' + toggleIconChar + '</span>';
       html += '</div>';
     }
     html += '</div>';

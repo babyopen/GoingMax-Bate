@@ -605,6 +605,12 @@ const ZodiacPrediction = {
   calcFrequencyRating: function(historyData) {
     if (!historyData || historyData.length < 12) return null;
 
+    // 性能优化：一次性扁平化预处理（避免多次调用 _getSpecial）
+    var flatData = historyData.map(function(item) {
+      var s = ZodiacPrediction._getSpecial(item);
+      return { expect: Number(item.expect || 0), zod: s.zod };
+    });
+
     var windows = [12, 24, 36];
     var result = {};
 
@@ -626,7 +632,7 @@ const ZodiacPrediction = {
         result['p' + w] = null;
         return;
       }
-      var windowData = historyData.slice(0, w);
+      var windowData = flatData.slice(0, w);
       var freq = {};
       var posMap = {};
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { 
@@ -635,42 +641,17 @@ const ZodiacPrediction = {
       });
 
       windowData.forEach(function(item, idx) {
-        var s = ZodiacPrediction._getSpecial(item);
-        if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
-          freq[s.zod]++;
-          posMap[s.zod].push(idx);
+        if (ZodiacPrediction.ZODIAC_ORDER.indexOf(item.zod) !== -1) {
+          freq[item.zod]++;
+          posMap[item.zod].push(idx);
         }
       });
 
       var rated = [];
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
         var count = freq[z];
-        // 按窗口大小使用不同的分区阈值（7级分区）
-        var level;
-        if (w === 24) {
-          if (count >= 8)       level = 6;
-          else if (count >= 6)  level = 5;
-          else if (count >= 5)  level = 4;
-          else if (count >= 4)  level = 3;
-          else if (count >= 3)  level = 2;
-          else if (count >= 2)  level = 1;
-          else                  level = 0;
-        } else if (w === 36) {
-          if (count >= 12)      level = 6;
-          else if (count >= 9)  level = 5;
-          else if (count >= 7)  level = 4;
-          else if (count >= 5)  level = 3;
-          else if (count >= 3)  level = 2;
-          else if (count >= 2)  level = 1;
-          else                  level = 0;
-        } else {
-          // 12期窗口：跳过活跃区(2)和过热区(4)
-          if (count >= 4)       level = 6;
-          else if (count >= 3)  level = 5;
-          else if (count >= 2)  level = 3;
-          else if (count >= 1)  level = 1;
-          else                  level = 0;
-        }
+        // 使用统一的分区阈值配置（CONFIG.ZONE_THRESHOLDS）
+        var level = ZodiacPrediction._getZoneLevel(w, count);
         var zone = ZodiacPrediction.ZONE_MAP[level];
         var miss = Utils.calcMiss(missLastIdx[z], missScope, missLatest, missList);
         
@@ -2070,80 +2051,55 @@ _predictOddEvenTrend: function(sequence) {
     var ZONE_ORDER = ZodiacPrediction.ZONE_ORDER;
     var ZODIAC_ORDER = ZodiacPrediction.ZODIAC_ORDER;
 
-    // 根据窗口大小确定分区分区逻辑（与calcFrequencyRating一致）
-    function getZoneLevel(count) {
-      if (windowSize === 24) {
-        if (count >= 8)      return 6;
-        else if (count >= 6) return 5;
-        else if (count >= 5) return 4;
-        else if (count >= 4) return 3;
-        else if (count >= 3) return 2;
-        else if (count >= 2) return 1;
-        else                 return 0;
-      } else if (windowSize === 36) {
-        if (count >= 12)     return 6;
-        else if (count >= 9) return 5;
-        else if (count >= 7) return 4;
-        else if (count >= 5) return 3;
-        else if (count >= 3) return 2;
-        else if (count >= 2) return 1;
-        else                 return 0;
-      } else {
-        if (count >= 4)      return 6;
-        else if (count >= 3) return 5;
-        else if (count >= 2) return 3;
-        else if (count >= 1) return 1;
-        else                 return 0;
-      }
-    }
+    // 性能优化：扁平化预处理
+    var flatData = historyData.map(function(item) {
+      var s = ZodiacPrediction._getSpecial(item);
+      return { expect: Number(item.expect || 0), zod: s.zod };
+    });
 
     // 统计最近12期各原区域"输出"次数
     var sourceZoneCount = {};
     ZONE_ORDER.forEach(function(z) { sourceZoneCount[z] = 0; });
 
     var records = [];
-    var maxRecords = Math.min(12, historyData.length - windowSize);
+    var maxRecords = Math.min(12, flatData.length - windowSize);
 
     for (var i = 0; i < maxRecords; i++) {
-      var curItem = historyData[i];
-      var curSpecial = ZodiacPrediction._getSpecial(curItem);
-      var zodiac = curSpecial.zod;
+      var curItem = flatData[i];
+      var zodiac = curItem.zod;
 
       if (ZODIAC_ORDER.indexOf(zodiac) === -1) continue;
 
       // 开出前的窗口（不含当期）
-      var prevWindow = historyData.slice(i + 1, i + 1 + windowSize);
+      var prevWindow = flatData.slice(i + 1, i + 1 + windowSize);
 
       var prevCount = 0;
       prevWindow.forEach(function(item) {
-        var s = ZodiacPrediction._getSpecial(item);
-        if (s.zod === zodiac) prevCount++;
+        if (item.zod === zodiac) prevCount++;
       });
 
-      var prevLevel = getZoneLevel(prevCount);
+      var prevLevel = ZodiacPrediction._getZoneLevel(windowSize, prevCount);
       var prevZone = ZONE_MAP[prevLevel];
 
       // 开出后的窗口（含当期）
-      var curWindow = historyData.slice(i, i + windowSize);
+      var curWindow = flatData.slice(i, i + windowSize);
 
       var curCount = 0;
       curWindow.forEach(function(item) {
-        var s = ZodiacPrediction._getSpecial(item);
-        if (s.zod === zodiac) curCount++;
+        if (item.zod === zodiac) curCount++;
       });
 
-      var curLevel = getZoneLevel(curCount);
+      var curLevel = ZodiacPrediction._getZoneLevel(windowSize, curCount);
       var curZone = ZONE_MAP[curLevel];
 
       // 计算遗漏间隔：距离上一次出现该生肖的期数
       var missInterval = -1;
-      for (var j = i + 1; j < historyData.length; j++) {
-        var prevS = ZodiacPrediction._getSpecial(historyData[j]);
-        if (prevS.zod === zodiac) { missInterval = j - i; break; }
+      for (var j = i + 1; j < flatData.length; j++) {
+        if (flatData[j].zod === zodiac) { missInterval = j - i; break; }
       }
 
       records.push({
-        expect: Number(curItem.expect || 0),
+        expect: curItem.expect,
         zodiac: zodiac,
         prevZone: prevZone,
         prevCount: prevCount,
@@ -2173,5 +2129,32 @@ _predictOddEvenTrend: function(sequence) {
       topCount: topCount,
       windowSize: windowSize
     };
+  },
+
+  /**
+   * 根据窗口大小与出现次数返回分区级别（统一来源，CONFIG.ZONE_THRESHOLDS）
+   * @param {number} windowSize - 窗口大小（12/24/36）
+   * @param {number} count - 出现次数
+   * @returns {number} 分区级别 0-6
+   */
+  _getZoneLevel: function(windowSize, count) {
+    var thresholds = CONFIG.ZONE_THRESHOLDS[windowSize] || CONFIG.ZONE_THRESHOLDS[12];
+    // 阈值数组按 [封顶,降权,热号,穿插,冷号,活跃,过热] 顺序排列
+    // 12期只有4级分区，跳过活跃(2)和过热(4)级别
+    if (windowSize === 12) {
+      if (count >= thresholds[0]) return 6; // 封顶区
+      if (count >= thresholds[1]) return 5; // 降权区
+      if (count >= thresholds[2]) return 3; // 热号区（12期跳过活跃和过热）
+      if (count >= thresholds[3]) return 1; // 穿插区
+      return 0;                              // 冷号区
+    }
+    // 24/36期 7级分区
+    if (count >= thresholds[0]) return 6; // 封顶区
+    if (count >= thresholds[1]) return 5; // 降权区
+    if (count >= thresholds[2]) return 4; // 过热区
+    if (count >= thresholds[3]) return 3; // 热号区
+    if (count >= thresholds[4]) return 2; // 活跃区
+    if (count >= thresholds[5]) return 1; // 穿插区
+    return 0;                              // 冷号区
   }
 };

@@ -87,5 +87,20 @@ const CONFIG = Object.freeze({
     DELETE_FILTER: 'deleteFilter',
     // 导航操作
     SWITCH_NAV: 'switchBottomNav'
+  }),
+
+  /**
+   * 分区阈值配置（统一来源：calcFrequencyRating 与 calcZoneChangeTracking 共用）
+   * 数组下标为 count，值越大越热
+   * 索引含义: [0]=冷号区 [1]=穿插区 [2]=活跃区 [3]=热号区 [4]=过热区 [5]=降权区 [6]=封顶区
+   * @example
+   *   W=12: count>=4→封顶, >=3→降权, >=2→热号, >=1→穿插, else→冷号
+   *   W=24: count>=8→封顶, >=6→降权, >=5→过热, >=4→热号, >=3→活跃, >=2→穿插, else→冷号
+   *   W=36: count>=12→封顶, >=9→降权, >=7→过热, >=5→热号, >=3→活跃, >=2→穿插, else→冷号
+   */
+  ZONE_THRESHOLDS: Object.freeze({
+    12: Object.freeze([4, 3, 2, 1, 0, 0, 0]), // [封顶,降权,热号,穿插,冷号,活跃,过热] - 实际使用4级
+    24: Object.freeze([8, 6, 5, 4, 3, 2, 0]),
+    36: Object.freeze([12, 9, 7, 5, 3, 2, 0])
   })
 });

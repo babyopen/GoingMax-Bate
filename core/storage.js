@@ -11,7 +11,9 @@ const Storage = {
     HISTORY_TIMESTAMP: 'historyTimestamp',
     ZODIAC_BACKTEST: 'zodiacBacktest',
     GIONG_BACKTEST_RECORDS: 'giongBacktestRecords',
-    MARK_HINT_SHOWN: 'markHintShown'
+    MARK_HINT_SHOWN: 'markHintShown',
+    // 用户偏好（区域变动追踪卡片展开状态）
+    ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded'
   }),
 
   /**
@@ -164,5 +166,21 @@ const Storage = {
 
   saveGiongBacktestRecords: (records) => {
     return Storage.set(Storage.KEYS.GIONG_BACKTEST_RECORDS, records);
+  },
+
+  /**
+   * 获取区域变动追踪卡片的展开状态
+   * @returns {boolean} 是否展开
+   */
+  getZoneChangeExpanded: () => {
+    return Storage.get(Storage.KEYS.ZONE_CHANGE_EXPANDED, false);
+  },
+
+  /**
+   * 保存区域变动追踪卡片的展开状态
+   * @param {boolean} expanded - 是否展开
+   */
+  saveZoneChangeExpanded: (expanded) => {
+    return Storage.set(Storage.KEYS.ZONE_CHANGE_EXPANDED, !!expanded);
   }
 };

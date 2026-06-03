@@ -299,6 +299,8 @@ const EventBinder = {
         var toggleIcon = list.querySelector('.zone-change-toggle-icon');
         if (toggleText) toggleText.textContent = isExpanded ? '收起' : '展开更多';
         if (toggleIcon) toggleIcon.textContent = isExpanded ? '▲' : '▼';
+        // 持久化用户偏好
+        Storage.saveZoneChangeExpanded(isExpanded);
       }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
@@ -341,12 +343,7 @@ const EventBinder = {
       }
       else if(action === 'switchFreqTab') {
         var freqKey = actionBtn.dataset.freqKey;
-        ViewZodiacPrediction.switchFreqTabUI(freqKey);
-        // 区域变动追踪联动切换窗口
-        var wSize = parseInt(freqKey.replace('p', '')) || 12;
-        var historyData = StateManager._state.analysis.historyData;
-        var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
-        ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
+        EventBinder._handleSwitchFreqTab(freqKey);
       }
       else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
@@ -600,5 +597,18 @@ const EventBinder = {
         daxianLoading.style.display = 'none';
       }
     }
-  }
+  },
+
+  /**
+   * 切换频率Tab（防抖处理，避免快速切换导致渲染竞态）
+   * @param {string} freqKey - 频率key（p12/p24/p36）
+   */
+  _handleSwitchFreqTab: Utils.debounce(function(freqKey) {
+    ViewZodiacPrediction.switchFreqTabUI(freqKey);
+    // 区域变动追踪联动切换窗口
+    var wSize = parseInt(freqKey.replace('p', '')) || 12;
+    var historyData = StateManager._state.analysis.historyData;
+    var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
+    ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
+  }, 200)
 };
