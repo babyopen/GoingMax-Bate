@@ -1249,18 +1249,61 @@ const ViewZodiacPrediction = {
   },
 
   /**
-   * 渲染未推荐生肖卡片（综合 v1/v2/终极 三方推荐后剩下的生肖）
-   * 挂载到 #ultimateResultContainer 所在 .card-body 末尾
-   * @param {Array} unrecommended - 未推荐生肖列表 [{zodiac, emoji}, ...]
+   * 从 DOM 中读取 v1 推荐（前 6 张生肖预测卡片的生肖名）
+   * @returns {string[]} 生肖名数组
    */
-  renderUnrecommendedZodiacs: function(unrecommended) {
+  _readV1FromDOM: function() {
+    var grid = document.getElementById('zodiacPredictionGrid');
+    if (!grid) return [];
+    // 优先显示的面板（top6）卡片
+    var visiblePanel = grid.querySelector('.freq-panel[style*="display: block"], .freq-panel:not([style*="display: none"])');
+    var target = visiblePanel || grid;
+    var cards = target.querySelectorAll('.zodiac-static-card .zodiac-static-name');
+    var list = [];
+    cards.forEach(function(el) { if (el.textContent) list.push(el.textContent.trim()); });
+    // 卡片只展示前 6，所以限制
+    return list.slice(0, 6);
+  },
+
+  /**
+   * 从 DOM 中读取 v2 推荐（Giong 页面推荐面板）
+   * @returns {string[]} 生肖名数组
+   */
+  _readV2FromDOM: function() {
+    var panel = document.getElementById('giongRecommendPanel');
+    if (!panel) return [];
+    var cards = panel.querySelectorAll('.zodiac-static-card .zodiac-static-name');
+    var list = [];
+    cards.forEach(function(el) { if (el.textContent) list.push(el.textContent.trim()); });
+    return list;
+  },
+
+  /**
+   * 从 DOM 中读取终极推荐（主推 4 码 + 备选 n 码）
+   * @returns {string[]} 生肖名数组
+   */
+  _readUltimateFromDOM: function() {
+    var container = document.getElementById('ultimateResultContainer');
+    if (!container) return [];
+    var names = container.querySelectorAll('.db-card-name');
+    var list = [];
+    names.forEach(function(el) { if (el.textContent) list.push(el.textContent.trim()); });
+    return list;
+  },
+
+  /**
+   * 渲染未推荐生肖卡片（直接从三个推荐源 DOM 中读取）
+   * 挂载到 #ultimateResultContainer 所在 .card-body 末尾
+   * @param {*} _ - 占位参数，忽略（保留接口兼容）
+   */
+  renderUnrecommendedZodiacs: function(_) {
     // 找到终极算法卡的 .card-body（不修改 index.html 已有的 DOM，动态挂载）
     var ultimateResultContainer = document.getElementById('ultimateResultContainer');
     if (!ultimateResultContainer) return;
-    var cardBody = ultimateResultContainer.parentNode; // .card-body
+    var cardBody = ultimateResultContainer.parentNode;
     if (!cardBody) return;
 
-    // 复用同一个容器，避免重复创建
+    // 复用同一个容器
     var panel = document.getElementById('unrecommendedZodiacPanel');
     if (!panel) {
       panel = document.createElement('div');
@@ -1268,27 +1311,89 @@ const ViewZodiacPrediction = {
       cardBody.appendChild(panel);
     }
 
-    if (!unrecommended || !unrecommended.length) {
-      // 全部被推荐或无数据
-      panel.innerHTML =
-        '<div class="unrec-card unrec-empty">' +
-          '<div class="unrec-title">综合未推荐生肖</div>' +
-          '<div class="unrec-empty-tip">全部生肖均被推荐（或数据不足）</div>' +
-        '</div>';
-      return;
+    // 直接从 DOM 读取三个推荐源
+    var v1List = ViewZodiacPrediction._readV1FromDOM();
+    var v2List = ViewZodiacPrediction._readV2FromDOM();
+    var ultimateList = ViewZodiacPrediction._readUltimateFromDOM();
+
+    // 合并去重（纯 JS，不依赖业务层）
+    var ZODIAC_ORDER = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+    var ZODIAC_EMOJI = {
+      '鼠': '🐭', '牛': '🐮', '虎': '🐯', '兔': '🐰',
+      '龙': '🐲', '蛇': '🐍', '马': '🐎', '羊': '🐏',
+      '猴': '🐒', '鸡': '🐔', '狗': '🐶', '猪': '🐷'
+    };
+
+    function uniq(arr) {
+      var map = {};
+      var out = [];
+      arr.forEach(function(z) { if (z && !map[z]) { map[z] = true; out.push(z); } });
+      return out;
+    }
+
+    var v1Uniq = uniq(v1List);
+    var v2Uniq = uniq(v2List);
+    var ultUniq = uniq(ultimateList);
+    var allRecSet = {};
+    [].concat(v1Uniq, v2Uniq, ultUniq).forEach(function(z) { allRecSet[z] = true; });
+    var allRecommended = Object.keys(allRecSet);
+
+    var unrecommended = [];
+    ZODIAC_ORDER.forEach(function(z) {
+      if (!allRecSet[z]) unrecommended.push({ zodiac: z, emoji: ZODIAC_EMOJI[z] || '❓' });
+    });
+
+    function renderChip(z) {
+      return '<span class="unrec-chip">' + (ZODIAC_EMOJI[z] || '❓') + z + '</span>';
     }
 
     var html = '<div class="unrec-card">';
-    html += '<div class="unrec-title">综合未推荐生肖（' + unrecommended.length + '个）</div>';
-    html += '<div class="unrec-grid">';
-    unrecommended.forEach(function(item) {
-      var emoji = item.emoji || ZodiacPrediction.getZodiacEmoji(item.zodiac);
-      html += '<div class="unrec-item">';
-      html += '<span class="unrec-emoji">' + emoji + '</span>';
-      html += '<span class="unrec-name">' + item.zodiac + '</span>';
+
+    html += '<div class="unrec-section">';
+    html += '<div class="unrec-source-title">① 终极算法推荐</div>';
+    html += ultUniq.length
+      ? '<div class="unrec-chips">' + ultUniq.map(renderChip).join('') + '</div>'
+      : '<div class="unrec-empty-tip">无</div>';
+    html += '</div>';
+
+    html += '<div class="unrec-section">';
+    html += '<div class="unrec-source-title">② 生肖预测（v1）</div>';
+    html += v1Uniq.length
+      ? '<div class="unrec-chips">' + v1Uniq.map(renderChip).join('') + '</div>'
+      : '<div class="unrec-empty-tip">无</div>';
+    html += '</div>';
+
+    html += '<div class="unrec-section">';
+    html += '<div class="unrec-source-title">③ Giong 页面推荐（v2）</div>';
+    html += v2Uniq.length
+      ? '<div class="unrec-chips">' + v2Uniq.map(renderChip).join('') + '</div>'
+      : '<div class="unrec-empty-tip">无</div>';
+    html += '</div>';
+
+    html += '<div class="unrec-section unrec-merged">';
+    html += '<div class="unrec-source-title">合并去重（共 ' + allRecommended.length + ' 个）</div>';
+    html += allRecommended.length
+      ? '<div class="unrec-chips">' + allRecommended.map(renderChip).join('') + '</div>'
+      : '<div class="unrec-empty-tip">无</div>';
+    html += '</div>';
+
+    html += '<div class="unrec-section unrec-final">';
+    html += '<div class="unrec-source-title unrec-highlight">未推荐生肖（' + unrecommended.length + '个）</div>';
+    if (unrecommended.length) {
+      html += '<div class="unrec-grid">';
+      unrecommended.forEach(function(item) {
+        html += '<div class="unrec-item">';
+        html += '<span class="unrec-emoji">' + item.emoji + '</span>';
+        html += '<span class="unrec-name">' + item.zodiac + '</span>';
+        html += '</div>';
+      });
       html += '</div>';
-    });
-    html += '</div></div>';
+    } else {
+      html += '<div class="unrec-empty-tip">全部生肖均被推荐</div>';
+    }
+    html += '</div>';
+
+    html += '</div>';
     panel.innerHTML = html;
   },
 

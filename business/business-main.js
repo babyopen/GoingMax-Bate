@@ -1221,9 +1221,9 @@ const Business = {
       return;
     }
     var result = ZodiacPrediction.calcContinuousScores(historyData);
-    // 保存 v1 推荐结果到状态（供未推荐生肖卡片使用）
-    if (result && result.cards) {
-      StateManager._state.analysis.v1Recommend = result.cards;
+    // 保存 v1 推荐结果到状态（仅前 6 名，与卡片展示一致）
+    if (result && result.cards && result.cards.length) {
+      StateManager._state.analysis.v1Recommend = result.cards.slice(0, 6);
     }
     ViewZodiacPrediction.renderPrediction(result);
   },
@@ -1282,8 +1282,6 @@ const Business = {
     if (freqResult && patternResult) {
       var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
       var nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
-      // 保存 v2 推荐结果到状态（供未推荐生肖卡片使用）
-      StateManager._state.analysis.v2Recommend = recommend;
       ViewZodiacPrediction.renderZoneRecommend(recommend, nextExpect);
     }
 
@@ -1334,15 +1332,8 @@ const Business = {
       adaptiveInfo: BusinessUltimate.getAdaptiveState()
     });
 
-    // 保存终极推荐结果到状态（供未推荐生肖卡片使用）
-    StateManager._state.analysis.v3Recommend = (numbers || []).concat(report.numbers ? (report.numbers.alternativeNumbers || []) : []);
-    // 渲染未推荐生肖卡片
-    var unrecommended = ZodiacPrediction.calcUnrecommendedZodiacs(
-      StateManager._state.analysis.v1Recommend,
-      StateManager._state.analysis.v2Recommend,
-      StateManager._state.analysis.v3Recommend
-    );
-    ViewZodiacPrediction.renderUnrecommendedZodiacs(unrecommended);
+    // 渲染未推荐生肖卡片（直接从三个推荐源 DOM 中读取，不依赖业务层）
+    ViewZodiacPrediction.renderUnrecommendedZodiacs(null);
 
     if (ultimateHistory.length >= 25) {
       ViewZodiacPrediction.renderUltimateBacktestEmpty();
