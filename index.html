@@ -634,6 +634,26 @@
           <div class="empty-tip" id="mainEmptyTip">暂无开奖数据，请先刷新历史数据</div>
         </div>
       </div>
+      <!-- 历史记录统计 -->
+      <div class="card" id="mainHistoryStatsCard" style="display:none;">
+        <div class="card-body">
+          <div class="analysis-section-title">历史记录 · 命中率统计</div>
+          <div id="mainHistoryStats"></div>
+        </div>
+      </div>
+      <!-- 历史记录列表 -->
+      <div class="card" id="mainHistoryListCard" style="display:none;">
+        <div class="card-body">
+          <div class="analysis-section-title">近30期推荐记录</div>
+          <div id="mainHistoryList"></div>
+        </div>
+      </div>
+      <!-- 历史记录空状态 -->
+      <div class="card" id="mainHistoryEmptyCard" style="display:none;">
+        <div class="card-body">
+          <div class="empty-tip">暂无历史推荐记录</div>
+        </div>
+      </div>
     </div>
 
     <!-- 生肖预测面板 -->
@@ -864,6 +884,8 @@
 <script src="business/business-ultimate.js"></script>
 <script src="business/business-giong.js"></script>
 <script src="business/business-sliding-window.js"></script>
+<script src="business/business-sliding-window-history.js"></script>
+<script src="views/view-sliding-window-history.js"></script>
 
 <!-- 视图层 -->
 

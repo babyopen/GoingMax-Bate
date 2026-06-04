@@ -1271,12 +1271,17 @@ const Business = {
 
     if (!historyData || !historyData.length) {
       ViewZodiacPrediction.renderSlidingWindowPrediction(null);
+      ViewSlidingWindowHistory.render([]);
       return;
     }
 
     // 调用滑动窗口预测算法
     var result = BusinessSlidingWindow.predict(historyData);
     ViewZodiacPrediction.renderSlidingWindowPrediction(result);
+
+    // 保存推荐记录 + 自动核对 + 渲染历史记录
+    var records = BusinessSlidingWindowHistory.saveAndCheck(result, historyData);
+    ViewSlidingWindowHistory.render(records);
   },
 
   initGiongTab: () => {

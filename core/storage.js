@@ -13,7 +13,9 @@ const Storage = {
     GIONG_BACKTEST_RECORDS: 'giongBacktestRecords',
     MARK_HINT_SHOWN: 'markHintShown',
     // 用户偏好（区域变动追踪卡片展开状态）
-    ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded'
+    ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded',
+    // 滑动窗口预测历史记录（主推）
+    SLIDING_WINDOW_RECORDS: 'slidingWindowRecords'
   }),
 
   /**

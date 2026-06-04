@@ -2206,16 +2206,21 @@ const ViewZodiacPrediction = {
       scoreTable.innerHTML = tableHtml;
     }
 
-    // 4. 渲染算法版本信息
+    // 4. 渲染算法版本信息（写入独立容器，避免重复累加）
     if (zoneOverviewCard) {
       var summary = data.summary || {};
-      var footerHtml = '<div style="font-size:11px;color:var(--sub-text);margin-top:8px;text-align:right;">';
-      footerHtml += '算法版本：' + (data.algorithm || '滑动窗口V1.0');
-      footerHtml += ' | 12窗最大：' + (summary.max12 || 0) + '次';
-      footerHtml += ' | 24窗最大：' + (summary.max24 || 0) + '次';
-      footerHtml += ' | 36窗最大：' + (summary.max36 || 0) + '次';
-      footerHtml += '</div>';
-      zoneOverviewCard.querySelector('.card-body').insertAdjacentHTML('beforeend', footerHtml);
+      var footerContainer = document.getElementById('mainZoneFooter');
+      if (!footerContainer) {
+        footerContainer = document.createElement('div');
+        footerContainer.id = 'mainZoneFooter';
+        footerContainer.style.cssText = 'font-size:11px;color:var(--sub-text);margin-top:8px;text-align:right;';
+        zoneOverviewCard.querySelector('.card-body').appendChild(footerContainer);
+      }
+      footerContainer.innerHTML =
+        '算法版本：' + (data.algorithm || '滑动窗口V1.0') +
+        ' | 12窗最大：' + (summary.max12 || 0) + '次' +
+        ' | 24窗最大：' + (summary.max24 || 0) + '次' +
+        ' | 36窗最大：' + (summary.max36 || 0) + '次';
     }
   },
 
