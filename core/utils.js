@@ -368,5 +368,63 @@ const Utils = {
       if (!Array.isArray(items)) return [];
       return items.map(item => Utils.SpecialCalculator.getSpecial(item));
     }
+  },
+
+  // ============================================================
+  // 通用工具（兼容路径：消除 view-filter / state / event 中的重复代码）
+  // ============================================================
+
+  /**
+   * 批量输入分隔符正则常量
+   * 支持中英文逗号、空格、换行、点、斜杠、反斜杠、连号、分号、多种引号、方括号、中日文方括号
+   */
+  SPLIT_TOKEN_REGEX: /[,，\s\n.。\/／\\\-、；;'""''\[\]【】]+/,
+
+  /**
+   * 号码范围检查（1-49，符合本项目彩种规则）
+   * @param {number} n - 待检查的号码
+   * @returns {boolean}
+   */
+  isValidLotteryNum: (n) => {
+    return typeof n === 'number' && !isNaN(n) && n >= 1 && n <= 49;
+  },
+
+  /**
+   * 合并多个数组并去重（保持首次出现顺序）
+   * @param {...Array} arrays - 要合并的多个数组
+   * @returns {Array} 去重后的新数组
+   */
+  mergeUnique: (...arrays) => {
+    const seen = new Set();
+    const result = [];
+    arrays.forEach(arr => {
+      if (!Array.isArray(arr)) return;
+      arr.forEach(item => {
+        if (item == null) return;
+        const key = typeof item === 'object' ? item : String(item);
+        if (!seen.has(key)) { seen.add(key); result.push(item); }
+      });
+    });
+    return result;
+  },
+
+  /**
+   * 多分组字符串分割（兼容 "a,b,c" 格式与单值）
+   * @param {string} str - data-group 值（可能含逗号）
+   * @returns {string[]} 分组数组
+   */
+  splitGroups: (str) => {
+    if (!str) return [];
+    return String(str).split(',').map(s => s.trim()).filter(Boolean);
+  },
+
+  /**
+   * 获取指定分组下所有标签的值（消除 querySelectorAll + formatTagValue 重复 6+ 次）
+   * @param {string} group - 分组名
+   * @returns {Array} 标签值数组
+   */
+  getTagValues: (group) => {
+    const tags = document.querySelectorAll(`.tag[data-group="${group}"]`);
+    return [...tags].map(tag => Utils.formatTagValue(tag.dataset.value, group));
   }
 };

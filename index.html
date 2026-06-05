@@ -850,9 +850,10 @@
 </div>
 
 <!-- 平台层：模态框（APP切换只需替换此文件夹） -->
-<script src="platform/web/input-modal.js"></script>
-<script src="platform/web/confirm-modal.js"></script>
-<script src="platform/web/zodiac-stat-modal.js"></script>
+<!-- 弹窗组件（2026-06-05 整理到 platform/web/modals/） -->
+<script src="platform/web/modals/input-modal.js"></script>
+<script src="platform/web/modals/confirm-modal.js"></script>
+<script src="platform/web/modals/zodiac-stat-modal.js"></script>
 
 <!-- 核心层：配置 → 工具 → 状态 → 存储 -->
 <script src="core/config.js"></script>
@@ -877,16 +878,30 @@
 
 <!-- 业务层：禁止DOM操作 -->
 <script src="business/business-main.js"></script>
-<script src="business/business-zodiac-prediction.js"></script>
+<!-- 生肖预测（门面 + 5 个子模块，2026-06-05 按文件夹整理到 business/zodiac/） -->
+<script src="business/zodiac/business-zodiac-prediction.js"></script>
+<!-- 兼容路径：business-zodiac-prediction.js 拆分出的子模块（2026-06-05），自动挂载到 ZodiacPrediction 上 -->
+<!-- 子模块按依赖顺序加载：scores → miss → zones → stats → backtest -->
+<script src="business/zodiac/business-zodiac-scores.js"></script>
+<script src="business/zodiac/business-zodiac-miss.js"></script>
+<script src="business/zodiac/business-zodiac-zones.js"></script>
+<script src="business/zodiac/business-zodiac-stats.js"></script>
+<script src="business/zodiac/business-zodiac-backtest.js"></script>
 <script src="business/business-ultimate.js"></script>
 <script src="business/business-giong.js"></script>
-<script src="business/business-sliding-window.js"></script>
-<script src="business/business-sliding-window-history.js"></script>
+<!-- 滑动窗口（2026-06-05 整理到 business/sliding-window/） -->
+<script src="business/sliding-window/business-sliding-window.js"></script>
+<script src="business/sliding-window/business-sliding-window-history.js"></script>
 <script src="views/view-sliding-window-history.js"></script>
 
 <!-- 视图层 -->
 
 <script src="views/view-filter.js"></script>
+<!-- 兼容路径：view-filter.js 拆分出的子模块（2026-06-05），自动挂载到 ViewFilter 上 -->
+<!-- 弹窗视图子模块（2026-06-05 整理到 views/modals/） -->
+<script src="views/modals/view-batch-modal.js"></script>
+<script src="views/view-quick-nav.js"></script>
+<script src="views/modals/view-overlap-modal.js"></script>
 <script src="views/view-analysis.js"></script>
 <script src="views/view-zodiac-prediction.js"></script>
 

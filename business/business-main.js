@@ -456,13 +456,12 @@ const Business = {
    * @returns {Object} 特码信息
    */
   /**
-   * 获取特码信息（使用公共计算器，消除重复代码）
-   * @param {Object} item - 历史数据项
-   * @returns {Object} 特码信息
+   * 获取特码信息
+   * 兼容路径：getSpecial 包装层已删除（2026-06-05 重构，统一使用 Utils.SpecialCalculator.getSpecial）
+   * 旧包装层为 (item) => Utils.SpecialCalculator.getSpecial(item)，无逻辑增值
+   * 现调用方全部直接使用 Utils.SpecialCalculator.getSpecial(item)
+   * （business-main.js 内部 10 处调用已统一替换）
    */
-  getSpecial: (item) => {
-    return Utils.SpecialCalculator.getSpecial(item);
-  },
 
   /**
    * 获取五行
@@ -506,7 +505,7 @@ const Business = {
   renderLatest: (item) => {
     if(!item) return;
     const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
-    const s = Business.getSpecial(item);
+    const s = Utils.SpecialCalculator.getSpecial(item);
     const zodArr = s.fullZodArr;
 
     let html = '';
@@ -549,7 +548,7 @@ const Business = {
     const historyHtml = list.map(item => {
       const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
       const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
-      const s = Business.getSpecial(item);
+      const s = Utils.SpecialCalculator.getSpecial(item);
       const zodArr = s.fullZodArr;
       let balls = '';
       for(let i = 0; i < 6; i++) balls += Business.buildBall(codeArr[i], waveArr[i], zodArr[i]);
@@ -602,7 +601,7 @@ const Business = {
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => lastAppearZod[z] = -1);
 
     list.forEach((item, idx) => {
-      const s = Business.getSpecial(item);
+      const s = Utils.SpecialCalculator.getSpecial(item);
       s.odd ? singleDouble['单']++ : singleDouble['双']++;
       s.big ? bigSmall['大']++ : bigSmall['小']++;
       const rangeKey = Utils.getRangeCategory(s.te);
@@ -677,17 +676,17 @@ const Business = {
 
     let curStreak = 1, maxStreak = 1, current = 1;
     if(list.length >= 2) {
-      const firstS = Business.getSpecial(list[0]);
+      const firstS = Utils.SpecialCalculator.getSpecial(list[0]);
       const firstShape = `${firstS.odd}_${firstS.big}`;
       for(let i = 1; i < list.length; i++) {
-        const s = Business.getSpecial(list[i]);
+        const s = Utils.SpecialCalculator.getSpecial(list[i]);
         const shape = `${s.odd}_${s.big}`;
         if(shape === firstShape) curStreak++;
         else break;
       }
       let prevShape = firstShape;
       for(let i = 1; i < list.length; i++) {
-        const s = Business.getSpecial(list[i]);
+        const s = Utils.SpecialCalculator.getSpecial(list[i]);
         const shape = `${s.odd}_${s.big}`;
         if(shape === prevShape) {
           current++;
@@ -801,7 +800,7 @@ const Business = {
     const followMap = {};
 
     list.forEach((item, idx) => {
-      const s = Business.getSpecial(item);
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
         zodCount[s.zod]++;
         if(lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
@@ -812,8 +811,8 @@ const Business = {
     });
 
     for(let i = 1; i < list.length; i++) {
-      const preZod = Business.getSpecial(list[i-1]).zod;
-      const curZod = Business.getSpecial(list[i]).zod;
+      const preZod = Utils.SpecialCalculator.getSpecial(list[i-1]).zod;
+      const curZod = Utils.SpecialCalculator.getSpecial(list[i]).zod;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(preZod) && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curZod)) {
         if(!followMap[preZod]) followMap[preZod] = {};
         followMap[preZod][curZod] = (followMap[preZod][curZod] || 0) + 1;
@@ -934,7 +933,7 @@ const Business = {
     let finalNums = candidateNums.slice(0, targetCount).map(i => i.num);
 
     if(finalNums.length < targetCount) {
-      const fillNums = [...new Set(data.list.map(item => Business.getSpecial(item).te))]
+      const fillNums = [...new Set(data.list.map(item => Utils.SpecialCalculator.getSpecial(item).te))]
         .filter(num => !finalNums.includes(num))
         .slice(0, targetCount - finalNums.length);
       finalNums.push(...fillNums);

@@ -134,6 +134,10 @@ const StateManager = {
     { color: '#AF52DE', right: '5px', top: '3px' },
     { color: '#5AC8FA', right: '5px', top: '50%', marginTop: '-2px' },
     { color: '#7B2D8E', right: '5px', bottom: '3px' },
+    // 新增槽位（兼容路径：在原 6 个槽位之后追加，扩展为 9 次标记）
+    { color: '#FF2D55', left: '50%', top: '3px', marginLeft: '-3px' },
+    { color: '#FFCC00', left: '50%', top: '50%', marginLeft: '-3px', marginTop: '-3px' },
+    { color: '#007AFF', left: '50%', bottom: '3px', marginLeft: '-3px' },
   ],
 
   /**
@@ -257,19 +261,9 @@ const StateManager = {
    * @param {Array} [allValues] - 可选：从视图层传入的所有标签值数组（符合分层规范）
    */
   selectGroup: (group, allValues) => {
-    const lockedSet = new Set(StateManager._state.locked[group] || []);
-    let values;
-    if (allValues && Array.isArray(allValues)) {
-      values = allValues.filter(v => !lockedSet.has(v));
-    } else {
-      const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
-      values = allTags
-        .map(tag => Utils.formatTagValue(tag.dataset.value, group))
-        .filter(v => !lockedSet.has(v));
-    }
-    const newSelected = { ...StateManager._state.selected };
-    newSelected[group] = values;
-    StateManager.setState({ selected: newSelected });
+    // 兼容路径：使用内部辅助 _getAvailableValues + _setSelected 消除重复代码（行为等价）
+    const values = StateManager._getAvailableValues(group, allValues);
+    StateManager._setSelected(group, values);
   },
 
   /**
@@ -278,20 +272,10 @@ const StateManager = {
    * @param {Array} [allValues] - 可选：从视图层传入的所有标签值数组（符合分层规范）
    */
   invertGroup: (group, allValues) => {
-    const state = StateManager._state;
-    const lockedSet = new Set(state.locked[group] || []);
-    let values;
-    if (allValues && Array.isArray(allValues)) {
-      values = allValues.filter(v => !lockedSet.has(v));
-    } else {
-      const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
-      values = allTags
-        .map(tag => Utils.formatTagValue(tag.dataset.value, group))
-        .filter(v => !lockedSet.has(v));
-    }
-    const newSelected = { ...state.selected };
-    newSelected[group] = values.filter(v => !state.selected[group].includes(v));
-    StateManager.setState({ selected: newSelected });
+    // 兼容路径：使用内部辅助 _getAvailableValues + _setSelected 消除重复代码（行为等价）
+    const values = StateManager._getAvailableValues(group, allValues);
+    const currentSelected = StateManager._state.selected[group] || [];
+    StateManager._setSelected(group, values.filter(v => !currentSelected.includes(v)));
   },
 
   /**
@@ -306,5 +290,44 @@ const StateManager = {
       StateManager._renderQueue = null;
     }
     Toast.clearTimer();
+  },
+
+  // ============================================================
+  // 兼容路径：内部辅助方法（消除 selectGroup / invertGroup 等的重复模板）
+  // ============================================================
+
+  /**
+   * 内部辅助：把 values 写入到 selected[group] 并 setState
+   * 用于消除 6+ 处"const newSelected = { ...state.selected }; newSelected[group] = ...; setState(...)"模板
+   * @param {string} group
+   * @param {Array} values
+   */
+  _setSelected: (group, values) => {
+    const newSelected = { ...StateManager._state.selected };
+    newSelected[group] = values;
+    StateManager.setState({ selected: newSelected });
+  },
+
+  /**
+   * 内部辅助：从 allValues 或 DOM 中提取"非锁定"的所有标签值
+   * 兼容路径：selectGroup / invertGroup 等的公共查询逻辑
+   * @param {string} group
+   * @param {Array} [allValues] - 可选：调用方已准备好的标签值数组
+   * @returns {Array}
+   */
+  _getAvailableValues: (group, allValues) => {
+    const lockedSet = new Set(StateManager._state.locked[group] || []);
+    if (allValues && Array.isArray(allValues)) {
+      return allValues.filter(v => !lockedSet.has(v));
+    }
+    // 兼容路径：使用 Utils.getTagValues 消除重复 querySelectorAll
+    if (typeof Utils !== 'undefined' && typeof Utils.getTagValues === 'function') {
+      return Utils.getTagValues(group).filter(v => !lockedSet.has(v));
+    }
+    // 兜底：原 inline 实现（保证 Utils 未加载时也能工作）
+    const allTags = [...document.querySelectorAll(`.tag[data-group="${group}"]`)];
+    return allTags
+      .map(tag => Utils.formatTagValue(tag.dataset.value, group))
+      .filter(v => !lockedSet.has(v));
   }
 };

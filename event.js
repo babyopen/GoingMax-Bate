@@ -214,16 +214,14 @@ const EventBinder = {
       if(action === CONFIG.ACTIONS.RESET_GROUP) groups.forEach(g => StateManager.resetGroup(g));
       else if(action === CONFIG.ACTIONS.SELECT_GROUP) {
         groups.forEach(g => {
-          const allTags = [...document.querySelectorAll(`.tag[data-group="${g}"]`)];
-          const allValues = allTags.map(tag => Utils.formatTagValue(tag.dataset.value, g));
-          StateManager.selectGroup(g, allValues);
+          // 兼容路径：使用 Utils.getTagValues 消除 querySelectorAll + formatTagValue 重复
+          StateManager.selectGroup(g, Utils.getTagValues(g));
         });
       }
       else if(action === CONFIG.ACTIONS.INVERT_GROUP) {
         groups.forEach(g => {
-          const allTags = [...document.querySelectorAll(`.tag[data-group="${g}"]`)];
-          const allValues = allTags.map(tag => Utils.formatTagValue(tag.dataset.value, g));
-          StateManager.invertGroup(g, allValues);
+          // 兼容路径：使用 Utils.getTagValues 消除 querySelectorAll + formatTagValue 重复
+          StateManager.invertGroup(g, Utils.getTagValues(g));
         });
       }
       else if(action === CONFIG.ACTIONS.CLEAR_GROUP) groups.forEach(g => StateManager.clearGroup(g));
