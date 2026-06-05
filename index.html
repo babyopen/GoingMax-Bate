@@ -594,7 +594,6 @@
   <!-- 资料页面 -->
   <div class="page" id="randomPage" style="display:none">
     <div class="zodiac-tab-bar">
-      <button class="zodiac-tab-btn" data-zodiac-tab="main">主推</button>
       <button class="zodiac-tab-btn active" data-zodiac-tab="ultimate">终极算法</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="predict">生肖预测</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
@@ -602,6 +601,12 @@
 
     <!-- 主推面板（滑动窗口预测算法） -->
     <div class="zodiac-tab-panel" id="zodiacMainPanel">
+      <!-- 数据陈旧度提示 -->
+      <div class="card" id="mainDataFreshnessCard" style="display:none;">
+        <div class="card-body">
+          <div id="mainDataFreshness" class="sw-freshness"></div>
+        </div>
+      </div>
       <!-- 预测标题 -->
       <div class="card" id="mainPredictHeaderCard" style="display:none;">
         <div class="card-body">
@@ -621,13 +626,6 @@
           <div id="mainScoreTable"></div>
         </div>
       </div>
-      <!-- 窗口区域分布 -->
-      <div class="card" id="mainZoneOverviewCard" style="display:none;">
-        <div class="card-body">
-          <div class="analysis-section-title">窗口区域分布</div>
-          <div id="mainZoneOverview"></div>
-        </div>
-      </div>
       <!-- 空状态 -->
       <div class="card" id="mainEmptyCard">
         <div class="card-body">
@@ -637,7 +635,6 @@
       <!-- 历史记录统计 -->
       <div class="card" id="mainHistoryStatsCard" style="display:none;">
         <div class="card-body">
-          <div class="analysis-section-title">历史记录 · 命中率统计</div>
           <div id="mainHistoryStats"></div>
         </div>
       </div>

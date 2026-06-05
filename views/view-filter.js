@@ -166,6 +166,7 @@ const ViewFilter = {
       { label: '生肖关联', type: 'tab', page: 'analysis', tabName: 'zodiac' }
     ],
     random: [
+      { label: '主推', type: 'tab', page: 'random', tabName: 'main' },
       { label: '终极算法', type: 'tab', page: 'random', tabName: 'ultimate' },
       { label: '生肖预测', type: 'tab', page: 'random', tabName: 'predict' },
       { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' }

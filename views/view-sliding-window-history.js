@@ -38,12 +38,40 @@ const ViewSlidingWindowHistory = {
   },
 
   /**
+   * 渲染空状态（清空后或无数据时）
+   */
+  renderEmpty: function() {
+    var statsCard = document.getElementById('mainHistoryStatsCard');
+    var listCard = document.getElementById('mainHistoryListCard');
+    var emptyCard = document.getElementById('mainHistoryEmptyCard');
+    if (statsCard) statsCard.style.display = 'none';
+    if (listCard) listCard.style.display = 'none';
+    if (emptyCard) emptyCard.style.display = '';
+    // 清理可能遗留的 header（清空记录时）
+    var headers = document.querySelectorAll('.sw-stats-header');
+    headers.forEach(function(h) { h.remove(); });
+  },
+
+  /**
    * 渲染统计面板
    * @private
    */
   _renderStats: function(stats) {
     var container = document.getElementById('mainHistoryStats');
     if (!container) return;
+
+    // 渲染清空按钮（独立容器，避免重复）
+    var parentEl = container.parentElement;
+    if (parentEl) {
+      var existing = parentEl.querySelector('.sw-stats-header');
+      if (existing) existing.remove();
+      var headerEl = document.createElement('div');
+      headerEl.className = 'sw-stats-header';
+      headerEl.innerHTML =
+        '<span class="sw-stats-title">命中率统计</span>' +
+        '<button type="button" class="sw-stats-clear-btn" data-action="clearSlidingWindowHistory">清空记录</button>';
+      parentEl.insertBefore(headerEl, container);
+    }
 
     var hitRateStyle = stats.hitRate >= 80 ? 'color:#30D158;' : (stats.hitRate >= 50 ? 'color:#FF9F0A;' : 'color:#FF453A;');
     var top3Style = stats.top3Rate >= 50 ? 'color:#30D158;' : (stats.top3Rate >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
@@ -88,12 +116,12 @@ const ViewSlidingWindowHistory = {
       var maxRank = Math.max(1, stats.rankStats[1], stats.rankStats[2], stats.rankStats[3], stats.rankStats[4], stats.rankStats[5], stats.rankStats[6]);
       for (var r = 1; r <= 6; r++) {
         var count = stats.rankStats[r] || 0;
-        var pct = (count / stats.checked * 100).toFixed(0);
-        var barHeight = Math.max(2, (count / maxRank * 100));
+        var pct = stats.checked > 0 ? (count / stats.checked * 100).toFixed(0) : '0';
+        var barHeight = Math.max(18, (count / maxRank * 100));
         var barColor = r <= 3 ? '#30D158' : (r <= 4 ? '#FF9F0A' : 'var(--sub-text)');
         html += '<div class="sw-rank-bar-item">';
         html += '<div class="sw-rank-bar-count">' + count + '</div>';
-        html += '<div class="sw-rank-bar-track"><div class="sw-rank-bar-fill" style="height:' + barHeight + '%;background:' + barColor + ';"></div></div>';
+        html += '<div class="sw-rank-bar-track"><div class="sw-rank-bar-fill" style="height:' + barHeight + '%;background:' + barColor + ';"><span class="sw-rank-bar-pct">' + pct + '%</span></div></div>';
         html += '<div class="sw-rank-bar-label">第' + r + '名</div>';
         html += '</div>';
       }
@@ -137,14 +165,12 @@ const ViewSlidingWindowHistory = {
     } else if (rec.hitStatus === 'hit') {
       statusClass = 'sw-row-hit';
       statusText = '命中';
-      var actualEmoji = this.EMOJI_MAP[rec.actualZodiac] || '';
-      actualDisplay = '<span class="sw-actual-hit">' + actualEmoji + rec.actualZodiac + '</span>';
+      actualDisplay = this._renderActualWithZones(rec, 'hit');
       rankDisplay = '<span class="sw-rank-hit">第' + rec.hitRank + '名</span>';
     } else {
       statusClass = 'sw-row-miss';
       statusText = '未中';
-      var actualEmoji2 = this.EMOJI_MAP[rec.actualZodiac] || '';
-      actualDisplay = '<span class="sw-actual-miss">' + actualEmoji2 + rec.actualZodiac + '</span>';
+      actualDisplay = this._renderActualWithZones(rec, 'miss');
       rankDisplay = '<span class="sw-rank-miss">未中</span>';
     }
 
@@ -186,5 +212,50 @@ const ViewSlidingWindowHistory = {
 
     html += '</div>';
     return html;
+  },
+
+  /**
+   * 渲染"实际生肖"span，含 emoji + 生肖名 + 3个窗口区域标签
+   * @private
+   */
+  _renderActualWithZones: function(rec, status) {
+    var emoji = this.EMOJI_MAP[rec.actualZodiac] || '';
+    var cls = status === 'hit' ? 'sw-actual-hit' : 'sw-actual-miss';
+    var html = '<span class="' + cls + '">' + emoji + rec.actualZodiac + '</span>';
+
+    // 附加 3 个窗口区域标签（如有数据）
+    var zones = rec.actualZones;
+    if (zones && (zones.zone12 || zones.zone24 || zones.zone36)) {
+      html += '<span class="sw-actual-zones">';
+      if (zones.zone12) {
+        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone12) + '">' + zones.zone12 + '</span>';
+      }
+      if (zones.zone24) {
+        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone24) + '">' + zones.zone24 + '</span>';
+      }
+      if (zones.zone36) {
+        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone36) + '">' + zones.zone36 + '</span>';
+      }
+      html += '</span>';
+    }
+
+    return html;
+  },
+
+  /**
+   * 区域名 → CSS class 映射
+   * @private
+   */
+  _getZoneClass: function(zone) {
+    var map = {
+      '封顶区': 'zone-peak',
+      '降权区': 'zone-high',
+      '过热区': 'zone-ovht',
+      '热号区': 'zone-mid',
+      '活跃区': 'zone-active',
+      '穿插区': 'zone-low',
+      '冷号区': 'zone-wait'
+    };
+    return map[zone] || 'zone-wait';
   }
 };

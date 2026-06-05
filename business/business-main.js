@@ -316,9 +316,13 @@ const Business = {
     const cache = Storage.getHistoryCache();
     const currentLatestExpect = StateManager._state.analysis.historyData.length ? Number(StateManager._state.analysis.historyData[0].expect || 0) : 0;
     const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
-    
+
     if(cache && cache.data && cache.data.length > 0 && cacheLatestExpect > currentLatestExpect) {
-      const newAnalysis = { ...StateManager._state.analysis, historyData: cache.data };
+      const newAnalysis = {
+        ...StateManager._state.analysis,
+        historyData: cache.data,
+        historyTimestamp: cache.timestamp || 0
+      };
       StateManager.setState({ analysis: newAnalysis }, false);
       Business.renderLatest(cache.data[0]);
       Business.renderHistory();
@@ -384,8 +388,13 @@ const Business = {
 
       const newLatestExpect = sortedData.length ? Number(sortedData[0].expect || 0) : 0;
       if(newLatestExpect > currentLatestExpect) {
+        const now = Date.now();
         Storage.saveHistoryCache(sortedData);
-        const newAnalysis = { ...StateManager._state.analysis, historyData: sortedData };
+        const newAnalysis = {
+          ...StateManager._state.analysis,
+          historyData: sortedData,
+          historyTimestamp: now
+        };
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
@@ -397,7 +406,11 @@ const Business = {
         Business.renderZodiacAnalysis();
         if(!silentUpdate) Toast.show('数据加载成功');
       } else if(cacheLatestExpect > currentLatestExpect) {
-        const newAnalysis = { ...state.analysis, historyData: cache.data };
+        const newAnalysis = {
+          ...state.analysis,
+          historyData: cache.data,
+          historyTimestamp: cache.timestamp || 0
+        };
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
@@ -1262,22 +1275,37 @@ const Business = {
   initMainTab: () => {
     var state = StateManager._state;
     var historyData = state.analysis.historyData;
+    var cacheTimestamp = state.analysis.historyTimestamp || 0;
 
     // 尝试加载缓存
     if (!historyData || !historyData.length) {
       Business.loadHistoryCache();
       historyData = StateManager._state.analysis.historyData;
+      cacheTimestamp = StateManager._state.analysis.historyTimestamp || 0;
     }
 
     if (!historyData || !historyData.length) {
       ViewZodiacPrediction.renderSlidingWindowPrediction(null);
       ViewSlidingWindowHistory.render([]);
+      ViewZodiacPrediction.renderDataFreshness(null, null);
+      // 数据为空时清理任何遗留的统计 header
+      var strayHeaders = document.querySelectorAll('.sw-stats-header');
+      strayHeaders.forEach(function(h) { h.remove(); });
       return;
     }
+
+    // 数据陈旧检测：超过24小时未更新则提示用户
+    var now = Date.now();
+    var ageMs = cacheTimestamp > 0 ? (now - cacheTimestamp) : 0;
+    var ageHours = ageMs > 0 ? Math.floor(ageMs / (60 * 60 * 1000)) : null;
 
     // 调用滑动窗口预测算法
     var result = BusinessSlidingWindow.predict(historyData);
     ViewZodiacPrediction.renderSlidingWindowPrediction(result);
+    ViewZodiacPrediction.renderDataFreshness(cacheTimestamp, ageHours);
+
+    // 清理永远无法核对的老记录（其 period 已超出 historyData 范围）
+    BusinessSlidingWindowHistory.cleanupStaleRecords(historyData);
 
     // 保存推荐记录 + 自动核对 + 渲染历史记录
     var records = BusinessSlidingWindowHistory.saveAndCheck(result, historyData);

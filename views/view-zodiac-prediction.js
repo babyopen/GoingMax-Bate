@@ -2112,14 +2112,12 @@ const ViewZodiacPrediction = {
     var headerCard = document.getElementById('mainPredictHeaderCard');
     var candidatesCard = document.getElementById('mainCandidatesCard');
     var scoreTableCard = document.getElementById('mainScoreTableCard');
-    var zoneOverviewCard = document.getElementById('mainZoneOverviewCard');
     var emptyCard = document.getElementById('mainEmptyCard');
 
     if (!data || !data.candidates || !data.candidates.length) {
       if (headerCard) headerCard.style.display = 'none';
       if (candidatesCard) candidatesCard.style.display = 'none';
       if (scoreTableCard) scoreTableCard.style.display = 'none';
-      if (zoneOverviewCard) zoneOverviewCard.style.display = 'none';
       if (emptyCard) {
         emptyCard.style.display = '';
         var emptyTip = document.getElementById('mainEmptyTip');
@@ -2133,7 +2131,6 @@ const ViewZodiacPrediction = {
     if (headerCard) headerCard.style.display = '';
     if (candidatesCard) candidatesCard.style.display = '';
     if (scoreTableCard) scoreTableCard.style.display = '';
-    if (zoneOverviewCard) zoneOverviewCard.style.display = '';
 
     // 1. 渲染标题
     var titleEl = document.getElementById('mainPredictTitle');
@@ -2205,23 +2202,6 @@ const ViewZodiacPrediction = {
       tableHtml += '</tbody></table></div>';
       scoreTable.innerHTML = tableHtml;
     }
-
-    // 4. 渲染算法版本信息（写入独立容器，避免重复累加）
-    if (zoneOverviewCard) {
-      var summary = data.summary || {};
-      var footerContainer = document.getElementById('mainZoneFooter');
-      if (!footerContainer) {
-        footerContainer = document.createElement('div');
-        footerContainer.id = 'mainZoneFooter';
-        footerContainer.style.cssText = 'font-size:11px;color:var(--sub-text);margin-top:8px;text-align:right;';
-        zoneOverviewCard.querySelector('.card-body').appendChild(footerContainer);
-      }
-      footerContainer.innerHTML =
-        '算法版本：' + (data.algorithm || '滑动窗口V1.0') +
-        ' | 12窗最大：' + (summary.max12 || 0) + '次' +
-        ' | 24窗最大：' + (summary.max24 || 0) + '次' +
-        ' | 36窗最大：' + (summary.max36 || 0) + '次';
-    }
   },
 
   /**
@@ -2239,5 +2219,65 @@ const ViewZodiacPrediction = {
       '冷号区': 'zone-wait'
     };
     return map[zone] || 'zone-wait';
+  },
+
+  /**
+   * 渲染数据陈旧度提示
+   * @param {number|null} timestamp - 数据缓存时间戳（毫秒），0 或 null 表示无缓存
+   * @param {number|null} ageHours - 缓存年龄（小时），null 表示无法计算
+   */
+  renderDataFreshness: function(timestamp, ageHours) {
+    var card = document.getElementById('mainDataFreshnessCard');
+    var el = document.getElementById('mainDataFreshness');
+    if (!card || !el) return;
+
+    // 无缓存时间戳 → 隐藏提示
+    if (!timestamp || timestamp <= 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    var ageText, severityClass, icon, label;
+    if (ageHours === null || ageHours === undefined) {
+      ageText = '未知';
+      severityClass = 'sw-freshness-unknown';
+      icon = '⏱';
+      label = '数据缓存时间未知';
+    } else if (ageHours < 1) {
+      ageText = '刚刚';
+      severityClass = 'sw-freshness-fresh';
+      icon = '✓';
+      label = '数据为最新';
+    } else if (ageHours < 24) {
+      ageText = ageHours + '小时前';
+      severityClass = 'sw-freshness-fresh';
+      icon = '✓';
+      label = '数据较新';
+    } else if (ageHours < 72) {
+      var days1 = Math.floor(ageHours / 24);
+      ageText = days1 + '天前';
+      severityClass = 'sw-freshness-stale';
+      icon = '⚠';
+      label = '数据可能已过时';
+    } else {
+      var daysN = Math.floor(ageHours / 24);
+      ageText = daysN + '天前';
+      severityClass = 'sw-freshness-expired';
+      icon = '✕';
+      label = '数据已严重过期，预测结果不可靠';
+    }
+
+    var updateTime = new Date(timestamp);
+    var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+    var timeStr = pad(updateTime.getMonth() + 1) + '-' + pad(updateTime.getDate()) + ' ' +
+                  pad(updateTime.getHours()) + ':' + pad(updateTime.getMinutes());
+
+    el.className = 'sw-freshness ' + severityClass;
+    el.innerHTML =
+      '<span class="sw-freshness-icon">' + icon + '</span>' +
+      '<span class="sw-freshness-label">' + label + '</span>' +
+      '<span class="sw-freshness-detail">最后更新：' + timeStr + '（' + ageText + '）</span>';
+
+    card.style.display = '';
   }
 };

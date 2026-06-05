@@ -10,6 +10,9 @@ const BusinessSlidingWindow = {
   /** 12生肖列表 */
   SHENGXIAO_ALL: ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'],
 
+  /** 算法版本（升级时修改此处） */
+  ALGORITHM_VERSION: '滑动窗口V1.0',
+
   /** 生肖 Emoji 映射 */
   SHENGXIAO_EMOJI: {
     '鼠': '🐭', '牛': '🐮', '虎': '🐯', '兔': '🐰',
@@ -377,8 +380,19 @@ const BusinessSlidingWindow = {
       allScores.push(scoreObj);
     });
 
-    // 4. 按评分降序排列
-    allScores.sort(function(a, b) { return b.score - a.score; });
+    // 4. 按评分降序排列（同分时按生肖数组索引升序，确保确定性）
+    var sxIndex = {};
+    self.SHENGXIAO_ALL.forEach(function(sx, idx) { sxIndex[sx] = idx; });
+    allScores.sort(function(a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      // 次级排序：按生肖数组原始索引（鼠->猪）
+      var ia = sxIndex[a.shengxiao];
+      var ib = sxIndex[b.shengxiao];
+      if (ia === undefined && ib === undefined) return 0;
+      if (ia === undefined) return 1;
+      if (ib === undefined) return -1;
+      return ia - ib;
+    });
 
     // 5. 取前6名为候选
     var top6 = allScores.slice(0, 6);
@@ -426,7 +440,7 @@ const BusinessSlidingWindow = {
       allScores: allScores,
       nextExpect: nextExpect,
       summary: windowSummary,
-      algorithm: '滑动窗口V1.0',
+      algorithm: self.ALGORITHM_VERSION,
       timestamp: Date.now()
     };
   },
