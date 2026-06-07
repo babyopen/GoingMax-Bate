@@ -59,6 +59,12 @@ const StateManager = {
         ...partialState
       };
 
+      // 新增：状态变更后触发可选持久化钩子（默认无，避免破坏现有行为）
+      // 该钩子由 business-main.initFilterPersistence 注册
+      if(typeof StateManager._persistCurrentFilter === 'function'){
+        try { StateManager._persistCurrentFilter(); } catch(_) {}
+      }
+
       if(needRender) {
         if(immediate) {
           Render.renderAll();

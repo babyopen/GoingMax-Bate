@@ -440,6 +440,64 @@
 .backtest-record-period{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--primary);margin-bottom:clamp(3px,0.6vw,6px)}
 .backtest-record-predict{font-size:clamp(11px,2vw,13px);color:var(--sub-text);margin-bottom:2px}
 .backtest-record-result{font-size:clamp(11px,2vw,13px);color:var(--text)}
+/* 一行显示的回测记录（仅作用于使用 .backtest-records-inline 的容器，不影响其他回测区） */
+.backtest-records-inline{
+  display:flex;flex-direction:column;gap:clamp(6px,1.2vw,10px);
+  font-size:clamp(14px,2.8vw,17px);
+  line-height:1.5;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+/* 行/单元格/所有后代字号统一，避免 <b> 加粗或 span 改变视觉大小 */
+.backtest-records-inline .backtest-record-row,
+.backtest-records-inline .backtest-record-row > span,
+.backtest-records-inline .backtest-record-row > span > span,
+.backtest-records-inline .backtest-record-row b{
+  font-size:inherit;line-height:inherit;letter-spacing:inherit;
+  font-weight:inherit;
+}
+/* 每行作为整体：底色、圆角、左边色条、padding；内部 3 个 span 走 inline 文本流 */
+.backtest-records-inline .backtest-record-row{
+  display:flex;align-items:baseline;flex-wrap:wrap;
+  gap:clamp(4px,1vw,8px);
+  padding:clamp(8px,1.6vw,12px) clamp(10px,2vw,14px);
+  background:var(--bg-secondary);
+  border-left:3px solid var(--border);
+  border-radius:12px;
+}
+.backtest-records-inline .backtest-record-row > span{
+  display:inline;padding:0;background:transparent;
+}
+.backtest-records-inline .backtest-record-period{
+  white-space:nowrap;font-weight:700;color:var(--text);
+}
+.backtest-records-inline .backtest-record-predict{
+  color:var(--text);
+}
+/* 通用：预测行加大字号（覆盖所有 .backtest-records 容器，包括终极算法回测） */
+.backtest-records .backtest-record-predict{
+  font-size:clamp(14px,2.8vw,17px);
+  color:var(--text);
+  font-weight:700;
+  line-height:1.5;
+}
+/* 通用：生肖列表红色（对所有 .backtest-records 容器生效，inline 与终极回测都覆盖到） */
+.backtest-record-zodiacs{
+  color:#FF3B30;word-break:keep-all;
+}
+/* 命中的生肖字变蓝色高亮 */
+.backtest-record-zodiac-hit{color:#007AFF;font-weight:700}
+.backtest-records-inline .backtest-record-result{
+  white-space:nowrap;
+}
+.backtest-records-inline .backtest-record-result b{color:var(--text);font-weight:700;margin:0 1px}
+.backtest-records-inline .backtest-record-row.backtest-hit{border-left-color:#30D158}
+.backtest-records-inline .backtest-record-row.backtest-miss{border-left-color:#FF453A}
+.backtest-records-inline .backtest-record-row.backtest-pending{border-left-color:var(--primary);background:rgba(10,132,255,0.04)}
+.backtest-records-inline .backtest-record-hittext{font-weight:700;margin-left:clamp(2px,0.4vw,4px)}
+.backtest-records-inline .backtest-record-row.backtest-hit .backtest-record-hittext{color:#30D158}
+.backtest-records-inline .backtest-record-row.backtest-miss .backtest-record-hittext{color:#FF453A}
+.backtest-records-inline .backtest-record-row.backtest-pending .backtest-record-hittext{color:var(--primary)}
 .backtest-miss-analysis{margin-top:10px;padding:10px;background:rgba(255,69,58,0.05);border-radius:8px;border:1px solid rgba(255,69,58,0.15)}
 .backtest-miss-title{font-size:clamp(12px,2vw,14px);font-weight:600;color:#FF453A;margin-bottom:8px}
 .backtest-miss-row{display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,1.8vw,13px);padding:4px 0;color:var(--sub-text)}
@@ -2239,4 +2297,44 @@
 .sw-rank-hit { color: #30D158; font-weight: 700; }
 .sw-rank-miss { color: #FF453A; font-weight: 600; }
 .sw-rank-pending { color: var(--sub-text); opacity: 0.5; }
+
+/* 彩票列表通用布局（期号 + 预测 + 结果） */
+.lottery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lottery-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 小屏：期号占满整行，预测和结果占剩余行 */
+@media (max-width: 480px) {
+  .lottery-row {
+    grid-template-areas:
+      "expect expect"
+      "predict result";
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+  }
+
+  .lottery-cell.expect {
+    grid-area: expect;
+  }
+
+  .lottery-cell.predict {
+    grid-area: predict;
+  }
+
+  .lottery-cell.result {
+    grid-area: result;
+    text-align: left; /* 可选右对齐 */
+  }
+}
 

@@ -379,6 +379,13 @@ const EventBinder = {
       return;
     }
 
+    // 8.1 精选推荐回测（#zodiacFinalNum 点击）
+    const finalNumEl = target.closest('#zodiacFinalNum');
+    if(finalNumEl){
+      EventBinder._showFinalBacktest();
+      return;
+    }
+
     // 9. 资料页标签切换
     const zodiacTabBtn = target.closest('.zodiac-tab-btn[data-zodiac-tab]');
     if(zodiacTabBtn){
@@ -552,6 +559,37 @@ const EventBinder = {
       ViewZodiacPrediction.showColorBacktestModal(backtestData);
     } catch (e) {
       console.error('波色回测出错:', e);
+      Toast.show('回测计算出错，请重试');
+    }
+  },
+
+  /**
+   * 显示精选推荐 6 肖回测弹窗（点击 #zodiacFinalNum 触发）
+   */
+  _showFinalBacktest: function() {
+    try {
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+
+      if (!historyData || !historyData.length) {
+        Toast.show('暂无历史数据');
+        return;
+      }
+
+      if (historyData.length < 14) {
+        Toast.show('数据不足（需至少14期，当前仅' + historyData.length + '期）');
+        return;
+      }
+
+      var backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 20);
+      if (!backtestData) {
+        Toast.show('回测执行失败，请重试');
+        return;
+      }
+
+      ViewAnalysis.showFinalBacktestModal(backtestData);
+    } catch (e) {
+      console.error('精选六肖回测出错:', e);
       Toast.show('回测计算出错，请重试');
     }
   },

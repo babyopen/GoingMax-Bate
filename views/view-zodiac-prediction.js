@@ -251,17 +251,45 @@ const ViewZodiacPrediction = {
     html += '</div>';
     html += '</div>';
 
-    html += '<div class="backtest-records">';
-    var recentRecords = summary.records.slice(0, 10);
+    html += '<div class="backtest-records backtest-records-inline">';
+
+    // 新增：待开奖行（基于 state.analysis.v1Recommend 顶部插入）
+    try {
+      var _st = (typeof StateManager !== 'undefined') ? StateManager._state : null;
+      var _hist = _st && _st.analysis ? _st.analysis.historyData : null;
+      var _v1 = _st && _st.analysis ? _st.analysis.v1Recommend : null;
+      if (_hist && _hist.length > 0 && _v1 && _v1.length) {
+        var _nextExp = Number(_hist[0].expect) + 1;
+        var _top6 = _v1.map(function(c) { return c.zodiac; }).join('');
+        html += '<div class="backtest-record-row backtest-pending">';
+        html += '<span class="backtest-record-period">' + _nextExp + '期:</span>';
+        html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + _top6 + '</span>】</span>';
+        html += '<span class="backtest-record-result"><span class="backtest-record-hittext">待开奖</span></span>';
+        html += '</div>';
+      }
+    } catch (e) { /* 状态不可用则跳过 */ }
+
+    var recentRecords = summary.records.slice(0, 15);
     recentRecords.forEach(function(r) {
-      var hitIcon = r.hit ? '✅' : '❌';
-      var hitText = r.hit ? '第' + r.hitRank + '名命中' : '未命中';
+      var hitText = r.hit ? '准' : '错';
       var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
-      var top6Text = r.top6.join(' ');
+      // 命中的生肖单独包裹 span 以高亮（紧凑拼接，不加空格）
+      var top6Html;
+      if (r.hit && r.hitRank >= 1 && r.hitRank <= r.top6.length) {
+        var hitIdx = r.hitRank - 1;
+        top6Html = r.top6.map(function(z, i) {
+          if (i === hitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
+          return z;
+        }).join('');
+      } else {
+        top6Html = r.top6.join('');
+      }
+      var actualNumRaw = r.actualTe !== undefined ? r.actualTe : (r.actualNumber !== undefined ? r.actualNumber : '');
+      var actualNum = (actualNumRaw !== '' && Number(actualNumRaw) >= 1 && Number(actualNumRaw) < 10) ? '0' + actualNumRaw : actualNumRaw;
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
-      html += '<div class="backtest-record-period">' + r.expect + '期</div>';
-      html += '<div class="backtest-record-predict">预测：' + top6Text + '</div>';
-      html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
+      html += '<span class="backtest-record-period">' + r.expect + '期:</span>';
+      html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
+      html += '<span class="backtest-record-result">开:<b>' + r.actualZodiac + '</b>' + actualNum + '<span class="backtest-record-hittext">' + hitText + '</span></span>';
       html += '</div>';
     });
     html += '</div>';
@@ -1063,17 +1091,28 @@ const ViewZodiacPrediction = {
     html += '</div>';
     html += '</div>';
 
-    html += '<div class="backtest-records">';
-    var recentRecords = summary.records.slice(0, 8);
+    html += '<div class="backtest-records backtest-records-inline">';
+    var recentRecords = summary.records.slice(0, 15);
     recentRecords.forEach(function(r) {
-      var hitIcon = r.hit ? '✅' : '❌';
-      var hitText = r.hit ? '第' + r.hitRank + '名命中' : '未命中';
+      var hitText = r.hit ? '准' : '错';
       var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
-      var top6Text = r.top6.join(' ');
+      // 命中的生肖单独包裹 span 以高亮（紧凑拼接，不加空格）
+      var top6Html;
+      if (r.hit && r.hitRank >= 1 && r.hitRank <= r.top6.length) {
+        var hitIdx = r.hitRank - 1;
+        top6Html = r.top6.map(function(z, i) {
+          if (i === hitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
+          return z;
+        }).join('');
+      } else {
+        top6Html = r.top6.join('');
+      }
+      var actualNumRaw = r.actualTe !== undefined ? r.actualTe : (r.actualNumber !== undefined ? r.actualNumber : '');
+      var actualNum = (actualNumRaw !== '' && Number(actualNumRaw) >= 1 && Number(actualNumRaw) < 10) ? '0' + actualNumRaw : actualNumRaw;
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
-      html += '<div class="backtest-record-period">' + r.expect + '期</div>';
-      html += '<div class="backtest-record-predict">预测：' + top6Text + '</div>';
-      html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
+      html += '<span class="backtest-record-period">' + r.expect + '期:</span>';
+      html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
+      html += '<span class="backtest-record-result">开:<b>' + r.actualZodiac + '</b>' + actualNum + '<span class="backtest-record-hittext">' + hitText + '</span></span>';
       html += '</div>';
     });
     html += '</div>';
@@ -1378,7 +1417,7 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     html += '<div class="unrec-section unrec-final">';
-    html += '<div class="unrec-source-title unrec-highlight">未推荐生肖（' + unrecommended.length + '个）</div>';
+    html += '<div class="unrec-source-title unrec-highlight">绝杀生肖（' + unrecommended.length + '个）</div>';
     if (unrecommended.length) {
       html += '<div class="unrec-grid">';
       unrecommended.forEach(function(item) {
@@ -1533,15 +1572,35 @@ const ViewZodiacPrediction = {
         hitRowClass = 'backtest-backup-hit';
       }
 
+      // 主推：命中行高亮命中的生肖（蓝色）
       var topNText = r.topN.join(' ');
-      var backupText = r.backupTopN && r.backupTopN.length > 0 ? ' 备选: ' + r.backupTopN.join(' ') : '';
+      if (r.hit && r.hitRank >= 1 && r.hitRank <= r.topN.length) {
+        var _hitIdx = r.hitRank - 1;
+        topNText = r.topN.map(function(z, i) {
+          if (i === _hitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
+          return z;
+        }).join(' ');
+      }
+      // 备选：备选命中行高亮命中的生肖（蓝色）
+      var backupText = '';
+      if (r.backupTopN && r.backupTopN.length > 0) {
+        var _bHtml = r.backupTopN.join(' ');
+        if (r.backupHit && r.backupHitRank >= 1 && r.backupHitRank <= r.backupTopN.length) {
+          var _bHitIdx = r.backupHitRank - 1;
+          _bHtml = r.backupTopN.map(function(z, i) {
+            if (i === _bHitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
+            return z;
+          }).join(' ');
+        }
+        backupText = '  备选：' + _bHtml;
+      }
 
       var stageTag = r.stage ? '<span class="backtest-stage-tag">' + r.stage.replace('稳定运行期', '').replace('过渡混沌期', '过渡') + '</span>' : '';
       var blackInfo = r.blackListCount > 0 ? '<span class="backtest-black-info">降权' + r.blackListCount + '个</span>' : '';
 
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
       html += '<div class="backtest-record-period">' + r.expect + '期 ' + stageTag + '</div>';
-      html += '<div class="backtest-record-predict">主推：' + topNText + backupText + ' ' + blackInfo + '</div>';
+      html += '<span class="backtest-record-predict"><span class="backtest-record-zodiacs">主推：' + topNText + backupText + '</span>' + blackInfo + '</span>';
       html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
       html += '</div>';
     });

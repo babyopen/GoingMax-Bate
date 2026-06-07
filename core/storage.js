@@ -15,7 +15,9 @@ const Storage = {
     // 用户偏好（区域变动追踪卡片展开状态）
     ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded',
     // 滑动窗口预测历史记录（主推）
-    SLIDING_WINDOW_RECORDS: 'slidingWindowRecords'
+    SLIDING_WINDOW_RECORDS: 'slidingWindowRecords',
+    // 当前主页临时筛选状态（新增：用于后台返回/页面刷新后恢复未保存的筛选）
+    CURRENT_FILTER: 'currentFilter'
   }),
 
   /**
@@ -184,5 +186,78 @@ const Storage = {
    */
   saveZoneChangeExpanded: (expanded) => {
     return Storage.set(Storage.KEYS.ZONE_CHANGE_EXPANDED, !!expanded);
+  },
+
+  // ============================================================
+  // 新增：当前主页临时筛选状态持久化（2026-06-07）
+  // 用途：解决"后台返回/页面刷新后丢失未保存的筛选"问题
+  // 设计：与 SAVED_FILTERS（已命名方案）相互独立，互不干扰
+  // ============================================================
+
+  /**
+   * 保存当前主页临时筛选状态到 localStorage
+   * @param {Object} payload - 包含 selected/excluded/locked/marked/markCount/excludeHistory 的对象
+   * @returns {boolean} 是否成功
+   */
+  saveCurrentFilter: (payload) => {
+    if(!payload || typeof payload !== 'object') return false;
+    // 只持久化白名单字段，避免写入临时定时器/分析状态
+    const safe = {
+      selected: payload.selected || {},
+      excluded: Array.isArray(payload.excluded) ? payload.excluded : [],
+      locked: payload.locked || {},
+      marked: payload.marked || {},
+      markCount: payload.markCount || {},
+      excludeHistory: Array.isArray(payload.excludeHistory) ? payload.excludeHistory : [],
+      lockExclude: !!payload.lockExclude,
+      showAllFilters: !!payload.showAllFilters,
+      _ts: Date.now()
+    };
+    return Storage.set(Storage.KEYS.CURRENT_FILTER, safe);
+  },
+
+  /**
+   * 加载并校验当前主页临时筛选状态
+   * @returns {Object|null} 合法的状态对象；无缓存/校验失败返回 null
+   */
+  loadCurrentFilter: () => {
+    const raw = Storage.get(Storage.KEYS.CURRENT_FILTER, null);
+    if(!raw || typeof raw !== 'object') return null;
+
+    // 7 天过期自动失效，避免历史脏数据长期生效
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    if(raw._ts && (Date.now() - raw._ts) > SEVEN_DAYS) {
+      Storage.remove(Storage.KEYS.CURRENT_FILTER);
+      return null;
+    }
+
+    // 字段校验
+    const safe = {
+      selected: (raw.selected && typeof raw.selected === 'object') ? raw.selected : {},
+      excluded: Array.isArray(raw.excluded) ? raw.excluded : [],
+      locked: (raw.locked && typeof raw.locked === 'object') ? raw.locked : {},
+      marked: (raw.marked && typeof raw.marked === 'object') ? raw.marked : {},
+      markCount: (raw.markCount && typeof raw.markCount === 'object') ? raw.markCount : {},
+      excludeHistory: Array.isArray(raw.excludeHistory) ? raw.excludeHistory : [],
+      lockExclude: !!raw.lockExclude,
+      showAllFilters: !!raw.showAllFilters,
+      _ts: raw._ts || Date.now()
+    };
+
+    // 兜底：selected 必须包含所有 group（缺失补空数组）
+    const expectedGroups = ['zodiac','color','colorsx','type','element','head','tail','sum','sumOdd','sumSize','tailSize','bs','hot','num'];
+    expectedGroups.forEach(g => {
+      if(!Array.isArray(safe.selected[g])) safe.selected[g] = [];
+    });
+
+    return safe;
+  },
+
+  /**
+   * 清除当前主页临时筛选状态缓存
+   * @returns {boolean} 是否成功
+   */
+  clearCurrentFilter: () => {
+    return Storage.remove(Storage.KEYS.CURRENT_FILTER);
   }
 };

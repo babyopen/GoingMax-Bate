@@ -27,7 +27,11 @@ async function initApp() {
     Business.checkDrawTimeLoop();
     // 13. 后台静默更新历史数据
     Business.refreshHistory(true);
-    // 14. 隐藏加载遮罩
+    // 14. 新增：初始化当前主页临时筛选状态持久化（必须在 renderAll 之前完成恢复）
+    Business.initFilterPersistence();
+    // 15. 重新渲染一次以反映从 localStorage 恢复的筛选状态
+    Render.renderAll();
+    // 16. 隐藏加载遮罩
     Render.hideLoading();
     
     console.log(`GiongBeta v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);

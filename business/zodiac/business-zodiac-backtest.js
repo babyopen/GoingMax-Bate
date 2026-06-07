@@ -253,6 +253,97 @@ const ZodiacPredictionBacktest = {
   },
 
   /**
+   * 精选特码 5 维算法号码回测（用于 #zodiacFinalNum 点击弹窗）
+   * 算法：对每一期回测目标，模拟"在那一期时"用前 12 期窗口跑 5 维算法
+   *       得出 top N 推荐号码，与实际特码对比判定命中。
+   * @param {Array} historyData - 历史数据（[0] 最新，[1] 次新，…）
+   * @param {number} testCount - 回测期数（默认 20，上限 30）
+   * @returns {Object|null} 回测汇总
+   */
+  runFinalZodiacBacktest: function(historyData, testCount) {
+    if (!historyData || historyData.length < 14) return null;
+    testCount = Math.min(testCount || 20, 30);
+    var results = [];
+
+    for (var offset = 0; offset < testCount; offset++) {
+      var targetItem = historyData[offset];
+      if (!targetItem) break;
+      // 至少需要：1 期最新 + 12 期窗口 + 1 期跟随统计 = 14 期
+      if (historyData.length < offset + 14) break;
+
+      // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+12] 共 12 期
+      var list = historyData.slice(offset + 1, offset + 13);
+
+      // 2. 计算"上期生肖的常跟随生肖"：从历史数据 historyData[offset+2..end] 中
+      //    找出 latestZodiac 之后最常跟出的生肖 Top3
+      var latestItem = list[0];
+      var latestZodiac = '';
+      if (latestItem) {
+        var zodArrRaw = (latestItem.zodiac || '').split(',');
+        var zodArr = zodArrRaw.map(function(z) { return CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z; });
+        latestZodiac = zodArr[6] || '';
+      }
+      var followZodiacs = [];
+      if (latestZodiac) {
+        var followData = historyData.slice(offset + 2, offset + 14);
+        var followCount = {};
+        for (var fi = 0; fi < followData.length - 1; fi++) {
+          var preS = Utils.SpecialCalculator.getSpecial(followData[fi]);
+          var curS = Utils.SpecialCalculator.getSpecial(followData[fi + 1]);
+          if (preS.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curS.zod)) {
+            followCount[curS.zod] = (followCount[curS.zod] || 0) + 1;
+          }
+        }
+        followZodiacs = Object.entries(followCount)
+          .sort(function(a, b) { return b[1] - a[1]; })
+          .slice(0, 3)
+          .map(function(e) { return e[0]; });
+      }
+
+      // 3. 调用 5 维核心算法得到 top 5 推荐号码
+      var recommend = Business._calcFinalZodiacRecommend(list, 5, followZodiacs);
+      var recommendedNums = recommend.numbers || [];
+
+      // 4. 实际特码对比
+      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      var actualNum = actualSpecial.te || 0;
+      var isHit = recommendedNums.indexOf(actualNum) !== -1;
+
+      results.push({
+        expect: targetItem.expect,
+        recommendedNums: recommendedNums,
+        actualNumber: actualNum,
+        actualZodiac: actualSpecial.zod || '-',
+        isHit: isHit
+      });
+    }
+
+    if (!results.length) return null;
+
+    var hitCount = results.filter(function(r) { return r.isHit; }).length;
+    var hitRate = Math.round((hitCount / results.length) * 100);
+    var recentResults = results.slice(0, 12);
+    var recentHits = recentResults.filter(function(r) { return r.isHit; }).length;
+    var recentHitRate = recentResults.length > 0 ? Math.round((recentHits / recentResults.length) * 100) : 0;
+    var currentStreak = 0;
+    for (var i = 0; i < recentResults.length; i++) {
+      if (recentResults[i].isHit) currentStreak++;
+      else break;
+    }
+
+    return {
+      totalTests: results.length,
+      totalHits: hitCount,
+      totalHitRate: hitRate,
+      recentTests: recentResults.length,
+      recentHits: recentHits,
+      recentHitRate: recentHitRate,
+      currentStreak: currentStreak,
+      details: recentResults
+    };
+  },
+
+  /**
    * 综合三个推荐源，计算未被推荐的所有生肖
    * @param {Array} v1List - v1 推荐列表 [{zodiac}, ...]
    * @param {Array} v2List - v2 推荐列表 [{zodiac}, ...]

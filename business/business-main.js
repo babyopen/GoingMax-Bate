@@ -308,6 +308,86 @@ const Business = {
     }
   },
 
+  // ============================================================
+  // 新增：当前主页临时筛选状态持久化（2026-06-07）
+  // 解决问题：主页筛选后切到后台，被系统杀掉进程或刷新页面后丢失未保存的筛选
+  // ============================================================
+  /**
+   * 初始化筛选状态持久化
+   *   1) 启动时从 localStorage 恢复（仅在内存 state 全空时生效，避免覆盖已加载的状态）
+   *   2) 注册 setState 钩子：所有状态变更节流（500ms）写入 localStorage
+   *   3) 注册 pagehide / visibilitychange 兜底：iOS WebView 切后台时立即 flush
+   */
+  initFilterPersistence: () => {
+    // 1) 启动恢复：仅当 state 全空时从缓存恢复
+    const cache = Storage.loadCurrentFilter();
+    if(cache){
+      const s = StateManager._state;
+      const hasAnyState =
+        Object.values(s.selected || {}).some(arr => Array.isArray(arr) && arr.length > 0) ||
+        (Array.isArray(s.excluded) && s.excluded.length > 0) ||
+        Object.values(s.locked || {}).some(arr => Array.isArray(arr) && arr.length > 0) ||
+        Object.values(s.marked || {}).some(obj => obj && typeof obj === 'object' && Object.keys(obj).length > 0);
+
+      if(!hasAnyState){
+        // 合并：以默认结构为底，覆盖缓存字段
+        const restored = {
+          selected: { ...s.selected, ...cache.selected },
+          excluded: cache.excluded,
+          locked: cache.locked,
+          marked: cache.marked,
+          markCount: cache.markCount,
+          excludeHistory: cache.excludeHistory,
+          lockExclude: cache.lockExclude,
+          showAllFilters: cache.showAllFilters
+        };
+        // 使用 needRender=false 避免初始化期重复渲染（Render.renderAll 会在 initApp 末尾被调用）
+        StateManager.setState(restored, false);
+        // 同步排除锁定复选框
+        if(typeof DOM !== 'undefined' && DOM.lockExclude){
+          DOM.lockExclude.checked = !!cache.lockExclude;
+        }
+      }
+    }
+
+    // 2) 注册节流持久化钩子（500ms 合并连续点击）
+    const persistDebounced = Utils.debounce(() => {
+      const s = StateManager._state;
+      Storage.saveCurrentFilter({
+        selected: s.selected,
+        excluded: s.excluded,
+        locked: s.locked,
+        marked: s.marked,
+        markCount: s.markCount,
+        excludeHistory: s.excludeHistory,
+        lockExclude: s.lockExclude,
+        showAllFilters: s.showAllFilters
+      });
+    }, 500);
+    StateManager._persistCurrentFilter = persistDebounced;
+
+    // 3) pagehide / visibilitychange 兜底：iOS WebView 切后台时立即 flush
+    const flushPersist = () => {
+      try {
+        const s = StateManager._state;
+        Storage.saveCurrentFilter({
+          selected: s.selected,
+          excluded: s.excluded,
+          locked: s.locked,
+          marked: s.marked,
+          markCount: s.markCount,
+          excludeHistory: s.excludeHistory,
+          lockExclude: s.lockExclude,
+          showAllFilters: s.showAllFilters
+        });
+      } catch(_) {}
+    };
+    window.addEventListener('pagehide', flushPersist);
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'hidden') flushPersist();
+    });
+  },
+
   // ====================== 分析页面相关 ======================
   /**
    * 加载历史记录缓存
@@ -894,13 +974,21 @@ const Business = {
   },
 
   /**
-   * 渲染生肖精选号码
-   * @param {Object} data - 分析数据
+   * 精选特码 5 维加权打分核心（v2 5 维算法核心，供实时推荐 + 回测共用）
+   * 算法说明：基于近期 12 期特码的头/尾/波色/五行统计热度，再结合
+   *          "上期开出生肖→下期常跟生肖"的跟随规律，对 1-49
+   *          每个号码进行加权打分，按分数降序推荐。
+   * @param {Array} list - 历史数据（[0] 最新，[1] 次新，…）
+   * @param {number} targetCount - 推荐数量
+   * @param {Array} followZodiacs - 跟随生肖（外部传入，回测可动态计算）
+   * @returns {Object} { numbers: number[], candidateNums: [{num, score}] }
    */
-  renderZodiacFinalNums: (data) => {
-    const state = StateManager._state;
+  _calcFinalZodiacRecommend: (list, targetCount, followZodiacs) => {
+    if(!list || list.length === 0) return { numbers: [], candidateNums: [] };
+
+    // ========== 1. 号码→生肖 映射（最新一期 openCode+zodiac）==========
     const numZodiacMap = new Map();
-    const latestItem = data.list[0];
+    const latestItem = list[0];
     if(latestItem) {
       const codeArr = (latestItem.openCode || '').split(',');
       const zodArrRaw = (latestItem.zodiac || '').split(',');
@@ -911,34 +999,118 @@ const Business = {
       });
     }
 
-    const coreZodiacs = data.topZod.slice(0, 2).map(i => i[0]);
-    const missZodiac = Object.entries(data.zodMiss).sort((a, b) => b[1] - a[1]).slice(0, 1).map(i => i[0]);
-    if(missZodiac.length && !coreZodiacs.includes(missZodiac[0])) coreZodiacs.push(missZodiac[0]);
+    // ========== 2. 1-49 号码 → 波色 / 五行 反查表 ==========
+    const numColorMap = {};
+    const numWuxingMap = {};
+    for(let n = 1; n <= 49; n++) {
+      numColorMap[n]  = Object.keys(CONFIG.COLOR_MAP).find(k => CONFIG.COLOR_MAP[k].includes(n))  || '红';
+      numWuxingMap[n] = Object.keys(CONFIG.ELEMENT_MAP).find(k => CONFIG.ELEMENT_MAP[k].includes(n)) || '金';
+    }
 
-    const hotTails = data.topTail.slice(0, 3).map(i => i.t);
+    // ========== 3. 近期12期 头/尾/波色/五行 频次统计 ==========
+    const RECENT_N = 12;
+    const recentList = list.slice(0, Math.min(RECENT_N, list.length));
+    const headCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+    const tailCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
+    const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+    recentList.forEach(item => {
+      const s = Utils.SpecialCalculator.getSpecial(item);
+      headCount[s.head]   = (headCount[s.head]   || 0) + 1;
+      tailCount[s.tail]   = (tailCount[s.tail]   || 0) + 1;
+      colorCount[s.colorName]  = (colorCount[s.colorName]  || 0) + 1;
+      wuxingCount[s.wuxing]    = (wuxingCount[s.wuxing]    || 0) + 1;
+    });
+
+    // ========== 4. 提取热头/热尾/热色/热五行 TOP ==========
+    const topHeads   = Object.entries(headCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => Number(e[0]));
+    const topTails   = Object.entries(tailCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => Number(e[0]));
+    const topColors  = Object.entries(colorCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0]);
+    const topWuxing  = Object.entries(wuxingCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0]);
+    const topFollowZodiacs = Array.isArray(followZodiacs) ? followZodiacs : [];
+
+    // ========== 5. 1-49 号码 5 维加权打分 ==========
+    // 权重设计（满分 10）：
+    //   跟随生肖 3   —— 最强信号（"上期开X→下期常跟Y"）
+    //   头数/尾数 2   —— 位置信号
+    //   波色/五行 1.5 —— 属性信号
+    const W_FOLLOW = 3, W_HEAD = 2, W_TAIL = 2, W_COLOR = 1.5, W_WUXING = 1.5;
 
     const candidateNums = [];
     for(let num = 1; num <= 49; num++) {
-      const zod = numZodiacMap.get(num);
-      const tail = num % 10;
-      if(coreZodiacs.includes(zod) && hotTails.includes(tail)) {
-        const miss = data.zodMiss[zod] || 0;
-        const count = data.zodCount[zod] || 0;
-        candidateNums.push({ num, weight: count * 10 + (10 - miss) });
+      const zod   = numZodiacMap.get(num);
+      if(!zod) continue;
+      const head  = Math.floor(num / 10);
+      const tail  = num % 10;
+      const color = numColorMap[num];
+      const wx    = numWuxingMap[num];
+
+      let score = 0;
+      if(topFollowZodiacs.includes(zod))    score += W_FOLLOW;
+      if(topHeads.includes(head))           score += W_HEAD;
+      if(topTails.includes(tail))           score += W_TAIL;
+      if(topColors.includes(color))         score += W_COLOR;
+      if(topWuxing.includes(wx))            score += W_WUXING;
+
+      candidateNums.push({ num, score });
+    }
+
+    // ========== 6. 排序 + 选取 + 补位 ==========
+    const primary  = candidateNums.filter(c => c.score > 0)
+      .sort((a, b) => b.score - a.score || a.num - b.num);
+    const fallback = candidateNums.filter(c => c.score === 0)
+      .sort((a, b) => a.num - b.num);
+
+    let numbers = primary.slice(0, targetCount).map(c => c.num);
+
+    if(numbers.length < targetCount) {
+      const fillNums = fallback.map(c => c.num)
+        .filter(n => !numbers.includes(n))
+        .slice(0, targetCount - numbers.length);
+      numbers.push(...fillNums);
+    }
+
+    if(numbers.length < targetCount) {
+      const historyFill = [...new Set(list.map(item => Utils.SpecialCalculator.getSpecial(item).te))]
+        .filter(num => !numbers.includes(num))
+        .slice(0, targetCount - numbers.length);
+      numbers.push(...historyFill);
+    }
+
+    return { numbers, candidateNums };
+  },
+
+  /**
+   * 渲染生肖精选号码（v2 5维加权算法 - 实时推荐）
+   * @param {Object} data - 分析数据（由 calcZodiacAnalysis 提供）
+   * @returns {string} 推荐号码字符串
+   */
+  renderZodiacFinalNums: (data) => {
+    const state = StateManager._state;
+    const targetCount = state.analysis.selectedNumCount;
+
+    // 1. 计算"上期开出生肖的常跟随生肖"（来自全量 followMap）
+    const latestItem = data.list && data.list[0];
+    let topFollowZodiacs = [];
+    if(latestItem) {
+      const codeArr = (latestItem.openCode || '').split(',');
+      const zodArrRaw = (latestItem.zodiac || '').split(',');
+      const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+      const latestTe = Math.max(0, Number(codeArr[6] || 0));
+      const latestZodiac = zodArr[6] || '';
+      if(latestZodiac && data.followMap && data.followMap[latestZodiac]) {
+        topFollowZodiacs = Object.entries(data.followMap[latestZodiac])
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(e => e[0]);
       }
     }
 
-    const targetCount = state.analysis.selectedNumCount;
-    candidateNums.sort((a, b) => b.weight - a.weight);
-    let finalNums = candidateNums.slice(0, targetCount).map(i => i.num);
+    // 2. 调用核心算法
+    const result = Business._calcFinalZodiacRecommend(data.list, targetCount, topFollowZodiacs);
+    let finalNums = (result.numbers || []).slice();
 
-    if(finalNums.length < targetCount) {
-      const fillNums = [...new Set(data.list.map(item => Utils.SpecialCalculator.getSpecial(item).te))]
-        .filter(num => !finalNums.includes(num))
-        .slice(0, targetCount - finalNums.length);
-      finalNums.push(...fillNums);
-    }
-
+    // 3. 升序展示
     finalNums.sort((a, b) => a - b);
     const finalFormatNums = finalNums.map(num => String(num).padStart(2, '0'));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');

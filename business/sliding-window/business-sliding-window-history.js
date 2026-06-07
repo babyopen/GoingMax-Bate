@@ -134,6 +134,9 @@ const BusinessSlidingWindowHistory = {
       candidates: candidates,
       candidateScores: candidateScores,
       algorithm: prediction.algorithm || this.ALGORITHM_VERSION,
+      // 保存推荐当时的 allScores（用于回填实际开奖前的窗口区域）
+      // 关键：这里的 allScores 是推荐时计算的，对应"开出之前"的窗口统计
+      allScores: prediction.allScores || [],
       actualZodiac: '',
       actualPeriod: prediction.nextExpect,
       hitRank: 0,
@@ -204,11 +207,27 @@ const BusinessSlidingWindowHistory = {
           rec.hitStatus = rec.hitRank > 0 ? 'hit' : 'miss';
           rec.checkedTime = Date.now();
           // 回填实际开奖时所在窗口区域
-          if (zoneMap[actual]) {
+          // 优先使用 rec.allScores（推荐当时的快照，对应"开出之前"的窗口统计）
+          // 兼容老数据：若无 rec.allScores 则回退到当前的 allScores
+          var recZoneMap = {};
+          var recScores = rec.allScores && rec.allScores.length > 0 ? rec.allScores : allScores;
+          if (Array.isArray(recScores)) {
+            for (var s = 0; s < recScores.length; s++) {
+              var sc = recScores[s];
+              if (sc && sc.shengxiao) {
+                recZoneMap[sc.shengxiao] = {
+                  z12: sc.zone12 || '',
+                  z24: sc.zone24 || '',
+                  z36: sc.zone36 || ''
+                };
+              }
+            }
+          }
+          if (recZoneMap[actual]) {
             rec.actualZones = {
-              zone12: zoneMap[actual].z12,
-              zone24: zoneMap[actual].z24,
-              zone36: zoneMap[actual].z36
+              zone12: recZoneMap[actual].z12,
+              zone24: recZoneMap[actual].z24,
+              zone36: recZoneMap[actual].z36
             };
           }
           updated = true;
