@@ -321,7 +321,7 @@ const ViewAnalysis = {
 
     backtestData.details.forEach(function(item) {
       var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
-                                : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">不</span>';
+                                : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">错</span>';
       var actualNumStr = String(item.actualNumber || 0).padStart(2, '0');
       // 5 个推荐号码：红色；若实际号码在其中则蓝色高亮
       var numsHtml = (item.recommendedNums || []).map(function(n) {
@@ -334,7 +334,6 @@ const ViewAnalysis = {
 
       html += '<div style="display:flex;align-items:center;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:13px;line-height:1.6;">';
       html += '<span style="font-weight:700;color:#1a1a1a;min-width:60px;">' + item.expect + '期</span>';
-      html += '<span style="color:#1a1a1a;">:精选推荐</span>';
       html += '<span style="color:#1a1a1a;margin:0 2px;">【</span>';
       html += '<span style="letter-spacing:1px;">' + numsHtml + '</span>';
       html += '<span style="color:#1a1a1a;margin:0 2px;">】</span>';
