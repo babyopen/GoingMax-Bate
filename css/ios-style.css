@@ -195,4 +195,64 @@
   
   /* 频率标签深色适配 */
   .freq-tab-btn{background:rgba(255,255,255,0.06)}
+
+  /* ====================== 回测追踪模块 dark mode 适配 ====================== */
+  /* 摘要容器 + 记录行：暗背景下提亮背景（提高透明度让背景更明显可见） */
+  .backtest-summary{background:rgba(255,255,255,0.07)}
+  .backtest-record-row{background:rgba(255,255,255,0.08);border-left-color:rgba(255,255,255,0.22)}
+  .backtest-records-inline .backtest-record-row{background:rgba(255,255,255,0.08);border-left-color:rgba(255,255,255,0.22)}
+
+  /* 命中/备选/未命中/待开奖行：对应语义色加深（暗底上更清晰） */
+  .backtest-record-row.backtest-hit{background:rgba(48,209,88,0.14);border-left-color:#30D158}
+  .backtest-record-row.backtest-backup-hit{background:rgba(48,209,88,0.12);border-left-color:#30D158}
+  .backtest-record-row.backtest-miss{background:rgba(255,69,58,0.12);border-left-color:#FF453A}
+  .backtest-record-row.backtest-pending{background:rgba(10,132,255,0.10);border-left-color:var(--primary)}
+
+  /* 文本颜色：暗模式下使用半透明白提亮（确保清晰可见） */
+  .backtest-record-period{color:rgba(235,235,245,0.95)}
+  .backtest-record-predict{color:rgba(235,235,245,0.8)}
+  .backtest-record-result{color:rgba(235,235,245,0.92)}
+  .backtest-records-inline .backtest-record-period{color:rgba(235,235,245,0.95)}
+  .backtest-records-inline .backtest-record-predict{color:rgba(235,235,245,0.85)}
+  .backtest-records-inline .backtest-record-result{color:rgba(235,235,245,0.92)}
+  .backtest-records-inline .backtest-record-result b{color:#ffffff}
+
+  /* 主/防 等 inline color 标签：覆盖 view 渲染的 style="color:#1a1a1a"，dark mode 用半透明白提亮 */
+  .backtest-record-zodiacs > span[style*="color"]{
+    color:rgba(235,235,245,0.78) !important;
+  }
+
+  /* 生肖文字：主推红色 + 命中蓝色 在暗底上提亮（iOS 暗色规范） */
+  .backtest-record-zodiacs{color:#FF6961}
+  .backtest-record-zodiac-hit{color:#5AC8FA}
+
+  /* 命中率颜色：暗模式下三档全部提亮 */
+  .backtest-rate-high{color:#30D158}
+  .backtest-rate-mid{color:#FFB340}
+  .backtest-rate-low{color:#FF6961}
+
+  /* 统计标签 + 分解项：次要文字用低透明白 */
+  .backtest-stat-label{color:rgba(235,235,245,0.6)}
+  .backtest-breakdown-item{color:rgba(235,235,245,0.6)}
+
+  /* 未命中分析块：暗模式下加深背景与边框 */
+  .backtest-miss-title{color:#FF6961}
+  .backtest-miss-analysis{background:rgba(255,69,58,0.12);border-color:rgba(255,69,58,0.32)}
+  .backtest-miss-row{color:rgba(235,235,245,0.65)}
+  .backtest-miss-row span:first-child{color:#ffffff}
+
+  /* 降权徽章：橙色提亮 + 背景加深 */
+  .backtest-black-info{color:#FFB340;background:rgba(255,179,64,0.2)}
+
+  /* 段落组 + 段落标题：暗底上加深背景、提亮分隔线 */
+  .backtest-section-group{background:rgba(255,255,255,0.06)}
+  .backtest-section-title{color:rgba(235,235,245,0.9);border-bottom-color:rgba(255,255,255,0.18)}
+
+  /* 合计高亮：暗底加深绿 */
+  .backtest-total-highlight{background:linear-gradient(135deg, rgba(52,199,89,0.2), rgba(48,209,88,0.14));border-color:rgba(52,199,89,0.4)}
+  .backtest-total-highlight .backtest-section-title{color:#5BD672}
+
+  /* 自适应提示 + 徽章：暗底加深 */
+  .backtest-adaptive-info{background:rgba(255,179,64,0.12);border-color:rgba(255,179,64,0.3);color:rgba(235,235,245,0.9)}
+  .adaptive-badge-small{color:#FFB340;background:rgba(255,179,64,0.22)}
 }

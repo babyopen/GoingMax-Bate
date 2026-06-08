@@ -1410,7 +1410,20 @@ const ViewZodiacPrediction = {
     var html = '<div class="unrec-card">';
 
     html += '<div class="unrec-section unrec-final">';
-    html += '<div class="unrec-source-title unrec-highlight">绝杀生肖（' + unrecommended.length + '个）</div>';
+    html += '<div class="unrec-source-title unrec-highlight">';
+    html += '<span>绝杀生肖（' + unrecommended.length + '个）</span>';
+    // 查看来源图标按钮：与标题同一行右侧，点击弹窗展示 ①②③ + 合并去重
+    html += '<button class="unrec-view-sources-btn" data-action="showUnrecSources" type="button" aria-label="查看来源（' + allRecommended.length + ' 个推荐 · ' + unrecommended.length + ' 个绝杀）" title="查看来源">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    html += '<line x1="8" y1="6" x2="21" y2="6"></line>';
+    html += '<line x1="8" y1="12" x2="21" y2="12"></line>';
+    html += '<line x1="8" y1="18" x2="21" y2="18"></line>';
+    html += '<line x1="3" y1="6" x2="3.01" y2="6"></line>';
+    html += '<line x1="3" y1="12" x2="3.01" y2="12"></line>';
+    html += '<line x1="3" y1="18" x2="3.01" y2="18"></line>';
+    html += '</svg>';
+    html += '</button>';
+    html += '</div>';
     if (unrecommended.length) {
       html += '<div class="unrec-grid">';
       unrecommended.forEach(function(item) {
@@ -1424,18 +1437,6 @@ const ViewZodiacPrediction = {
       html += '<div class="unrec-empty-tip">全部生肖均被推荐</div>';
     }
     html += '</div>';
-
-    // 查看来源图标按钮：位于卡片右上角，点击弹窗展示 ①②③ + 合并去重
-    html += '<button class="unrec-view-sources-btn" data-action="showUnrecSources" type="button" aria-label="查看来源（' + allRecommended.length + ' 个推荐 · ' + unrecommended.length + ' 个绝杀）" title="查看来源">';
-    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
-    html += '<line x1="8" y1="6" x2="21" y2="6"></line>';
-    html += '<line x1="8" y1="12" x2="21" y2="12"></line>';
-    html += '<line x1="8" y1="18" x2="21" y2="18"></line>';
-    html += '<line x1="3" y1="6" x2="3.01" y2="6"></line>';
-    html += '<line x1="3" y1="12" x2="3.01" y2="12"></line>';
-    html += '<line x1="3" y1="18" x2="3.01" y2="18"></line>';
-    html += '</svg>';
-    html += '</button>';
 
     html += '</div>';
     panel.innerHTML = html;
