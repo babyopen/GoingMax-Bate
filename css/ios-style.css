@@ -130,6 +130,14 @@
     --danger:#FF453A;
     --blue:#0A84FF;
     --green:#30D158;
+    /* 区域（zone）配色集中变量（2026-06-09 重构，card.css 中重复 3 次的字面值改用变量） */
+    --zone-peak:#FF453A;--zone-peak-bg:rgba(255,69,58,0.18);--zone-peak-bg-12:rgba(255,69,58,0.12);
+    --zone-high:#FF9500;--zone-high-bg:rgba(255,149,0,0.15);--zone-high-bg-12:rgba(255,149,0,0.12);
+    --zone-ovht:#FF6B6B;--zone-ovht-bg:rgba(255,107,107,0.14);--zone-ovht-bg-12:rgba(255,107,107,0.12);
+    --zone-mid:#0A84FF;--zone-mid-bg:rgba(0,122,255,0.12);--zone-mid-bg-8:rgba(0,122,255,0.08);
+    --zone-active:#E6A823;--zone-active-bg:rgba(230,168,35,0.14);--zone-active-bg-12:rgba(230,168,35,0.12);
+    --zone-low:#30D158;--zone-low-bg:rgba(48,209,88,0.12);
+    --zone-wait:#AF52DE;--zone-wait-bg:rgba(175,82,222,0.12);
     --border:rgba(255,255,255,0.1);
     --overlay:rgba(0,0,0,0.85);
     --bg-secondary:#2C2C2E;

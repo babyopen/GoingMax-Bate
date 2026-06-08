@@ -36,11 +36,7 @@ const ViewZodiacPrediction = {
 
       var emoji = ZodiacPrediction.getZodiacEmoji(card.zodiac);
 
-      html += '<div class="zodiac-static-card ' + cardClass + '">';
-      html += '<div class="zodiac-static-rank">' + rankNum + '</div>';
-      html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
-      html += '<div class="zodiac-static-name">' + card.zodiac + '</div>';
-      html += '</div>';
+      html += ViewZodiacPrediction._renderZodiacCardHtml(card.zodiac, rankNum, cardClass, emoji);
     });
     html += '</div>';
     html += '</div>';
@@ -56,11 +52,7 @@ const ViewZodiacPrediction = {
 
       var emoji = ZodiacPrediction.getZodiacEmoji(card.zodiac);
 
-      html += '<div class="zodiac-static-card ' + cardClass + '">';
-      html += '<div class="zodiac-static-rank">' + rankNum + '</div>';
-      html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
-      html += '<div class="zodiac-static-name">' + card.zodiac + '</div>';
-      html += '</div>';
+      html += ViewZodiacPrediction._renderZodiacCardHtml(card.zodiac, rankNum, cardClass, emoji);
     });
     html += '</div>';
     html += '</div>';
@@ -73,6 +65,25 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     grid.innerHTML = html;
+  },
+
+  /**
+   * 渲染生肖静态卡片 HTML（4 处共用）
+   * @param {string} zodiac 生肖名
+   * @param {number} rank 排名
+   * @param {string} cardClass 卡片 class（如 card-rank-1 / card-rank-other）
+   * @param {string} emoji emoji
+   * @param {string} [extraHtml] 可选的额外子元素 HTML（如评分）
+   * @returns {string} 卡片 HTML
+   */
+  _renderZodiacCardHtml: function(zodiac, rank, cardClass, emoji, extraHtml) {
+    var html = '<div class="zodiac-static-card ' + cardClass + '">';
+    html += '<div class="zodiac-static-rank">' + rank + '</div>';
+    html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
+    html += '<div class="zodiac-static-name">' + zodiac + '</div>';
+    if (extraHtml) html += extraHtml;
+    html += '</div>';
+    return html;
   },
 
   _createSwiper: function(config) {
@@ -232,7 +243,7 @@ const ViewZodiacPrediction = {
       return;
     }
 
-    var hitClass = summary.hitRate >= 70 ? 'backtest-rate-high' : (summary.hitRate >= 40 ? 'backtest-rate-mid' : 'backtest-rate-low');
+    var hitClass = ViewCommon.getRateClass(summary.hitRate);
 
     var html = '<div class="backtest-summary">';
     html += '<div class="backtest-summary-title">回测追踪（前6名）</div>';
@@ -390,16 +401,6 @@ const ViewZodiacPrediction = {
       { key: 'p36', label: '36期窗口' }
     ];
 
-    var zoneColors = {
-      '封顶区': 'zone-peak',
-      '降权区': 'zone-high',
-      '过热区': 'zone-ovht',
-      '热号区': 'zone-mid',
-      '活跃区': 'zone-active',
-      '穿插区': 'zone-low',
-      '冷号区': 'zone-wait'
-    };
-
     var zoneOrder = ['封顶区', '降权区', '过热区', '热号区', '活跃区', '穿插区', '冷号区'];
 
     var html = '';
@@ -429,12 +430,12 @@ const ViewZodiacPrediction = {
 
         html += '<div class="zone-section">';
         html += '<div class="zone-section-header">';
-        html += '<span class="freq-zone-tag ' + (zoneColors[zone] || '') + '">' + zone + '</span>';
+        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zone, '') + '">' + zone + '</span>';
         html += '<span class="zone-count-badge">' + items.length + '个</span>';
         html += '</div>';
         html += '<div class="zone-card-list">';
         items.forEach(function(item) {
-          var badgeClass = zoneColors[item.zone] || '';
+          var badgeClass = ViewCommon.getZoneClass(item.zone, '');
 
           var droppedArrow = '';
           if (item.willDrop) {
@@ -1058,11 +1059,7 @@ const ViewZodiacPrediction = {
 
       var emoji = ZodiacPrediction.getZodiacEmoji(zodiac);
 
-      html += '<div class="zodiac-static-card ' + cardClass + '">';
-      html += '<div class="zodiac-static-rank">' + rankNum + '</div>';
-      html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
-      html += '<div class="zodiac-static-name">' + zodiac + '</div>';
-      html += '</div>';
+      html += ViewZodiacPrediction._renderZodiacCardHtml(zodiac, rankNum, cardClass, emoji);
     });
     html += '</div>';
     container.innerHTML = html;
@@ -1077,7 +1074,7 @@ const ViewZodiacPrediction = {
       return;
     }
 
-    var hitClass = summary.hitRate >= 70 ? 'backtest-rate-high' : (summary.hitRate >= 40 ? 'backtest-rate-mid' : 'backtest-rate-low');
+    var hitClass = ViewCommon.getRateClass(summary.hitRate);
 
     var html = '<div class="backtest-summary">';
     html += '<div class="backtest-summary-title">区域回测追踪（前6名）</div>';
@@ -1218,7 +1215,7 @@ const ViewZodiacPrediction = {
       if (data.alternative && data.alternative.length) {
         html += '<div class="db-divider"></div>';
         html += '<div class="db-backup-section">';
-        html += '<div class="db-section-label">备选 ' + data.alternative.length + ' 码</div>';
+        html += '<div class="db-section-label">防 ' + data.alternative.length + ' 码</div>';
         html += '<div class="db-number-grid" id="ultimateBackupGrid">';
         data.alternative.forEach(function(item, idx) {
           var rank = idx + 1;
@@ -1255,7 +1252,7 @@ const ViewZodiacPrediction = {
       if (data.alternative && data.alternative.length) {
         html += '<div class="db-divider"></div>';
         html += '<div class="db-backup-section">';
-        html += '<div class="db-section-label">备选 ' + data.alternative.length + ' 码</div>';
+        html += '<div class="db-section-label">防 ' + data.alternative.length + ' 码</div>';
         html += '<div class="db-number-grid" id="ultimateBackupGrid">';
         data.alternative.forEach(function(item, idx) {
           var rank = idx + 1;
@@ -1367,13 +1364,9 @@ const ViewZodiacPrediction = {
     var v2List = ViewZodiacPrediction._readV2FromDOM();
     var ultimateList = ViewZodiacPrediction._readUltimateFromDOM();
 
-    // 合并去重（纯 JS，不依赖业务层）
-    var ZODIAC_ORDER = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
-    var ZODIAC_EMOJI = {
-      '鼠': '🐭', '牛': '🐮', '虎': '🐯', '兔': '🐰',
-      '龙': '🐲', '蛇': '🐍', '马': '🐎', '羊': '🐏',
-      '猴': '🐒', '鸡': '🐔', '狗': '🐶', '猪': '🐷'
-    };
+    // 合并去重（使用共享常量，2026-06-09 重构）
+    var ZODIAC_ORDER = ZodiacPrediction.ZODIAC_ORDER;
+    var ZODIAC_EMOJI = ZodiacPrediction.ZODIAC_EMOJI;
 
     function uniq(arr) {
       var map = {};
@@ -1483,7 +1476,7 @@ const ViewZodiacPrediction = {
       return;
     }
 
-    var hitClass = summary.hitRate >= 70 ? 'backtest-rate-high' : (summary.hitRate >= 40 ? 'backtest-rate-mid' : 'backtest-rate-low');
+    var hitClass = ViewCommon.getRateClass(summary.hitRate);
     var totalHitClass = summary.totalHitRate >= 60 ? 'backtest-rate-high' : (summary.totalHitRate >= 35 ? 'backtest-rate-mid' : 'backtest-rate-low');
     var adaptiveState = BusinessUltimate.getAdaptiveState();
 
@@ -2116,16 +2109,6 @@ const ViewZodiacPrediction = {
       return;
     }
 
-    var zoneColors = {
-      '封顶区': 'zone-peak',
-      '降权区': 'zone-high',
-      '过热区': 'zone-ovht',
-      '热号区': 'zone-mid',
-      '活跃区': 'zone-active',
-      '穿插区': 'zone-low',
-      '冷号区': 'zone-wait'
-    };
-
     var html = '';
     html += '<div class="zone-change-card">';
 
@@ -2135,7 +2118,7 @@ const ViewZodiacPrediction = {
     html += '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>';
     if (changeData.topZone && changeData.topCount > 0) {
       html += '<span class="zone-change-top-info">';
-      html += '变动最多：<span class="freq-zone-tag ' + (zoneColors[changeData.topZone] || '') + '">' + changeData.topZone + '</span>';
+      html += '变动最多：<span class="freq-zone-tag ' + ViewCommon.getZoneClass(changeData.topZone, '') + '">' + changeData.topZone + '</span>';
       html += '<span class="zone-change-top-count">×' + changeData.topCount + '</span>';
       html += '</span>';
     }
@@ -2155,7 +2138,7 @@ const ViewZodiacPrediction = {
       html += '<div class="zone-change-stat-item">';
       html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
       html += '<div class="zone-change-bar-track">';
-      html += '<div class="zone-change-bar-fill ' + (zoneColors[item.zone] || '') + '" style="width:' + pct + '%;"></div>';
+      html += '<div class="zone-change-bar-fill ' + ViewCommon.getZoneClass(item.zone, '') + '" style="width:' + pct + '%;"></div>';
       html += '</div>';
       html += '<span class="zone-change-stat-val">' + item.count + '次</span>';
       html += '</div>';
@@ -2177,9 +2160,9 @@ const ViewZodiacPrediction = {
       // 遗漏间隔：-1=首次出现，>=1=距离上次出现的期数
       var missText = r.missInterval === -1 ? '首现' : '隔' + r.missInterval + '期';
       html += '<span class="zone-change-miss">' + missText + '</span>';
-      html += '<span class="zone-change-zone-tag ' + (zoneColors[r.prevZone] || '') + '">' + r.prevZone + '</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.prevZone, '') + '">' + r.prevZone + '</span>';
       html += '<span class="zone-change-arrow">' + arrow + '</span>';
-      html += '<span class="zone-change-zone-tag ' + (zoneColors[r.curZone] || '') + '">' + r.curZone + '</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.curZone, '') + '">' + r.curZone + '</span>';
       html += '</div>';
     });
     // 展开/折叠按钮（超过2条时显示）
@@ -2252,12 +2235,10 @@ const ViewZodiacPrediction = {
 
         var scoreColor = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
 
-        cardHtml += '<div class="zodiac-static-card ' + cardClass + '">';
-        cardHtml += '<div class="zodiac-static-rank">' + rankNum + '</div>';
-        cardHtml += '<div class="zodiac-static-emoji">' + item.emoji + '</div>';
-        cardHtml += '<div class="zodiac-static-name">' + item.shengxiao + '</div>';
-        cardHtml += '<div class="zodiac-static-sub" style="font-size:11px;' + scoreColor + '">评分:' + item.score + '</div>';
-        cardHtml += '</div>';
+        cardHtml += ViewZodiacPrediction._renderZodiacCardHtml(
+          item.shengxiao, rankNum, cardClass, item.emoji,
+          '<div class="zodiac-static-sub" style="font-size:11px;' + scoreColor + '">评分:' + item.score + '</div>'
+        );
       });
       cardHtml += '</div>';
       candidatesGrid.innerHTML = cardHtml;
@@ -2284,9 +2265,9 @@ const ViewZodiacPrediction = {
         var rowBg = isTop6 ? 'background:rgba(48,209,88,0.06);' : '';
         var scoreStyle = item.score >= 60 ? 'color:#30D158;font-weight:700;' : (item.score >= 30 ? 'color:#FF9F0A;font-weight:600;' : 'color:var(--sub-text);');
 
-        var zoneClass12 = ViewZodiacPrediction._getZoneClass(item.zone12);
-        var zoneClass24 = ViewZodiacPrediction._getZoneClass(item.zone24);
-        var zoneClass36 = ViewZodiacPrediction._getZoneClass(item.zone36);
+        var zoneClass12 = ViewCommon.getZoneClass(item.zone12);
+        var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
+        var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
         tableHtml += '<tr style="' + rowBg + 'border-bottom:1px solid var(--border);">';
         tableHtml += '<td style="padding:6px 8px;font-weight:600;">' + item.shengxiao + '</td>';
@@ -2305,20 +2286,10 @@ const ViewZodiacPrediction = {
   },
 
   /**
-   * 获取区域对应的CSS class（内部辅助方法）
-   * @private
+   * @deprecated 已迁移到 ViewCommon.getZoneClass（2026-06-09 重构）
    */
   _getZoneClass: function(zone) {
-    var map = {
-      '封顶区': 'zone-peak',
-      '降权区': 'zone-high',
-      '过热区': 'zone-ovht',
-      '热号区': 'zone-mid',
-      '活跃区': 'zone-active',
-      '穿插区': 'zone-low',
-      '冷号区': 'zone-wait'
-    };
-    return map[zone] || 'zone-wait';
+    return ViewCommon.getZoneClass(zone);
   },
 
   /**

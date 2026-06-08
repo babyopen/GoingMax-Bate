@@ -177,27 +177,9 @@ const ViewOverlapModal = {
     modal.querySelectorAll('.copy-nums-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const nums = btn.dataset.nums;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(nums).then(() => {
-            Toast.show(`已复制: ${nums}`);
-          }).catch(() => {
-            Toast.show('复制失败，请手动复制');
-          });
-        } else {
-          const textarea = document.createElement('textarea');
-          textarea.value = nums;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          textarea.select();
-          try {
-            document.execCommand('copy');
-            Toast.show(`已复制: ${nums}`);
-          } catch (err) {
-            Toast.show('复制失败，请手动复制');
-          }
-          document.body.removeChild(textarea);
-        }
+        Utils.copyToClipboard(nums, {
+          successMsg: `已复制: ${nums}`
+        });
       });
     });
 

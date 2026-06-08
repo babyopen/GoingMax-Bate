@@ -30,6 +30,13 @@ const CONFIG = Object.freeze({
   JIAQIN: Object.freeze(['马','牛','羊','鸡','狗','猪']),
   YESHOU: Object.freeze(['鼠','虎','兔','龙','蛇','猴']),
   NUMBER_GROUPS: Object.freeze(['head','tail','sum','num']), // 数字类型的分组
+  // 号码 → 生肖映射（1-49，2026-06-09 重构从业务层提取）
+  NUM_TO_ZODIAC: Object.freeze({
+    1: '马', 2: '蛇', 3: '龙', 4: '兔', 5: '虎', 6: '牛',
+    7: '鼠', 8: '猪', 9: '狗', 10: '鸡', 11: '猴', 12: '羊'
+  }),
+  // 生肖 → 号码映射（运行时由 init 构建，已在下方预构建）
+
   // 号码规则配置
   COLOR_MAP: Object.freeze({
     '红':[1,2,7,8,12,13,18,19,23,24,29,30,34,35,40,45,46],

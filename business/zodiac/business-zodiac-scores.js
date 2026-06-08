@@ -195,9 +195,7 @@ const ZodiacPredictionScores = {
       var matchCount = 0;
       var totalN = nums.length || 1;
       nums.forEach(function(n) {
-        var c = Object.keys(CONFIG.COLOR_MAP).find(function(k) {
-          return CONFIG.COLOR_MAP[k].indexOf(n) !== -1;
-        });
+        var c = Utils.getColorName(n);
         if (c === hotColor) matchCount++;
       });
       if (matchCount / totalN >= 0.5) scores[z] += 4;

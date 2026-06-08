@@ -68,8 +68,8 @@ const DataQuery = {
     const odd = num % 2 === 1 ? '单' : '双';
     const bs = big + odd;
     
-    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(num));
-    const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(num));
+    const color = Utils.getColorName(num);
+    const element = Utils.getWuxing(num);
     
     const type = CONFIG.JIAQIN.includes(DataQuery._getZodiacByNum(num)) ? '家禽' : '野兽';
     

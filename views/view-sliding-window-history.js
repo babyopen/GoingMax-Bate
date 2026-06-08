@@ -228,13 +228,13 @@ const ViewSlidingWindowHistory = {
     if (zones && (zones.zone12 || zones.zone24 || zones.zone36)) {
       html += '<span class="sw-actual-zones">';
       if (zones.zone12) {
-        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone12) + '">' + zones.zone12 + '</span>';
+        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zones.zone12) + '">' + zones.zone12 + '</span>';
       }
       if (zones.zone24) {
-        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone24) + '">' + zones.zone24 + '</span>';
+        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zones.zone24) + '">' + zones.zone24 + '</span>';
       }
       if (zones.zone36) {
-        html += '<span class="freq-zone-tag ' + this._getZoneClass(zones.zone36) + '">' + zones.zone36 + '</span>';
+        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zones.zone36) + '">' + zones.zone36 + '</span>';
       }
       html += '</span>';
     }
@@ -243,19 +243,9 @@ const ViewSlidingWindowHistory = {
   },
 
   /**
-   * 区域名 → CSS class 映射
-   * @private
+   * @deprecated 已迁移到 ViewCommon.getZoneClass（2026-06-09 重构）
    */
   _getZoneClass: function(zone) {
-    var map = {
-      '封顶区': 'zone-peak',
-      '降权区': 'zone-high',
-      '过热区': 'zone-ovht',
-      '热号区': 'zone-mid',
-      '活跃区': 'zone-active',
-      '穿插区': 'zone-low',
-      '冷号区': 'zone-wait'
-    };
-    return map[zone] || 'zone-wait';
+    return ViewCommon.getZoneClass(zone);
   }
 };

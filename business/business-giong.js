@@ -1,17 +1,17 @@
 const BusinessGiong = {
 
-  NUM_TO_ZODIAC: {
-    1: '马', 2: '蛇', 3: '龙', 4: '兔', 5: '虎', 6: '牛',
-    7: '鼠', 8: '猪', 9: '狗', 10: '鸡', 11: '猴', 12: '羊'
-  },
-
-  ZODIAC_TO_NUM: {},
+  // NUM_TO_ZODIAC / ZODIAC_TO_NUM 已迁移到 CONFIG（2026-06-09 重构）
+  NUM_TO_ZODIAC: CONFIG.NUM_TO_ZODIAC,
+  ZODIAC_TO_NUM: (function() {
+    var map = {};
+    Object.keys(CONFIG.NUM_TO_ZODIAC).forEach(function(num) {
+      map[CONFIG.NUM_TO_ZODIAC[num]] = Number(num);
+    });
+    return map;
+  })(),
 
   init: function() {
-    var self = this;
-    Object.keys(this.NUM_TO_ZODIAC).forEach(function(num) {
-      self.ZODIAC_TO_NUM[self.NUM_TO_ZODIAC[num]] = Number(num);
-    });
+    // 已由 IIFE 在加载时构建，无需重复执行
   },
 
   OLD_CHAIN: [1, 5, 7, 9, 4],
@@ -60,10 +60,7 @@ const BusinessGiong = {
     var result = [];
     for (var i = 0; i < historyData.length; i++) {
       var item = historyData[i];
-      var zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
-      var zodArr = zodArrRaw.map(function(z) {
-        return CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z;
-      });
+      var zodArr = Utils.parseZodiacArr(item);
       var zod = zodArr[6] || '';
       var num = this._toNum(zod);
       if (num) {

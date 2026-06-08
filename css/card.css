@@ -202,7 +202,7 @@
 .unrec-source-title.unrec-highlight{
   color:var(--primary);
   font-size:13px;
-  margin-top:6px;
+  margin-top:0;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -229,8 +229,8 @@
   color:var(--primary);
 }
 .unrec-section.unrec-final{
-  padding-top:10px;
-  margin-top:6px;
+  padding-top:4px;
+  margin-top:0;
 }
 .unrec-grid{
   display:grid;
@@ -337,13 +337,13 @@
   display:inline-block;padding:clamp(3px,0.6vw,5px) clamp(8px,1.5vw,14px);border-radius:14px;
   font-size:clamp(10px,2vw,12px);font-weight:700;white-space:nowrap;letter-spacing:0.3px;
 }
-.zone-peak{background:rgba(255,69,58,0.18);color:#FF453A}
-.zone-high{background:rgba(255,149,0,0.15);color:#FF9500}
-.zone-ovht{background:rgba(255,107,107,0.14);color:#FF6B6B}
-.zone-mid{background:rgba(0,122,255,0.12);color:var(--primary)}
-.zone-active{background:rgba(230,168,35,0.14);color:#E6A823}
-.zone-low{background:rgba(48,209,88,0.12);color:#30D158}
-.zone-wait{background:rgba(175,82,222,0.12);color:#AF52DE}
+.zone-peak{background:var(--zone-peak-bg);color:var(--zone-peak)}
+.zone-high{background:var(--zone-high-bg);color:var(--zone-high)}
+.zone-ovht{background:var(--zone-ovht-bg);color:var(--zone-ovht)}
+.zone-mid{background:var(--zone-mid-bg);color:var(--zone-mid)}
+.zone-active{background:var(--zone-active-bg);color:var(--zone-active)}
+.zone-low{background:var(--zone-low-bg);color:var(--zone-low)}
+.zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait)}
 
 /* 生肖预测卡片 */
 .zodiac-static-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.2vw,10px);width:100%}
@@ -403,13 +403,13 @@
   font-size:clamp(10px,2vw,13px);font-weight:800;color:var(--primary);line-height:1;
   min-width:clamp(12px,2vw,16px);text-align:center;
 }
-.zod-card-count-badge.zone-peak{color:#FF453A}
-.zod-card-count-badge.zone-high{color:#FF9500}
-.zod-card-count-badge.zone-ovht{color:#FF6B6B}
-.zod-card-count-badge.zone-mid{color:var(--primary)}
-.zod-card-count-badge.zone-active{color:#E6A823}
-.zod-card-count-badge.zone-low{color:#30D158}
-.zod-card-count-badge.zone-wait{color:#AF52DE}
+.zod-card-count-badge.zone-peak{color:var(--zone-peak)}
+.zod-card-count-badge.zone-high{color:var(--zone-high)}
+.zod-card-count-badge.zone-ovht{color:var(--zone-ovht)}
+.zod-card-count-badge.zone-mid{color:var(--zone-mid)}
+.zod-card-count-badge.zone-active{color:var(--zone-active)}
+.zod-card-count-badge.zone-low{color:var(--zone-low)}
+.zod-card-count-badge.zone-wait{color:var(--zone-wait)}
 .drop-arrow{color:#FF3B30;font-size:10px;margin-left:2px;line-height:1}
 .drop-arrow-yellow{color:#FFCC00}
 .zod-card-name{
@@ -422,13 +422,13 @@
   font-weight:600;color:var(--sub-text);background:rgba(120,120,128,0.08);
   padding:clamp(2px,0.4vw,3px) clamp(5px,1vw,8px);border-radius:6px;
 }
-.zod-card-miss.zone-peak{color:#FF453A;background:rgba(255,69,58,0.12)}
-.zod-card-miss.zone-high{color:#FF9500;background:rgba(255,149,0,0.12)}
-.zod-card-miss.zone-ovht{color:#FF6B6B;background:rgba(255,107,107,0.12)}
-.zod-card-miss.zone-mid{color:var(--primary);background:rgba(0,122,255,0.08)}
-.zod-card-miss.zone-active{color:#E6A823;background:rgba(230,168,35,0.12)}
-.zod-card-miss.zone-low{color:#30D158;background:rgba(48,209,88,0.12)}
-.zod-card-miss.zone-wait{color:#AF52DE;background:rgba(175,82,222,0.12)}
+.zod-card-miss.zone-peak{color:var(--zone-peak);background:var(--zone-peak-bg-12)}
+.zod-card-miss.zone-high{color:var(--zone-high);background:var(--zone-high-bg-12)}
+.zod-card-miss.zone-ovht{color:var(--zone-ovht);background:var(--zone-ovht-bg-12)}
+.zod-card-miss.zone-mid{color:var(--zone-mid);background:var(--zone-mid-bg-8)}
+.zod-card-miss.zone-active{color:var(--zone-active);background:var(--zone-active-bg-12)}
+.zod-card-miss.zone-low{color:var(--zone-low);background:var(--zone-low-bg)}
+.zod-card-miss.zone-wait{color:var(--zone-wait);background:var(--zone-wait-bg)}
 
 /* 动态策略面板 */
 .strategy-panel{background:var(--bg-secondary);border-radius:clamp(14px,2.5vw,18px);padding:clamp(12px,2.5vw,18px)}

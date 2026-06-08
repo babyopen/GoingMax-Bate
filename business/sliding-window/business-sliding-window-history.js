@@ -166,12 +166,7 @@ const BusinessSlidingWindowHistory = {
       var item = historyData[i];
       var expect = Number(item.expect || 0);
       if (!expect) continue;
-      var zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
-      var zodArr = zodArrRaw.map(function(z) {
-        return CONFIG && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP
-          ? (CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z)
-          : z;
-      });
+      var zodArr = Utils.parseZodiacArr(item);
       var specialZodiac = zodArr[6] || '';
       if (specialZodiac) {
         zodiacMap[expect] = specialZodiac;

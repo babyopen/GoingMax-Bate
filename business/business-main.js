@@ -147,15 +147,11 @@ const Business = {
    */
   copyMainZodiacs: (zodiacStr) => {
     if(!zodiacStr) return;
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(zodiacStr).then(() => {
-        Toast.show('已复制');
-      }).catch(() => {
-        GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', zodiacStr, () => {});
-      });
-    } else {
-      GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', zodiacStr, () => {});
-    }
+    Utils.copyToClipboard(zodiacStr, {
+      fallback: (text) => {
+        GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', text, () => {});
+      }
+    });
   },
 
   /**
@@ -163,15 +159,14 @@ const Business = {
    * 数据源：StateManager._state.selected.zodiac
    */
   copySelectedZodiacs: () => {
-    const ZODIAC_ORDER = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
     const state = StateManager._state;
     const selected = (state.selected && state.selected.zodiac) ? state.selected.zodiac : [];
     if(!selected || selected.length === 0){
       Toast.show('暂未选择生肖');
       return;
     }
-    // 按12生肖固定顺序拼接
-    const ordered = ZODIAC_ORDER.filter(z => selected.indexOf(z) !== -1);
+    // 按12生肖固定顺序拼接（使用 CONFIG 共享常量，2026-06-09 重构）
+    const ordered = CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => selected.indexOf(z) !== -1);
     const zodiacStr = ordered.join(' ');
     Business.copyMainZodiacs(zodiacStr);
   },
@@ -200,16 +195,12 @@ const Business = {
     }
 
     const numStr = list.map(n => n.s).join(' ');
-    // 剪贴板API兼容
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(numStr).then(() => {
-        Toast.show('复制成功');
-      }).catch(() => {
-        GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', numStr, () => {});
-      });
-    } else {
-      GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', numStr, () => {});
-    }
+    Utils.copyToClipboard(numStr, {
+      successMsg: '复制成功',
+      fallback: (text) => {
+        GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', text, () => {});
+      }
+    });
   },
 
   /**
@@ -631,19 +622,17 @@ const Business = {
    * @returns {string} 五行
    */
   getColor: (n) => {
-    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
+    const colorName = Utils.getColorName(n);
     const colorMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
-    return colorMap[color] || 'red';
+    return colorMap[colorName] || 'red';
   },
-  
+
   getColorName: (n) => {
-    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(n));
-    return color || '红';
+    return Utils.getColorName(n);
   },
-  
+
   getWuxing: (n) => {
-    const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(n));
-    return element || '金';
+    return Utils.getWuxing(n);
   },
 
   /**
@@ -1073,8 +1062,7 @@ const Business = {
     const latestItem = list[0];
     if(latestItem) {
       const codeArr = (latestItem.openCode || '').split(',');
-      const zodArrRaw = (latestItem.zodiac || '').split(',');
-      const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+      const zodArr = Utils.parseZodiacArr(latestItem);
       codeArr.forEach((num, idx) => {
         const numVal = Number(num);
         if(numVal && zodArr[idx]) numZodiacMap.set(numVal, zodArr[idx]);
@@ -1085,8 +1073,8 @@ const Business = {
     const numColorMap = {};
     const numWuxingMap = {};
     for(let n = 1; n <= 49; n++) {
-      numColorMap[n]  = Object.keys(CONFIG.COLOR_MAP).find(k => CONFIG.COLOR_MAP[k].includes(n))  || '红';
-      numWuxingMap[n] = Object.keys(CONFIG.ELEMENT_MAP).find(k => CONFIG.ELEMENT_MAP[k].includes(n)) || '金';
+      numColorMap[n]  = Utils.getColorName(n);
+      numWuxingMap[n] = Utils.getWuxing(n);
     }
 
     // ========== 3. 近期12期 头/尾/波色/五行 频次统计 ==========
@@ -1176,8 +1164,7 @@ const Business = {
     let topFollowZodiacs = [];
     if(latestItem) {
       const codeArr = (latestItem.openCode || '').split(',');
-      const zodArrRaw = (latestItem.zodiac || '').split(',');
-      const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+      const zodArr = Utils.parseZodiacArr(latestItem);
       const latestTe = Math.max(0, Number(codeArr[6] || 0));
       const latestZodiac = zodArr[6] || '';
       if(latestZodiac && data.followMap && data.followMap[latestZodiac]) {

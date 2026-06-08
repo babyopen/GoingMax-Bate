@@ -394,17 +394,11 @@ const Utils = {
       }
 
       const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
-      const zodArrRaw = (item.zodiac || ',,,,,,,,,,,,').split(',');
-      const zodArr = zodArrRaw.map(z => CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z);
+      const zodArr = Utils.parseZodiacArr(item);
       const te = Math.max(0, Number(codeArr[6]));
 
-      const colorName = Object.keys(CONFIG.COLOR_MAP).find(c =>
-        CONFIG.COLOR_MAP[c].includes(te)
-      ) || '红';
-
-      const wuxing = Object.keys(CONFIG.ELEMENT_MAP).find(e =>
-        CONFIG.ELEMENT_MAP[e].includes(te)
-      ) || '金';
+      const colorName = Utils.getColorName(te);
+      const wuxing = Utils.getWuxing(te);
 
       return {
         te,
@@ -430,6 +424,108 @@ const Utils = {
       if (!Array.isArray(items)) return [];
       return items.map(item => Utils.SpecialCalculator.getSpecial(item));
     }
+  },
+
+  /**
+   * 解析历史数据项的 zodiac 字段为生肖数组（8 处共用，2026-06-09 重构合并）
+   * 处理繁体/简体生肖映射（CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP）
+   * @param {Object} item - 历史数据单项 { zodiac: '馬,牛,虎,...' }
+   * @returns {string[]} 12 个生肖字符串数组（默认 ',' 占位）
+   */
+  parseZodiacArr: (item) => {
+    const raw = (item && item.zodiac || ',,,,,,,,,,,,').split(',');
+    const map = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP) || {};
+    return raw.map(z => map[z] || z);
+  },
+
+  /**
+   * 解析 openCode 字段为号码数组（兼容占位字符串）
+   * @param {Object} item - 历史数据单项 { openCode: '1,2,3,4,5,6,7' }
+   * @returns {number[]} 7 个号码数组（默认 0）
+   */
+  parseOpenCodeArr: (item) => {
+    const raw = (item && item.openCode || '0,0,0,0,0,0,0').split(',');
+    return raw.map(n => Number(n));
+  },
+
+  /**
+   * 通用剪贴板复制（兼容降级，3 处共用，2026-06-09 重构合并）
+   * 1. 优先 navigator.clipboard.writeText（HTTPS / localhost）
+   * 2. 降级 document.execCommand('copy') + 隐藏 textarea
+   * 3. 失败回调 fallback（可传入 fn(text) 让用户手动选择）
+   * @param {string} text - 要复制的文本
+   * @param {Object} [opts]
+   * @param {string} [opts.successMsg] - 成功 Toast 文案（默认 '已复制'）
+   * @param {string} [opts.errorMsg] - 失败 Toast 文案（默认 '复制失败，请手动复制'）
+   * @param {Function} [opts.fallback] - 失败回调函数（用于打开 modal 让用户手动复制）
+   * @returns {Promise<boolean>} 是否成功
+   */
+  copyToClipboard: async (text, opts) => {
+    opts = opts || {};
+    const successMsg = opts.successMsg || '已复制';
+    const errorMsg = opts.errorMsg || '复制失败，请手动复制';
+    const fallback = opts.fallback;
+
+    // 优先：navigator.clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (typeof Toast !== 'undefined' && Toast.show) Toast.show(successMsg);
+        return true;
+      } catch (e) {
+        // 降级到 textarea + execCommand
+      }
+    }
+
+    // 降级：textarea + execCommand
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (ok) {
+        if (typeof Toast !== 'undefined' && Toast.show) Toast.show(successMsg);
+        return true;
+      }
+    } catch (e) {
+      // 继续到 fallback
+    }
+
+    // 兜底回调
+    if (typeof fallback === 'function') {
+      fallback(text);
+      return false;
+    }
+    if (typeof Toast !== 'undefined' && Toast.show) Toast.show(errorMsg);
+    return false;
+  },
+
+  /**
+   * 号码 → 颜色名 反查（8+ 处共用，2026-06-09 重构合并）
+   * @param {number} num - 号码 (1-49)
+   * @returns {string} '红' / '蓝' / '绿'（默认 '红'）
+   */
+  getColorName: (num) => {
+    if (typeof CONFIG === 'undefined' || !CONFIG.COLOR_MAP) return '红';
+    const color = Object.keys(CONFIG.COLOR_MAP).find(c => CONFIG.COLOR_MAP[c].includes(num));
+    return color || '红';
+  },
+
+  /**
+   * 号码 → 五行 反查（8+ 处共用，2026-06-09 重构合并）
+   * @param {number} num - 号码 (1-49)
+   * @returns {string} '金' / '木' / '水' / '火' / '土'（默认 '金'）
+   */
+  getWuxing: (num) => {
+    if (typeof CONFIG === 'undefined' || !CONFIG.ELEMENT_MAP) return '金';
+    const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(num));
+    return element || '金';
   },
 
   // ============================================================

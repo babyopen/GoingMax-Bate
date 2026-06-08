@@ -279,8 +279,7 @@ const ZodiacPredictionBacktest = {
       var latestItem = list[0];
       var latestZodiac = '';
       if (latestItem) {
-        var zodArrRaw = (latestItem.zodiac || '').split(',');
-        var zodArr = zodArrRaw.map(function(z) { return CONFIG.ANALYSIS.ZODIAC_TRAD_TO_SIMP[z] || z; });
+        var zodArr = Utils.parseZodiacArr(latestItem);
         latestZodiac = zodArr[6] || '';
       }
       var followZodiacs = [];

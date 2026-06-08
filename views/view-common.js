@@ -7,6 +7,44 @@
 const ViewCommon = {
 
   /**
+   * 区域名 → CSS class 映射表（4 处共用，2026-06-09 重构合并）
+   */
+  ZONE_CLASS_MAP: Object.freeze({
+    '封顶区': 'zone-peak',
+    '降权区': 'zone-high',
+    '过热区': 'zone-ovht',
+    '热号区': 'zone-mid',
+    '活跃区': 'zone-active',
+    '穿插区': 'zone-low',
+    '冷号区': 'zone-wait'
+  }),
+
+  /**
+   * 获取区域对应的 CSS class
+   * @param {string} zone - 区域名（如 '封顶区'）
+   * @param {string} [fallback='zone-wait'] - 未匹配时的兜底 class
+   * @returns {string}
+   */
+  getZoneClass: function(zone, fallback) {
+    return ViewCommon.ZONE_CLASS_MAP[zone] || fallback || 'zone-wait';
+  },
+
+  /**
+   * 命中率 → CSS class 映射（3 处共用，2026-06-09 重构合并）
+   * @param {number} rate - 命中率（0-100）
+   * @param {number} [high=70] - 高分阈值
+   * @param {number} [mid=40] - 中分阈值
+   * @returns {string} 'backtest-rate-high' / 'backtest-rate-mid' / 'backtest-rate-low'
+   */
+  getRateClass: function(rate, high, mid) {
+    if (high === undefined) high = 70;
+    if (mid === undefined) mid = 40;
+    if (rate >= high) return 'backtest-rate-high';
+    if (rate >= mid) return 'backtest-rate-mid';
+    return 'backtest-rate-low';
+  },
+
+  /**
    * 通用 tab 切换（仅 DOM 操作）
    * @param {Object} config
    * @param {string} config.tabSelector - tab 按钮的选择器（如 '.analysis-tab-btn'）
