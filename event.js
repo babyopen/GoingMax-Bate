@@ -301,6 +301,8 @@ const EventBinder = {
       else if(action === 'showWuxingBacktest') EventBinder._showWuxingBacktest();
       // 波色回测操作
       else if(action === 'showColorBacktest') EventBinder._showColorBacktest();
+      // 未推荐生肖 - 查看来源弹窗
+      else if(action === 'showUnrecSources') ViewZodiacPrediction.showUnrecSourcesModal();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
       else if(action === 'closeBatchModal') ViewFilter.closeBatchModal();
       else if(action === 'confirmBatchSelect') ViewFilter.confirmBatchSelect();

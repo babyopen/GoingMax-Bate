@@ -1398,35 +1398,16 @@ const ViewZodiacPrediction = {
       return '<span class="unrec-chip">' + z + '</span>';
     }
 
+    // 缓存源数据，供「查看来源」弹窗使用
+    ViewZodiacPrediction._lastUnrecSources = {
+      ultUniq: ultUniq,
+      v1Uniq: v1Uniq,
+      v2Uniq: v2Uniq,
+      allRecommended: allRecommended,
+      unrecommended: unrecommended
+    };
+
     var html = '<div class="unrec-card">';
-
-    html += '<div class="unrec-section">';
-    html += '<div class="unrec-source-title">① 终极算法推荐</div>';
-    html += ultUniq.length
-      ? '<div class="unrec-chips">' + ultUniq.map(renderChip).join('') + '</div>'
-      : '<div class="unrec-empty-tip">无</div>';
-    html += '</div>';
-
-    html += '<div class="unrec-section">';
-    html += '<div class="unrec-source-title">② 生肖预测（v1）</div>';
-    html += v1Uniq.length
-      ? '<div class="unrec-chips">' + v1Uniq.map(renderChip).join('') + '</div>'
-      : '<div class="unrec-empty-tip">无</div>';
-    html += '</div>';
-
-    html += '<div class="unrec-section">';
-    html += '<div class="unrec-source-title">③ Giong 页面推荐（v2）</div>';
-    html += v2Uniq.length
-      ? '<div class="unrec-chips">' + v2Uniq.map(renderChip).join('') + '</div>'
-      : '<div class="unrec-empty-tip">无</div>';
-    html += '</div>';
-
-    html += '<div class="unrec-section unrec-merged">';
-    html += '<div class="unrec-source-title">合并去重（共 ' + allRecommended.length + ' 个）</div>';
-    html += allRecommended.length
-      ? '<div class="unrec-chips">' + allRecommended.map(renderChip).join('') + '</div>'
-      : '<div class="unrec-empty-tip">无</div>';
-    html += '</div>';
 
     html += '<div class="unrec-section unrec-final">';
     html += '<div class="unrec-source-title unrec-highlight">绝杀生肖（' + unrecommended.length + '个）</div>';
@@ -1444,8 +1425,52 @@ const ViewZodiacPrediction = {
     }
     html += '</div>';
 
+    // 查看来源图标按钮：位于卡片右上角，点击弹窗展示 ①②③ + 合并去重
+    html += '<button class="unrec-view-sources-btn" data-action="showUnrecSources" type="button" aria-label="查看来源（' + allRecommended.length + ' 个推荐 · ' + unrecommended.length + ' 个绝杀）" title="查看来源">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    html += '<line x1="8" y1="6" x2="21" y2="6"></line>';
+    html += '<line x1="8" y1="12" x2="21" y2="12"></line>';
+    html += '<line x1="8" y1="18" x2="21" y2="18"></line>';
+    html += '<line x1="3" y1="6" x2="3.01" y2="6"></line>';
+    html += '<line x1="3" y1="12" x2="3.01" y2="12"></line>';
+    html += '<line x1="3" y1="18" x2="3.01" y2="18"></line>';
+    html += '</svg>';
+    html += '</button>';
+
     html += '</div>';
     panel.innerHTML = html;
+  },
+
+  /**
+   * 展示「查看来源」弹窗
+   * 拼 ①②③ 与合并去重 的 html，交给 UnrecSourceModal 渲染
+   */
+  showUnrecSourcesModal: function() {
+    var src = ViewZodiacPrediction._lastUnrecSources;
+    if (!src) {
+      Toast.show('暂无来源数据');
+      return;
+    }
+    function renderChip(z) {
+      return '<span class="unrec-chip">' + z + '</span>';
+    }
+    function renderSection(title, list) {
+      var inner = list && list.length
+        ? '<div class="unrec-chips">' + list.map(renderChip).join('') + '</div>'
+        : '<div class="unrec-empty-tip">无</div>';
+      return '<div class="unrec-section">'
+        + '<div class="unrec-source-title">' + title + '</div>'
+        + inner
+        + '</div>';
+    }
+
+    var html = '';
+    html += renderSection('① 终极算法推荐', src.ultUniq);
+    html += renderSection('② 生肖预测（v1）', src.v1Uniq);
+    html += renderSection('③ Giong 页面推荐（v2）', src.v2Uniq);
+    html += renderSection('合并去重（共 ' + src.allRecommended.length + ' 个）', src.allRecommended);
+
+    UnrecSourceModal.show('推荐来源明细', html);
   },
 
   renderUltimateBacktest: function(summary, currentBackupCount) {
@@ -1604,7 +1629,7 @@ const ViewZodiacPrediction = {
             return z;
           }).join(' ');
         }
-        backupText = '  <span style="color:#1a1a1a;">备选：</span>' + _bHtml;
+        backupText = '  <span style="color:#1a1a1a;">防:</span>' + _bHtml;
       }
 
       var stageTag = r.stage ? '<span class="backtest-stage-tag">' + r.stage.replace('稳定运行期', '').replace('过渡混沌期', '过渡') + '</span>' : '';
@@ -1612,7 +1637,7 @@ const ViewZodiacPrediction = {
 
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
       html += '<div class="backtest-record-period">' + r.expect + '期 ' + stageTag + '</div>';
-      html += '<span class="backtest-record-predict"><span class="backtest-record-zodiacs"><span style="color:#1a1a1a;">主推：</span>' + topNText + backupText + '</span>' + blackInfo + '</span>';
+      html += '<span class="backtest-record-predict"><span class="backtest-record-zodiacs"><span style="color:#1a1a1a;">主:</span>' + topNText + backupText + '</span>' + blackInfo + '</span>';
       html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
       html += '</div>';
     });
