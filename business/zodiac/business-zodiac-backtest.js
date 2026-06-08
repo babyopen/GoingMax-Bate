@@ -300,8 +300,8 @@ const ZodiacPredictionBacktest = {
           .map(function(e) { return e[0]; });
       }
 
-      // 3. 调用 5 维核心算法得到 top 5 推荐号码
-      var recommend = Business._calcFinalZodiacRecommend(list, 5, followZodiacs);
+      // 3. 调用 5 维核心算法得到 top 10 推荐号码
+      var recommend = Business._calcFinalZodiacRecommend(list, 10, followZodiacs);
       var recommendedNums = recommend.numbers || [];
 
       // 4. 实际特码对比

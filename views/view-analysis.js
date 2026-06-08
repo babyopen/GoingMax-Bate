@@ -324,7 +324,7 @@ const ViewAnalysis = {
       var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
                                 : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">错</span>';
       var actualNumStr = String(item.actualNumber || 0).padStart(2, '0');
-      // 5 个推荐号码：红色；若实际号码在其中则蓝色高亮
+      // 推荐号码：红色；若实际号码在其中则蓝色高亮
       var numsHtml = (item.recommendedNums || []).map(function(n) {
         var ns = String(n).padStart(2, '0');
         if (n === item.actualNumber) {
@@ -350,7 +350,7 @@ const ViewAnalysis = {
     // 底部说明
     html += '<div style="background:var(--bg-secondary);padding:10px 12px;border-radius:8px;font-size:11px;color:var(--sub-text);line-height:1.6;">';
     html += '• 算法：每期用其前 12 期窗口跑 5 维加权打分（头/尾/色/五行 + 跟随生肖）<br>';
-    html += '• 推荐 Top5 号码 vs 实际特码对比判定命中<br>';
+    html += '• 推荐 Top10 号码 vs 实际特码对比判定命中<br>';
     html += '• 最近 ' + backtestData.recentTests + ' 期命中 <strong style="color:#30D158;">' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>';
     html += '• 数据仅供参考，不构成投资建议';
     html += '</div>';
