@@ -203,9 +203,9 @@
   .backtest-records-inline .backtest-record-row{background:rgba(255,255,255,0.08);border-left-color:rgba(255,255,255,0.22)}
 
   /* 命中/备选/未命中/待开奖行：对应语义色加深（暗底上更清晰） */
-  .backtest-record-row.backtest-hit{background:rgba(48,209,88,0.14);border-left-color:#30D158}
-  .backtest-record-row.backtest-backup-hit{background:rgba(48,209,88,0.12);border-left-color:#30D158}
-  .backtest-record-row.backtest-miss{background:rgba(255,69,58,0.12);border-left-color:#FF453A}
+  .backtest-record-row.backtest-hit{background:rgba(10,132,255,0.07);border-left-color:#0A84FF}
+  .backtest-record-row.backtest-backup-hit{background:rgba(10,132,255,0.06);border-left-color:#0A84FF}
+  .backtest-record-row.backtest-miss{background:rgba(255,69,58,0.06);border-left-color:#FF453A}
   .backtest-record-row.backtest-pending{background:rgba(10,132,255,0.10);border-left-color:var(--primary)}
 
   /* 文本颜色：暗模式下使用半透明白提亮（确保清晰可见） */

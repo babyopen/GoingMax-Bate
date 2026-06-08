@@ -36,7 +36,7 @@ async function initApp() {
     // 16. 隐藏加载遮罩
     Render.hideLoading();
     
-    console.log(`GiongBeta v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);
+    console.log(`Gemini v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);
   } catch(e) {
     console.error('应用初始化失败', e);
     Toast.show('页面初始化失败，请刷新重试');

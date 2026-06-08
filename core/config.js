@@ -1,5 +1,5 @@
 const CONFIG = Object.freeze({
-  VERSION: 'Beta2',
+  VERSION: '2.0.6',
   DATA_VERSION: 1, // 数据版本号，用于后续数据迁移
   // API配置（GitHub Pages/Vercel均使用完整URL直连外部API）
   API: Object.freeze({
