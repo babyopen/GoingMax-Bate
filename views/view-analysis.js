@@ -217,14 +217,15 @@ const ViewAnalysis = {
    * @param {string} tab - 标签名
    */
   switchTabUI: (tab) => {
-    document.querySelectorAll('.analysis-tab-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.analysisTab === tab);
-    });
-    var panels = { 'history': 'historyPanel', 'analysis': 'analysisPanelContent', 'zodiac': 'zodiacAnalysisPanel' };
-    Object.keys(panels).forEach(function(key) {
-      var panel = document.getElementById(panels[key]);
-      if(panel) panel.classList.toggle('active', key === tab);
-    });
+    ViewCommon.switchTabUI({
+      tabSelector: '.analysis-tab-btn',
+      tabDataAttr: 'analysisTab',
+      panelMap: {
+        history: 'historyPanel',
+        analysis: 'analysisPanelContent',
+        zodiac: 'zodiacAnalysisPanel'
+      }
+    }, tab);
   },
 
   /**

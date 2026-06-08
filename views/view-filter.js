@@ -170,9 +170,13 @@ const ViewFilter = {
     btn.setAttribute('aria-label', '复制已选生肖');
     btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
 
-    // 插入到"清除"按钮之前(与"清除"按钮对换位置)
+    // 插入到"批量选择"按钮之前(与"批量选择"按钮互换位置)
+    // 兼容：找不到 batchSelectGroup 时回退到"清除"按钮之前
+    const batchBtn = btnGroup.querySelector('[data-action="batchSelectGroup"]');
     const clearBtn = btnGroup.querySelector('[data-action="clearGroup"]');
-    if(clearBtn){
+    if(batchBtn){
+      btnGroup.insertBefore(btn, batchBtn);
+    } else if(clearBtn){
       btnGroup.insertBefore(btn, clearBtn);
     } else {
       btnGroup.appendChild(btn);

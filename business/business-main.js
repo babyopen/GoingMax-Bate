@@ -330,6 +330,22 @@ const Business = {
 
   // ====================== 导航相关 ======================
   /**
+   * 底部导航 → 页面的子 tab 记忆配置
+   * index: 底部导航索引（1=广播 / 2=资料 / 3=我的）
+   * page:  TAB_MEMORY 配置名（profile / analysis / random）
+   * restore: 恢复函数（接收 tab 参数）
+   */
+  _BOTTOM_NAV_TAB_MEMORY: [
+    { index: 1, page: 'analysis', restore: function(tab) { Business.switchAnalysisTab(tab); } },
+    { index: 2, page: 'random',   restore: function(tab) { Business.switchZodiacTab(tab); } },
+    { index: 3, page: 'profile',  restore: function(tab) {
+        if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
+          ViewProfile.switchProfileTabUI(tab);
+        }
+      } }
+  ],
+
+  /**
    * 切换底部导航
    * @param {number} index - 导航索引
    */
@@ -337,27 +353,16 @@ const Business = {
     ViewFilter.switchBottomNavUI(index);
     if(index === 1) {
       Business.initAnalysisPage();
-      // 新增：进入『广播』页面时，恢复用户上次离开时的子 tab（默认 history）
-      var lastAnalysisTab = (typeof Storage !== 'undefined' && Storage.getAnalysisLastTab)
-        ? Storage.getAnalysisLastTab()
-        : 'history';
-      Business.switchAnalysisTab(lastAnalysisTab);
     }
-    if(index === 2) {
-      // 新增：进入『资料』页面时，恢复用户上次离开时的子 tab（默认 ultimate）
-      var lastRandomTab = (typeof Storage !== 'undefined' && Storage.getRandomLastTab)
-        ? Storage.getRandomLastTab()
-        : 'ultimate';
-      Business.switchZodiacTab(lastRandomTab);
-    }
-    // 新增：进入『我的』页面（index=3）时，恢复用户上次离开时的子 tab
-    // 首次进入或无记录时默认显示 mine
-    if(index === 3) {
-      var lastTab = (typeof Storage !== 'undefined' && Storage.getProfileLastTab)
-        ? Storage.getProfileLastTab()
-        : 'mine';
-      if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
-        ViewProfile.switchProfileTabUI(lastTab);
+    // 按配置表恢复对应页面的子 tab（新增页面只需在 _BOTTOM_NAV_TAB_MEMORY 加一行）
+    if (typeof Storage !== 'undefined' && Storage.getLastTab) {
+      var list = Business._BOTTOM_NAV_TAB_MEMORY;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].index === index) {
+          var lastTab = Storage.getLastTab(list[i].page);
+          if (lastTab) list[i].restore(lastTab);
+          break;
+        }
       }
     }
   },
@@ -1286,10 +1291,8 @@ const Business = {
     ViewAnalysis.switchTabUI(tab);
     const newAnalysis = { ...StateManager._state.analysis, currentTab: tab };
     StateManager.setState({ analysis: newAnalysis }, false);
-    // 新增：记录『广播』页面当前子 tab，用于再次进入『广播』时恢复
-    if (typeof Storage !== 'undefined' && Storage.saveAnalysisLastTab) {
-      Storage.saveAnalysisLastTab(tab);
-    }
+    // 记录『广播』页面当前子 tab（用于再次进入『广播』时恢复）
+    Storage.saveLastTab('analysis', tab);
   },
 
   /**
@@ -1496,10 +1499,8 @@ const Business = {
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
-    // 新增：记录『资料』页面当前子 tab，用于再次进入『资料』时恢复
-    if (typeof Storage !== 'undefined' && Storage.saveRandomLastTab) {
-      Storage.saveRandomLastTab(tab);
-    }
+    // 记录『资料』页面当前子 tab（用于再次进入『资料』时恢复）
+    Storage.saveLastTab('random', tab);
   },
 
   /**

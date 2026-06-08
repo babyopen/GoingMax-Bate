@@ -361,14 +361,16 @@ const ViewZodiacPrediction = {
   },
 
   switchTabUI: function(tab) {
-    document.querySelectorAll('.zodiac-tab-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.zodiacTab === tab);
-    });
-    document.querySelectorAll('.zodiac-tab-panel').forEach(function(panel) {
-      var panelId = panel.id;
-      var panelMap = { main: 'zodiacMainPanel', predict: 'zodiacPredictPanel', giong: 'zodiacGiongPanel', ultimate: 'zodiacUltimatePanel' };
-      panel.classList.toggle('active', panelId === panelMap[tab]);
-    });
+    ViewCommon.switchTabUI({
+      tabSelector: '.zodiac-tab-btn',
+      tabDataAttr: 'zodiacTab',
+      panelMap: {
+        main: 'zodiacMainPanel',
+        predict: 'zodiacPredictPanel',
+        giong: 'zodiacGiongPanel',
+        ultimate: 'zodiacUltimatePanel'
+      }
+    }, tab);
   },
 
   renderFrequencyRating: function(freqResult) {

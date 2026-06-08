@@ -62,26 +62,16 @@ const ViewProfile = {
    * @param {string} tab - mine / official / phoenix / daxian
    */
   switchProfileTabUI: function(tab) {
-    var validTabs = ['mine', 'official', 'phoenix', 'daxian'];
-    if (validTabs.indexOf(tab) < 0) tab = 'mine';
-
-    // 顶部 tab 按钮激活态
-    document.querySelectorAll('#profilePage .zodiac-tab-btn[data-profile-tab]').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.profileTab === tab);
-    });
-    // 快捷导航里的 profile 子 tab 按钮（如有）
-    document.querySelectorAll('.nav-tab[data-page="profile"]').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.tabName === tab);
-    });
-    // 面板显示
-    var panelMap = {
-      mine: 'profileMinePanel',
-      official: 'profileOfficialPanel',
-      phoenix: 'profilePhoenixPanel',
-      daxian: 'profileDaxianPanel'
-    };
-    document.querySelectorAll('#profilePage .zodiac-tab-panel').forEach(function(panel) {
-      panel.classList.toggle('active', panel.id === panelMap[tab]);
-    });
+    ViewCommon.switchTabUI({
+      tabSelector: '#profilePage .zodiac-tab-btn[data-profile-tab]',
+      tabDataAttr: 'profileTab',
+      panelMap: {
+        mine: 'profileMinePanel',
+        official: 'profileOfficialPanel',
+        phoenix: 'profilePhoenixPanel',
+        daxian: 'profileDaxianPanel'
+      },
+      navBtnSelector: '.nav-tab[data-page="profile"]'
+    }, tab);
   }
 };

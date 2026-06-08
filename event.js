@@ -622,32 +622,20 @@ const EventBinder = {
   },
 
   /**
-   * 我的页面标签切换（符合分层规范：事件层负责DOM操作）
+   * 我的页面标签切换（委托 ViewProfile 渲染）
    * @param {string} tab - 标签名称：mine / official / phoenix / daxian
    */
   _switchProfileTab: function(tab) {
-    // 更新标签按钮激活状态
-    document.querySelectorAll('#profilePage .zodiac-tab-btn[data-profile-tab]').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.profileTab === tab);
-    });
-    // 切换面板显示
-    var panelMap = {
-      mine: 'profileMinePanel',
-      official: 'profileOfficialPanel',
-      phoenix: 'profilePhoenixPanel',
-      daxian: 'profileDaxianPanel'
-    };
-    document.querySelectorAll('#profilePage .zodiac-tab-panel').forEach(function(panel) {
-      panel.classList.toggle('active', panel.id === panelMap[tab]);
-    });
-    // 新增：切换到『我的』面板时，动态注入"使用说明"卡片（仅一次）
+    // 委托视图层渲染（与 ViewProfile.switchProfileTabUI 行为一致）
+    if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
+      ViewProfile.switchProfileTabUI(tab);
+    }
+    // 切换到『我的』面板时，动态注入"使用说明"卡片（仅一次）
     if (tab === 'mine' && typeof ViewProfile !== 'undefined' && ViewProfile.renderHelpCard) {
       ViewProfile.renderHelpCard();
     }
-    // 新增：记录『我的』页面当前子 tab，用于再次进入『我的』时恢复
-    if (typeof Storage !== 'undefined' && Storage.saveProfileLastTab) {
-      Storage.saveProfileLastTab(tab);
-    }
+    // 记录『我的』页面当前子 tab（用于再次进入『我的』时恢复）
+    Storage.saveLastTab('profile', tab);
     // 懒加载iframe
     if (tab === 'official') {
       var officialFrame = document.getElementById('officialFrame');

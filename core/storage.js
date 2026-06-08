@@ -17,13 +17,8 @@ const Storage = {
     // 滑动窗口预测历史记录（主推）
     SLIDING_WINDOW_RECORDS: 'slidingWindowRecords',
     // 当前主页临时筛选状态（新增：用于后台返回/页面刷新后恢复未保存的筛选）
-    CURRENT_FILTER: 'currentFilter',
-    // 『我的』页面上次离开的子标签（用于从其他页面再次回到『我的』时恢复到原 tab）
-    PROFILE_LAST_TAB: 'profileLastTab',
-    // 『广播』页面（analysisPage）上次离开的子标签
-    ANALYSIS_LAST_TAB: 'analysisLastTab',
-    // 『资料』页面（randomPage）上次离开的子标签
-    RANDOM_LAST_TAB: 'randomLastTab'
+    CURRENT_FILTER: 'currentFilter'
+    // 注：页面子标签记忆（profile/analysis/random）改由 TAB_MEMORY 配置表管理，见下方
   }),
 
   /**
@@ -268,84 +263,52 @@ const Storage = {
   },
 
   // ============================================================
-  // 新增：『我的』页面离开时子标签记忆（2026-06-08）
-  // 用途：用户在『我的』页面切换到 mine/official/phoenix/daxian 之一后离开
-  //       （切换到 filter/analysis/random 页面），再次回到『我的』时还原离开时的 tab
-  // 设计：仅在『我的』页面内部切换时记录；首次进入默认 mine
+  // 新增：页面离开时子标签记忆（2026-06-08）
+  // 用途：在『我的/广播/资料』页面切换到任意子标签后离开到其他页面，
+  //       再次回到时还原离开时的 tab；首次进入使用各页面默认
+  // 设计：TAB_MEMORY 配置驱动，新增页面只需添加配置项
   // ============================================================
+  TAB_MEMORY: Object.freeze({
+    profile: {
+      key: 'profileLastTab',
+      default: 'mine',
+      valid: ['mine', 'official', 'phoenix', 'daxian']
+    },
+    analysis: {
+      key: 'analysisLastTab',
+      default: 'history',
+      valid: ['history', 'analysis', 'zodiac']
+    },
+    random: {
+      key: 'randomLastTab',
+      default: 'ultimate',
+      // 注意：『主推』(main) 是从快捷导航进入的（顶部 tab 栏未列出），但需要支持记忆
+      valid: ['main', 'ultimate', 'predict', 'giong']
+    }
+  }),
 
   /**
-   * 获取『我的』页面上次的子标签
-   * @returns {string} 合法子标签（默认 mine）
+   * 获取指定页面上次的子标签
+   * @param {string} pageName - profile / analysis / random
+   * @returns {string|null} 合法子标签；未配置返回 null
    */
-  getProfileLastTab: () => {
-    const validTabs = ['mine', 'official', 'phoenix', 'daxian'];
-    const v = Storage.get(Storage.KEYS.PROFILE_LAST_TAB, 'mine');
-    return validTabs.indexOf(v) >= 0 ? v : 'mine';
+  getLastTab: (pageName) => {
+    const conf = Storage.TAB_MEMORY[pageName];
+    if (!conf) return null;
+    const v = Storage.get(conf.key, conf.default);
+    return conf.valid.indexOf(v) >= 0 ? v : conf.default;
   },
 
   /**
-   * 保存『我的』页面当前子标签
-   * @param {string} tab - mine / official / phoenix / daxian
-   * @returns {boolean} 是否成功
+   * 保存指定页面当前子标签
+   * @param {string} pageName - profile / analysis / random
+   * @param {string} tab - 当前 tab
+   * @returns {boolean} 是否成功；未配置或非法值返回 false
    */
-  saveProfileLastTab: (tab) => {
-    const validTabs = ['mine', 'official', 'phoenix', 'daxian'];
-    if (validTabs.indexOf(tab) < 0) return false;
-    return Storage.set(Storage.KEYS.PROFILE_LAST_TAB, tab);
-  },
-
-  // ============================================================
-  // 新增：『广播』页面（analysisPage）子标签记忆（2026-06-08）
-  // 用途：在『广播』页面切换到 history/analysis/zodiac 之一后离开，
-  //       再次回到『广播』时还原离开时的 tab；首次进入默认 history
-  // ============================================================
-
-  /**
-   * 获取『广播』页面上次的子标签
-   * @returns {string} 合法子标签（默认 history）
-   */
-  getAnalysisLastTab: () => {
-    const validTabs = ['history', 'analysis', 'zodiac'];
-    const v = Storage.get(Storage.KEYS.ANALYSIS_LAST_TAB, 'history');
-    return validTabs.indexOf(v) >= 0 ? v : 'history';
-  },
-
-  /**
-   * 保存『广播』页面当前子标签
-   * @param {string} tab - history / analysis / zodiac
-   * @returns {boolean} 是否成功
-   */
-  saveAnalysisLastTab: (tab) => {
-    const validTabs = ['history', 'analysis', 'zodiac'];
-    if (validTabs.indexOf(tab) < 0) return false;
-    return Storage.set(Storage.KEYS.ANALYSIS_LAST_TAB, tab);
-  },
-
-  // ============================================================
-  // 新增：『资料』页面（randomPage）子标签记忆（2026-06-08）
-  // 用途：在『资料』页面切换到 ultimate/predict/giong 之一后离开，
-  //       再次回到『资料』时还原离开时的 tab；首次进入默认 ultimate
-  // ============================================================
-
-  /**
-   * 获取『资料』页面上次的子标签
-   * @returns {string} 合法子标签（默认 ultimate）
-   */
-  getRandomLastTab: () => {
-    const validTabs = ['ultimate', 'predict', 'giong'];
-    const v = Storage.get(Storage.KEYS.RANDOM_LAST_TAB, 'ultimate');
-    return validTabs.indexOf(v) >= 0 ? v : 'ultimate';
-  },
-
-  /**
-   * 保存『资料』页面当前子标签
-   * @param {string} tab - ultimate / predict / giong
-   * @returns {boolean} 是否成功
-   */
-  saveRandomLastTab: (tab) => {
-    const validTabs = ['ultimate', 'predict', 'giong'];
-    if (validTabs.indexOf(tab) < 0) return false;
-    return Storage.set(Storage.KEYS.RANDOM_LAST_TAB, tab);
+  saveLastTab: (pageName, tab) => {
+    const conf = Storage.TAB_MEMORY[pageName];
+    if (!conf) return false;
+    if (conf.valid.indexOf(tab) < 0) return false;
+    return Storage.set(conf.key, tab);
   }
 };
