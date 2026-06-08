@@ -146,5 +146,36 @@ const ViewFilter = {
   cleanupPageEvents: (scrollHandler, unloadHandler) => {
     window.removeEventListener('scroll', scrollHandler);
     window.removeEventListener('beforeunload', unloadHandler);
+  },
+
+  /**
+   * 动态注入"复制已选生肖"按钮到主页生肖卡片(#mod-zodiac) 头部按钮组
+   * 说明：仅在主页生肖卡片内注入，不影响 index.html 已有的 DOM 结构
+   * 幂等：多次调用只注入一次
+   * 位置：插入到"清除"按钮(btn-icon-red)之前，与"清除"按钮互换相对位置
+   */
+  injectZodiacCopyBtn: () => {
+    const card = document.getElementById('mod-zodiac');
+    if(!card) return;
+    const btnGroup = card.querySelector('.card-header .btn-group[aria-label="生肖操作"]');
+    if(!btnGroup) return;
+    if(btnGroup.querySelector('[data-action="copySelectedZodiacs"]')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-mini btn-icon';
+    btn.setAttribute('data-action', 'copySelectedZodiacs');
+    btn.setAttribute('data-group', 'zodiac');
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('title', '复制已选生肖');
+    btn.setAttribute('aria-label', '复制已选生肖');
+    btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+
+    // 插入到"清除"按钮之前(与"清除"按钮对换位置)
+    const clearBtn = btnGroup.querySelector('[data-action="clearGroup"]');
+    if(clearBtn){
+      btnGroup.insertBefore(btn, clearBtn);
+    } else {
+      btnGroup.appendChild(btn);
+    }
   }
 };

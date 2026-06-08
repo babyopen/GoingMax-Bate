@@ -20,6 +20,8 @@ async function initApp() {
     Render.renderFilterList();
     // 10. 初始化快捷导航（主页默认 filter 页签）
     ViewFilter.refreshQuickNav('filter');
+    // 10.1 注入主页生肖卡片的"复制已选生肖"按钮（仅主页生肖卡片，不影响其它页面）
+    ViewFilter.injectZodiacCopyBtn();
     // 11. 初始化事件绑定
     EventBinder.init();
     // 12. 启动分析页面倒计时和自动刷新检查

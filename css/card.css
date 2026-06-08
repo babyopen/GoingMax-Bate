@@ -167,6 +167,15 @@
 .db-result-container{
   background:linear-gradient(135deg, rgba(0,122,255,0.04), rgba(175,82,222,0.04));
   border-radius:20px;padding:16px 12px;margin-bottom:16px;
+  position:relative;
+}
+.db-copy-btn{
+  position:absolute;top:5px;right:5px;z-index:5;
+  width:24px;height:24px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:#007AFF;background:rgba(0,122,255,0.12);
+  border:1px solid rgba(0,122,255,0.25);border-radius:6px;
+  cursor:pointer;line-height:1;
 }
 /* 综合未推荐生肖卡片 */
 .unrec-card{
@@ -484,6 +493,11 @@
 /* 通用：生肖列表红色（对所有 .backtest-records 容器生效，inline 与终极回测都覆盖到） */
 .backtest-record-zodiacs{
   color:#FF3B30;word-break:keep-all;
+  font-size:clamp(13px,2.5vw,15px);
+}
+/* 行内回测容器下覆盖强制继承的字号 */
+.backtest-records-inline .backtest-record-zodiacs{
+  font-size:clamp(13px,2.5vw,15px);
 }
 /* 命中的生肖字变蓝色高亮 */
 .backtest-record-zodiac-hit{color:#007AFF;font-weight:700}
@@ -492,6 +506,7 @@
 }
 .backtest-records-inline .backtest-record-result b{color:var(--text);font-weight:700;margin:0 1px}
 .backtest-records-inline .backtest-record-row.backtest-hit{border-left-color:#30D158}
+.backtest-records-inline .backtest-record-row.backtest-backup-hit{border-left-color:#30D158;background:rgba(48,209,88,0.06)}
 .backtest-records-inline .backtest-record-row.backtest-miss{border-left-color:#FF453A}
 .backtest-records-inline .backtest-record-row.backtest-pending{border-left-color:var(--primary);background:rgba(10,132,255,0.04)}
 .backtest-records-inline .backtest-record-hittext{font-weight:700;margin-left:clamp(2px,0.4vw,4px)}

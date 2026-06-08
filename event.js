@@ -251,6 +251,33 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.COPY_FILTER) Business.copyFilterNums(Number(index));
       else if(action === CONFIG.ACTIONS.TOP_FILTER) Business.topFilter(Number(index));
       else if(action === CONFIG.ACTIONS.DELETE_FILTER) Business.deleteFilter(Number(index));
+      // 复制主推与备选生肖（终极推荐卡片右上角按钮，DOM 顺序拼接，空格分隔）
+      else if(action === 'copyMainZodiacs') {
+        const card = actionBtn.closest('.db-result-container');
+        if(!card) return;
+        const allNames = card.querySelectorAll('#ultimateMainGrid .db-card-name, #ultimateBackupGrid .db-card-name');
+        const zodiacs = Array.prototype.map.call(allNames, n => (n.textContent || '').trim()).filter(Boolean);
+        if(zodiacs.length === 0){ Toast.show('暂无生肖'); return; }
+        Business.copyMainZodiacs(zodiacs.join(' '));
+      }
+      // 复制前 6 名生肖（生肖预测 / Giong 推荐 grid 右上角按钮；Giong 与生肖预测标题行也能触发）
+      else if(action === 'copyZodiacTop6') {
+        const trigger = actionBtn.closest('.zodiac-pred-grid, .zodiac-static-grid, .giong-header-row, .zp-header-row');
+        if(!trigger) return;
+        let grid = trigger;
+        if(trigger.classList.contains('giong-header-row') || trigger.classList.contains('zp-header-row')){
+          grid = trigger.parentElement ? trigger.parentElement.querySelector('.zodiac-pred-grid, .zodiac-static-grid') : null;
+        }
+        if(!grid) return;
+        const names = grid.querySelectorAll('.zodiac-static-card .zodiac-static-name');
+        const zodiacs = Array.prototype.map.call(names, n => (n.textContent || '').trim()).filter(Boolean).slice(0, 6);
+        if(zodiacs.length === 0){ Toast.show('暂无生肖'); return; }
+        Business.copyMainZodiacs(zodiacs.join(' '));
+      }
+      // 复制主页生肖卡片中已选生肖（视图层动态注入的按钮；数据源来自 StateManager.selected.zodiac）
+      else if(action === 'copySelectedZodiacs') {
+        Business.copySelectedZodiacs();
+      }
       // 导航操作
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
@@ -613,6 +640,14 @@ const EventBinder = {
     document.querySelectorAll('#profilePage .zodiac-tab-panel').forEach(function(panel) {
       panel.classList.toggle('active', panel.id === panelMap[tab]);
     });
+    // 新增：切换到『我的』面板时，动态注入"使用说明"卡片（仅一次）
+    if (tab === 'mine' && typeof ViewProfile !== 'undefined' && ViewProfile.renderHelpCard) {
+      ViewProfile.renderHelpCard();
+    }
+    // 新增：记录『我的』页面当前子 tab，用于再次进入『我的』时恢复
+    if (typeof Storage !== 'undefined' && Storage.saveProfileLastTab) {
+      Storage.saveProfileLastTab(tab);
+    }
     // 懒加载iframe
     if (tab === 'official') {
       var officialFrame = document.getElementById('officialFrame');

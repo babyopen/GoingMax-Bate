@@ -17,7 +17,13 @@ const Storage = {
     // 滑动窗口预测历史记录（主推）
     SLIDING_WINDOW_RECORDS: 'slidingWindowRecords',
     // 当前主页临时筛选状态（新增：用于后台返回/页面刷新后恢复未保存的筛选）
-    CURRENT_FILTER: 'currentFilter'
+    CURRENT_FILTER: 'currentFilter',
+    // 『我的』页面上次离开的子标签（用于从其他页面再次回到『我的』时恢复到原 tab）
+    PROFILE_LAST_TAB: 'profileLastTab',
+    // 『广播』页面（analysisPage）上次离开的子标签
+    ANALYSIS_LAST_TAB: 'analysisLastTab',
+    // 『资料』页面（randomPage）上次离开的子标签
+    RANDOM_LAST_TAB: 'randomLastTab'
   }),
 
   /**
@@ -259,5 +265,87 @@ const Storage = {
    */
   clearCurrentFilter: () => {
     return Storage.remove(Storage.KEYS.CURRENT_FILTER);
+  },
+
+  // ============================================================
+  // 新增：『我的』页面离开时子标签记忆（2026-06-08）
+  // 用途：用户在『我的』页面切换到 mine/official/phoenix/daxian 之一后离开
+  //       （切换到 filter/analysis/random 页面），再次回到『我的』时还原离开时的 tab
+  // 设计：仅在『我的』页面内部切换时记录；首次进入默认 mine
+  // ============================================================
+
+  /**
+   * 获取『我的』页面上次的子标签
+   * @returns {string} 合法子标签（默认 mine）
+   */
+  getProfileLastTab: () => {
+    const validTabs = ['mine', 'official', 'phoenix', 'daxian'];
+    const v = Storage.get(Storage.KEYS.PROFILE_LAST_TAB, 'mine');
+    return validTabs.indexOf(v) >= 0 ? v : 'mine';
+  },
+
+  /**
+   * 保存『我的』页面当前子标签
+   * @param {string} tab - mine / official / phoenix / daxian
+   * @returns {boolean} 是否成功
+   */
+  saveProfileLastTab: (tab) => {
+    const validTabs = ['mine', 'official', 'phoenix', 'daxian'];
+    if (validTabs.indexOf(tab) < 0) return false;
+    return Storage.set(Storage.KEYS.PROFILE_LAST_TAB, tab);
+  },
+
+  // ============================================================
+  // 新增：『广播』页面（analysisPage）子标签记忆（2026-06-08）
+  // 用途：在『广播』页面切换到 history/analysis/zodiac 之一后离开，
+  //       再次回到『广播』时还原离开时的 tab；首次进入默认 history
+  // ============================================================
+
+  /**
+   * 获取『广播』页面上次的子标签
+   * @returns {string} 合法子标签（默认 history）
+   */
+  getAnalysisLastTab: () => {
+    const validTabs = ['history', 'analysis', 'zodiac'];
+    const v = Storage.get(Storage.KEYS.ANALYSIS_LAST_TAB, 'history');
+    return validTabs.indexOf(v) >= 0 ? v : 'history';
+  },
+
+  /**
+   * 保存『广播』页面当前子标签
+   * @param {string} tab - history / analysis / zodiac
+   * @returns {boolean} 是否成功
+   */
+  saveAnalysisLastTab: (tab) => {
+    const validTabs = ['history', 'analysis', 'zodiac'];
+    if (validTabs.indexOf(tab) < 0) return false;
+    return Storage.set(Storage.KEYS.ANALYSIS_LAST_TAB, tab);
+  },
+
+  // ============================================================
+  // 新增：『资料』页面（randomPage）子标签记忆（2026-06-08）
+  // 用途：在『资料』页面切换到 ultimate/predict/giong 之一后离开，
+  //       再次回到『资料』时还原离开时的 tab；首次进入默认 ultimate
+  // ============================================================
+
+  /**
+   * 获取『资料』页面上次的子标签
+   * @returns {string} 合法子标签（默认 ultimate）
+   */
+  getRandomLastTab: () => {
+    const validTabs = ['ultimate', 'predict', 'giong'];
+    const v = Storage.get(Storage.KEYS.RANDOM_LAST_TAB, 'ultimate');
+    return validTabs.indexOf(v) >= 0 ? v : 'ultimate';
+  },
+
+  /**
+   * 保存『资料』页面当前子标签
+   * @param {string} tab - ultimate / predict / giong
+   * @returns {boolean} 是否成功
+   */
+  saveRandomLastTab: (tab) => {
+    const validTabs = ['ultimate', 'predict', 'giong'];
+    if (validTabs.indexOf(tab) < 0) return false;
+    return Storage.set(Storage.KEYS.RANDOM_LAST_TAB, tab);
   }
 };

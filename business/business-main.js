@@ -134,6 +134,41 @@ const Business = {
   },
 
   /**
+   * 复制终极推荐生肖（主推 + 备选，事件层传入已拼接的字符串）
+   * @param {string} zodiacStr - 已拼接好的生肖字符串（如 "主推：xx xx 备选：xx xx"）
+   */
+  copyMainZodiacs: (zodiacStr) => {
+    if(!zodiacStr) return;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(zodiacStr).then(() => {
+        Toast.show('已复制');
+      }).catch(() => {
+        GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', zodiacStr, () => {});
+      });
+    } else {
+      GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', zodiacStr, () => {});
+    }
+  },
+
+  /**
+   * 复制主页生肖筛选已选生肖（按12生肖顺序拼接，空格分隔）
+   * 数据源：StateManager._state.selected.zodiac
+   */
+  copySelectedZodiacs: () => {
+    const ZODIAC_ORDER = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+    const state = StateManager._state;
+    const selected = (state.selected && state.selected.zodiac) ? state.selected.zodiac : [];
+    if(!selected || selected.length === 0){
+      Toast.show('暂未选择生肖');
+      return;
+    }
+    // 按12生肖固定顺序拼接
+    const ordered = ZODIAC_ORDER.filter(z => selected.indexOf(z) !== -1);
+    const zodiacStr = ordered.join(' ');
+    Business.copyMainZodiacs(zodiacStr);
+  },
+
+  /**
    * 复制方案号码
    * @param {number} index - 方案索引
    */
@@ -302,9 +337,28 @@ const Business = {
     ViewFilter.switchBottomNavUI(index);
     if(index === 1) {
       Business.initAnalysisPage();
+      // 新增：进入『广播』页面时，恢复用户上次离开时的子 tab（默认 history）
+      var lastAnalysisTab = (typeof Storage !== 'undefined' && Storage.getAnalysisLastTab)
+        ? Storage.getAnalysisLastTab()
+        : 'history';
+      Business.switchAnalysisTab(lastAnalysisTab);
     }
     if(index === 2) {
-      Business.switchZodiacTab('ultimate');
+      // 新增：进入『资料』页面时，恢复用户上次离开时的子 tab（默认 ultimate）
+      var lastRandomTab = (typeof Storage !== 'undefined' && Storage.getRandomLastTab)
+        ? Storage.getRandomLastTab()
+        : 'ultimate';
+      Business.switchZodiacTab(lastRandomTab);
+    }
+    // 新增：进入『我的』页面（index=3）时，恢复用户上次离开时的子 tab
+    // 首次进入或无记录时默认显示 mine
+    if(index === 3) {
+      var lastTab = (typeof Storage !== 'undefined' && Storage.getProfileLastTab)
+        ? Storage.getProfileLastTab()
+        : 'mine';
+      if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
+        ViewProfile.switchProfileTabUI(lastTab);
+      }
     }
   },
 
@@ -1232,6 +1286,10 @@ const Business = {
     ViewAnalysis.switchTabUI(tab);
     const newAnalysis = { ...StateManager._state.analysis, currentTab: tab };
     StateManager.setState({ analysis: newAnalysis }, false);
+    // 新增：记录『广播』页面当前子 tab，用于再次进入『广播』时恢复
+    if (typeof Storage !== 'undefined' && Storage.saveAnalysisLastTab) {
+      Storage.saveAnalysisLastTab(tab);
+    }
   },
 
   /**
@@ -1438,6 +1496,10 @@ const Business = {
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
+    // 新增：记录『资料』页面当前子 tab，用于再次进入『资料』时恢复
+    if (typeof Storage !== 'undefined' && Storage.saveRandomLastTab) {
+      Storage.saveRandomLastTab(tab);
+    }
   },
 
   /**

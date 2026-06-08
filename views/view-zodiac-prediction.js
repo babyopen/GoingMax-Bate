@@ -22,6 +22,9 @@ const ViewZodiacPrediction = {
     var bottom6Cards = allCards.slice(6, 12);
 
     html += '<div class="freq-panel zodiac-pred-panel" data-pred-panel="top6">';
+    html += '<div class="zp-header-row">';
+    html += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制前 6 名生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
+    html += '</div>';
     html += '<div class="zodiac-pred-grid">';
     top6Cards.forEach(function(card, idx) {
       var rankNum = idx + 1;
@@ -43,6 +46,9 @@ const ViewZodiacPrediction = {
     html += '</div>';
 
     html += '<div class="freq-panel zodiac-pred-panel" data-pred-panel="bottom6" style="display:none;">';
+    html += '<div class="zp-header-row">';
+    html += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制后 6 名生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
+    html += '</div>';
     html += '<div class="zodiac-pred-grid">';
     bottom6Cards.forEach(function(card, idx) {
       var rankNum = idx + 7;
@@ -1034,7 +1040,10 @@ const ViewZodiacPrediction = {
     var title = '区域综合推荐';
     if (nextExpect) title = '第' + nextExpect + '期推荐';
 
-    var html = '<div class="analysis-section-title">' + title + '</div>';
+    var html = '<div class="giong-header-row">';
+    html += '<div class="analysis-section-title">' + title + '</div>';
+    html += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制 Giong 推荐生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
+    html += '</div>';
     html += '<div class="zodiac-static-grid">';
     zodiacList.forEach(function(item, idx) {
       var zodiac = Array.isArray(item) ? item[0] : item;
@@ -1176,6 +1185,7 @@ const ViewZodiacPrediction = {
 
     var html = '';
     html += '<div class="db-result-container">';
+    html += '<button class="db-copy-btn" data-action="copyMainZodiacs" type="button" aria-label="复制主推与备选生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
 
     var adaptiveInfo = data.adaptiveInfo || {};
     var mainCount = adaptiveInfo.mainCount || 5;
@@ -1592,7 +1602,7 @@ const ViewZodiacPrediction = {
             return z;
           }).join(' ');
         }
-        backupText = '  备选：' + _bHtml;
+        backupText = '  <span style="color:#1a1a1a;">备选：</span>' + _bHtml;
       }
 
       var stageTag = r.stage ? '<span class="backtest-stage-tag">' + r.stage.replace('稳定运行期', '').replace('过渡混沌期', '过渡') + '</span>' : '';
@@ -1600,7 +1610,7 @@ const ViewZodiacPrediction = {
 
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
       html += '<div class="backtest-record-period">' + r.expect + '期 ' + stageTag + '</div>';
-      html += '<span class="backtest-record-predict"><span class="backtest-record-zodiacs">主推：' + topNText + backupText + '</span>' + blackInfo + '</span>';
+      html += '<span class="backtest-record-predict"><span class="backtest-record-zodiacs"><span style="color:#1a1a1a;">主推：</span>' + topNText + backupText + '</span>' + blackInfo + '</span>';
       html += '<div class="backtest-record-result">实际：<b>' + r.actualZodiac + '</b> ' + hitIcon + ' ' + hitText + '</div>';
       html += '</div>';
     });
@@ -2200,7 +2210,10 @@ const ViewZodiacPrediction = {
     // 2. 渲染候选卡片（前6名）
     var candidatesGrid = document.getElementById('mainCandidatesGrid');
     if (candidatesGrid) {
-      var cardHtml = '<div class="zodiac-pred-grid">';
+      var cardHtml = '<div class="zp-header-row">';
+      cardHtml += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制主推候选生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
+      cardHtml += '</div>';
+      cardHtml += '<div class="zodiac-pred-grid">';
       data.candidates.forEach(function(item, idx) {
         var rankNum = idx + 1;
         var cardClass = '';

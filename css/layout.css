@@ -96,7 +96,7 @@
 .zodiac-pred-card{height:100%;min-height:200px;display:flex;flex-direction:column}
 .zodiac-pred-grid{
   width:100%;display:grid;grid-template-columns:repeat(3,1fr);
-  gap:clamp(8px,1.5vw,12px);align-content:center;
+  gap:clamp(8px,1.5vw,12px);align-content:center;position:relative;
 }
 .freq-swiper-dots{display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 0 8px;background:var(--card);flex-shrink:0}
 .freq-swiper-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s ease;cursor:pointer}
@@ -129,7 +129,11 @@
 #zodiacPredictionGrid .freq-panels-container{padding-bottom:8px}
 .zodiac-pred-tabs{padding-bottom:0}
 #zodiacPredictPanel .card:first-child .card-body{padding:12px 20px 8px}
-#giongRecommendPanel .zodiac-static-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vw,10px);width:100%}
+#giongRecommendPanel .giong-header-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+#giongRecommendPanel .giong-header-row .db-copy-btn{position:static}
+.zp-header-row{display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px}
+.zp-header-row .db-copy-btn{position:static}
+#giongRecommendPanel .zodiac-static-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vw,10px);width:100%;position:relative}
 
 /* 分析区块标题 */
 .analysis-section-title{font-size:clamp(16px,3.5vw,20px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,16px);padding:0 clamp(4px,1vw,8px)}
