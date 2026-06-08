@@ -193,7 +193,9 @@ const Render = {
         const previewFragment = Utils.createFragment(previewList, (num) => {
           const wrapper = document.createElement('div');
           wrapper.className = 'num-item';
-          wrapper.innerHTML = `<div class="num-ball ${num.color}色">${num.s}</div><div class="tag-zodiac">${num.zodiac}</div>`;
+          // P2-2 防御：num.color 白名单（来源 DataQuery 内部映射但仍加白名单保险）
+          const safeColor = (num.color === '红' || num.color === '蓝' || num.color === '绿') ? num.color : '红';
+          wrapper.innerHTML = `<div class="num-ball ${Utils.escapeHtml(safeColor)}色">${Utils.escapeHtml(num.s)}</div><div class="tag-zodiac">${Utils.escapeHtml(num.zodiac)}</div>`;
           return wrapper;
         });
 
@@ -202,7 +204,7 @@ const Render = {
         itemWrapper.setAttribute('role', 'listitem');
         itemWrapper.innerHTML = `
           <div class="filter-row">
-            <div class="filter-item-name">${item.name}</div>
+            <div class="filter-item-name">${Utils.escapeHtml(item.name)}</div>
             <div class="filter-preview"></div>
           </div>
           <div class="filter-item-btns">
@@ -218,9 +220,12 @@ const Render = {
       });
 
       if(savedList.length > showCount){
-        const expandBtn = document.createElement('div');
+        // P1-4: 用 button 替代 div（原生 button 语义，键盘 / 屏幕阅读器友好）
+        const expandBtn = document.createElement('button');
+        expandBtn.type = 'button';
         expandBtn.className = 'filter-expand';
         expandBtn.dataset.action = CONFIG.ACTIONS.TOGGLE_SHOW_ALL;
+        expandBtn.setAttribute('aria-expanded', state.showAllFilters ? 'true' : 'false');
         expandBtn.innerText = state.showAllFilters ? '收起' : `展开全部(${savedList.length}条)`;
         fragment.appendChild(expandBtn);
       }

@@ -15,7 +15,7 @@
 .filter-save-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .filter-item{background:var(--bg-secondary);padding:10px 12px;border-radius:12px}
 .filter-row{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.filter-item-name{font-weight:600;font-size:11px;white-space:nowrap}
+.filter-item-name{font-weight:600;font-size:11px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .filter-preview{display:flex;gap:5px;max-width:100%;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
 .filter-preview::-webkit-scrollbar{height:4px}
 .filter-preview::-webkit-scrollbar-thumb{background:var(--sub-text);border-radius:2px;opacity:0.3}
@@ -31,6 +31,8 @@
   text-align:center;padding:8px;color:var(--primary);cursor:pointer;font-size:14px;
   background:var(--bg-secondary);border-radius:10px;margin-top:4px;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  /* P1-4: 改 button 后需要的 reset（去掉浏览器默认 border/font/width） */
+  border:none;font:inherit;width:100%;font-family:inherit;
 }
 .filter-expand:active{opacity:0.6}
 

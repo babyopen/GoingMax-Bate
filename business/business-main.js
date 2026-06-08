@@ -98,10 +98,13 @@ const Business = {
       return;
     }
 
-    const defaultName = `方案${state.savedFilters.length + 1}`;
+    // P1-3: 默认名用"最大编号+1"避免与现存方案冲突
+    const defaultName = Utils.nextDefaultName(state.savedFilters);
     GIONGBETA_INPUT_MODAL.show('请输入方案名称', '请输入方案名称', defaultName, (name) => {
       if(name === null) return;
-      const filterName = name.trim() || defaultName;
+      const rawName = (name.trim() || defaultName).slice(0, 20); // P1-2: 输入超长截断
+      // P1-1: 智能去重（已存在同名则自动追加 " (2)" 后缀）
+      const filterName = Utils.ensureUniqueName(rawName, state.savedFilters);
       const filterItem = {
         name: filterName,
         selected: Utils.deepClone(state.selected),
@@ -111,7 +114,12 @@ const Business = {
       const success = Storage.saveFilter(filterItem);
       if(success){
         Render.renderFilterList();
-        Toast.show('保存成功');
+        // 若发生自动重命名，附带给用户提示
+        if(filterName !== rawName){
+          Toast.show(`已保存（重名自动调整为：${filterName}）`);
+        } else {
+          Toast.show('保存成功');
+        }
       }
     });
   },
@@ -179,7 +187,15 @@ const Business = {
 
     const list = Filter.getFilteredList(item.selected, item.excluded);
     if(list.length === 0){
-      Toast.show('该方案无符合条件的号码');
+      // P2-1: 空态提示更详细（让用户知道为什么没有号码）
+      const excludedCount = (item.excluded || []).length;
+      if(excludedCount >= 49){
+        Toast.show('该方案全部号码均已排除');
+      } else if(excludedCount > 0){
+        Toast.show(`该方案无符合条件的号码（已排除${excludedCount}个）`);
+      } else {
+        Toast.show('该方案筛选条件下无号码');
+      }
       return;
     }
 
@@ -207,13 +223,20 @@ const Business = {
 
     GIONGBETA_INPUT_MODAL.show('修改方案名称', '请输入新名称', item.name, (newName) => {
       if(newName === null || newName.trim() === "") return;
+      const rawName = newName.trim().slice(0, 20); // P1-2: 输入超长截断
       const newList = [...state.savedFilters];
-      newList[index].name = newName.trim();
+      // P1-1: 重命名去重（排除自身）
+      const finalName = Utils.ensureUniqueName(rawName, newList, index);
+      newList[index].name = finalName;
       const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
       if(success){
         StateManager.setState({ savedFilters: newList }, false);
         Render.renderFilterList();
-        Toast.show('重命名成功');
+        if(finalName !== rawName){
+          Toast.show(`已重命名（重名自动调整为：${finalName}）`);
+        } else {
+          Toast.show('重命名成功');
+        }
       }
     });
   },

@@ -75,11 +75,73 @@ const Utils = {
    * @returns {boolean} 是否合法
    */
   validateFilterItem: (item) => {
-    return item && 
-      typeof item === 'object' && 
-      typeof item.name === 'string' && 
+    return item &&
+      typeof item === 'object' &&
+      typeof item.name === 'string' &&
       item.selected && typeof item.selected === 'object' &&
       Array.isArray(item.excluded);
+  },
+
+  /**
+   * HTML 实体转义（防止 XSS 注入）
+   * 用于将用户输入的字符串安全地插入到 innerHTML 上下文中
+   * @param {any} str - 要转义的字符串
+   * @returns {string} 转义后的字符串
+   */
+  escapeHtml: (str) => {
+    if(str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+
+  /**
+   * 生成不与已存在方案重名的方案名
+   * - 若 baseName 不冲突，原样返回
+   * - 若冲突则自动追加 " (2)"、" (3)"… 后缀
+   * @param {string} baseName - 期望的方案名
+   * @param {Array<{name:string}>} existingList - 已有方案列表
+   * @param {number} [excludeIndex=-1] - 排除的索引（重命名时排除自身）
+   * @returns {string} 不重名的方案名
+   */
+  ensureUniqueName: (baseName, existingList, excludeIndex = -1) => {
+    const names = new Set(
+      (existingList || [])
+        .filter((_, i) => i !== excludeIndex)
+        .map(s => s.name)
+    );
+    if(!names.has(baseName)) return baseName;
+    let i = 2;
+    let candidate = `${baseName} (${i})`;
+    while(names.has(candidate)){
+      i++;
+      candidate = `${baseName} (${i})`;
+      if(i > 999) break; // 防御性截断
+    }
+    return candidate;
+  },
+
+  /**
+   * 计算默认方案名："方案N" 其中 N = 最大编号 + 1
+   * 处理用户删除中间方案后 length+1 冲突的情况
+   * @param {Array<{name:string}>} existingList - 已有方案列表
+   * @param {string} [prefix='方案'] - 名前缀
+   * @returns {string} 不冲突的默认方案名
+   */
+  nextDefaultName: (existingList, prefix = '方案') => {
+    const re = new RegExp(`^${prefix}(\\d+)$`);
+    let max = 0;
+    (existingList || []).forEach(s => {
+      const m = re.exec(s.name);
+      if(m){
+        const n = parseInt(m[1], 10);
+        if(n > max) max = n;
+      }
+    });
+    return `${prefix}${max + 1}`;
   },
 
   /**

@@ -255,4 +255,21 @@
   /* 自适应提示 + 徽章：暗底加深 */
   .backtest-adaptive-info{background:rgba(255,179,64,0.12);border-color:rgba(255,179,64,0.3);color:rgba(235,235,245,0.9)}
   .adaptive-badge-small{color:#FFB340;background:rgba(255,179,64,0.22)}
+
+  /* ====================== 筛选方案模块 dark mode 适配 ====================== */
+  /* 方案容器：在暗底上微提亮底色，让卡片轮廓更清晰 */
+  .filter-item{background:rgba(255,255,255,0.05)}
+
+  /* 方案名：暗底用半透明白 */
+  .filter-item-name{color:rgba(235,235,245,0.9)}
+
+  /* 方案操作按钮组：原 background:var(--bg) 在暗底是 #000 过深，改用浅色背景 */
+  .filter-item-btns button{background:rgba(255,255,255,0.08);color:var(--primary)}
+  .filter-item-btns button:active{background:rgba(255,255,255,0.14)}
+  /* 删除按钮：暗底下红色调亮 + 背景加深 */
+  .filter-item-btns .del{background:rgba(255,69,58,0.18);color:#FF6961}
+
+  /* 展开按钮：暗底用半透明白文字 + 中性背景 */
+  .filter-expand{background:rgba(255,255,255,0.06);color:rgba(235,235,245,0.85)}
+  .filter-expand:active{background:rgba(255,255,255,0.12)}
 }
