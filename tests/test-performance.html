@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>性能优化测试</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test-pass { color: green; font-weight: bold; }
+    .test-fail { color: red; font-weight: bold; }
+    .test-section { margin: 16px 0; padding: 12px; border: 1px solid #ccc; border-radius: 6px; }
+    .test-section h3 { margin: 0 0 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>性能优化测试</h1>
+  <div id="results"></div>
+
+  <script src="../core/config.js"></script>
+  <script src="../core/utils.js"></script>
+  <script src="../data/data-query.js"></script>
+  <script>
+    const results = [];
+    function log(msg, isPass) {
+      results.push({ msg, isPass });
+      const el = document.getElementById('results');
+      const div = document.createElement('div');
+      div.className = isPass ? 'test-pass' : 'test-fail';
+      div.textContent = (isPass ? '✅' : '❌') + ' ' + msg;
+      el.appendChild(div);
+    }
+
+    function section(title) {
+      const el = document.getElementById('results');
+      const div = document.createElement('div');
+      div.className = 'test-section';
+      div.innerHTML = '<h3>' + title + '</h3>';
+      el.appendChild(div);
+    }
+
+    // 准备测试数据
+    const mockHistory = [];
+    for (let i = 0; i < 200; i++) {
+      mockHistory.push({
+        expect: '2025001-' + i,
+        openCode: [1,2,3,4,5,6,(i%49)+1].join(','),
+        zodiac: '鼠,牛,虎,兔,龙,蛇,马,羊,猴,鸡,狗,猪'
+      });
+    }
+
+    // ============================================================
+    // 1. DOM 缓存测试
+    // ============================================================
+    section('1. DOM 缓存（ViewCommon.$）');
+    if (typeof ViewCommon !== 'undefined' && typeof ViewCommon.$ === 'function') {
+      // 创建一个测试 DOM
+      const testEl = document.createElement('div');
+      testEl.id = 'test-dom-cache-el';
+      document.body.appendChild(testEl);
+
+      const start1 = performance.now();
+      for (let i = 0; i < 1000; i++) {
+        ViewCommon.$('test-dom-cache-el');
+      }
+      const cachedTime = performance.now() - start1;
+
+      const start2 = performance.now();
+      for (let i = 0; i < 1000; i++) {
+        document.getElementById('test-dom-cache-el');
+      }
+      const directTime = performance.now() - start2;
+
+      log('DOM 缓存查询 1000 次: ' + cachedTime.toFixed(2) + 'ms', cachedTime < 50);
+      log('直接查询 1000 次: ' + directTime.toFixed(2) + 'ms', true);
+
+      document.body.removeChild(testEl);
+      ViewCommon.clearDomCache('test-dom-cache-el');
+    } else {
+      log('ViewCommon 未加载', false);
+    }
+
+    // ============================================================
+    // 2. memoize 测试
+    // ============================================================
+    section('2. memoize 缓存（Utils.memoize）');
+    if (typeof Utils !== 'undefined' && typeof Utils.memoize === 'function') {
+      let callCount = 0;
+      const expensive = Utils.memoize((x) => {
+        callCount++;
+        return x * 2;
+      });
+
+      expensive(5);
+      expensive(5);
+      expensive(5);
+      expensive(10);
+
+      log('memoize 调用 4 次，实际执行 ' + callCount + ' 次（应为 2）', callCount === 2);
+    } else {
+      log('Utils.memoize 未定义', false);
+    }
+
+    // ============================================================
+    // 3. LRU 缓存测试
+    // ============================================================
+    section('3. LRU 缓存（Utils.createLRU）');
+    if (typeof Utils !== 'undefined' && typeof Utils.createLRU === 'function') {
+      const lru = Utils.createLRU(3);
+      lru.set('a', 1);
+      lru.set('b', 2);
+      lru.set('c', 3);
+      lru.set('d', 4);  // 应淘汰 'a'
+
+      log('LRU 容量限制：a 应被淘汰', lru.get('a') === undefined);
+      log('LRU 数据 b 仍存在', lru.get('b') === 2);
+      log('LRU 数据 d 已添加', lru.get('d') === 4);
+    } else {
+      log('Utils.createLRU 未定义', false);
+    }
+
+    // ============================================================
+    // 4. SpecialCalculator 缓存测试
+    // ============================================================
+    section('4. SpecialCalculator 缓存优化');
+    if (typeof Utils !== 'undefined' && Utils.SpecialCalculator) {
+      // 第一次调用：实际计算
+      const start1 = performance.now();
+      mockHistory.forEach(item => Utils.SpecialCalculator.getSpecial(item));
+      const firstTime = performance.now() - start1;
+
+      // 第二次调用：走缓存
+      const start2 = performance.now();
+      mockHistory.forEach(item => Utils.SpecialCalculator.getSpecial(item));
+      const secondTime = performance.now() - start2;
+
+      const speedup = firstTime / Math.max(secondTime, 0.001);
+      log('首次计算 200 条: ' + firstTime.toFixed(2) + 'ms', true);
+      log('缓存命中 200 条: ' + secondTime.toFixed(2) + 'ms', true);
+      log('缓存加速比: ' + speedup.toFixed(1) + 'x', speedup > 1);
+
+      Utils.SpecialCalculator.clearCache();
+    } else {
+      log('Utils.SpecialCalculator 未定义', false);
+    }
+
+    // ============================================================
+    // 5. 批量 setState 测试
+    // ============================================================
+    section('5. StateManager.batchSetState');
+    if (typeof StateManager !== 'undefined' && typeof StateManager.batchSetState === 'function') {
+      let renderCount = 0;
+      const origRender = window.Render;
+      window.Render = { renderAll: () => renderCount++ };
+
+      StateManager.batchSetState({ a: 1 });
+      StateManager.batchSetState({ b: 2 });
+      StateManager.batchSetState({ c: 3 });
+      StateManager.batchSetState({ a: 4 }, { immediate: true });
+
+      log('batchSetState 已定义且可调用', typeof StateManager.batchSetState === 'function');
+      window.Render = origRender;
+    } else {
+      log('StateManager.batchSetState 未定义', false);
+    }
+
+    // ============================================================
+    // 6. DataQuery 增量检测测试
+    // ============================================================
+    section('6. DataQuery.hasHistoryChanged 增量检测');
+    if (typeof DataQuery !== 'undefined' && typeof DataQuery.hasHistoryChanged === 'function') {
+      DataQuery.updateHistorySnapshot(mockHistory);
+      log('首次快照后数据未变：hasHistoryChanged=' + DataQuery.hasHistoryChanged(mockHistory), DataQuery.hasHistoryChanged(mockHistory) === false);
+
+      const newHistory = mockHistory.concat([{ expect: 'new', openCode: '1,2,3,4,5,6,7' }]);
+      log('数据变化后：hasHistoryChanged=' + DataQuery.hasHistoryChanged(newHistory), DataQuery.hasHistoryChanged(newHistory) === true);
+    } else {
+      log('DataQuery.hasHistoryChanged 未定义', false);
+    }
+
+    // ============================================================
+    // 汇总
+    // ============================================================
+    section('汇总');
+    const passed = results.filter(r => r.isPass).length;
+    const total = results.length;
+    const el = document.createElement('div');
+    el.style.cssText = 'margin-top: 16px; padding: 12px; background: #f0f0f0; border-radius: 6px; font-weight: bold;';
+    el.textContent = '通过: ' + passed + ' / ' + total;
+    el.style.color = passed === total ? 'green' : (passed > total/2 ? 'orange' : 'red');
+    document.getElementById('results').appendChild(el);
+
+    console.log('%c[性能优化测试] ' + (passed === total ? '全部通过 ✅' : '有失败 ❌'),
+      'color:' + (passed === total ? 'green' : 'red') + ';font-weight:bold');
+    console.log('通过: ' + passed + ', 失败: ' + (total - passed));
+  </script>
+</body>
+</html>

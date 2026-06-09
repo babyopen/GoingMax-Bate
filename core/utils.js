@@ -1,4 +1,70 @@
 const Utils = {
+  // ============================================================
+  // 缓存机制（2026-06-09 性能优化）
+  // ============================================================
+
+  /**
+   * 通用缓存 Map（带 TTL）
+   * 用于缓存计算密集型函数的结果
+   */
+  _cache: new Map(),
+
+  /**
+   * 创建带缓存的函数（memoize）
+   * @param {Function} fn - 要缓存的原函数
+   * @param {Function} [keyFn] - 自定义 key 生成函数，默认使用 JSON.stringify(args)
+   * @param {number} [ttl=0] - 缓存过期时间(ms)，0 表示永不过期
+   * @returns {Function} 带缓存的函数
+   */
+  memoize: (fn, keyFn, ttl) => {
+    var cache = new Map();
+    if (!keyFn) {
+      keyFn = function(args) {
+        try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
+      };
+    }
+    return function() {
+      var key = keyFn(arguments);
+      if (cache.has(key)) {
+        var entry = cache.get(key);
+        if (!ttl || Date.now() - entry.time < ttl) {
+          return entry.value;
+        }
+        cache.delete(key);
+      }
+      var value = fn.apply(this, arguments);
+      cache.set(key, { value: value, time: Date.now() });
+      return value;
+    };
+  },
+
+  /**
+   * 创建 LRU 缓存（限制最大数量）
+   * @param {number} maxSize - 最大缓存数量
+   * @returns {{get: Function, set: Function, clear: Function}}
+   */
+  createLRU: (maxSize) => {
+    var cache = new Map();
+    return {
+      get: function(key) {
+        if (!cache.has(key)) return undefined;
+        var value = cache.get(key);
+        cache.delete(key);
+        cache.set(key, value);
+        return value;
+      },
+      set: function(key, value) {
+        if (cache.has(key)) cache.delete(key);
+        else if (cache.size >= maxSize) {
+          var firstKey = cache.keys().next().value;
+          cache.delete(firstKey);
+        }
+        cache.set(key, value);
+      },
+      clear: function() { cache.clear(); }
+    };
+  },
+
   /**
    * 节流函数（优化高频事件）
    * @param {Function} fn - 要执行的函数
@@ -378,7 +444,33 @@ const Utils = {
    */
   SpecialCalculator: {
     /**
-     * 从历史数据项中提取特码完整信息
+     * 内部缓存：使用 LRU 策略，最多缓存 500 条记录（避免内存无限增长）
+     * @private
+     */
+    _cache: null,
+
+    /**
+     * 获取缓存实例（懒加载）
+     * @private
+     */
+    _getCache: function() {
+      if (!Utils.SpecialCalculator._cache) {
+        Utils.SpecialCalculator._cache = Utils.createLRU(500);
+      }
+      return Utils.SpecialCalculator._cache;
+    },
+
+    /**
+     * 清空 SpecialCalculator 缓存（在历史数据刷新时调用）
+     */
+    clearCache: function() {
+      if (Utils.SpecialCalculator._cache) {
+        Utils.SpecialCalculator._cache.clear();
+      }
+    },
+
+    /**
+     * 从历史数据项中提取特码完整信息（带缓存优化）
      * @param {Object} item - 历史数据单项
      * @returns {Object} 特码信息对象
      */
@@ -393,6 +485,12 @@ const Utils = {
         };
       }
 
+      // 性能优化：使用 LRU 缓存，key 基于 expect + openCode
+      var cacheKey = (item.expect || '') + '_' + (item.openCode || '');
+      var cache = Utils.SpecialCalculator._getCache();
+      var cached = cache.get(cacheKey);
+      if (cached) return cached;
+
       const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
       const zodArr = Utils.parseZodiacArr(item);
       const te = Math.max(0, Number(codeArr[6]));
@@ -400,7 +498,7 @@ const Utils = {
       const colorName = Utils.getColorName(te);
       const wuxing = Utils.getWuxing(te);
 
-      return {
+      const result = {
         te,
         tail: te % 10,
         head: Math.floor(te / 10),
@@ -413,10 +511,13 @@ const Utils = {
         animal: CONFIG.ANALYSIS.HOME_ZODIAC.indexOf(zodArr[6]) !== -1 ? '家禽' : '野兽',
         fullZodArr: zodArr
       };
+
+      cache.set(cacheKey, result);
+      return result;
     },
 
     /**
-     * 批量提取特码信息（用于列表处理）
+     * 批量提取特码信息（用于列表处理，自动利用缓存）
      * @param {Array} items - 历史数据数组
      * @returns {Array} 特码信息数组
      */

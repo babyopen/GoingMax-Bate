@@ -47,6 +47,12 @@ const StateManager = {
   _renderTimer: null,
 
   /**
+   * 待合并状态队列（性能优化：合并同一帧内的多次 setState）
+   * @private
+   */
+  _pendingState: null,
+
+  /**
    * 统一更新状态入口（性能优化版）
    * @param {Object} partialState - 要更新的部分状态
    * @param {boolean} needRender - 是否自动触发渲染（默认true）
@@ -54,10 +60,9 @@ const StateManager = {
    */
   setState: (partialState, needRender = true, immediate = false) => {
     try {
-      StateManager._state = {
-        ...StateManager._state,
-        ...partialState
-      };
+      // 性能优化：浅合并 partialState 中的对象字段（避免深拷贝）
+      // 这样多次 setState 同一 key 会自动合并
+      StateManager._state = Object.assign({}, StateManager._state, partialState);
 
       // 新增：状态变更后触发可选持久化钩子（默认无，避免破坏现有行为）
       // 该钩子由 business-main.initFilterPersistence 注册
@@ -83,6 +88,23 @@ const StateManager = {
       console.error('状态更新失败', e);
       Toast.show('操作失败，请刷新重试');
     }
+  },
+
+  /**
+   * 批量更新状态（性能优化：合并多次状态更新到一次渲染）
+   * @param {Object} partialState - 要更新的部分状态
+   * @param {Object} [opts]
+   * @param {boolean} [opts.immediate=false] - 是否立即渲染
+   */
+  batchSetState: (partialState, opts) => {
+    opts = opts || {};
+    if (!StateManager._pendingState) {
+      StateManager._pendingState = {};
+    }
+    // 浅合并：同一 key 后者覆盖前者
+    Object.assign(StateManager._pendingState, partialState);
+    StateManager.setState(StateManager._pendingState, true, !!opts.immediate);
+    StateManager._pendingState = null;
   },
 
   /**

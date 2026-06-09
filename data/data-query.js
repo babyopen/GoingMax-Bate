@@ -162,13 +162,71 @@ const DataQuery = {
     const attrs1 = DataQuery.getNumAttrs(num1);
     const attrs2 = DataQuery.getNumAttrs(num2);
     const common = [];
-    
+
     ['zodiac', 'color', 'element', 'type', 'big', 'odd', 'bs', 'colorsx'].forEach(key => {
       if(attrs1[key] === attrs2[key]) {
         common.push(key);
       }
     });
-    
+
     return common;
+  },
+
+  // ============================================================
+  // 增量计算工具（2026-06-09 性能优化）
+  // ============================================================
+
+  /**
+   * 历史数据快照（用于增量计算）
+   * @private
+   */
+  _historySnapshot: {
+    length: 0,
+    lastExpect: null,
+    lastTimestamp: 0
+  },
+
+  /**
+   * 检查历史数据是否变化（性能优化：避免重复计算）
+   * @param {Array} historyData - 当前历史数据
+   * @returns {boolean} true 表示数据有变化，需要重新计算
+   */
+  hasHistoryChanged: (historyData) => {
+    if (!Array.isArray(historyData)) return false;
+    var snap = DataQuery._historySnapshot;
+    var lastItem = historyData[historyData.length - 1];
+    var lastExpect = lastItem ? (lastItem.expect || '') : null;
+    return snap.length !== historyData.length || snap.lastExpect !== lastExpect;
+  },
+
+  /**
+   * 更新历史数据快照
+   * @param {Array} historyData - 当前历史数据
+   */
+  updateHistorySnapshot: (historyData) => {
+    if (!Array.isArray(historyData)) return;
+    var lastItem = historyData[historyData.length - 1];
+    DataQuery._historySnapshot = {
+      length: historyData.length,
+      lastExpect: lastItem ? (lastItem.expect || '') : null,
+      lastTimestamp: Date.now()
+    };
+  },
+
+  /**
+   * 增量计算工具：基于上次结果 + 新增数据计算
+   * @param {Array} oldData - 旧数据
+   * @param {Array} newData - 新数据
+   * @param {Object} cachedStats - 上次统计结果
+   * @param {Function} reducer - 归约函数 (item, stats) => void
+   * @returns {Object} 新的统计结果
+   */
+  incrementalReduce: (oldData, newData, cachedStats, reducer) => {
+    var stats = cachedStats || {};
+    if (!Array.isArray(newData)) return stats;
+    for (var i = 0; i < newData.length; i++) {
+      reducer(newData[i], stats);
+    }
+    return stats;
   }
 };

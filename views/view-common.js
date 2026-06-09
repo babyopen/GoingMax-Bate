@@ -44,6 +44,71 @@ const ViewCommon = {
     return 'backtest-rate-low';
   },
 
+  // ============================================================
+  // DOM 元素缓存机制（2026-06-09 性能优化）
+  // ============================================================
+
+  /**
+   * DOM 元素缓存 Map（全局共享）
+   * 避免重复调用 document.getElementById，提升 DOM 查询性能
+   */
+  _domCache: new Map(),
+
+  /**
+   * 获取缓存的 DOM 元素（性能优化：避免重复查询）
+   * @param {string} id - 元素 ID
+   * @returns {HTMLElement|null}
+   */
+  $: function(id) {
+    if (!ViewCommon._domCache.has(id)) {
+      var el = document.getElementById(id);
+      if (el) ViewCommon._domCache.set(id, el);
+    }
+    return ViewCommon._domCache.get(id) || null;
+  },
+
+  /**
+   * 批量获取 DOM 元素并返回对象
+   * @param {string[]} ids - 元素 ID 数组
+   * @returns {Object} id → 元素 的映射对象
+   */
+  $batch: function(ids) {
+    var result = {};
+    ids.forEach(function(id) {
+      result[id] = ViewCommon.$(id);
+    });
+    return result;
+  },
+
+  /**
+   * 清除指定 ID 的 DOM 缓存
+   * @param {string} [id] - 元素 ID，不传则清空所有
+   */
+  clearDomCache: function(id) {
+    if (id) {
+      ViewCommon._domCache.delete(id);
+    } else {
+      ViewCommon._domCache.clear();
+    }
+  },
+
+  // ============================================================
+  // HTML 字符串数组拼接优化（2026-06-09 性能优化）
+  // ============================================================
+
+  /**
+   * 创建 HTML 数组构建器（使用数组 join 替代字符串 + 拼接，性能更好）
+   * @returns {{parts: string[], push: Function, toString: Function}}
+   */
+  createHtmlBuilder: function() {
+    var parts = [];
+    return {
+      parts: parts,
+      push: function(str) { parts.push(str); return this; },
+      toString: function() { return parts.join(''); }
+    };
+  },
+
   /**
    * 渲染生肖静态卡片 HTML（4 处共用，2026-06-09 重构提取，原 ViewZodiacPrediction._renderZodiacCardHtml）
    * @param {string} zodiac 生肖名
@@ -245,6 +310,21 @@ const ViewCommon = {
     w.addEventListener('mouseup', end);
     w.addEventListener('mouseleave', end);
 
+    // 性能优化：提供清理方法，避免内存泄漏
+    var cleanup = function() {
+      w.removeEventListener('touchstart', start);
+      w.removeEventListener('touchmove', moveHandler);
+      w.removeEventListener('touchend', end);
+      w.removeEventListener('touchcancel', end);
+      w.removeEventListener('mousedown', start);
+      w.removeEventListener('mousemove', moveHandler);
+      w.removeEventListener('mouseup', end);
+      w.removeEventListener('mouseleave', end);
+      if (animTimer) clearTimeout(animTimer);
+      delete w.dataset.swiperInit;
+    };
+    w._cleanupSwiper = cleanup;
+
     if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
     var updateRef = config.updateRef;
     if (updateRef) {
@@ -369,6 +449,11 @@ const ViewCommon = {
     // 关闭逻辑
     var closeHandler = function() {
       overlay.style.animation = 'fadeOut 0.2s ease forwards';
+      // 性能优化：清理内部 swiper（如果存在）
+      var innerSwiper = overlay.querySelector('[data-swiper-init]');
+      if (innerSwiper && typeof innerSwiper._cleanupSwiper === 'function') {
+        innerSwiper._cleanupSwiper();
+      }
       setTimeout(function() { overlay.remove(); }, 200);
     };
     var closeBtn = document.getElementById(config.closeBtnId);

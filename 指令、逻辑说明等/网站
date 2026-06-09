@@ -1,0 +1,206 @@
+/******************************
+ * 自己使用第0批链接（原有逻辑）
+ ******************************/
+// 初始化一个包含多个网址的数组
+const urlsBatch0 = [
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+];
+
+// 洗牌函数：随机打乱数组顺序，使用 Fisher–Yates 算法
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    // 生成 0 到 i 的随机下标 j
+    const j = Math.floor(Math.random() * (i + 1));
+    // 交换 array[i] 和 array[j]
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// 打乱 urls 数组的顺序，便于后续随机调用
+const shuffledUrlsBatch0 = shuffle(urlsBatch0.slice()); // 使用 slice() 避免原数组被改动
+
+// 依次获取打乱后的前 6 个网址，方便绑定到不同跳转函数
+const url1 = shuffledUrlsBatch0[0];
+const url2 = shuffledUrlsBatch0[1];
+const url3 = shuffledUrlsBatch0[2];
+const url4 = shuffledUrlsBatch0[3];
+const url5 = shuffledUrlsBatch0[4];
+const url6 = shuffledUrlsBatch0[5];
+
+// 以下分别是 6 个跳转函数（第一批），执行时会打开对应变量里的网址，且新开浏览器标签页
+function goto1() { window.open(url1, '_blank'); } // 新标签页打开
+function goto2() { window.open(url2, '_blank'); }
+function goto3() { window.open(url3, '_blank'); }
+function goto4() { window.open(url4, '_blank'); }
+function goto5() { window.open(url5, '_blank'); }
+function goto6() { window.open(url6, '_blank'); }
+
+
+
+/******************************
+ * 第一批链接（原有逻辑）
+ ******************************/
+// 初始化一个包含多个网址的数组
+const urlsBatch1 = [
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+];
+
+// 洗牌函数：随机打乱数组顺序，使用 Fisher–Yates 算法
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    // 生成 0 到 i 的随机下标 j
+    const j = Math.floor(Math.random() * (i + 1));
+    // 交换 array[i] 和 array[j]
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// 打乱 urls 数组的顺序，便于后续随机调用
+const shuffledUrlsBatch1 = shuffle(urlsBatch1.slice()); // 使用 slice() 避免原数组被改动
+
+// 依次获取打乱后的前 6 个网址，方便绑定到不同跳转函数
+const url1_1 = shuffledUrlsBatch1[0];
+const url1_2 = shuffledUrlsBatch1[1];
+const url1_3 = shuffledUrlsBatch1[2];
+const url1_4 = shuffledUrlsBatch1[3];
+const url1_5 = shuffledUrlsBatch1[4];
+const url1_6 = shuffledUrlsBatch1[5];
+const url1_7 = shuffledUrlsBatch1[6];
+const url1_8 = shuffledUrlsBatch1[7];
+
+// 以下分别是 6 个跳转函数（第一批），执行时会打开对应变量里的网址，且新开浏览器标签页
+function goto1_1() { window.open(url1_1, '_blank'); } // 新标签页打开
+function goto1_2() { window.open(url1_2, '_blank'); }
+function goto1_3() { window.open(url1_3, '_blank'); }
+function goto1_4() { window.open(url1_4, '_blank'); }
+function goto1_5() { window.open(url1_5, '_blank'); }
+function goto1_6() { window.open(url1_6, '_blank'); }
+function goto1_7() { window.open(url1_7, '_blank'); }
+function goto1_8() { window.open(url1_8, '_blank'); }
+
+/******************************
+ * 第二批链接（相同功能副本）
+ ******************************/
+// 初始化“第二批”链接数组（替换为你的第二批真实链接）
+const urlsBatch2 = [
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+];
+
+// 打乱第二批数组
+const shuffledUrlsBatch2 = shuffle(urlsBatch2.slice());
+
+// 取前 6 个
+const url2_1 = shuffledUrlsBatch2[0];
+const url2_2 = shuffledUrlsBatch2[1];
+const url2_3 = shuffledUrlsBatch2[2];
+const url2_4 = shuffledUrlsBatch2[3];
+const url2_5 = shuffledUrlsBatch2[4];
+const url2_6 = shuffledUrlsBatch2[5];
+const url2_7 = shuffledUrlsBatch2[6];
+const url2_8 = shuffledUrlsBatch2[7];
+
+// 第二批 6 个跳转函数
+function goto2_1() { window.open(url2_1, '_blank'); }
+function goto2_2() { window.open(url2_2, '_blank'); }
+function goto2_3() { window.open(url2_3, '_blank'); }
+function goto2_4() { window.open(url2_4, '_blank'); }
+function goto2_5() { window.open(url2_5, '_blank'); }
+function goto2_6() { window.open(url2_6, '_blank'); }
+function goto2_7() { window.open(url2_7, '_blank'); }
+function goto2_8() { window.open(url2_8, '_blank'); }
+
+/******************************
+ * 第三批链接（相同功能副本）
+ ******************************/
+// 初始化“第三批”链接数组（替换为你的第三批真实链接）
+const urlsBatch3 = [
+  '',
+  '',
+];
+
+// 打乱第三批数组
+const shuffledUrlsBatch3 = shuffle(urlsBatch3.slice());
+
+// 取前 6 个
+const url3_1 = shuffledUrlsBatch3[0];
+const url3_2 = shuffledUrlsBatch3[1];
+const url3_3 = shuffledUrlsBatch3[2];
+const url3_4 = shuffledUrlsBatch3[3];
+const url3_5 = shuffledUrlsBatch3[4];
+const url3_6 = shuffledUrlsBatch3[5];
+const url3_7 = shuffledUrlsBatch3[6];
+const url3_8 = shuffledUrlsBatch3[7];
+
+// 第三批 6 个跳转函数
+function goto3_1() { window.open(url3_1, '_blank'); }
+function goto3_2() { window.open(url3_2, '_blank'); }
+function goto3_3() { window.open(url3_3, '_blank'); }
+function goto3_4() { window.open(url3_4, '_blank'); }
+function goto3_5() { window.open(url3_5, '_blank'); }
+function goto3_6() { window.open(url3_6, '_blank'); }
+function goto3_7() { window.open(url3_7, '_blank'); }
+function goto3_8() { window.open(url3_8, '_blank'); }
+
+
+//*****************************************************************************************************//
+// 随机进入网址函数：从另一组网址数组中随机选择一个地址打开，用于随机跳转
+
+function suijiurl() {
+    // 新的可选网址数组，用于随机访问不同的站点或页面
+    const urls = [
+                '',
+                '',
+                '',
+                '',
+                '',
+    ];
+    
+    // 生成urls数组内的随机索引
+    const randomIndex = Math.floor(Math.random() * urls.length);
+    // 打开所选的随机网址，新标签页打开
+    window.open(urls[randomIndex], '_blank');
+    
+    
+}function suijiurl6() {
+    // 新的可选网址数组，用于随机访问不同的站点或页面
+    const urls = [
+				'',
+    ];
+    
+    // 生成urls数组内的随机索引
+    const randomIndex = Math.floor(Math.random() * urls.length);
+    // 打开所选的随机网址，新标签页打开
+    window.open(urls[randomIndex], '_blank');
+}
+
+// 备注总结：
+// 本代码段实现两个主要功能：
+// 1. 预先随机排列一组网站地址，并通过6个分别的gotoX函数在新标签页打开指定的网址，方便绑定不同的按钮或事件。
+// 2. suijiurl函数则实现从另一组备用网址中随机选择一个打开，用于“随机进入网站”的需求。
+// 开发者可根据需求，将这些函数绑定到界面按钮，实现随机和指定跳转访问。
