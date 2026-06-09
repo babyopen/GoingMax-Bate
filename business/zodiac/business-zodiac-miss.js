@@ -9,14 +9,20 @@
  * 拆分原则（只新增不破坏）：
  * - 原 ZodiacPrediction.xxx() 调用方式完全保留（通过文件末尾的 Object.assign 挂载）
  * - 内部使用 `Utils.SpecialCalculator.getSpecial / ZODIAC_ORDER` 引用门面上的共享数据/工具（运行时查找）
+ *
+ * 2026-06-09 统一遗漏值计算逻辑，复用 Utils.calcMiss
  */
 const ZodiacPredictionMiss = {
   calcZodiacMissHistory: function(historyData, zodiac) {
     if (!historyData || !historyData.length || !zodiac) return null;
 
+    var total = historyData.length;
+    var latestExpect = Number(historyData[0]?.expect || 0);
+    var lastAppearIdx = -1;
     var appearances = [];
     var intervals = [];
 
+    // 查找所有出现位置
     for (var i = 0; i < historyData.length; i++) {
       var item = historyData[i];
       var s = Utils.SpecialCalculator.getSpecial(item);
@@ -27,25 +33,29 @@ const ZodiacPredictionMiss = {
           index: i,
           interval: i > 0 ? i : 0
         });
+        if (lastAppearIdx === -1) {
+          lastAppearIdx = i; // 记录最近一次出现位置（倒序中 index 最小的）
+        }
       }
     }
 
     if (appearances.length === 0) return null;
 
+    // 使用统一的 Utils.calcMiss 计算当前遗漏值
+    var currentMiss = Utils.calcMiss(lastAppearIdx, total, latestExpect, historyData);
+
     for (var j = 1; j < appearances.length; j++) {
       intervals.push(appearances[j].index - appearances[j - 1].index);
     }
 
-    var total = 0;
+    var totalInterval = 0;
     for (var k = 0; k < intervals.length; k++) {
-      total += intervals[k];
+      totalInterval += intervals[k];
     }
-    var avgInterval = intervals.length > 0 ? Math.round(total / intervals.length * 10) / 10 : 0;
+    var avgInterval = intervals.length > 0 ? Math.round(totalInterval / intervals.length * 10) / 10 : 0;
 
     var maxInterval = intervals.length > 0 ? Math.max.apply(null, intervals) : 0;
     var minInterval = intervals.length > 0 ? Math.min.apply(null, intervals) : 0;
-
-    var currentMiss = appearances.length > 0 ? appearances[0].index : historyData.length;
 
     var recentAppearances = appearances.slice(0, Math.min(10, appearances.length));
 

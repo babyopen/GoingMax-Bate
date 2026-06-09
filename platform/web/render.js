@@ -109,7 +109,7 @@ const Render = {
         wrapper.dataset.num = num;
         wrapper.setAttribute('aria-checked', isExcluded);
         wrapper.setAttribute('tabindex', '0');
-        wrapper.innerText = num.toString().padStart(2,'0');
+        wrapper.innerText = Utils.formatNum(num);
         return wrapper;
       });
 
@@ -160,7 +160,7 @@ const Render = {
         wrapper.dataset.group = 'num';
         wrapper.setAttribute('role', 'checkbox');
         wrapper.setAttribute('tabindex', '0');
-        wrapper.innerText = num.toString().padStart(2, '0');
+        wrapper.innerText = Utils.formatNum(num);
         return wrapper;
       });
 

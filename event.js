@@ -302,7 +302,7 @@ const EventBinder = {
       // 波色回测操作
       else if(action === 'showColorBacktest') EventBinder._showColorBacktest();
       // 未推荐生肖 - 查看来源弹窗
-      else if(action === 'showUnrecSources') ViewZodiacPrediction.showUnrecSourcesModal();
+      else if(action === 'showUnrecSources') ViewZodiacUltimate.showUnrecSourcesModal();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
       else if(action === 'closeBatchModal') ViewFilter.closeBatchModal();
       else if(action === 'confirmBatchSelect') ViewFilter.confirmBatchSelect();
@@ -318,10 +318,10 @@ const EventBinder = {
         }
       }
       else if(action === 'showBacktestDetail') {
-        ViewZodiacPrediction.toggleBacktestDetailModal(true);
+        ViewZodiacUltimate.toggleBacktestDetailModal(true);
       }
       else if(action === 'closeBacktestDetail') {
-        ViewZodiacPrediction.toggleBacktestDetailModal(false);
+        ViewZodiacUltimate.toggleBacktestDetailModal(false);
       }
       // 区域变动追踪展开/折叠
       else if(action === 'toggleZoneChangeList') {
@@ -337,8 +337,8 @@ const EventBinder = {
       }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
-        if (zodiac && ViewZodiacPrediction._cachedFreqResult) {
-          var freqResult = ViewZodiacPrediction._cachedFreqResult;
+        if (zodiac && ViewZodiacGiong._cachedFreqResult) {
+          var freqResult = ViewZodiacGiong._cachedFreqResult;
           var data = null;
           var periods = ['p12', 'p24', 'p36'];
           for (var i = 0; i < periods.length; i++) {
@@ -370,8 +370,8 @@ const EventBinder = {
       }
       else if(action === 'switchFreqCard') {
         var freqIndex = Number(actionBtn.dataset.freqIndex);
-        if (ViewZodiacPrediction.freqSwiperUpdate) {
-          ViewZodiacPrediction.freqSwiperUpdate(freqIndex);
+        if (ViewZodiacGiong.freqSwiperUpdate) {
+          ViewZodiacGiong.freqSwiperUpdate(freqIndex);
         }
       }
       else if(action === 'switchFreqTab') {
@@ -380,13 +380,13 @@ const EventBinder = {
       }
       else if(action === 'switchPredCard') {
         var predIndex = Number(actionBtn.dataset.predIndex);
-        if (ViewZodiacPrediction.predSwiperUpdate) {
-          ViewZodiacPrediction.predSwiperUpdate(predIndex);
+        if (ViewZodiacPredict.predSwiperUpdate) {
+          ViewZodiacPredict.predSwiperUpdate(predIndex);
         }
       }
       else if(action === 'switchPredTab') {
         var predTab = actionBtn.dataset.predTab;
-        ViewZodiacPrediction.switchPredTabUI(predTab);
+        ViewZodiacPredict.switchPredTabUI(predTab);
       }
       else if(action === 'showOverlap') {
         ViewFilter.showOverlapModal();
@@ -493,7 +493,7 @@ const EventBinder = {
         return;
       }
 
-      ViewZodiacPrediction.showSizeBacktestModal(backtestData);
+      ViewZodiacGiong.showSizeBacktestModal(backtestData);
     } catch (e) {
       console.error('大小回测出错:', e);
       Toast.show('回测计算出错，请重试');
@@ -525,7 +525,7 @@ const EventBinder = {
         return;
       }
 
-      ViewZodiacPrediction.showOddEvenBacktestModal(backtestData);
+      ViewZodiacGiong.showOddEvenBacktestModal(backtestData);
     } catch (e) {
       console.error('单双回测出错:', e);
       Toast.show('回测计算出错，请重试');
@@ -557,7 +557,7 @@ const EventBinder = {
         return;
       }
 
-      ViewZodiacPrediction.showWuxingBacktestModal(backtestData);
+      ViewZodiacGiong.showWuxingBacktestModal(backtestData);
     } catch (e) {
       console.error('五行回测出错:', e);
       Toast.show('回测计算出错，请重试');
@@ -585,7 +585,7 @@ const EventBinder = {
         return;
       }
 
-      ViewZodiacPrediction.showColorBacktestModal(backtestData);
+      ViewZodiacGiong.showColorBacktestModal(backtestData);
     } catch (e) {
       console.error('波色回测出错:', e);
       Toast.show('回测计算出错，请重试');
@@ -672,7 +672,7 @@ const EventBinder = {
    */
   _handleSwitchFreqTab: function(freqKey) {
     // UI 切换立即执行，用户感知零延迟
-    ViewZodiacPrediction.switchFreqTabUI(freqKey);
+    ViewZodiacGiong.switchFreqTabUI(freqKey);
     // 重计算用防抖，避免快速来回切换
     EventBinder._renderZoneChangeDebounced(freqKey);
   },
@@ -685,6 +685,6 @@ const EventBinder = {
     var wSize = parseInt(freqKey.replace('p', '')) || 12;
     var historyData = StateManager._state.analysis.historyData;
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
-    ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
+    ViewZodiacGiong.renderZoneChangeTracking(zoneChangeData);
   }, 200)
 };

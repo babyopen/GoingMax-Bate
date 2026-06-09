@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utils.formatNum 单元测试</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { font-size: 18px; margin-bottom: 10px; }
+    .summary { padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+    .summary.pass { background: #e8f5e9; color: #2e7d32; }
+    .summary.fail { background: #ffebee; color: #c62828; }
+    .test-case { padding: 8px 12px; margin: 4px 0; border-radius: 6px; font-size: 13px; }
+    .test-case.pass { background: #f0fff0; border-left: 3px solid #4caf50; }
+    .test-case.fail { background: #fff0f0; border-left: 3px solid #f44336; }
+    .test-case .input { color: #666; }
+    .test-case .expected { color: #1976d2; }
+    .test-case .actual { color: #e65100; font-weight: 600; }
+    .test-case .label { display: inline-block; min-width: 50px; }
+  </style>
+</head>
+<body>
+  <h1>Utils.formatNum 单元测试</h1>
+  <div id="summary"></div>
+  <div id="results"></div>
+
+  <script src="../core/config.js"></script>
+  <script src="../core/utils.js"></script>
+  <script>
+    const tests = [
+      // === 正常号码 ===
+      { input: 1, expected: '01', desc: '个位号码 1' },
+      { input: 2, expected: '02', desc: '个位号码 2' },
+      { input: 9, expected: '09', desc: '个位号码 9' },
+      { input: 10, expected: '10', desc: '十位号码 10' },
+      { input: 25, expected: '25', desc: '中间号码 25' },
+      { input: 49, expected: '49', desc: '最大号码 49' },
+
+      // === 字符串输入 ===
+      { input: '1', expected: '01', desc: '字符串 "1"' },
+      { input: '7', expected: '07', desc: '字符串 "7"' },
+      { input: '25', expected: '25', desc: '字符串 "25"' },
+      { input: '49', expected: '49', desc: '字符串 "49"' },
+
+      // === 边界值 ===
+      { input: 0, expected: '00', desc: '0（无效号码，返回 00）' },
+      { input: 50, expected: '00', desc: '50（超出范围，返回 00）' },
+      { input: -1, expected: '00', desc: '-1（负数，返回 00）' },
+      { input: 100, expected: '00', desc: '100（大数，返回 00）' },
+
+      // === 特殊值 ===
+      { input: null, expected: '00', desc: 'null → 00' },
+      { input: undefined, expected: '00', desc: 'undefined → 00' },
+      { input: '', expected: '00', desc: '空字符串 → 00' },
+      { input: 7.5, expected: '00', desc: '小数 7.5 → 00（无效号码）' },
+    ];
+
+    let passCount = 0;
+    let failCount = 0;
+
+    const resultsEl = document.getElementById('results');
+    const summaryEl = document.getElementById('summary');
+
+    tests.forEach(function(t, i) {
+      const actual = Utils.formatNum(t.input);
+      const passed = actual === t.expected;
+      if (passed) passCount++; else failCount++;
+
+      const div = document.createElement('div');
+      div.className = 'test-case ' + (passed ? 'pass' : 'fail');
+      div.innerHTML = '<span class="label">' + (passed ? '✅' : '❌') + '</span> ' + t.desc +
+        ' | <span class="input">输入: ' + JSON.stringify(t.input) + '</span>' +
+        ' | <span class="expected">预期: ' + t.expected + '</span>' +
+        (passed ? '' : ' | <span class="actual">实际: ' + actual + '</span>');
+      resultsEl.appendChild(div);
+    });
+
+    const allPassed = failCount === 0;
+    summaryEl.className = 'summary ' + (allPassed ? 'pass' : 'fail');
+    summaryEl.textContent = '测试结果：' + passCount + ' 通过, ' + failCount + ' 失败（共 ' + tests.length + ' 项）';
+
+    // 输出到控制台
+    console.log('%c[Utils.formatNum 测试]' + (allPassed ? ' 全部通过 ✅' : ' 有失败 ❌'), allPassed ? 'color:green' : 'color:red');
+    console.log('通过: ' + passCount + ', 失败: ' + failCount);
+  </script>
+</body>
+</html>

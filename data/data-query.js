@@ -57,7 +57,7 @@ const DataQuery = {
    */
   getNumAttrs: (num) => {
     num = Number(num);
-    const s = num.toString().padStart(2, '0');
+    const s = Utils.formatNum(num);
     const head = Math.floor(num / 10);
     const tail = num % 10;
     const sum = head + tail;

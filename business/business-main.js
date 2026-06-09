@@ -623,8 +623,7 @@ const Business = {
    */
   getColor: (n) => {
     const colorName = Utils.getColorName(n);
-    const colorMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
-    return colorMap[colorName] || 'red';
+    return CONFIG.COLOR_NAME_TO_EN[colorName] || 'red';
   },
 
   getColorName: (n) => {
@@ -735,7 +734,7 @@ const Business = {
     const zodiac = {};
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
     const numCount = {};
-    for(let i = 1; i <= 49; i++) numCount[String(i).padStart(2, '0')] = 0;
+    for(let i = 1; i <= 49; i++) numCount[Utils.formatNum(i)] = 0;
 
     const lastAppearIdx = {};
     for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
@@ -763,7 +762,7 @@ const Business = {
       wuxing[s.wuxing]++;
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
-      numCount[String(s.te).padStart(2, '0')]++;
+      numCount[Utils.formatNum(s.te)]++;
       
       if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
       if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
@@ -1181,7 +1180,7 @@ const Business = {
 
     // 3. 升序展示
     finalNums.sort((a, b) => a - b);
-    const finalFormatNums = finalNums.map(num => String(num).padStart(2, '0'));
+    const finalFormatNums = finalNums.map(num => Utils.formatNum(num));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
 
@@ -1472,7 +1471,7 @@ const Business = {
     var state = StateManager._state;
     var historyData = state.analysis.historyData;
     if (!historyData || !historyData.length) {
-      ViewZodiacPrediction.renderEmpty();
+      ViewZodiacPredict.renderEmpty();
       return;
     }
     var result = ZodiacPrediction.calcContinuousScores(historyData);
@@ -1480,31 +1479,31 @@ const Business = {
     if (result && result.cards && result.cards.length) {
       StateManager._state.analysis.v1Recommend = result.cards.slice(0, 6);
     }
-    ViewZodiacPrediction.renderPrediction(result);
+    ViewZodiacPredict.renderPrediction(result);
   },
 
   initZodiacBacktest: () => {
     var state = StateManager._state;
     var historyData = state.analysis.historyData;
     if (!historyData || !historyData.length) {
-      ViewZodiacPrediction.renderBacktest(null);
-      ViewZodiacPrediction.renderStrategyPanel(null);
+      ViewZodiacPredict.renderBacktest(null);
+      ViewZodiacPredict.renderStrategyPanel(null);
       return;
     }
-    ViewZodiacPrediction.renderBacktestEmpty();
-    ViewZodiacPrediction.renderStrategyPanel(null);
+    ViewZodiacPredict.renderBacktestEmpty();
+    ViewZodiacPredict.renderStrategyPanel(null);
     setTimeout(function() {
       var result = ZodiacPrediction.runBacktest(historyData);
-      ViewZodiacPrediction.renderBacktest(result);
+      ViewZodiacPredict.renderBacktest(result);
       if (result) {
         var newTuned = ZodiacPrediction.analyzeBacktest(result);
-        ViewZodiacPrediction.renderStrategyPanel(newTuned);
+        ViewZodiacPredict.renderStrategyPanel(newTuned);
       }
     }, 100);
   },
 
   switchZodiacTab: (tab) => {
-    ViewZodiacPrediction.switchTabUI(tab);
+    ViewCommon.switchZodiacPanel(tab);
     if (tab === 'main') Business.initMainTab();
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
@@ -1529,9 +1528,9 @@ const Business = {
     }
 
     if (!historyData || !historyData.length) {
-      ViewZodiacPrediction.renderSlidingWindowPrediction(null);
+      ViewZodiacMain.renderSlidingWindowPrediction(null);
       ViewSlidingWindowHistory.render([]);
-      ViewZodiacPrediction.renderDataFreshness(null, null);
+      ViewZodiacMain.renderDataFreshness(null, null);
       // 数据为空时清理任何遗留的统计 header
       var strayHeaders = document.querySelectorAll('.sw-stats-header');
       strayHeaders.forEach(function(h) { h.remove(); });
@@ -1545,8 +1544,8 @@ const Business = {
 
     // 调用滑动窗口预测算法
     var result = BusinessSlidingWindow.predict(historyData);
-    ViewZodiacPrediction.renderSlidingWindowPrediction(result);
-    ViewZodiacPrediction.renderDataFreshness(cacheTimestamp, ageHours);
+    ViewZodiacMain.renderSlidingWindowPrediction(result);
+    ViewZodiacMain.renderDataFreshness(cacheTimestamp, ageHours);
 
     // 清理永远无法核对的老记录（其 period 已超出 historyData 范围）
     BusinessSlidingWindowHistory.cleanupStaleRecords(historyData);
@@ -1566,35 +1565,35 @@ const Business = {
     if (!historyData || !historyData.length) return;
 
     var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
-    ViewZodiacPrediction.renderFrequencyRating(freqResult);
+    ViewZodiacGiong.renderFrequencyRating(freqResult);
 
     var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
-    ViewZodiacPrediction.renderLatestFollowStats(latestFollowStats);
+    ViewZodiacGiong.renderLatestFollowStats(latestFollowStats);
 
     var latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12);
     var latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12);
     var latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12);
     var latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12);
 
-    ViewZodiacPrediction.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
+    ViewZodiacGiong.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
 
     var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
 
     if (freqResult && patternResult) {
       var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
       var nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
-      ViewZodiacPrediction.renderZoneRecommend(recommend, nextExpect);
+      ViewZodiacGiong.renderZoneRecommend(recommend, nextExpect);
     }
 
-    ViewZodiacPrediction.renderZoneBacktestEmpty();
+    ViewZodiacGiong.renderZoneBacktestEmpty();
     setTimeout(function() {
       var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
-      if (zoneBt) ViewZodiacPrediction.renderZoneBacktest(zoneBt);
+      if (zoneBt) ViewZodiacGiong.renderZoneBacktest(zoneBt);
     }, 150);
 
     // 区域变动追踪
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
-    ViewZodiacPrediction.renderZoneChangeTracking(zoneChangeData);
+    ViewZodiacGiong.renderZoneChangeTracking(zoneChangeData);
   },
 
   initUltimateAlgorithm: () => {
@@ -1605,15 +1604,15 @@ const Business = {
       historyData = StateManager._state.analysis.historyData;
     }
     if (!historyData || !historyData.length) {
-      ViewZodiacPrediction.renderUltimateAlgorithm(null);
-      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      ViewZodiacUltimate.renderUltimateAlgorithm(null);
+      ViewZodiacUltimate.renderUltimateBacktestEmpty();
       return;
     }
 
     var ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
     if (!ultimateHistory || !ultimateHistory.length) {
-      ViewZodiacPrediction.renderUltimateAlgorithm(null);
-      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      ViewZodiacUltimate.renderUltimateAlgorithm(null);
+      ViewZodiacUltimate.renderUltimateBacktestEmpty();
       return;
     }
 
@@ -1625,7 +1624,7 @@ const Business = {
       BusinessUltimate.saveRecommendHistory(nextExpect, numbers);
     }
 
-    ViewZodiacPrediction.renderUltimateAlgorithm({
+    ViewZodiacUltimate.renderUltimateAlgorithm({
       report: report,
       nextExpect: nextExpect,
       numbers: BusinessUltimate.formatNumbersToDisplay(numbers),
@@ -1639,17 +1638,17 @@ const Business = {
     if (giongPanel && !giongPanel.querySelector('.zodiac-static-card')) {
       Business.initGiongTab();
     }
-    ViewZodiacPrediction.renderUnrecommendedZodiacs(null);
+    ViewZodiacUltimate.renderUnrecommendedZodiacs(null);
 
     if (ultimateHistory.length >= 25) {
-      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      ViewZodiacUltimate.renderUltimateBacktestEmpty();
       var currentBackupCount = (report.numbers && report.numbers.alternativeNumbers) ? report.numbers.alternativeNumbers.length : (BusinessUltimate.getAdaptiveState().currentBackupCount || 3);
       setTimeout(function() {
         var btSummary = BusinessUltimate.runBacktest(ultimateHistory);
-        if (btSummary) ViewZodiacPrediction.renderUltimateBacktest(btSummary, currentBackupCount);
+        if (btSummary) ViewZodiacUltimate.renderUltimateBacktest(btSummary, currentBackupCount);
       }, 100);
     } else {
-      ViewZodiacPrediction.renderUltimateBacktestEmpty();
+      ViewZodiacUltimate.renderUltimateBacktestEmpty();
     }
   },
 

@@ -404,7 +404,7 @@ const Utils = {
         te,
         tail: te % 10,
         head: Math.floor(te / 10),
-        wave: ['red', 'blue', 'green'][['红', '蓝', '绿'].indexOf(colorName)] || 'red',
+        wave: CONFIG.COLOR_NAME_TO_EN[colorName] || 'red',
         colorName,
         zod: zodArr[6] || '-',
         odd: te % 2 === 1,
@@ -526,6 +526,18 @@ const Utils = {
     if (typeof CONFIG === 'undefined' || !CONFIG.ELEMENT_MAP) return '金';
     const element = Object.keys(CONFIG.ELEMENT_MAP).find(e => CONFIG.ELEMENT_MAP[e].includes(num));
     return element || '金';
+  },
+
+  /**
+   * 号码格式化：1 → '01'（全局统一，2026-06-09 新增）
+   * @param {number|string} num - 号码
+   * @returns {string} 两位字符串，如 '01'；异常值返回 '00'
+   */
+  formatNum: (num) => {
+    const n = Number(num);
+    // 仅接受 1-49 的有效整数号码
+    if (!Number.isInteger(n) || n < 1 || n > 49) return '00';
+    return String(n).padStart(2, '0');
   },
 
   // ============================================================
