@@ -335,6 +335,16 @@ const EventBinder = {
         // 持久化用户偏好
         Storage.saveZoneChangeExpanded(isExpanded);
       }
+      // 多窗口组合列表展开/折叠
+      else if(action === 'toggleZoneChangeComboList') {
+        var comboList = actionBtn.closest('.zone-change-combo-list');
+        if (!comboList) return;
+        var isComboExpanded = comboList.classList.toggle('expanded');
+        var comboToggleText = comboList.querySelector('.zone-change-toggle-text');
+        var comboToggleIcon = comboList.querySelector('.zone-change-toggle-icon');
+        if (comboToggleText) comboToggleText.textContent = isComboExpanded ? '收起' : '展开更多';
+        if (comboToggleIcon) comboToggleIcon.textContent = isComboExpanded ? '▲' : '▼';
+      }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
         if (zodiac && ViewZodiacGiong._cachedFreqResult) {

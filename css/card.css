@@ -2071,6 +2071,185 @@
   opacity: 0.6;
 }
 
+/* ===================================
+   多窗口区域变动追踪（12/24/36 期组合：每行 期号 生肖 区域12-区域24-区域36）
+   =================================== */
+.zone-change-multi-card {
+  padding: 12px 14px;
+}
+/* 旧版三列 grid 样式保留，不再被新组合版本使用 */
+/* 三列并排布局（保留旧版以便复用） */
+.zone-change-multi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.zone-change-multi-col {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.zone-change-multi-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(255,255,255,0.08);
+}
+.zone-change-list-multi {
+  gap: 3px;
+}
+.zone-change-list-multi .zone-change-item {
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  gap: 4px;
+}
+.zone-change-list-multi .zone-change-expect {
+  font-size: 10px;
+  min-width: 52px;
+  color: var(--sub-text);
+}
+.zone-change-list-multi .zone-change-zodiac {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 18px;
+}
+.zone-change-list-multi .zone-change-miss {
+  font-size: 10px;
+  color: var(--sub-text);
+}
+.zone-change-list-multi .zone-change-zone-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.zone-change-list-multi .zone-change-arrow {
+  font-size: 10px;
+}
+
+/* 新版组合列表样式 */
+.zone-change-combo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* 多窗口组合列表：展开时显示 zone-change-hidden 项（与单窗口版一致） */
+.zone-change-combo-list.expanded .zone-change-hidden {
+  display: flex;
+}
+/* ===================================
+   多窗口组合统计区（三列：12/24/36 期窗口独立统计）
+   =================================== */
+.zone-change-combo-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.zone-change-combo-stats-col {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.zone-change-combo-stats-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub-text);
+}
+.zone-change-combo-stats-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(255,255,255,0.08);
+}
+.zone-change-combo-stats-topcount {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.zone-change-combo-stats-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zone-change-combo-stats-bars .zone-change-stat-name {
+  font-size: 10px;
+  min-width: 32px;
+}
+.zone-change-combo-stats-bars .zone-change-bar-track {
+  height: 6px;
+}
+.zone-change-combo-stats-bars .zone-change-stat-val {
+  font-size: 10px;
+  min-width: 22px;
+}
+.zone-change-combo-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid var(--primary);
+  border-radius: 4px;
+  font-size: 12px;
+}
+/* 修复：combo-item 默认 display:flex 会覆盖 .zone-change-hidden 的 display:none，
+   需用更高特异性保证折叠隐藏生效 */
+.zone-change-combo-list:not(.expanded) .zone-change-combo-item.zone-change-hidden {
+  display: none;
+}
+.zone-change-combo-item .zone-change-expect {
+  min-width: 60px;
+  font-size: 11px;
+  color: var(--sub-text);
+}
+.zone-change-combo-item .zone-change-zodiac {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 18px;
+}
+.zone-change-combo-zones {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.zone-change-combo-sep {
+  font-size: 11px;
+  color: var(--sub-text);
+  font-weight: 700;
+}
+
+/* 小屏：多窗口卡片改为单列堆叠 */
+@media (max-width: 720px) {
+  .zone-change-multi-grid {
+    grid-template-columns: 1fr;
+  }
+  .zone-change-combo-zones {
+    justify-content: flex-start;
+  }
+  .zone-change-combo-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* 小屏适配：期号独占一行 */
 @media (max-width: 375px) {
   .zone-change-expect {

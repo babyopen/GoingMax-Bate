@@ -449,7 +449,7 @@ const ViewZodiacUltimate = {
     html += '</div>';
 
     html += '<div class="backtest-records">';
-    var recentRecords = summary.records.slice(0, 15);
+    var recentRecords = summary.records.slice(0, 30);
     recentRecords.forEach(function(r) {
       var hitIcon = '❌';
       var hitText = '未命中';

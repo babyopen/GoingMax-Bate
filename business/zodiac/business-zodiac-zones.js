@@ -399,7 +399,8 @@ const ZodiacPredictionZones = {
     ZONE_ORDER.forEach(function(z) { sourceZoneCount[z] = 0; });
 
     var records = [];
-    var maxRecords = Math.min(12, flatData.length - windowSize);
+    // 记录上限：单窗口与多窗口组合追踪列表均按 36 期取数（默认折叠只显示前 2 期）
+    var maxRecords = Math.min(36, flatData.length - windowSize);
 
     for (var i = 0; i < maxRecords; i++) {
       var curItem = flatData[i];

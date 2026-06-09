@@ -1594,6 +1594,12 @@ const Business = {
     // 区域变动追踪
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
     ViewZodiacGiong.renderZoneChangeTracking(zoneChangeData);
+
+    // 多窗口区域变动追踪（12/24/36 期三列并排）
+    var zoneChangeP12 = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
+    var zoneChangeP24 = ZodiacPrediction.calcZoneChangeTracking(historyData, 24);
+    var zoneChangeP36 = ZodiacPrediction.calcZoneChangeTracking(historyData, 36);
+    ViewZodiacGiong.renderZoneChangeTrackingMulti(zoneChangeP12, zoneChangeP24, zoneChangeP36);
   },
 
   initUltimateAlgorithm: () => {

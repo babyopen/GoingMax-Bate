@@ -454,6 +454,147 @@ const ViewZodiacGiong = {
     container.innerHTML = html;
   },
 
+  /**
+   * 多窗口区域变动追踪（12/24/36 期组合展示：每行 期号 生肖 区域12-区域24-区域36）
+   * 数据源：ZodiacPrediction.calcZoneChangeTracking(historyData, [12|24|36])
+   * 容器：动态注入到 #giongZoneChangePanel 之后
+   * 行为：按期号对齐三组数据，每行展示三窗口的【变动前 prevZone】所属区域拼接
+   *       不展示 curZone、变动箭头、miss 等字段
+   */
+  renderZoneChangeTrackingMulti: function(p12Data, p24Data, p36Data) {
+    var host = document.getElementById('giongZoneChangePanel');
+    if (!host) return;
+
+    var container = document.getElementById('giongZoneChangePanelMulti');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'giongZoneChangePanelMulti';
+      if (host.parentNode) {
+        host.parentNode.insertBefore(container, host.nextSibling);
+      }
+    }
+
+    // 按期号把三组数据索引化，方便按 expect 对齐
+    var map12 = {}, map24 = {}, map36 = {};
+    if (p12Data && p12Data.records) {
+      p12Data.records.forEach(function(r) { map12[r.expect] = r; });
+    }
+    if (p24Data && p24Data.records) {
+      p24Data.records.forEach(function(r) { map24[r.expect] = r; });
+    }
+    if (p36Data && p36Data.records) {
+      p36Data.records.forEach(function(r) { map36[r.expect] = r; });
+    }
+
+    // 以 p12 的 records 顺序为基准（按 expect 降序），三期窗口均覆盖同一批期号
+    var baseRecords = (p12Data && p12Data.records) || [];
+    if (!baseRecords.length && p24Data && p24Data.records) baseRecords = p24Data.records;
+    if (!baseRecords.length && p36Data && p36Data.records) baseRecords = p36Data.records;
+
+    var html = '<div class="zone-change-card zone-change-multi-card">';
+    html += '<div class="zone-change-header">';
+    html += '<span class="zone-change-title">区域变动追踪（多窗口组合）</span>';
+    html += '<span class="zone-change-top-info">每期：12/24/36期窗口【变动前】所属区域</span>';
+    html += '</div>';
+
+    if (!baseRecords.length) {
+      html += '<div class="zone-change-empty-tip">数据不足（需至少13期历史数据）</div>';
+      html += '</div>';
+      container.innerHTML = html;
+      return;
+    }
+
+    // ===== 三窗口独立的区域变动统计（复用业务层 calcZoneChangeTracking 返回的 sourceZoneCount / topZone / topCount）=====
+    var statsList = [
+      { ws: 12, label: '12期窗口', data: p12Data },
+      { ws: 24, label: '24期窗口', data: p24Data },
+      { ws: 36, label: '36期窗口', data: p36Data }
+    ];
+    html += '<div class="zone-change-combo-stats-grid">';
+    statsList.forEach(function(s) {
+      html += '<div class="zone-change-combo-stats-col">';
+      html += '<div class="zone-change-combo-stats-title">' + s.label + '·变动最多</div>';
+
+      if (s.data && s.data.records && s.data.records.length) {
+        var totalCount = s.data.records.length;
+
+        // 顶部：变动最多区域
+        if (s.data.topZone && s.data.topCount > 0) {
+          html += '<div class="zone-change-combo-stats-top">';
+          html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(s.data.topZone, '') + '">' + s.data.topZone + '</span>';
+          html += '<span class="zone-change-combo-stats-topcount">×' + s.data.topCount + '</span>';
+          html += '</div>';
+        }
+
+        // 各区域统计条（按次数降序，跳过 0 次）
+        var sortedZones = [];
+        var zoneCount = s.data.sourceZoneCount || {};
+        Object.keys(zoneCount).forEach(function(z) {
+          sortedZones.push({ zone: z, count: zoneCount[z] });
+        });
+        sortedZones.sort(function(a, b) { return b.count - a.count; });
+
+        html += '<div class="zone-change-combo-stats-bars">';
+        sortedZones.forEach(function(item) {
+          if (item.count === 0) return;
+          var pct = totalCount > 0 ? Math.round(item.count / totalCount * 100) : 0;
+          html += '<div class="zone-change-stat-item">';
+          html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
+          html += '<div class="zone-change-bar-track">';
+          html += '<div class="zone-change-bar-fill ' + ViewCommon.getZoneClass(item.zone, '') + '" style="width:' + pct + '%;"></div>';
+          html += '</div>';
+          html += '<span class="zone-change-stat-val">' + item.count + '次</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="zone-change-empty-tip">数据不足</div>';
+      }
+
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="zone-change-combo-list">';
+    var comboVisibleCount = 2;
+    baseRecords.forEach(function(r, idx) {
+      var rec12 = map12[r.expect];
+      var rec24 = map24[r.expect];
+      var rec36 = map36[r.expect];
+
+      // 记录【变动前】的区域 prevZone（即该期开出前所在窗口的所属区域）
+      var z12 = rec12 ? rec12.prevZone : '-';
+      var z24 = rec24 ? rec24.prevZone : '-';
+      var z36 = rec36 ? rec36.prevZone : '-';
+
+      // 默认只显示前 2 期，超出部分加 zone-change-hidden 由 CSS 折叠
+      var hiddenClass = (idx >= comboVisibleCount) ? ' zone-change-hidden' : '';
+
+      html += '<div class="zone-change-combo-item' + hiddenClass + '">';
+      html += '<span class="zone-change-expect">' + r.expect + '期</span>';
+      html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
+      html += '<span class="zone-change-combo-zones">';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(z12, '') + '">' + z12 + '</span>';
+      html += '<span class="zone-change-combo-sep">-</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(z24, '') + '">' + z24 + '</span>';
+      html += '<span class="zone-change-combo-sep">-</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(z36, '') + '">' + z36 + '</span>';
+      html += '</span>';
+      html += '</div>';
+    });
+    // 超过 2 条时显示展开/折叠按钮
+    if (baseRecords.length > comboVisibleCount) {
+      html += '<div class="zone-change-toggle" data-action="toggleZoneChangeComboList">';
+      html += '<span class="zone-change-toggle-text">展开更多（共' + baseRecords.length + '期）</span>';
+      html += '<span class="zone-change-toggle-icon">▼</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
   // 频率评级 swiper 全局引用（由 ViewCommon._createSwiper 写入）
   freqSwiperUpdate: null
 };
