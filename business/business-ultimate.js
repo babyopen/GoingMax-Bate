@@ -40,7 +40,21 @@ const BusinessUltimate = {
   ZODIAC_TO_NUM: (function() {
     var map = {};
     Object.keys(CONFIG.NUM_TO_ZODIAC).forEach(function(num) {
-      map[CONFIG.NUM_TO_ZODIAC[num]] = Number(num);
+      var zodiac = CONFIG.NUM_TO_ZODIAC[num];
+      // 2026-06-09 修复 55a01d3 重构引入的 BUG：
+      // CONFIG.NUM_TO_ZODIAC 是 1-49 完整映射（按当前年份生肖轮换），
+      // 同一生肖对应多个号码（最多 4 个）。原重构未加去重逻辑，
+      // 导致 map[生肖] 被最后一次赋值覆盖，永远是"最末位"号码（38-49），
+      // 而非重构前（1-12 基础映射）的"首位"号码。
+      // historyDataToUltimateFormat 依赖此值计算 actualNum，
+      // 重构后 actualNum 错位到 38-49 范围，与 predictedNums（1-12 范围）
+      // 几乎永远不匹配，导致 runBacktest 命中率永远是 0，
+      // 回测追踪中"命中"完全无法体现出来。
+      // 修复：只对每个生肖记录首次出现的号码（即最小号 1-12），
+      // 与重构前 1-12 基础映射的行为保持一致。
+      if (map[zodiac] === undefined) {
+        map[zodiac] = Number(num);
+      }
     });
     return map;
   })(),

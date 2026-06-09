@@ -12,6 +12,17 @@
   --nav-item-text:rgba(0,0,0,0.45);
   --nav-item-active-text:rgba(0,0,0,0.85);
   --nav-item-active-bg:rgba(0,0,0,0.08);
+  /* 区域（zone）配色变量（2026-06-09 修复 light mode 丢失）
+     原 55a01d3 重构时只加在 dark mode 的 :root 中，导致 light mode 下
+     .zone-mid / .zone-active / .zone-wait 等 class 颜色全部丢失。
+     颜色值与原 card.css 字面值一一对应，确保视觉与重构前一致。 */
+  --zone-peak:#FF453A;--zone-peak-bg:rgba(255,69,58,0.18);--zone-peak-bg-12:rgba(255,69,58,0.12);
+  --zone-high:#FF9500;--zone-high-bg:rgba(255,149,0,0.15);--zone-high-bg-12:rgba(255,149,0,0.12);
+  --zone-ovht:#FF6B6B;--zone-ovht-bg:rgba(255,107,107,0.14);--zone-ovht-bg-12:rgba(255,107,107,0.12);
+  --zone-mid:#0A84FF;--zone-mid-bg:rgba(0,122,255,0.12);--zone-mid-bg-8:rgba(0,122,255,0.08);
+  --zone-active:#E6A823;--zone-active-bg:rgba(230,168,35,0.14);--zone-active-bg-12:rgba(230,168,35,0.12);
+  --zone-low:#30D158;--zone-low-bg:rgba(48,209,88,0.12);
+  --zone-wait:#AF52DE;--zone-wait-bg:rgba(175,82,222,0.12);
 }
 
 /* 固定底部导航栏 */

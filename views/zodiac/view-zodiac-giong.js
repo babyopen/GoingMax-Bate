@@ -341,63 +341,116 @@ const ViewZodiacGiong = {
 
   /**
    * 区域变动追踪（不同窗口大小下生肖区域的变化）
+   * 2026-06-09 从 view-zodiac-prediction.js 拆分时丢失的旧版本完整实现
+   * 旧版本（55a01d3）行为：
+   *   - 动态注入容器到 giongFreqGrid 下方
+   *   - 数据不足时显示"数据不足"空状态卡片
+   *   - 头部：区域变动追踪（X期）+ 变动最多 topZone/topCount
+   *   - 区域统计条（sourceZoneCount 柱状图）
+   *   - 变动记录列表（expect/zodiac/miss/prevZone→curZone，默认2期可展开）
+   *   - 展开/折叠按钮（持久化用户偏好）
+   * 数据源：ZodiacPrediction.calcZoneChangeTracking → { records, sourceZoneCount, topZone, topCount, windowSize }
    */
   renderZoneChangeTracking: function(changeData) {
+    // 确保容器存在，动态注入到 giongFreqGrid 下方
     var container = document.getElementById('giongZoneChangePanel');
-    if (!container) return;
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'giongZoneChangePanel';
+      var freqGrid = document.getElementById('giongFreqGrid');
+      if (freqGrid && freqGrid.parentNode) {
+        freqGrid.parentNode.appendChild(container);
+      }
+    }
 
-    if (!changeData || !changeData.windows || changeData.windows.length === 0) {
-      container.innerHTML = '';
+    if (!changeData || !changeData.records || !changeData.records.length) {
+      // 数据不足时显示空状态
+      var wsLabel = (changeData && changeData.windowSize === 24) ? '24期' : (changeData && changeData.windowSize === 36 ? '36期' : '12期');
+      container.innerHTML =
+        '<div class="zone-change-card zone-change-empty">' +
+          '<div class="zone-change-header">' +
+            '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>' +
+          '</div>' +
+          '<div class="zone-change-empty-tip">数据不足（需至少' + (changeData && changeData.windowSize || 12) + '期）</div>' +
+        '</div>';
       return;
     }
 
     var html = '';
-    html += '<div class="zone-change-tracking-card">';
-    html += '<div class="zone-change-header">';
-    html += '<div class="zone-change-title">区域变动追踪</div>';
-    html += '<button class="db-copy-btn" data-action="copyZoneChangeSummary" type="button" aria-label="复制变动摘要"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
-    html += '</div>';
+    html += '<div class="zone-change-card">';
 
-    html += '<div class="zone-change-summary">';
-    html += '共追踪 <strong>' + changeData.windows.length + '</strong> 个生肖在不同窗口大小的区域变动';
-    if (changeData.topZone) {
+    // 头部
+    var wsLabel = (changeData.windowSize === 24) ? '24期' : (changeData.windowSize === 36 ? '36期' : '12期');
+    html += '<div class="zone-change-header">';
+    html += '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>';
+    if (changeData.topZone && changeData.topCount > 0) {
+      html += '<span class="zone-change-top-info">';
       html += '变动最多：<span class="freq-zone-tag ' + ViewCommon.getZoneClass(changeData.topZone, '') + '">' + changeData.topZone + '</span>';
+      html += '<span class="zone-change-top-count">×' + changeData.topCount + '</span>';
+      html += '</span>';
     }
     html += '</div>';
 
-    html += '<div class="zone-change-list">';
-    changeData.windows.forEach(function(w) {
-      html += '<div class="zone-change-item">';
-      html += '<div class="zone-change-zodiac">' + w.zodiac + '</div>';
-      html += '<div class="zone-change-bars">';
-      ['p12','p24','p36'].forEach(function(p) {
-        var zone = w[p];
-        if (!zone) return;
-        html += '<div class="zone-change-bar-item">';
-        html += '<div class="zone-change-bar-label">' + (p === 'p12' ? '12期' : p === 'p24' ? '24期' : '36期') + '</div>';
-        html += '<div class="zone-change-bar-bg">';
-        html += '<div class="zone-change-bar-fill ' + ViewCommon.getZoneClass(zone, '') + '" style="width:100%;"></div>';
-        html += '</div>';
-        html += '<div class="zone-change-bar-zone"><span class="freq-zone-tag ' + ViewCommon.getZoneClass(zone, '') + '">' + zone + '</span></div>';
-        html += '</div>';
-      });
+    // 区域统计条
+    html += '<div class="zone-change-stats">';
+    var statZones = [];
+    Object.keys(changeData.sourceZoneCount).forEach(function(z) {
+      statZones.push({ zone: z, count: changeData.sourceZoneCount[z] });
+    });
+    statZones.sort(function(a, b) { return b.count - a.count; });
+    var total = statZones.reduce(function(s, item) { return s + item.count; }, 0);
+    statZones.forEach(function(item) {
+      if (item.count === 0) return;
+      var pct = total > 0 ? Math.round(item.count / total * 100) : 0;
+      html += '<div class="zone-change-stat-item">';
+      html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
+      html += '<div class="zone-change-bar-track">';
+      html += '<div class="zone-change-bar-fill ' + ViewCommon.getZoneClass(item.zone, '') + '" style="width:' + pct + '%;"></div>';
       html += '</div>';
-      if (w.movements && w.movements.length > 0) {
-        html += '<div class="zone-change-movements">';
-        w.movements.forEach(function(r) {
-          var arrow = r.direction === 'up' ? '↑' : (r.direction === 'down' ? '↓' : '→');
-          html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.prevZone, '') + '">' + r.prevZone + '</span>';
-          html += '<span class="zone-change-arrow">' + arrow + '</span>';
-          html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.curZone, '') + '">' + r.curZone + '</span>';
-          html += '<span class="zone-change-arrow-arrow">(' + (r.fromWindow || '') + '→' + (r.toWindow || '') + ')</span>';
-        });
-        html += '</div>';
-      }
+      html += '<span class="zone-change-stat-val">' + item.count + '次</span>';
       html += '</div>';
     });
     html += '</div>';
 
+    // 变动记录列表（默认只显示2期，可展开/折叠）
+    var preferExpanded = Storage.getZoneChangeExpanded();
+    var listClass = preferExpanded ? 'zone-change-list expanded' : 'zone-change-list';
+    html += '<div class="' + listClass + '">';
+    var visibleCount = 2;
+    changeData.records.forEach(function(r, idx) {
+      var changeClass = r.changed ? 'zone-changed' : 'zone-unchanged';
+      var arrow = r.changed ? '↗' : '→';
+      // 始终给超过 visibleCount 的项加 zone-change-hidden class，
+      // 由 CSS (.zone-change-list.expanded .zone-change-hidden { display: flex })
+      // 统一控制展开/折叠。
+      // 修复：当用户上次选择"展开"后刷新页面，!preferExpanded=false 会导致
+      // 所有项都不带 zone-change-hidden class，点击"收起"按钮时虽然 CSS 切了
+      // expanded class，但没有任何项需要被隐藏，看起来"无法收起"。
+      var hiddenClass = (idx >= visibleCount) ? ' zone-change-hidden' : '';
+      html += '<div class="zone-change-item ' + changeClass + hiddenClass + '">';
+      html += '<span class="zone-change-expect">' + r.expect + '期</span>';
+      html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
+      // 遗漏间隔：-1=首次出现，>=1=距离上次出现的期数
+      var missText = r.missInterval === -1 ? '首现' : '隔' + r.missInterval + '期';
+      html += '<span class="zone-change-miss">' + missText + '</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.prevZone, '') + '">' + r.prevZone + '</span>';
+      html += '<span class="zone-change-arrow">' + arrow + '</span>';
+      html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.curZone, '') + '">' + r.curZone + '</span>';
+      html += '</div>';
+    });
+    // 展开/折叠按钮（超过2条时显示）
+    if (changeData.records.length > visibleCount) {
+      var toggleLabel = preferExpanded ? '收起' : '展开更多（共' + changeData.records.length + '期）';
+      var toggleIconChar = preferExpanded ? '▲' : '▼';
+      html += '<div class="zone-change-toggle" data-action="toggleZoneChangeList">';
+      html += '<span class="zone-change-toggle-text">' + toggleLabel + '</span>';
+      html += '<span class="zone-change-toggle-icon">' + toggleIconChar + '</span>';
+      html += '</div>';
+    }
     html += '</div>';
+
+    html += '</div>';
+
     container.innerHTML = html;
   },
 
