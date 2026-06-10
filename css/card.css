@@ -179,6 +179,18 @@
   border:1px solid rgba(0,122,255,0.25);border-radius:6px;
   cursor:pointer;line-height:1;
 }
+/* 主推生肖标题行（期号 + 复制按钮） */
+.zp-header-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 4px 0 8px;
+}
+.zp-header-period {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
 /* 综合未推荐生肖卡片 */
 .unrec-card{
   background:var(--bg-secondary);

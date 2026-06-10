@@ -33,16 +33,17 @@ const ViewZodiacMain = {
     if (candidatesCard) candidatesCard.style.display = '';
     if (scoreTableCard) scoreTableCard.style.display = '';
 
-    // 1. 渲染标题
+    // 1. 渲染标题（移至 zp-header-row 内，仅保留期号）
     var titleEl = document.getElementById('mainPredictTitle');
     if (titleEl) {
-      titleEl.textContent = '第' + data.nextExpect + '期 主推生肖（滑动窗口算法）';
+      titleEl.textContent = '';
     }
 
     // 2. 渲染候选卡片（前6名）
     var candidatesGrid = document.getElementById('mainCandidatesGrid');
     if (candidatesGrid) {
       var cardHtml = '<div class="zp-header-row">';
+      cardHtml += '<span class="zp-header-period">第' + data.nextExpect + '期</span>';
       cardHtml += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制主推候选生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
       cardHtml += '</div>';
       cardHtml += '<div class="zodiac-pred-grid">';
