@@ -2447,3 +2447,77 @@
   }
 }
 
+/* ===================================
+   详细评分卡片（手机端适配）
+   =================================== */
+.sw-score-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sw-score-card {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--border);
+}
+.sw-score-card-top6 {
+  border-left-color: #30D158;
+  background: rgba(48,209,88,0.04);
+}
+.sw-score-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sw-score-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 28px;
+}
+.sw-score-card-score {
+  font-size: 18px;
+  font-weight: 800;
+  margin-left: auto;
+}
+.sw-score-card-miss {
+  font-size: 11px;
+  color: var(--sub-text);
+  white-space: nowrap;
+}
+.sw-score-card-zones {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.sw-zone-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+}
+.sw-zone-label {
+  font-size: 10px;
+  color: var(--sub-text);
+  font-weight: 500;
+}
+.sw-zone-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.sw-score-card-signals {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--sub-text);
+  line-height: 1.5;
+}
+

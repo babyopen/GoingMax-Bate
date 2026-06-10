@@ -65,54 +65,47 @@ const ViewZodiacMain = {
       candidatesGrid.innerHTML = cardHtml;
     }
 
-    // 3. 渲染评分详细表格（所有12生肖）
+    // 3. 渲染评分详细卡片（所有12生肖，卡片式布局适配手机端）
     var scoreTable = document.getElementById('mainScoreTable');
     if (scoreTable) {
-      var tableHtml = '<div class="sw-table-wrapper" style="overflow-x:auto;">';
-      tableHtml += '<table class="sw-score-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
-      tableHtml += '<thead><tr style="background:var(--bg-secondary);">';
-      tableHtml += '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">生肖</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">6期</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">12期</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">24期</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">36期</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">评分</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">遗漏</th>';
-      tableHtml += '</tr></thead><tbody>';
+      var cardHtml = '<div class="sw-score-cards">';
 
       var allScores = data.allScores || [];
       allScores.forEach(function(item) {
         var isTop6 = data.candidates.some(function(c) { return c.shengxiao === item.shengxiao; });
-        var rowBg = isTop6 ? 'background:rgba(48,209,88,0.06);' : '';
-        var scoreStyle = item.score >= 60 ? 'color:#30D158;font-weight:700;' : (item.score >= 30 ? 'color:#FF9F0A;font-weight:600;' : 'color:var(--sub-text);');
+        var scoreStyle = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
+        var top6Class = isTop6 ? ' sw-score-card-top6' : '';
 
-        var zoneClass6 = ViewCommon.getZoneClass(item.zone6);    // V1.1 新增
+        var zoneClass6 = ViewCommon.getZoneClass(item.zone6);
         var zoneClass12 = ViewCommon.getZoneClass(item.zone12);
         var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
         var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
-        tableHtml += '<tr style="' + rowBg + '">';
-        tableHtml += '<td style="padding:6px 8px;font-weight:600;">' + item.shengxiao + '</td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window6 + ' <span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + '</span></td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window12 + ' <span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window24 + ' <span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window36 + ' <span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;' + scoreStyle + '">' + item.score + '</td>';
-        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + (item.miss !== undefined ? item.miss + '期' : '—') + '</td>';
-        tableHtml += '</tr>';
-        // 信号行：独立一行显示在该生肖数据行下方
+        cardHtml += '<div class="sw-score-card' + top6Class + '">';
+        // 头部：生肖名 + 评分 + 遗漏
+        cardHtml += '<div class="sw-score-card-header">';
+        cardHtml += '<span class="sw-score-card-name">' + item.shengxiao + '</span>';
+        cardHtml += '<span class="sw-score-card-score" style="' + scoreStyle + '">' + item.score + '</span>';
+        cardHtml += '<span class="sw-score-card-miss">' + (item.miss !== undefined ? '遗漏' + item.miss + '期' : '—') + '</span>';
+        cardHtml += '</div>';
+        // 窗口区域行：4个窗口横排
+        cardHtml += '<div class="sw-score-card-zones">';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">6期</span><span class="sw-zone-val">' + item.window6 + '</span><span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">12期</span><span class="sw-zone-val">' + item.window12 + '</span><span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">24期</span><span class="sw-zone-val">' + item.window24 + '</span><span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">36期</span><span class="sw-zone-val">' + item.window36 + '</span><span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></div>';
+        cardHtml += '</div>';
+        // 信号行
         if (item.signals && item.signals.length > 0) {
-          tableHtml += '<tr style="' + rowBg + '">';
-          tableHtml += '<td style="padding:3px 8px;"></td>';
-          tableHtml += '<td colspan="6" style="padding:3px 8px;font-size:11px;color:var(--sub-text);border-bottom:1px solid var(--border);">';
-          tableHtml += '→ ' + item.signals.join('；');
-          tableHtml += '</td>';
-          tableHtml += '</tr>';
+          cardHtml += '<div class="sw-score-card-signals">';
+          cardHtml += '→ ' + item.signals.join('；');
+          cardHtml += '</div>';
         }
+        cardHtml += '</div>';
       });
 
-      tableHtml += '</tbody></table></div>';
-      scoreTable.innerHTML = tableHtml;
+      cardHtml += '</div>';
+      scoreTable.innerHTML = cardHtml;
     }
   },
 
