@@ -287,12 +287,6 @@ const EventBinder = {
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
-      // 主推历史记录操作
-      else if(action === 'clearSlidingWindowHistory') {
-        BusinessSlidingWindowHistory.confirmAndClearAll(function() {
-          ViewSlidingWindowHistory.renderEmpty();
-        });
-      }
       // 大小回测操作
       else if(action === 'showSizeBacktest') EventBinder._showSizeBacktest();
       // 单双回测操作

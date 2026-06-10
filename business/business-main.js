@@ -1529,11 +1529,8 @@ const Business = {
 
     if (!historyData || !historyData.length) {
       ViewZodiacMain.renderSlidingWindowPrediction(null);
-      ViewSlidingWindowHistory.render([]);
+      ViewSlidingWindowHistory.renderEmpty();
       ViewZodiacMain.renderDataFreshness(null, null);
-      // 数据为空时清理任何遗留的统计 header
-      var strayHeaders = document.querySelectorAll('.sw-stats-header');
-      strayHeaders.forEach(function(h) { h.remove(); });
       return;
     }
 
@@ -1542,17 +1539,17 @@ const Business = {
     var ageMs = cacheTimestamp > 0 ? (now - cacheTimestamp) : 0;
     var ageHours = ageMs > 0 ? Math.floor(ageMs / (60 * 60 * 1000)) : null;
 
-    // 调用滑动窗口预测算法
-    var result = BusinessSlidingWindow.predict(historyData);
+    // [V1.4.2 优化] 一次性获取交叉排除完整结果，避免 predict 内部重复调用 collectAllRecommend
+    var crossResult = BusinessCrossExclusion.collectAllRecommend(historyData);
+
+    // 调用滑动窗口预测算法（传入完整 crossResult）
+    var result = BusinessSlidingWindow.predict(historyData, { crossResult: crossResult });
     ViewZodiacMain.renderSlidingWindowPrediction(result);
     ViewZodiacMain.renderDataFreshness(cacheTimestamp, ageHours);
 
-    // 清理永远无法核对的老记录（其 period 已超出 historyData 范围）
-    BusinessSlidingWindowHistory.cleanupStaleRecords(historyData);
-
-    // 保存推荐记录 + 自动核对 + 渲染历史记录
-    var records = BusinessSlidingWindowHistory.saveAndCheck(result, historyData);
-    ViewSlidingWindowHistory.render(records);
+    // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
+    var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
+    ViewSlidingWindowHistory.render(backtestRecords);
   },
 
   initGiongTab: () => {

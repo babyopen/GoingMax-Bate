@@ -14,8 +14,6 @@ const Storage = {
     MARK_HINT_SHOWN: 'markHintShown',
     // 用户偏好（区域变动追踪卡片展开状态）
     ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded',
-    // 滑动窗口预测历史记录（主推）
-    SLIDING_WINDOW_RECORDS: 'slidingWindowRecords',
     // 当前主页临时筛选状态（新增：用于后台返回/页面刷新后恢复未保存的筛选）
     CURRENT_FILTER: 'currentFilter'
     // 注：页面子标签记忆（profile/analysis/random）改由 TAB_MEMORY 配置表管理，见下方
