@@ -1528,9 +1528,8 @@ const Business = {
     }
 
     if (!historyData || !historyData.length) {
-      ViewZodiacMain.renderSlidingWindowPrediction(null);
+      ViewZodiacMain.renderSlidingWindowPrediction(null, null, null);
       ViewSlidingWindowHistory.renderEmpty();
-      ViewZodiacMain.renderDataFreshness(null, null);
       return;
     }
 
@@ -1544,8 +1543,7 @@ const Business = {
 
     // 调用滑动窗口预测算法（传入完整 crossResult）
     var result = BusinessSlidingWindow.predict(historyData, { crossResult: crossResult });
-    ViewZodiacMain.renderSlidingWindowPrediction(result);
-    ViewZodiacMain.renderDataFreshness(cacheTimestamp, ageHours);
+    ViewZodiacMain.renderSlidingWindowPrediction(result, cacheTimestamp, ageHours);
 
     // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
     var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);

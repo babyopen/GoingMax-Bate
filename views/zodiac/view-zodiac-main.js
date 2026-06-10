@@ -9,8 +9,10 @@ const ViewZodiacMain = {
   /**
    * 渲染主推标签页：滑动窗口预测结果
    * @param {Object} data - BusinessSlidingWindow.predict() 的返回结果
+   * @param {number} [timestamp] - 数据缓存时间戳（毫秒）
+   * @param {number|null} [ageHours] - 缓存年龄（小时）
    */
-  renderSlidingWindowPrediction: function(data) {
+  renderSlidingWindowPrediction: function(data, timestamp, ageHours) {
     var headerCard = document.getElementById('mainPredictHeaderCard');
     var candidatesCard = document.getElementById('mainCandidatesCard');
     var scoreTableCard = document.getElementById('mainScoreTableCard');
@@ -42,8 +44,28 @@ const ViewZodiacMain = {
     // 2. 渲染候选卡片（前6名）
     var candidatesGrid = document.getElementById('mainCandidatesGrid');
     if (candidatesGrid) {
+      // 计算时间显示文本
+      var timeStr = '';
+      var ageText = '';
+      if (timestamp && timestamp > 0) {
+        var updateTime = new Date(timestamp);
+        var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+        timeStr = pad(updateTime.getMonth() + 1) + '-' + pad(updateTime.getDate()) + ' ' +
+                  pad(updateTime.getHours()) + ':' + pad(updateTime.getMinutes());
+        if (ageHours === null || ageHours === undefined) {
+          ageText = '未知';
+        } else if (ageHours < 1) {
+          ageText = '刚刚';
+        } else if (ageHours < 24) {
+          ageText = Math.floor(ageHours) + '小时前';
+        } else {
+          ageText = Math.floor(ageHours / 24) + '天前';
+        }
+      }
+
       var cardHtml = '<div class="zp-header-row">';
       cardHtml += '<span class="zp-header-period">第' + data.nextExpect + '期</span>';
+      cardHtml += '<span class="sw-freshness-inline">最后更新：' + (timestamp ? timeStr : '—') + '（' + ageText + '）</span>';
       cardHtml += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制主推候选生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
       cardHtml += '</div>';
       cardHtml += '<div class="zodiac-pred-grid">';
@@ -123,62 +145,4 @@ const ViewZodiacMain = {
     }
   },
 
-  /**
-   * 渲染数据陈旧度提示
-   * @param {number|null} timestamp - 数据缓存时间戳（毫秒），0 或 null 表示无缓存
-   * @param {number|null} ageHours - 缓存年龄（小时），null 表示无法计算
-   */
-  renderDataFreshness: function(timestamp, ageHours) {
-    var card = document.getElementById('mainDataFreshnessCard');
-    var el = document.getElementById('mainDataFreshness');
-    if (!card || !el) return;
-
-    if (!timestamp || timestamp <= 0) {
-      card.style.display = 'none';
-      return;
-    }
-
-    var ageText, severityClass, icon, label;
-    if (ageHours === null || ageHours === undefined) {
-      ageText = '未知';
-      severityClass = 'sw-freshness-unknown';
-      icon = '⏱';
-      label = '数据缓存时间未知';
-    } else if (ageHours < 1) {
-      ageText = '刚刚';
-      severityClass = 'sw-freshness-fresh';
-      icon = '✓';
-      label = '数据为最新';
-    } else if (ageHours < 24) {
-      ageText = ageHours + '小时前';
-      severityClass = 'sw-freshness-fresh';
-      icon = '✓';
-      label = '数据较新';
-    } else if (ageHours < 72) {
-      var days1 = Math.floor(ageHours / 24);
-      ageText = days1 + '天前';
-      severityClass = 'sw-freshness-stale';
-      icon = '⚠';
-      label = '数据可能已过时';
-    } else {
-      var daysN = Math.floor(ageHours / 24);
-      ageText = daysN + '天前';
-      severityClass = 'sw-freshness-expired';
-      icon = '✕';
-      label = '数据已严重过期，预测结果不可靠';
-    }
-
-    var updateTime = new Date(timestamp);
-    var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
-    var timeStr = pad(updateTime.getMonth() + 1) + '-' + pad(updateTime.getDate()) + ' ' +
-                  pad(updateTime.getHours()) + ':' + pad(updateTime.getMinutes());
-
-    el.className = 'sw-freshness ' + severityClass;
-    el.innerHTML =
-      '<span class="sw-freshness-icon">' + icon + '</span>' +
-      '<span class="sw-freshness-label">' + label + '</span>' +
-      '<span class="sw-freshness-detail">最后更新：' + timeStr + '（' + ageText + '）</span>';
-
-    card.style.display = '';
-  }
 };
