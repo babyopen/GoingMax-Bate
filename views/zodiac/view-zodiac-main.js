@@ -68,20 +68,22 @@ const ViewZodiacMain = {
     // 3. 渲染评分详细卡片（所有12生肖，卡片式布局适配手机端）
     var scoreTable = document.getElementById('mainScoreTable');
     if (scoreTable) {
-      var cardHtml = '<div class="sw-score-cards">';
+      var cardHtml = '<div class="sw-score-cards" id="swScoreCards">';
 
       var allScores = data.allScores || [];
-      allScores.forEach(function(item) {
+      allScores.forEach(function(item, idx) {
         var isTop6 = data.candidates.some(function(c) { return c.shengxiao === item.shengxiao; });
         var scoreStyle = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
         var top6Class = isTop6 ? ' sw-score-card-top6' : '';
+        // 默认只展示第1张，其余折叠
+        var collapsed = idx > 0 ? ' sw-score-card-collapsed' : '';
 
         var zoneClass6 = ViewCommon.getZoneClass(item.zone6);
         var zoneClass12 = ViewCommon.getZoneClass(item.zone12);
         var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
         var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
-        cardHtml += '<div class="sw-score-card' + top6Class + '">';
+        cardHtml += '<div class="sw-score-card' + top6Class + collapsed + '">';
         // 头部：生肖名 + 评分 + 遗漏
         cardHtml += '<div class="sw-score-card-header">';
         cardHtml += '<span class="sw-score-card-name">' + item.shengxiao + '</span>';
@@ -103,6 +105,14 @@ const ViewZodiacMain = {
         }
         cardHtml += '</div>';
       });
+
+      // 折叠/展开按钮
+      var totalCount = allScores.length;
+      cardHtml += '<div class="sw-score-toggle-wrap">';
+      cardHtml += '<button class="sw-score-toggle-btn" data-action="toggleScoreCards" data-expanded="false">';
+      cardHtml += '展开全部（共' + totalCount + '个生肖）';
+      cardHtml += '</button>';
+      cardHtml += '</div>';
 
       cardHtml += '</div>';
       scoreTable.innerHTML = cardHtml;

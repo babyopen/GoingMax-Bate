@@ -311,6 +311,15 @@ const EventBinder = {
           }
         }
       }
+      else if(action === 'toggleScoreCards') {
+        var cards = document.getElementById('swScoreCards');
+        if (!cards) return;
+        var isExpanded = cards.classList.toggle('expanded');
+        actionBtn.textContent = isExpanded
+          ? '收起'
+          : '展开全部（共' + cards.querySelectorAll('.sw-score-card').length + '个生肖）';
+        actionBtn.dataset.expanded = isExpanded ? 'true' : 'false';
+      }
       else if(action === 'showBacktestDetail') {
         ViewZodiacUltimate.toggleBacktestDetailModal(true);
       }
