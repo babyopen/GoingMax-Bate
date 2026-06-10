@@ -80,9 +80,14 @@ const ViewSlidingWindowHistory = {
     section.className = 'sw-backtest-section';
     section.innerHTML =
       '<div class="sw-backtest-divider"></div>' +
-      '<div class="analysis-section-title sw-backtest-title"><span>回测追踪</span></div>' +
-      '<div id="mainBacktestStats"></div>' +
-      '<div id="mainBacktestList"></div>';
+      '<div class="analysis-section-title sw-backtest-title">' +
+        '<span>主推</span>' +
+        '<button class="sw-backtest-toggle-btn" data-action="toggleBacktestSection">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>' +
+        '</button>' +
+      '</div>' +
+      '<div id="mainBacktestStats" class="sw-backtest-content"></div>' +
+      '<div id="mainBacktestList" class="sw-backtest-content"></div>';
     cardBody.appendChild(section);
   },
 
@@ -247,7 +252,7 @@ const ViewSlidingWindowHistory = {
     var top6Html = zodiacNames.join('');
 
     var html = '<div class="backtest-record-row backtest-pending">';
-    html += '<span class="backtest-record-period">第' + prediction.nextExpect + '期:</span>';
+    html += '<span class="backtest-record-period">' + prediction.nextExpect + '期:</span>';
     html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
     html += '<span class="backtest-record-result"><span class="backtest-record-hittext" style="color:var(--primary);">未开奖</span></span>';
     html += '</div>';

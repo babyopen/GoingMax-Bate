@@ -84,26 +84,29 @@ const ViewZodiacMain = {
         var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
         var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
+        // 判断生肖冷热（以 36 期区域为准）
+        var isHot = ['zone-peak', 'zone-high', 'zone-ovht', 'zone-mid', 'zone-active'].indexOf(zoneClass36) >= 0;
+        var nameClass = isHot ? ' sw-zone-hot' : ' sw-zone-cold';
+
         cardHtml += '<div class="sw-score-card' + top6Class + collapsed + '">';
-        // 头部：生肖名 + 评分 + 遗漏
+        // 头部：生肖名 + 信号 + 评分 + 遗漏
         cardHtml += '<div class="sw-score-card-header">';
-        cardHtml += '<span class="sw-score-card-name">' + item.shengxiao + '</span>';
+        cardHtml += '<span class="sw-score-card-name' + nameClass + '">' + item.shengxiao + '</span>';
+        if (item.signals && item.signals.length > 0) {
+          cardHtml += '<div class="sw-score-card-signals">';
+          cardHtml += item.signals.join('；');
+          cardHtml += '</div>';
+        }
         cardHtml += '<span class="sw-score-card-score" style="' + scoreStyle + '">' + item.score + '</span>';
         cardHtml += '<span class="sw-score-card-miss">' + (item.miss !== undefined ? '遗漏' + item.miss + '期' : '—') + '</span>';
         cardHtml += '</div>';
         // 窗口区域行：4个窗口横排
         cardHtml += '<div class="sw-score-card-zones">';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">6期</span><span class="sw-zone-val">' + item.window6 + '</span><span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">12期</span><span class="sw-zone-val">' + item.window12 + '</span><span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">24期</span><span class="sw-zone-val">' + item.window24 + '</span><span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">36期</span><span class="sw-zone-val">' + item.window36 + '</span><span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">6期</span><span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + item.window6 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">12期</span><span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + item.window12 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">24期</span><span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + item.window24 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">36期</span><span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + item.window36 + '</span></div>';
         cardHtml += '</div>';
-        // 信号行
-        if (item.signals && item.signals.length > 0) {
-          cardHtml += '<div class="sw-score-card-signals">';
-          cardHtml += '→ ' + item.signals.join('；');
-          cardHtml += '</div>';
-        }
         cardHtml += '</div>';
       });
 

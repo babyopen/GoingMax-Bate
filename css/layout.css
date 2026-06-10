@@ -136,7 +136,7 @@
 #giongRecommendPanel .zodiac-static-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vw,10px);width:100%;position:relative}
 
 /* 分析区块标题 */
-.analysis-section-title{font-size:clamp(16px,3.5vw,20px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,16px);padding:0 clamp(4px,1vw,8px)}
+.analysis-section-title{display:flex;align-items:center;justify-content:space-between;font-size:clamp(16px,3.5vw,20px);font-weight:700;color:var(--text);margin-bottom:clamp(10px,2vw,16px);padding:0 clamp(4px,1vw,8px)}
 .analysis-desc{font-size:clamp(10px,2vw,12px);color:var(--sub-text);margin-bottom:clamp(10px,2vw,16px)}
 .analysis-conclusion{background:var(--bg-secondary);border-radius:14px;padding:clamp(10px,2vw,16px);margin-top:clamp(10px,2vw,16px)}
 .analysis-conclusion-title{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--text);margin-bottom:clamp(6px,1.5vw,10px)}

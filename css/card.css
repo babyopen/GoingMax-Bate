@@ -2336,6 +2336,26 @@
   color: var(--sub-text);
   border: 1px solid var(--border);
 }
+/* 回测追踪折叠按钮 */
+.sw-backtest-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--sub-text);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.sw-backtest-toggle-btn svg {
+  transition: transform 0.2s ease;
+}
+/* 回测内容默认折叠 */
+#mainBacktestSection:not(.expanded) .sw-backtest-content {
+  display: none;
+}
 .sw-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2503,6 +2523,12 @@
   color: var(--text);
   min-width: 28px;
 }
+.sw-score-card-name.sw-zone-hot {
+  color: #FF9F0A;
+}
+.sw-score-card-name.sw-zone-cold {
+  color: #64D2FF;
+}
 .sw-score-card-score {
   font-size: 18px;
   font-weight: 800;
@@ -2540,8 +2566,6 @@
 }
 .sw-score-card-signals {
   margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--sub-text);
   line-height: 1.5;

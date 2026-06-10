@@ -320,6 +320,20 @@ const EventBinder = {
           : '展开全部（共' + cards.querySelectorAll('.sw-score-card').length + '个生肖）';
         actionBtn.dataset.expanded = isExpanded ? 'true' : 'false';
       }
+      // 回测追踪展开/折叠
+      else if(action === 'toggleBacktestSection') {
+        var section = document.getElementById('mainBacktestSection');
+        if (!section) return;
+        var contents = section.querySelectorAll('.sw-backtest-content');
+        var isExpanded = section.classList.toggle('expanded');
+        contents.forEach(function(c) {
+          c.style.display = isExpanded ? '' : 'none';
+        });
+        var btn = actionBtn.querySelector('svg');
+        if (btn) {
+          btn.style.transform = isExpanded ? 'rotate(180deg)' : '';
+        }
+      }
       else if(action === 'showBacktestDetail') {
         ViewZodiacUltimate.toggleBacktestDetailModal(true);
       }
