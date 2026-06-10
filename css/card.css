@@ -184,11 +184,14 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 4px 0 8px;
 }
 .zp-header-row .db-copy-btn {
-  position: static;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .zp-header-period {
   font-size: 14px;
