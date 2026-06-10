@@ -2359,6 +2359,7 @@
   gap: clamp(4px, 1vw, 8px);
   align-items: end;
   height: clamp(100px, 18vw, 140px);
+  margin-top: clamp(16px, 2.5vw, 24px);
 }
 .sw-rank-bar-item {
   display: flex;
