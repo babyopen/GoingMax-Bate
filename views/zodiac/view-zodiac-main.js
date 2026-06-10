@@ -77,7 +77,6 @@ const ViewZodiacMain = {
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">24期</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">36期</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">评分</th>';
-      tableHtml += '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">信号</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">遗漏</th>';
       tableHtml += '</tr></thead><tbody>';
 
@@ -92,16 +91,24 @@ const ViewZodiacMain = {
         var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
         var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
-        tableHtml += '<tr style="' + rowBg + 'border-bottom:1px solid var(--border);">';
+        tableHtml += '<tr style="' + rowBg + '">';
         tableHtml += '<td style="padding:6px 8px;font-weight:600;">' + item.shengxiao + '</td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window6 + ' <span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window12 + ' <span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window24 + ' <span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window36 + ' <span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;' + scoreStyle + '">' + item.score + '</td>';
-        tableHtml += '<td style="padding:6px 8px;font-size:11px;">' + (item.signals ? item.signals.join('；') : '—') + '</td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + (item.miss !== undefined ? item.miss + '期' : '—') + '</td>';
         tableHtml += '</tr>';
+        // 信号行：独立一行显示在该生肖数据行下方
+        if (item.signals && item.signals.length > 0) {
+          tableHtml += '<tr style="' + rowBg + '">';
+          tableHtml += '<td style="padding:3px 8px;"></td>';
+          tableHtml += '<td colspan="6" style="padding:3px 8px;font-size:11px;color:var(--sub-text);border-bottom:1px solid var(--border);">';
+          tableHtml += '→ ' + item.signals.join('；');
+          tableHtml += '</td>';
+          tableHtml += '</tr>';
+        }
       });
 
       tableHtml += '</tbody></table></div>';
