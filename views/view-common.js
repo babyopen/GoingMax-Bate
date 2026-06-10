@@ -7,7 +7,7 @@
 const ViewCommon = {
 
   /**
-   * 区域名 → CSS class 映射表（4 处共用，2026-06-09 重构合并）
+   * 区域名 → CSS class 映射表（4 处共用，2026-06-09 重构合并；2026-06-10 新增 6 期短期窗口映射）
    */
   ZONE_CLASS_MAP: Object.freeze({
     '封顶区': 'zone-peak',
@@ -16,7 +16,12 @@ const ViewCommon = {
     '热号区': 'zone-mid',
     '活跃区': 'zone-active',
     '穿插区': 'zone-low',
-    '冷号区': 'zone-wait'
+    '冷号区': 'zone-wait',
+    // V1.1 新增：6 期短期窗口区域（与中长期窗口视觉等级对齐）
+    '短期过热': 'zone-peak',   // ≥3次，P<0.2%（极罕见）
+    '短期热号': 'zone-mid',    // 2次，P≈8%（短期热）
+    '短期穿插': 'zone-low',    // 1次，P≈34%（偶尔穿插）
+    '短期冷号': 'zone-wait'    // 0次，P≈59%（完全冷）
   }),
 
   /**

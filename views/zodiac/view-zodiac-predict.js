@@ -146,7 +146,7 @@ const ViewZodiacPredict = {
       }
     } catch (e) { /* 状态不可用则跳过 */ }
 
-    var recentRecords = summary.records.slice(0, 15);
+    var recentRecords = summary.records.slice(0, 30);
     recentRecords.forEach(function(r) {
       var hitText = r.hit ? '准' : '错';
       var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';

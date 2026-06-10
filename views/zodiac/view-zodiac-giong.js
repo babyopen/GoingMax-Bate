@@ -228,7 +228,7 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     html += '<div class="backtest-records backtest-records-inline">';
-    var recentRecords = summary.records.slice(0, 15);
+    var recentRecords = summary.records.slice(0, 30);
     recentRecords.forEach(function(r) {
       var hitText = r.hit ? '准' : '错';
       var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';

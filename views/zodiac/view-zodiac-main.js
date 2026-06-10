@@ -72,6 +72,7 @@ const ViewZodiacMain = {
       tableHtml += '<table class="sw-score-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
       tableHtml += '<thead><tr style="background:var(--bg-secondary);">';
       tableHtml += '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">生肖</th>';
+      tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">6期</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">12期</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">24期</th>';
       tableHtml += '<th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">36期</th>';
@@ -86,12 +87,14 @@ const ViewZodiacMain = {
         var rowBg = isTop6 ? 'background:rgba(48,209,88,0.06);' : '';
         var scoreStyle = item.score >= 60 ? 'color:#30D158;font-weight:700;' : (item.score >= 30 ? 'color:#FF9F0A;font-weight:600;' : 'color:var(--sub-text);');
 
+        var zoneClass6 = ViewCommon.getZoneClass(item.zone6);    // V1.1 新增
         var zoneClass12 = ViewCommon.getZoneClass(item.zone12);
         var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
         var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
         tableHtml += '<tr style="' + rowBg + 'border-bottom:1px solid var(--border);">';
         tableHtml += '<td style="padding:6px 8px;font-weight:600;">' + item.shengxiao + '</td>';
+        tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window6 + ' <span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window12 + ' <span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window24 + ' <span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + '</span></td>';
         tableHtml += '<td style="padding:6px 8px;text-align:center;">' + item.window36 + ' <span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + '</span></td>';

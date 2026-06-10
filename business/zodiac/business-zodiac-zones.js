@@ -102,7 +102,7 @@ const ZodiacPredictionZones = {
   },
 
   analyzeZonePatterns: function(historyData) {
-    if (!historyData || historyData.length < 25) return null;
+    if (!historyData || historyData.length < 37) return null;
 
     var windows = [12, 24, 36];
     var result = {};
