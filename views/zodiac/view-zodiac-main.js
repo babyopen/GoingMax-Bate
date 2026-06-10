@@ -29,7 +29,7 @@ const ViewZodiacMain = {
     }
 
     if (emptyCard) emptyCard.style.display = 'none';
-    if (headerCard) headerCard.style.display = '';
+    if (headerCard) headerCard.style.display = 'none';
     if (candidatesCard) candidatesCard.style.display = '';
     if (scoreTableCard) scoreTableCard.style.display = '';
 
