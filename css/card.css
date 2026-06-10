@@ -2346,6 +2346,7 @@
   margin-top: clamp(10px, 2vw, 14px);
   padding-top: clamp(10px, 2vw, 14px);
   border-top: 1px solid var(--border);
+  margin-bottom: clamp(16px, 2.5vw, 24px);
 }
 .sw-rank-dist-title {
   font-size: clamp(11px, 2vw, 13px);
