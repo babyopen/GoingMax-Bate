@@ -184,23 +184,24 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-start !important;
-  padding: 4px 0 8px !important;
+  justify-content: space-between;
+  padding: 4px 0 8px;
 }
 .zp-header-row .db-copy-btn {
-  position: absolute !important;
+  position: relative !important;
   top: auto !important;
-  right: 12px !important;
+  right: auto !important;
   bottom: auto !important;
-  transform: translateY(-50%);
+  transform: none !important;
   margin: 0 !important;
+  flex-shrink: 0;
 }
 .zp-header-period {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
   margin: 0 !important;
-  flex: none;
+  flex: 1;
 }
 /* 综合未推荐生肖卡片 */
 .unrec-card{
