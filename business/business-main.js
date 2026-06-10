@@ -1549,7 +1549,11 @@ const Business = {
 
     // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
     var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
-    ViewSlidingWindowHistory.render(backtestRecords);
+    var pendingPrediction = {
+      nextExpect: result.nextExpect,
+      candidates: result.candidates
+    };
+    ViewSlidingWindowHistory.render(backtestRecords, pendingPrediction);
   },
 
   initGiongTab: () => {

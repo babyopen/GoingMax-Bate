@@ -14,8 +14,9 @@ const ViewSlidingWindowHistory = {
   /**
    * 主渲染入口（仅回测追踪）
    * @param {Array} backtestRecords - 回测记录列表
+   * @param {Object} [pendingPrediction] - 当前预测（未开奖），{ nextExpect, candidates }
    */
-  render: function(backtestRecords) {
+  render: function(backtestRecords, pendingPrediction) {
     var listCard = document.getElementById('mainHistoryListCard');
     if (!listCard) return;
 
@@ -27,7 +28,7 @@ const ViewSlidingWindowHistory = {
 
     // 动态注入回测追踪区块（在 cardBody 末尾）
     this._ensureBacktestContainer();
-    this._renderBacktestSection(backtestRecords);
+    this._renderBacktestSection(backtestRecords, pendingPrediction);
   },
 
   /**
@@ -90,14 +91,14 @@ const ViewSlidingWindowHistory = {
    * @param {Array} [backtestRecords] - 回测记录列表
    * @private
    */
-  _renderBacktestSection: function(backtestRecords) {
+  _renderBacktestSection: function(backtestRecords, pendingPrediction) {
     if (!Array.isArray(backtestRecords) || !backtestRecords.length) {
       this._renderBacktestEmpty();
       return;
     }
     var stats = BusinessSlidingWindowHistory.computeBacktestStats(backtestRecords);
     this._renderBacktestStats(stats);
-    this._renderBacktestList(backtestRecords);
+    this._renderBacktestList(backtestRecords, pendingPrediction);
   },
 
   /**
@@ -170,13 +171,19 @@ const ViewSlidingWindowHistory = {
    * 渲染回测记录列表（使用统一 inline 样式，与 view-zodiac-giong / view-zodiac-predict 一致）
    * @private
    */
-  _renderBacktestList: function(records) {
+  _renderBacktestList: function(records, pendingPrediction) {
     var container = document.getElementById('mainBacktestList');
     if (!container) return;
     // 容器套上统一样式类（与 view-zodiac-giong:230 / view-zodiac-predict:132 一致）
     container.className = 'backtest-records backtest-records-inline';
 
     var html = '';
+
+    // 未开奖条目：当前预测，排在列表最顶部
+    if (pendingPrediction && pendingPrediction.candidates && pendingPrediction.candidates.length > 0) {
+      html += this._renderPendingRow(pendingPrediction);
+    }
+
     for (var i = 0; i < records.length; i++) {
       html += this._renderBacktestRow(records[i]);
     }
@@ -225,6 +232,24 @@ const ViewSlidingWindowHistory = {
     html += '<span class="backtest-record-period">' + rec.period + '期:</span>';
     html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
     html += '<span class="backtest-record-result">开:<b>' + rec.actualZodiac + '</b>' + actualNum + '<span class="backtest-record-hittext">' + hitText + '</span></span>';
+    html += '</div>';
+    return html;
+  },
+
+  /**
+   * 渲染未开奖条目（当前预测，排在列表最顶部）
+   * @param {Object} prediction - { nextExpect, candidates: [{shengxiao, ...}] }
+   * @returns {string} HTML
+   * @private
+   */
+  _renderPendingRow: function(prediction) {
+    var zodiacNames = prediction.candidates.map(function(c) { return c.shengxiao; });
+    var top6Html = zodiacNames.join('');
+
+    var html = '<div class="backtest-record-row backtest-pending">';
+    html += '<span class="backtest-record-period">第' + prediction.nextExpect + '期:</span>';
+    html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
+    html += '<span class="backtest-record-result"><span class="backtest-record-hittext" style="color:var(--primary);">未开奖</span></span>';
     html += '</div>';
     return html;
   },
