@@ -1,7 +1,14 @@
 /**
  * 滑动窗口预测算法 · 业务层
- * 基于12/24/36期三窗联合判定算法，自动计算每期6个候选生肖
- * 
+ * 基于6/12/24/36期四窗联合判定 + 行情节奏状态机（V1.2 引入节奏跟随）
+ *
+ * 版本演进：
+ *   V1.0 - 12/24/36期三窗联合判定（基础）
+ *   V1.1 - 新增 6 期窗口，捕捉短期反弹/热号/冷号信号
+ *   V1.2 - 新增行情节奏识别（detectRecentRhythm），修复"连对/连错"现象
+ *           当识别到"连续 2+ 期开同一生肖"或"6 期全不同生肖"时，
+ *           修正层动态调整评分权重，使算法能够跟随当前行情节奏
+ *
  * 依赖方向: views/ -> business/ -> core/
  * 禁止DOM操作，只做纯计算和逻辑
  */
@@ -11,7 +18,7 @@ const BusinessSlidingWindow = {
   SHENGXIAO_ALL: ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'],
 
   /** 算法版本（升级时修改此处） */
-  ALGORITHM_VERSION: '滑动窗口V1.0',
+  ALGORITHM_VERSION: '滑动窗口V1.4',
 
   /** 生肖 Emoji 映射 */
   SHENGXIAO_EMOJI: {
@@ -57,18 +64,19 @@ const BusinessSlidingWindow = {
 
   /**
    * 计算各窗口期内每个生肖的出现次数
-   * 窗口: 12期、11期（解权）、24期、36期
+   * 窗口: 6期（V1.1 新增）、12期、11期（解权）、24期、36期
    *
    * @param {Array} zodiacSeq - 生肖序列（正序）
-   * @returns {Object} windows - {window12: Map, window11: Map, window24: Map, window36: Map}
+   * @returns {Object} windows - {window6, window12, window11, window24, window36}
    */
   calculateWindows: function(zodiacSeq) {
     var self = this;
     var total = zodiacSeq.length;
 
     // 初始化计数器
-    var window12 = {}, window11 = {}, window24 = {}, window36 = {};
+    var window6 = {}, window12 = {}, window11 = {}, window24 = {}, window36 = {};
     self.SHENGXIAO_ALL.forEach(function(sx) {
+      window6[sx] = 0;
       window12[sx] = 0;
       window11[sx] = 0;
       window24[sx] = 0;
@@ -81,6 +89,7 @@ const BusinessSlidingWindow = {
       if (offset >= 36) break;
 
       var sx = zodiacSeq[i].shengxiao;
+      if (offset < 6)  window6[sx]  = (window6[sx]  || 0) + 1;   // V1.1 新增
       if (offset < 12) window12[sx] = (window12[sx] || 0) + 1;
       if (offset < 11) window11[sx] = (window11[sx] || 0) + 1;
       if (offset < 24) window24[sx] = (window24[sx] || 0) + 1;
@@ -88,11 +97,23 @@ const BusinessSlidingWindow = {
     }
 
     return {
+      window6: window6,
       window12: window12,
       window11: window11,
       window24: window24,
       window36: window36
     };
+  },
+
+  /**
+   * 6期窗口区域划分（V1.1 新增）
+   * 理论概率：0次≈59%、1次≈34%、2次≈8%、3+次≈0.2%
+   */
+  getZone6: function(count) {
+    if (count >= 3) return '短过热';   // 极端罕见（P<0.2%）
+    if (count === 2) return '短热号';   // 短期热号（P≈8%）
+    if (count === 1) return '短穿插';   // 单次穿插（P≈34%）
+    return '短冷号';                    // 6期未开（P≈59%）
   },
 
   /**
@@ -149,185 +170,400 @@ const BusinessSlidingWindow = {
   },
 
   /**
-   * 核心评分规则：对每个生肖计算综合得分
+   * V1.3 新增：个体生肖热度趋势判断
+   * 比较短期频率 vs 长期频率，区分"变冷中"还是"变热中"
+   *
+   * 原理：
+   *   rate6  = w6/6   (最近6期频率，灵敏)
+   *   rate12 = w12/12 (最近12期频率)
+   *   rate24 = w24/24 (最近24期频率)
+   *   rate36 = w36/36 (最近36期频率，稳定基准)
+   *
+   *   shortRate = (rate6 + rate12) / 2  ← 短期信号
+   *   longRate  = (rate24 + rate36) / 2 ← 长期基准
+   *
+   *   差值 > 0 → 短期比长期更活跃 → 变热中
+   *   差值 < 0 → 短期比长期更稀少 → 变冷中
+   *
+   * @param {number} w6/w12/w24/w36 - 各窗口出现次数
+   * @returns {{ trend: string, shortRate: number, longRate: number, diff: number }}
+   */
+  detectTrend: function(w6, w12, w24, w36) {
+    var rate6  = (w6  || 0) / 6;
+    var rate12 = (w12 || 0) / 12;
+    var rate24 = (w24 || 0) / 24;
+    var rate36 = (w36 || 0) / 36;
+
+    var shortRate = (rate6 + rate12) / 2;
+    var longRate  = (rate24 + rate36) / 2;
+    var diff = shortRate - longRate;
+
+    var trend;
+    if (diff > 0.04) {
+      trend = 'HEATING';     // 短期频率明显高于长期 → 变热中
+    } else if (diff < -0.04) {
+      trend = 'COOLING';     // 短期频率明显低于长期 → 变冷中
+    } else if (shortRate > 0.12 && longRate > 0.12) {
+      trend = 'HOT';         // 持续热（短期和长期都高）
+    } else if (shortRate < 0.05 && longRate < 0.05) {
+      trend = 'COLD';        // 持续冷（短期和长期都低）
+    } else {
+      trend = 'STABLE';      // 稳定
+    }
+
+    return {
+      trend: trend,
+      shortRate: shortRate,
+      longRate: longRate,
+      diff: diff
+    };
+  },
+
+  /**
+   * 识别最近期的开奖节奏模式（V1.2 新增 · 行情状态机核心）
+   * 用于修复"连对/连错"现象：当算法不知道当前行情节奏时，会出现
+   *   - "连对"：连续命中多期（算法恰好踩中节奏）
+   *   - "连错"：连续未中多期（算法没踩中节奏）
+   * 通过识别最近期的节奏模式，让修正层动态调整权重。
+   *
+   * 节奏模式分类：
+   *   CONSECUTIVE_2  - 最近 2 期开同一生肖（连号期，下期不开概率高）
+   *   CONSECUTIVE_3  - 最近 3 期开同一生肖（强连号，下期必不开）
+   *   ALL_DIFFERENT   - 最近 6 期全不同生肖（轮转期，节奏分散）
+   *   STEADY          - 默认平稳期
+   *
+   * @param {Array} zodiacSeq - 生肖序列（正序，最新期在末尾）
+   * @returns {Object} { pattern: string, zx?: string, detail: string }
+   */
+  detectRecentRhythm: function(zodiacSeq) {
+    if (!zodiacSeq || zodiacSeq.length < 2) {
+      return { pattern: 'STEADY', detail: '数据不足，默认平稳' };
+    }
+    var len = zodiacSeq.length;
+    var last1 = zodiacSeq[len - 1].shengxiao;
+    var last2 = zodiacSeq[len - 2].shengxiao;
+    var last3 = len >= 3 ? zodiacSeq[len - 3].shengxiao : '';
+
+    // 1. 检测连号模式（最近 3 期）
+    if (last1 === last2 && last2 === last3 && last1) {
+      return {
+        pattern: 'CONSECUTIVE_3',
+        zx: last1,
+        detail: '最近 3 期连开 ' + last1 + '（强连号，下期大概率不开）'
+      };
+    }
+    if (last1 === last2 && last1) {
+      return {
+        pattern: 'CONSECUTIVE_2',
+        zx: last1,
+        detail: '最近 2 期连开 ' + last1 + '（连号期，下期不开概率高）'
+      };
+    }
+
+    // 2. 检测轮转模式（最近 6 期全不同）
+    if (zodiacSeq.length >= 6) {
+      var unique = {};
+      for (var i = len - 6; i < len; i++) {
+        unique[zodiacSeq[i].shengxiao] = true;
+      }
+      if (Object.keys(unique).length === 6) {
+        return {
+          pattern: 'ALL_DIFFERENT',
+          detail: '最近 6 期开 6 个不同生肖（轮转期，节奏分散）'
+        };
+      }
+    }
+
+    // 3. 默认平稳
+    return { pattern: 'STEADY', detail: '平稳期' };
+  },
+
+  /**
+   * 基础评分规则表（按数组顺序互斥，最多命中 1 条）
+   * 字段说明:
+   *   - weight: 命中后基础分
+   *   - signal: 加入 signals 数组的标签
+   *   - reason: 加入 reasons 数组的描述
+   *   - flag: 命中后设置的标志（如 strongest / dualHot），供修正层判定
+   *   - match: 匹配函数，参数为 { w12, w11, w24, w36 }
+   *   - isDefault: 是否兜底规则（必须能命中）
+   */
+  SW_BASE_RULES: [
+    { weight: 100, signal: '24/36期双过热(5/7)', reason: '24/36期双过热是最强信号',  flag: 'strongest', match: function(w) { return w.w24 === 5 && w.w36 === 7; } },
+    { weight: 90,  signal: '24/36期双过热',      reason: '24/36期双过热是极强信号',  flag: 'strongest', match: function(w) { return w.w24 >= 5 && w.w36 >= 6; } },
+    { weight: 80,  signal: '三窗热号(2/4/5+)',    reason: '三窗热号是强信号',          flag: 'dualHot',   match: function(w) { return w.w12 === 2 && w.w24 === 4 && w.w36 >= 5; } },
+    { weight: 70,  signal: '24/36期双热号(4/6)',  reason: '24/36期双热号是强信号',    flag: 'dualHot',   match: function(w) { return w.w24 === 4 && w.w36 === 6; } },
+    // V1.4.3 修复：w36≥7 单窗过热（24期未达5+）此前无规则命中，导致 2026138 期马评分 -30
+    { weight: 75,  signal: '36期单窗过热(7+)',    reason: '36期单窗过热(7+)是强信号（24期未达5+）', flag: 'strongest', match: function(w) { return w.w36 >= 7 && w.w24 < 5; } },
+    // V1.1 新增：短期反弹（6期0+12期≥1+36期≥2）—— 短期冷但中长期有戏，捕捉反弹起始信号
+    { weight: 70,  signal: '短期反弹(6期0+12期≥1+36期≥2)', reason: '短期反弹：6期未开但中长期活跃，反弹可能持续',
+      match: function(w) { return w.w6 === 0 && w.w12 >= 1 && w.w36 >= 2 && w.w36 <= 6; } },
+    { weight: 65,  signal: '2.7规则触发',         reason: '2.7规则触发（穿插+活跃+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 3 && w.w36 >= 5; } },
+    { weight: 65,  signal: '2.7规则触发',         reason: '2.7规则触发（穿插+热号+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 4 && w.w36 >= 4; } },
+    { weight: 60,  signal: '24/36期热号(4/5)',    reason: '24/36期热号是中强信号',    flag: 'dualHot',   match: function(w) { return w.w24 === 4 && w.w36 === 5; } },
+    { weight: 55,  signal: '36期热号(6)',         reason: '36期热号(6)是中强信号',    match: function(w) { return w.w36 === 6; } },
+    { weight: 50,  signal: '24/36期双冷+超长遗漏', reason: '24/36期双冷+超长遗漏是必出信号', match: function(w) { return w.w24 === 1 && w.w36 === 2; } },
+    { weight: 45,  signal: '24/36期活跃(3/4)',    reason: '24/36期活跃是中等信号',    match: function(w) { return w.w24 === 3 && w.w36 === 4; } },
+    { weight: 40,  signal: '36期活跃(4)',         reason: '36期活跃(4)是中等信号',    match: function(w) { return w.w36 === 4; } },
+    // V1.1 新增：短期热号（6期≥2）—— 短期连续活跃，跟随概率高
+    { weight: 40,  signal: '短期热号(6期≥2)',     reason: '短期热号：6期内开2+次，短期跟随概率高',
+      match: function(w) { return w.w6 >= 2; } },
+    { weight: 30,  signal: '36期活跃(3)',         reason: '36期活跃(3)是中等信号',    match: function(w) { return w.w36 === 3; } },
+    // V1.1 新增：短期冷号（6期0+12期0）—— 12期冷号+6期也冷，可能即将反弹
+    { weight: 30,  signal: '短期冷号(6期0+12期0)', reason: '短期冷号：6期和12期均未开，冷补信号启动',
+      match: function(w) { return w.w6 === 0 && w.w12 === 0 && w.w36 >= 2; } },
+    { weight: 10,  signal: '36期冷号(2)',         reason: '36期冷号(2)是基础信号',    match: function(w) { return w.w36 === 2; } },
+    { weight: 5,   signal: '36期冷号(1)',         reason: '36期冷号(1)是弱信号',      match: function(w) { return w.w36 === 1; } },
+    { weight: 0,   signal: '无明显信号',          reason: '无可匹配的评分规则',        isDefault: true, match: function() { return true; } }
+  ],
+
+  /**
+   * 叠加规则表（可同时命中多条，与基础规则并存）
+   * 字段说明:
+   *   - skipIfBaseWeightGte: 当基础分 ≥ 该值时跳过叠加（修复漏洞 1：跨窗信号叠加无上限）
+   */
+  SW_ADDITIVE_RULES: [
+    { weight: 55, signalFn: function(w) { return '跨窗信号(12期0+36期' + w.w36 + ')'; },
+      reason: '跨窗信号触发：12期冷号+36期热号，叠加+55',
+      skipIfBaseWeightGte: 60,
+      match: function(w) { return w.w12 === 0 && w.w36 >= 5; }
+    }
+  ],
+
+  /**
+   * 修正层规则表（按数组顺序应用，修改 score / reasons / signals）
+   * 字段说明:
+   *   - delta: 应用到 score 的增量（正为加分，负为扣分）
+   *   - signal / signalFn: 可选，命中后追加 signal 标签
+   *   - reason / reasonFn: 可选，命中后追加 reason 描述
+   *   - setScoreZero: 命中后直接将 score 置为 0（兜底排除）
+   *   - match: 匹配函数，参数为 ctx { score, baseScore, miss, w12, w11, w24, w36, zone12, zone24, zone36, flags }
+   */
+  SW_MODIFIER_RULES: [
+    // 冷补不重复 - miss ≤ 2：非最强信号 -25
+    { delta: -25, reasonFn: function(ctx) { return '冷补不重复：' + ctx.miss + '期前刚开过(-25)'; },
+      match: function(ctx) { return ctx.miss <= 2 && !ctx.flags.strongest; } },
+    // 冷补不重复 - miss === 3：非最强信号 -15
+    { delta: -15, reason: '冷补不重复：3期前刚开过(-15)',
+      match: function(ctx) { return ctx.miss === 3 && !ctx.flags.strongest; } },
+    // 接近冷补期 - miss 4-5：双热号豁免说明
+    { delta: 0, reason: '接近冷补期：双热号保留(不扣分)',
+      match: function(ctx) { return (ctx.miss === 4 || ctx.miss === 5) && ctx.flags.dualHot; } },
+    // 已过冷补期 - miss 6-14：score > 0 时 +10
+    { delta: 10, reasonFn: function(ctx) { return '已过冷补期：' + ctx.miss + '期未开(+10)'; },
+      match: function(ctx) { return ctx.miss >= 6 && ctx.miss <= 14 && ctx.baseScore > 0; } },
+    // 超长遗漏 - miss ≥ 15 且 24/36 都落在冷号区/穿插区（修复漏洞 2：改用 zone 对齐冷补排除）
+    { delta: 30, signal: '超长遗漏', reasonFn: function(ctx) { return '超长遗漏：' + ctx.miss + '期未出(+30)'; },
+      match: function(ctx) {
+        return ctx.miss >= 15
+          && (ctx.zone24 === '冷号区' || ctx.zone24 === '穿插区')
+          && (ctx.zone36 === '冷号区' || ctx.zone36 === '穿插区');
+      } },
+    // 冷补排除 - 12期1次 + 24/36期双冷 → 直接归零（替代原 -50，避免叠加后仍 > 0）
+    { delta: 0, reason: '冷补排除：12期穿插+24/36双冷号区', setScoreZero: true,
+      match: function(ctx) {
+        return ctx.w12 === 1
+          && (ctx.zone24 === '冷号区' || ctx.zone24 === '穿插区')
+          && (ctx.zone36 === '冷号区' || ctx.zone36 === '穿插区');
+      } },
+    // 11期解权机制 - 修复漏洞 4：仅在 score < 60 时触发（避免削掉高分）
+    { delta: -15, reasonFn: function(ctx) { return '12期降权中（11期解权：' + ctx.w11 + '/' + ctx.w12 + '，保留）'; },
+      match: function(ctx) { return ctx.w12 >= 3 && ctx.w11 <= 2 && ctx.score < 60; } },
+    // V1.3 新增：趋势加成 —— 变热中加分，变冷中扣分
+    { delta: 12, signal: '趋势变热', reason: '趋势：变热中(shortRate高于longRate)+12',
+      match: function(ctx) { return ctx.trend === 'HEATING'; } },
+    { delta: -12, signal: '趋势变冷', reason: '趋势：变冷中(shortRate低于longRate)-12',
+      match: function(ctx) { return ctx.trend === 'COOLING'; } }
+  ],
+
+  /**
+   * 核心评分规则：对每个生肖计算综合得分（数据驱动表版）
+   * 三段式：基础规则（互斥取 1）→ 叠加规则（可多条）→ 修正层（按顺序）
    *
    * @param {string} shengxiao - 生肖名
-   * @param {Object} windows - 窗口计数 {window12, window11, window24, window36}
+   * @param {Object} windows - 窗口计数 {window6, window12, window11, window24, window36}
    * @param {Array} zodiacSeq - 生肖序列
-   * @returns {Object} 评分结果 {shengxiao, score, reason, signals, window12, window11, window24, window36, zone12, zone24, zone36, miss}
+   * @param {Object} [rhythm] - V1.2 新增：行情节奏识别结果（由 predict() 注入）
+   * @param {Array<string>} [excludedZodiacs] - V1.3.1新增：交叉排除列表
+   * @param {Array<string>} [downweightedZodiacs] - V1.4新增：交叉排除 Rule2 触发时的软降权列表
+   * @param {number} [downweightFactor] - V1.4新增：软降权系数（0~1；如 0.5 表示分数打 5 折）
+   * @returns {Object} 评分结果
    */
-  calculateScore: function(shengxiao, windows, zodiacSeq) {
+  calculateScore: function(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor) {
+    var self = this;
+    // V1.2 兼容：rhythm 可选，未传时使用默认 STEADY
+    if (!rhythm) rhythm = { pattern: 'STEADY', detail: '未提供节奏' };
+    excludedZodiacs = excludedZodiacs || [];
+    // V1.4 新增：Rule 2 软降权参数兼容
+    downweightedZodiacs = downweightedZodiacs || [];
+    downweightFactor = typeof downweightFactor === 'number' ? downweightFactor : 0;
+
+    // V1.3.1 交叉排除：未被任何模块推荐的生肖直接归零
+    if (excludedZodiacs.indexOf(shengxiao) !== -1) {
+      return {
+        shengxiao: shengxiao,
+        score: 0,
+        reason: '交叉排除：未被生肖预测/Giong/终极算法中任一模块推荐',
+        signals: ['交叉排除'],
+        window6: windows.window6[shengxiao] || 0,
+        window12: windows.window12[shengxiao] || 0,
+        window11: windows.window11[shengxiao] || 0,
+        window24: windows.window24[shengxiao] || 0,
+        window36: windows.window36[shengxiao] || 0,
+        zone6: this.getZone6(windows.window6[shengxiao] || 0),
+        zone12: this.getZone12(windows.window12[shengxiao] || 0),
+        zone24: this.getZone24(windows.window24[shengxiao] || 0),
+        zone36: this.getZone36(windows.window36[shengxiao] || 0),
+        miss: this.getMissPeriods(shengxiao, zodiacSeq),
+        trend: { trend: 'EXCLUDED', shortRate: 0, longRate: 0, diff: 0 },
+        // V1.4 新增：硬排除时无降权
+        downweighted: false,
+        downweightFactor: 0,
+        originalScore: 0
+      };
+    }
+    var w6 = windows.window6[shengxiao] || 0;     // V1.1 新增
     var w12 = windows.window12[shengxiao] || 0;
     var w11 = windows.window11[shengxiao] || 0;
     var w24 = windows.window24[shengxiao] || 0;
     var w36 = windows.window36[shengxiao] || 0;
 
+    var zone6 = this.getZone6(w6);                 // V1.1 新增
     var zone12 = this.getZone12(w12);
     var zone24 = this.getZone24(w24);
     var zone36 = this.getZone36(w36);
 
+    var miss = this.getMissPeriods(shengxiao, zodiacSeq);
+
+    var w = { w6: w6, w12: w12, w11: w11, w24: w24, w36: w36 };   // V1.1 新增 w6
+    var flags = { strongest: false, dualHot: false };
     var score = 0;
     var signals = [];
     var reasons = [];
 
-    // 冷补豁免标志
-    var hasStrongest = false;  // 双过热（最强/极强信号）
-    var hasDualHot = false;    // 双热号信号
-
-    // ===== 核心评分规则（按优先级依次判断，取最高级别的一个信号为基础分） =====
-
-    // 规则1：24/36期双过热(5/7) - 最强信号 → 永远保留
-    if (w24 === 5 && w36 === 7) {
-      score += 100;
-      signals.push('24/36期双过热(5/7)');
-      reasons.push('24/36期双过热是最强信号');
-      hasStrongest = true;
-    }
-    // 规则2：24/36期双过热(5/6) - 极强信号 → 永远保留
-    else if (w24 >= 5 && w36 >= 6) {
-      score += 90;
-      signals.push('24/36期双过热');
-      reasons.push('24/36期双过热是极强信号');
-      hasStrongest = true;
-    }
-    // 规则3：三窗热号(2/4/5+) - 永远保留
-    else if (w12 === 2 && w24 === 4 && w36 >= 5) {
-      score += 80;
-      signals.push('三窗热号(2/4/5+)');
-      reasons.push('三窗热号是强信号');
-      hasDualHot = true;
-    }
-    // 规则4：24/36期双热号(4/6)
-    else if (w24 === 4 && w36 === 6) {
-      score += 70;
-      signals.push('24/36期双热号(4/6)');
-      reasons.push('24/36期双热号是强信号');
-      hasDualHot = true;
-    }
-    // 规则5：24/36期热号(4/5)
-    else if (w24 === 4 && w36 === 5) {
-      score += 60;
-      signals.push('24/36期热号(4/5)');
-      reasons.push('24/36期热号是中强信号');
-      hasDualHot = true;
-    }
-    // 规则6：36期热号(6)
-    else if (w36 === 6) {
-      score += 55;
-      signals.push('36期热号(6)');
-      reasons.push('36期热号(6)是中强信号');
-    }
-    // 规则7：2.7规则触发（穿插+活跃+热号）
-    else if (w12 === 1 && w24 === 3 && w36 >= 5) {
-      score += 65;
-      signals.push('2.7规则触发');
-      reasons.push('2.7规则触发（穿插+活跃+热号）');
-    }
-    // 规则8：2.7规则触发（穿插+热号+热号）
-    else if (w12 === 1 && w24 === 4 && w36 >= 4) {
-      score += 65;
-      signals.push('2.7规则触发');
-      reasons.push('2.7规则触发（穿插+热号+热号）');
-    }
-    // 规则9：24/36期双冷+超长遗漏 - 必出信号
-    else if (w24 === 1 && w36 === 2) {
-      score += 50;
-      signals.push('24/36期双冷+超长遗漏');
-      reasons.push('24/36期双冷+超长遗漏是必出信号');
-    }
-    // 规则10：24/36期活跃(3/4)
-    else if (w24 === 3 && w36 === 4) {
-      score += 45;
-      signals.push('24/36期活跃(3/4)');
-      reasons.push('24/36期活跃是中等信号');
-    }
-    // 规则11：36期活跃(4)
-    else if (w36 === 4) {
-      score += 40;
-      signals.push('36期活跃(4)');
-      reasons.push('36期活跃(4)是中等信号');
-    }
-    // 规则12：36期活跃(3)
-    else if (w36 === 3) {
-      score += 30;
-      signals.push('36期活跃(3)');
-      reasons.push('36期活跃(3)是中等信号');
-    }
-    // 规则13：36期冷号(2) - 基础信号
-    else if (w36 === 2) {
-      score += 10;
-      signals.push('36期冷号(2)');
-      reasons.push('36期冷号(2)是基础信号');
-    }
-    // 规则14：36期冷号(1) - 弱信号
-    else if (w36 === 1) {
-      score += 5;
-      signals.push('36期冷号(1)');
-      reasons.push('36期冷号(1)是弱信号');
-    }
-    // 无信号
-    else {
-      signals.push('无明显信号');
-      reasons.push('无可匹配的评分规则');
-    }
-
-    // ===== 跨窗信号（12期冷号0 + 36期热号5+ → 可与其他信号叠加） =====
-    if (w12 === 0 && w36 >= 5) {
-      score += 55;
-      signals.push('跨窗信号(12期0+36期' + w36 + ')');
-      reasons.push('跨窗信号触发：12期冷号+36期热号，叠加+55');
-    }
-
-    // ===== 冷补不重复 & 遗漏调整 =====
-    var miss = this.getMissPeriods(shengxiao, zodiacSeq);
-
-    if (miss <= 2) {
-      // 1-2期前：24/36期双过热保留，其他-25分
-      if (!hasStrongest) {
-        score -= 25;
-        reasons.push('冷补不重复：' + miss + '期前刚开过(-25)');
+    // ========== 阶段 1：基础规则（互斥，最多命中 1 条）==========
+    for (var i = 0; i < self.SW_BASE_RULES.length; i++) {
+      var rule = self.SW_BASE_RULES[i];
+      if (rule.match(w)) {
+        score += rule.weight;
+        signals.push(rule.signal);
+        reasons.push(rule.reason);
+        if (rule.flag === 'strongest') flags.strongest = true;
+        if (rule.flag === 'dualHot') flags.dualHot = true;
+        break;
       }
-    } else if (miss === 3) {
-      // 3期前：24/36期双过热保留，其他-15分
-      if (!hasStrongest) {
-        score -= 15;
-        reasons.push('冷补不重复：3期前刚开过(-15)');
+    }
+    var baseScore = score;
+
+    // ========== 阶段 2：叠加规则（可多条；跳过阈值由 skipIfBaseWeightGte 控制）==========
+    for (var j = 0; j < self.SW_ADDITIVE_RULES.length; j++) {
+      var add = self.SW_ADDITIVE_RULES[j];
+      if (!add.match(w)) continue;
+      if (typeof add.skipIfBaseWeightGte === 'number' && baseScore >= add.skipIfBaseWeightGte) continue;
+      score += add.weight;
+      signals.push(typeof add.signalFn === 'function' ? add.signalFn(w) : add.signal);
+      reasons.push(add.reason);
+    }
+
+    // V1.3 新增：趋势计算（在 ctx 之前，供修正层使用）
+    var trendObj = this.detectTrend(w6, w12, w24, w36);
+
+    // ========== 阶段 3：修正层（按顺序应用，每条规则独立判断 ctx）==========
+    var ctx = {
+      score: score,
+      baseScore: baseScore,
+      miss: miss,
+      w6: w6, w12: w12, w11: w11, w24: w24, w36: w36,    // V1.1 新增 w6
+      zone6: zone6, zone12: zone12, zone24: zone24, zone36: zone36,   // V1.1 新增 zone6
+      flags: flags,
+      rhythm: rhythm,                                     // V1.2 新增：行情节奏
+      trend: trendObj.trend                               // V1.3 新增：个体趋势
+    };
+    for (var k = 0; k < self.SW_MODIFIER_RULES.length; k++) {
+      var mod = self.SW_MODIFIER_RULES[k];
+      if (!mod.match(ctx)) continue;
+      if (mod.signal) signals.push(mod.signal);
+      else if (typeof mod.signalFn === 'function') signals.push(mod.signalFn(ctx));
+      if (typeof mod.reasonFn === 'function') reasons.push(mod.reasonFn(ctx));
+      else if (mod.reason) reasons.push(mod.reason);
+      if (mod.setScoreZero) {
+        score = 0;
+      } else {
+        score += mod.delta;
       }
-    } else if (miss === 4 || miss === 5) {
-      // 4-5期前：24/36期双热号保留，其他不变
-      if (hasDualHot) {
-        reasons.push('接近冷补期：双热号保留(不扣分)');
-      }
-    } else if (miss >= 6 && miss <= 14) {
-      // 6-14期前：全部保留，+10分
-      if (score > 0) {
-        score += 10;
-        reasons.push('已过冷补期：' + miss + '期未开(+10)');
-      }
-    } else {
-      // 15期前+：全部保留，双冷条件触发超长遗漏+30
-      if (miss >= 15 && w24 <= 2 && w36 <= 2) {
-        score += 30;
-        signals.push('超长遗漏');
-        reasons.push('超长遗漏：' + miss + '期未出(+30)');
+      // 修正层可能改变 score，需同步 ctx.score 给后续规则使用
+      ctx.score = score;
+    }
+
+    // ============================================================
+    // V1.3.1：生肖特化规则（按最近开奖结果，针对单个生肖的条件判定）
+    //   1. 马不连开 → 开出后下期绝不开
+    //   2. 虎易连开 → 开出后下期可能重开
+    //   3. 虎连开后 → 下期鼠概率极高
+    // ============================================================
+    var len = zodiacSeq.length;
+    var last1 = zodiacSeq[len - 1].shengxiao;   // 最近一期
+    var last2 = len >= 2 ? zodiacSeq[len - 2].shengxiao : '';  // 前一期
+
+    // 规则1：马不连开 — 最近一期开了马，本期马直接归零
+    if (shengxiao === '马' && last1 === '马') {
+      score = 0;
+      signals.push('生肖特化：马不连开');
+      reasons.push('马：最近一期刚开过马，连开概率极低，直接归零');
+    }
+
+    // 规则2：虎易连开 — 最近一期开了虎，本期虎加分鼓励
+    if (shengxiao === '虎' && last1 === '虎' && !ctx.flags.strongest) {
+      score += 35;
+      signals.push('生肖特化：虎连开');
+      reasons.push('虎：最近一期开了虎，虎有连开特性(+35)');
+    }
+
+    // 规则3：虎连开后的鼠 — 虎连号出现后，下期鼠概率极高
+    if (shengxiao === '鼠' && last1 === '虎') {
+      var tigerConsecutive = (last2 === '虎');
+      if (tigerConsecutive) {
+        score += 50;
+        signals.push('生肖特化：虎连后出鼠');
+        reasons.push('鼠：虎连号后下期鼠概率极高(+50)');
+      } else {
+        score += 20;
+        signals.push('生肖特化：虎后出鼠');
+        reasons.push('鼠：虎开出后鼠概率提升(+20)');
       }
     }
 
-    // ===== 冷补排除规则 =====
-    // 规则A：12期1次 + 24/36期都是冷号区/穿插区 → 排除（大幅扣分）
-    if (w12 === 1 && (zone24 === '冷号区' || zone24 === '穿插区') && (zone36 === '冷号区' || zone36 === '穿插区')) {
-      score -= 50;
-      reasons.push('冷补排除：12期穿插+24/36双冷号区');
-    }
-    // 规则B：12期1次 + 24/36期有活跃/热号 → 保留（不额外处理，已在评分中体现）
-    // 规则C：12期2次 + 24/36期热号 → 保留（不额外处理）
-    // 规则D：24/36期双过热/三窗热号 → 永远保留（由 hasStrongest/hasDualHot 处理）
+    // ============================================================
+    // V1.2.1：行情节奏评分（在修正层之后，直接用大分值差异化调整）
+    // ALL_DIFFERENT 轮转期：按遗漏期分层给冷号加分，创造排名差异化
+    // ============================================================
 
-    // ===== 11期解权机制 =====
-    // 12期3次（降权区）+ 11期≤2 → 解权保留（但仍轻微扣分表示降权）
-    if (w12 >= 3 && w11 <= 2) {
-      score -= 15;
-      reasons.push('12期降权中（11期解权：' + w11 + '/' + w12 + '，保留）');
+    // 轮转加分（ALL_DIFFERENT）—— 差异化冷号奖励
+    if (rhythm.pattern === 'ALL_DIFFERENT' && w12 <= 1 && w6 === 0) {
+      var rotBonus = 0;
+      if (miss >= 15) rotBonus = 25;           // 超长遗漏：+25
+      else if (miss >= 12) rotBonus = 20;      // 长期遗漏：+20
+      else if (miss >= 8) rotBonus = 15;       // 中期遗漏：+15
+      else if (miss >= 5) rotBonus = 10;       // 短期遗漏：+10
+      if (rotBonus > 0) {
+        score += rotBonus;
+        signals.push('轮转冷号+' + rotBonus);
+        reasons.push('节奏：轮转期冷号(miss=' + miss + ',+' + rotBonus + ')');
+      }
+    }
+
+    // ============================================================
+    // V1.4 新增：交叉排除 Rule 2 软降权（仅在 Rule 1 无硬排除时由交叉排除模块触发）
+    //   触发条件：3 源全覆盖（excluded 为空）+ 该生肖不在"Giong+终极算法"二源并集中
+    //   作用：分数 × downweightFactor（默认 0.5）
+    // ============================================================
+    var isDownweighted = false;
+    var originalScore = score;
+    if (downweightFactor > 0 && downweightFactor < 1 && downweightedZodiacs.indexOf(shengxiao) !== -1) {
+      score = Math.round(score * downweightFactor);
+      isDownweighted = true;
+      signals.push('Rule2降权×' + downweightFactor);
+      reasons.push('交叉排除Rule2：仅被生肖预测推荐，未被Giong/终极算法推荐，分数×' + downweightFactor + '（原' + originalScore + '→现' + score + '）');
     }
 
     return {
@@ -335,14 +571,21 @@ const BusinessSlidingWindow = {
       score: score,
       reason: reasons.join('；') || '无特殊原因',
       signals: signals,
+      window6: w6,            // V1.1 新增
       window12: w12,
       window11: w11,
       window24: w24,
       window36: w36,
+      zone6: zone6,           // V1.1 新增
       zone12: zone12,
       zone24: zone24,
       zone36: zone36,
-      miss: miss
+      miss: miss,
+      trend: trendObj,                               // V1.3 新增：个体热度趋势
+      // V1.4 新增：Rule 2 软降权元信息（用于视图层展示与调试）
+      downweighted: isDownweighted,
+      downweightFactor: isDownweighted ? downweightFactor : 0,
+      originalScore: originalScore
     };
   },
 
@@ -350,14 +593,21 @@ const BusinessSlidingWindow = {
    * 预测主逻辑：基于滑动窗口算法，返回评分前6的候选生肖
    *
    * @param {Array} historyData - 原始历史数据
+   * @param {Object} [options] - 可选配置
+   * @param {Array<string>} [options.excludedZodiacs] - V1.3.1新增：交叉排除列表（未被其他模块推荐的生肖）
+   * @param {Array<string>} [options.downweightedZodiacs] - V1.4新增：Rule 2 软降权生肖列表（未传则自动从 BusinessCrossExclusion 获取）
+   * @param {number} [options.downweightFactor] - V1.4新增：Rule 2 软降权系数（未传则自动从 BusinessCrossExclusion 获取，默认 0.5）
+   * @param {Object} [options.crossResult] - V1.4.2新增：调用方一次性传入的交叉排除完整结果（避免重复调用 collectAllRecommend）
    * @returns {Object|null} 预测结果
    *   - candidates: [{shengxiao, emoji, score, rank, ...}]
    *   - allScores: 所有12生肖的详细评分
    *   - nextExpect: 下一期期号
    *   - summary: 12/24/36窗口概览
+   *   - crossExclusion: 交叉排除元信息（含 rule2Triggered / downweighted / downweightFactor）
    */
-  predict: function(historyData) {
+  predict: function(historyData, options) {
     var self = this;
+    options = options || {};
 
     // 1. 转换数据格式
     var zodiacSeq = this.convertHistoryToZodiacSequence(historyData);
@@ -368,14 +618,66 @@ const BusinessSlidingWindow = {
     // 2. 计算窗口
     var windows = this.calculateWindows(zodiacSeq);
 
-    // 3. 计算所有生肖的评分
+    // 3. V1.2 新增：识别最近期开奖节奏（用于行情跟随）
+    var rhythm = this.detectRecentRhythm(zodiacSeq);
+
+    // ============================================================
+    // V1.4.2 优化：交叉排除信息获取（避免与调用方重复调用 collectAllRecommend）
+    //   优先级：
+    //     1. options.crossResult（完整结果，零次额外调用，推荐）
+    //     2. options.excludedZodiacs + options.downweightedZodiacs/factor（兼容旧接口）
+    //     3. 自动检测 BusinessCrossExclusion.collectAllRecommend（兜底）
+    // ============================================================
+    var excludedZodiacs, downweightedZodiacs, downweightFactor, rule2Triggered;
+
+    if (options.crossResult && typeof options.crossResult === 'object') {
+      // [Bug#2+#7 修复] 路径 1：调用方已传完整结果，零额外调用
+      excludedZodiacs = options.crossResult.excluded || [];
+      downweightedZodiacs = options.crossResult.downweighted || [];
+      downweightFactor = options.crossResult.downweightFactor || 0;
+      rule2Triggered = options.crossResult.rule2Triggered === true;
+    } else {
+      // 路径 2 / 3：仅传了 excludedZodiacs，需要补充 downweight 信息
+      excludedZodiacs = options.excludedZodiacs || [];
+
+      // 优先使用显式传入的 downweight 参数
+      if (options.downweightedZodiacs !== undefined && options.downweightFactor !== undefined) {
+        downweightedZodiacs = options.downweightedZodiacs;
+        downweightFactor = options.downweightFactor;
+        rule2Triggered = (downweightFactor > 0 && downweightedZodiacs.length > 0);
+      } else {
+        // 路径 3：自动从交叉排除模块获取（兜底，可能与调用方重复）
+        try {
+          if (typeof BusinessCrossExclusion !== 'undefined' && BusinessCrossExclusion.collectAllRecommend) {
+            var autoCross = BusinessCrossExclusion.collectAllRecommend(historyData);
+            downweightedZodiacs = options.downweightedZodiacs !== undefined ? options.downweightedZodiacs : (autoCross.downweighted || []);
+            downweightFactor = options.downweightFactor !== undefined ? options.downweightFactor : (autoCross.downweightFactor || 0);
+            rule2Triggered = autoCross.rule2Triggered === true;
+          } else {
+            downweightedZodiacs = [];
+            downweightFactor = 0;
+            rule2Triggered = false;
+          }
+        } catch (e) {
+          // 异常保护：自动检测失败时降级为无降权
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[BusinessSlidingWindow] 交叉排除自动检测失败：', e);
+          }
+          downweightedZodiacs = options.downweightedZodiacs || [];
+          downweightFactor = typeof options.downweightFactor === 'number' ? options.downweightFactor : 0;
+          rule2Triggered = false;
+        }
+      }
+    }
+
+    // 4. 计算所有生肖的评分
     var allScores = [];
     self.SHENGXIAO_ALL.forEach(function(sx) {
-      var scoreObj = self.calculateScore(sx, windows, zodiacSeq);
+      var scoreObj = self.calculateScore(sx, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
       allScores.push(scoreObj);
     });
 
-    // 4. 按评分降序排列（同分时按生肖数组索引升序，确保确定性）
+    // 5. 按评分降序排列（同分时按生肖数组索引升序，确保确定性）
     var sxIndex = {};
     self.SHENGXIAO_ALL.forEach(function(sx, idx) { sxIndex[sx] = idx; });
     allScores.sort(function(a, b) {
@@ -389,7 +691,7 @@ const BusinessSlidingWindow = {
       return ia - ib;
     });
 
-    // 5. 取前6名为候选
+    // 6. 取前6名为候选
     var top6 = allScores.slice(0, 6);
     var candidates = top6.map(function(item, idx) {
       return {
@@ -399,32 +701,39 @@ const BusinessSlidingWindow = {
         rank: idx + 1,
         reason: item.reason,
         signals: item.signals,
+        window6: item.window6,         // V1.1 新增
         window12: item.window12,
         window11: item.window11,
         window24: item.window24,
         window36: item.window36,
+        zone6: item.zone6,             // V1.1 新增
         zone12: item.zone12,
         zone24: item.zone24,
         zone36: item.zone36,
-        miss: item.miss
+        miss: item.miss,
+        // V1.4 新增：Rule 2 软降权信息（视图层可展示）
+        downweighted: item.downweighted || false,
+        originalScore: item.originalScore != null ? item.originalScore : item.score
       };
     });
 
-    // 6. 计算下一期期号
+    // 7. 计算下一期期号
     var latestExpect = zodiacSeq.length > 0 ? zodiacSeq[zodiacSeq.length - 1].period : 0;
     var nextExpect = latestExpect + 1;
 
-    // 7. 窗口概览统计
+    // 8. 窗口概览统计
     var windowSummary = {
-      max12: 0, max24: 0, max36: 0,
-      hotZones: { zone12: {}, zone24: {}, zone36: {} }
+      max6: 0, max12: 0, max24: 0, max36: 0,        // V1.1 新增 max6
+      hotZones: { zone6: {}, zone12: {}, zone24: {}, zone36: {} }   // V1.1 新增 zone6
     };
     allScores.forEach(function(item) {
+      if (item.window6 > windowSummary.max6) windowSummary.max6 = item.window6;    // V1.1 新增
       if (item.window12 > windowSummary.max12) windowSummary.max12 = item.window12;
       if (item.window24 > windowSummary.max24) windowSummary.max24 = item.window24;
       if (item.window36 > windowSummary.max36) windowSummary.max36 = item.window36;
 
-      var z12 = item.zone12, z24 = item.zone24, z36 = item.zone36;
+      var z6 = item.zone6, z12 = item.zone12, z24 = item.zone24, z36 = item.zone36;   // V1.1 新增 z6
+      windowSummary.hotZones.zone6[z6] = (windowSummary.hotZones.zone6[z6] || 0) + 1; // V1.1 新增
       windowSummary.hotZones.zone12[z12] = (windowSummary.hotZones.zone12[z12] || 0) + 1;
       windowSummary.hotZones.zone24[z24] = (windowSummary.hotZones.zone24[z24] || 0) + 1;
       windowSummary.hotZones.zone36[z36] = (windowSummary.hotZones.zone36[z36] || 0) + 1;
@@ -435,8 +744,16 @@ const BusinessSlidingWindow = {
       allScores: allScores,
       nextExpect: nextExpect,
       summary: windowSummary,
+      rhythm: rhythm,                          // V1.2 新增：当前行情节奏（供视图层展示）
       algorithm: self.ALGORITHM_VERSION,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      // V1.4 新增：交叉排除元信息（供视图层展示与调试）
+      crossExclusion: {
+        rule2Triggered: rule2Triggered,
+        excludedCount: excludedZodiacs.length,
+        downweighted: downweightedZodiacs || [],
+        downweightFactor: downweightFactor || 0
+      }
     };
   },
 
