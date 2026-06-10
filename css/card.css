@@ -200,13 +200,12 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
-  margin: 0 !important;
+  margin: 0 8px 0 0 !important;
   flex: 0 0 auto;
 }
 .sw-freshness-inline {
   font-size: 11px;
-  color: var(--sub-text);
-  opacity: 0.8;
+  color: #30D158;
   flex: 1;
   white-space: nowrap;
 }
