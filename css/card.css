@@ -530,6 +530,15 @@
 }
 /* 命中的生肖字变蓝色高亮 */
 .backtest-record-zodiac-hit{color:#007AFF;font-weight:700}
+/* V1.4.2 新增：Rule 2 软降权的生肖（仅与交叉排除联动时存在） */
+.backtest-record-zodiac-down{
+  color:var(--sub-text,#999);
+  font-size:0.82em;
+  font-weight:400;
+  text-decoration:line-through;
+  text-decoration-color:rgba(255,59,48,0.4);
+  opacity:0.7;
+}
 .backtest-records-inline .backtest-record-result{
   white-space:nowrap;
 }
@@ -2259,29 +2268,6 @@
 }
 
 /* 滑动窗口历史记录统计面板 */
-.sw-stats-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: clamp(10px, 2vw, 14px);
-  padding-bottom: clamp(8px, 1.5vw, 12px);
-  border-bottom: 1px solid var(--border);
-}
-.sw-stats-title {
-  font-size: clamp(13px, 2.5vw, 15px);
-  font-weight: 700;
-  color: var(--text);
-}
-.sw-stats-clear-btn {
-  padding: clamp(4px, 0.8vw, 6px) clamp(10px, 2vw, 14px);
-  background: var(--bg-secondary);
-  color: var(--sub-text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: clamp(11px, 2vw, 13px);
-  font-weight: 500;
-  cursor: pointer;
-}
 .sw-freshness {
   display: flex;
   align-items: center;
@@ -2420,107 +2406,6 @@
   color: var(--sub-text);
   margin-top: clamp(2px, 0.4vw, 4px);
 }
-
-/* 历史记录行（参考 backtest-record-row 布局） */
-.sw-history-row {
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  padding: clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 16px);
-  border-left: 3px solid var(--border);
-  margin-bottom: clamp(6px, 1.5vw, 10px);
-}
-.sw-history-row.sw-row-hit {
-  border-left-color: #30D158;
-  background: rgba(48, 209, 88, 0.06);
-}
-.sw-history-row.sw-row-miss {
-  border-left-color: #FF453A;
-  background: rgba(255, 69, 58, 0.04);
-}
-.sw-history-row.sw-row-pending {
-  border-left-color: var(--sub-text);
-  opacity: 0.85;
-}
-.sw-row-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: clamp(3px, 0.6vw, 6px);
-  font-size: clamp(11px, 2vw, 13px);
-}
-.sw-row-period {
-  font-size: clamp(12px, 2.5vw, 15px);
-  font-weight: 700;
-  color: var(--primary);
-}
-.sw-row-status {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: clamp(10px, 1.8vw, 12px);
-  font-weight: 600;
-}
-.sw-row-hit .sw-row-status { background: rgba(48, 209, 88, 0.15); color: #30D158; }
-.sw-row-miss .sw-row-status { background: rgba(255, 69, 58, 0.15); color: #FF453A; }
-.sw-row-pending .sw-row-status { background: var(--border); color: var(--sub-text); }
-.sw-row-time {
-  font-size: clamp(10px, 1.8vw, 11px);
-  color: var(--sub-text);
-  opacity: 0.8;
-}
-.sw-row-candidates {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: clamp(6px, 1.2vw, 10px);
-  margin-bottom: clamp(8px, 1.5vw, 10px);
-}
-.sw-candidate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: clamp(36px, 7vw, 44px);
-  padding: clamp(6px, 1.2vw, 10px) clamp(10px, 2vw, 14px);
-  background: var(--bg-primary);
-  border-radius: 8px;
-}
-.sw-candidate-hit {
-  background: rgba(48, 209, 88, 0.15);
-  border: 1.5px solid #30D158;
-}
-.sw-candidate-name {
-  font-size: clamp(12px, 2.2vw, 14px);
-  font-weight: 700;
-}
-.sw-row-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: clamp(11px, 2vw, 13px);
-  padding-top: clamp(6px, 1.2vw, 8px);
-  border-top: 1px dashed var(--border);
-}
-.sw-row-result-label {
-  color: var(--sub-text);
-  font-size: clamp(10px, 1.8vw, 12px);
-}
-.sw-actual-hit { color: #30D158; font-weight: 700; }
-.sw-actual-miss { color: #FF453A; font-weight: 600; }
-.sw-actual-pending { color: var(--sub-text); opacity: 0.5; font-weight: 700; font-size: clamp(14px, 2.5vw, 16px); }
-.sw-actual-zones {
-  display: inline-flex;
-  align-items: center;
-  gap: clamp(3px, 0.6vw, 5px);
-  margin-left: clamp(4px, 0.8vw, 6px);
-  flex-wrap: wrap;
-  vertical-align: middle;
-}
-.sw-actual-zones .freq-zone-tag {
-  font-size: clamp(9px, 1.5vw, 10px);
-  padding: 1px clamp(5px, 1vw, 7px);
-}
-.sw-rank-hit { color: #30D158; font-weight: 700; }
-.sw-rank-miss { color: #FF453A; font-weight: 600; }
-.sw-rank-pending { color: var(--sub-text); opacity: 0.5; }
 
 /* 彩票列表通用布局（期号 + 预测 + 结果） */
 .lottery-list {
