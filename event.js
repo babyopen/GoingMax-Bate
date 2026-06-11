@@ -481,6 +481,8 @@ const EventBinder = {
    */
   handleClickOutside: (e) => {
     if(DOM.navToggle && DOM.navToggle.contains(e.target)) return;
+    // 底部导航栏按钮点击时跳过收起（由 switchBottomNav 中的 setTimeout 控制展开/收起）
+    if(e.target.closest('.bottom-nav-item')) return;
     if(DOM.quickNav && !DOM.quickNav.contains(e.target) && DOM.quickNav.classList.contains('expanded')){
       Business.toggleQuickNav(false);
     }

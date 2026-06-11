@@ -146,7 +146,8 @@ const ViewCommon = {
         predict: 'zodiacPredictPanel',
         giong: 'zodiacGiongPanel',
         ultimate: 'zodiacUltimatePanel'
-      }
+      },
+      navBtnSelector: '.nav-tab[data-page="random"]'
     }, tab);
   },
 

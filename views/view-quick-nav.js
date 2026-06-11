@@ -55,6 +55,13 @@ const ViewQuickNav = {
     const configs = ViewFilter._navConfigs[pageKey];
     if (!configs) return;
 
+    // 读取当前激活的子 tab（用于高亮快捷导航按钮）
+    // 仅 analysis/random/profile 需要高亮（filter 页面是滚动定位类型不需要）
+    var currentActiveTab = null;
+    if (pageKey !== 'filter' && typeof Storage !== 'undefined' && Storage.getLastTab) {
+      currentActiveTab = Storage.getLastTab(pageKey);
+    }
+
     const fragment = document.createDocumentFragment();
     configs.forEach(cfg => {
       const btn = document.createElement('button');
@@ -66,6 +73,10 @@ const ViewQuickNav = {
         btn.dataset.navType = 'tab';
         btn.dataset.page = cfg.page;
         btn.dataset.tabName = cfg.tabName;
+        // 如果是当前激活的 tab，添加 active 类
+        if (currentActiveTab && cfg.tabName === currentActiveTab) {
+          btn.classList.add('active');
+        }
       }
       btn.textContent = cfg.label;
       fragment.appendChild(btn);

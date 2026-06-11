@@ -110,7 +110,7 @@
 }
 .quick-nav.collapsed{height:0;width:0;padding:0;margin:0;opacity:0;overflow:hidden}
 .quick-nav.expanded{height:auto}
-.nav-tabs{display:flex;gap:8px;padding:10px;flex-wrap:wrap;max-height:none}
+.nav-tabs{display:flex;gap:8px;padding:10px;flex-wrap:wrap;max-height:none;justify-content:center}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{
   padding:9px 15px;border-radius:14px;background:var(--nav-item-bg);color:var(--nav-item-text);
@@ -118,6 +118,9 @@
   transition:all var(--anim-fast);touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
 .nav-tab:active{background:var(--nav-item-active-bg);color:var(--nav-item-active-text)}
+.nav-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700}
+.nav-tab[data-page="random"][data-tab-name="giong"].active{background:#AF52DE;border-color:#AF52DE}
+.nav-tab[data-page="analysis"][data-tab-name="zodiac"].active{background:#13a662;border-color:#13a662}
 
 /* 返回顶部按钮 - 毛玻璃 */
 .back-top-btn{

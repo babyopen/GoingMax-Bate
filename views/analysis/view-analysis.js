@@ -38,7 +38,8 @@ const ViewAnalysis = {
         history: 'historyPanel',
         analysis: 'analysisPanelContent',
         zodiac: 'zodiacAnalysisPanel'
-      }
+      },
+      navBtnSelector: '.nav-tab[data-page="analysis"]'
     }, tab);
   },
 
