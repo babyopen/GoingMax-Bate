@@ -8,6 +8,8 @@
  *   V1.2 - 新增行情节奏识别（detectRecentRhythm），修复"连对/连错"现象
  *           当识别到"连续 2+ 期开同一生肖"或"6 期全不同生肖"时，
  *           修正层动态调整评分权重，使算法能够跟随当前行情节奏
+ *   V1.4.4 - 新增修正层规则：6期内出现2次（短热号/短过热）降权 -12
+ *             短期热号可能见顶，统计均值回归
  *
  * 依赖方向: views/ -> business/ -> core/
  * 禁止DOM操作，只做纯计算和逻辑
@@ -369,6 +371,9 @@ const BusinessSlidingWindow = {
     // 11期解权机制 - 修复漏洞 4：仅在 score < 60 时触发（避免削掉高分）
     { delta: -15, reasonFn: function(ctx) { return '12期降权中（11期解权：' + ctx.w11 + '/' + ctx.w12 + '，保留）'; },
       match: function(ctx) { return ctx.w12 >= 3 && ctx.w11 <= 2 && ctx.score < 60; } },
+    // V1.4.4 新增：6期内出现2次降权 —— 短期热号/短过热可能见顶，统计均值回归
+    { delta: -12, signal: '6期2次降权', reasonFn: function(ctx) { return '6期内出现' + ctx.w6 + '次，短期热号见顶(-12)'; },
+      match: function(ctx) { return ctx.w6 >= 2; } },
     // V1.3 新增：趋势加成 —— 变热中加分，变冷中扣分
     { delta: 12, signal: '趋势变热', reason: '趋势：变热中(shortRate高于longRate)+12',
       match: function(ctx) { return ctx.trend === 'HEATING'; } },

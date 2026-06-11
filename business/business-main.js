@@ -1187,7 +1187,6 @@ const Business = {
     if(latestItem) {
       const codeArr = (latestItem.openCode || '').split(',');
       const zodArr = Utils.parseZodiacArr(latestItem);
-      const latestTe = Math.max(0, Number(codeArr[6] || 0));
       const latestZodiac = zodArr[6] || '';
       if(latestZodiac && data.followMap && data.followMap[latestZodiac]) {
         topFollowZodiacs = Object.entries(data.followMap[latestZodiac])
@@ -1721,7 +1720,6 @@ const Business = {
   _cleanInvalidRecords: (records, latestExpect) => {
     if (!records || !records.length || !latestExpect) return records;
 
-    var cleaned = false;
     var latestNum = Number(latestExpect);
 
     records.forEach(function(record) {
@@ -1734,10 +1732,6 @@ const Business = {
         record.actualResult = null;
         record.isHit = null;
         record.hitType = null;
-        cleaned = true;
-      }
-
-      if (recordExpect === latestNum && record.actualResult === null) {
       }
     });
 

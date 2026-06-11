@@ -311,7 +311,6 @@ const BusinessUltimate = {
 
     var main = [];
     var backup = [];
-    var silent = [];
     var i, num;
 
     for (i = 0; i < candidateNums.length; i++) {
@@ -855,7 +854,7 @@ const BusinessUltimate = {
         actualInBlackList: actualInBlackList
       });
 
-      var adaptiveUpdate = this.updateAdaptiveState(totalHitRank > 0);
+      this.updateAdaptiveState(totalHitRank > 0);
       if (i >= maxBacktest - 5) {
       }
 
@@ -953,8 +952,6 @@ const BusinessUltimate = {
     } else {
     }
 
-    var finalAdaptive = this.getAdaptiveState();
-
     Storage.set(this.BACKTEST_KEY, summary);
     return summary;
   },
@@ -1012,10 +1009,6 @@ const BusinessUltimate = {
 
     for (var s in stageStats) {
       stageStats[s].hitRate = Math.round((stageStats[s].hits / stageStats[s].total) * 100);
-    }
-
-    for (var s in stageStats) {
-      var st = stageStats[s];
     }
 
     var totalMiss = backtestResult.total - backtestResult.hits;

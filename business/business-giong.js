@@ -271,7 +271,6 @@ const BusinessGiong = {
 
     var isCongestion = this.checkHighCongestion(periods);
     var pivotActive = this.checkPivotActive(numArray);
-    var coldInChain = this.checkColdInChain(numArray, chain);
 
     var priorityList = [];
 

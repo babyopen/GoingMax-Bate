@@ -240,7 +240,7 @@ input[type="checkbox"]{transform:scale(0.9);margin-right:4px;touch-action:manipu
 
 /* ===================================
    低端设备性能优化模式
-   由 scroll-performance.js 自动启用
+   （如需启用：手动添加 class="low-performance-mode" 到 <body>）
    =================================== */
 body.low-performance-mode *{
   transition-duration: 0.01ms !important;
