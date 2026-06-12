@@ -374,6 +374,11 @@
 .zone-active{background:var(--zone-active-bg);color:var(--zone-active)}
 .zone-low{background:var(--zone-low-bg);color:var(--zone-low)}
 .zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait)}
+/* 6期窗口专属区域色（短期热→短期冷，渐变区分） */
+.zone-6-peak{background:rgba(255,59,48,0.15);color:#FF3B30}
+.zone-6-high{background:rgba(255,149,0,0.18);color:#FF9500}
+.zone-6-mid{background:rgba(255,214,10,0.18);color:#FFD60A}
+.zone-6-wait{background:rgba(100,210,255,0.18);color:#64D2FF}
 
 /* 生肖预测卡片 */
 .zodiac-static-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.2vw,10px);width:100%}

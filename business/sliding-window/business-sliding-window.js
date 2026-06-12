@@ -372,7 +372,7 @@ const BusinessSlidingWindow = {
     { delta: -15, reasonFn: function(ctx) { return '12期降权中（11期解权：' + ctx.w11 + '/' + ctx.w12 + '，保留）'; },
       match: function(ctx) { return ctx.w12 >= 3 && ctx.w11 <= 2 && ctx.score < 60; } },
     // V1.4.4 新增：6期内出现2次降权 —— 短期热号/短过热可能见顶，统计均值回归
-    { delta: -12, signal: '6期2次降权', reasonFn: function(ctx) { return '6期内出现' + ctx.w6 + '次，短期热号见顶(-12)'; },
+    { delta: -30, signal: '6期2次降权', reasonFn: function(ctx) { return '6期内出现' + ctx.w6 + '次，短期热号见顶(-30)'; },
       match: function(ctx) { return ctx.w6 >= 2; } },
     // V1.3 新增：趋势加成 —— 变热中加分，变冷中扣分
     { delta: 12, signal: '趋势变热', reason: '趋势：变热中(shortRate高于longRate)+12',

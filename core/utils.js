@@ -98,6 +98,54 @@ const Utils = {
   },
 
   /**
+   * 2026-06-13 新增：防反弹的延迟单次执行器
+   * 适用场景：底部导航栏重复点击展开/收起快捷导航栏
+   *   - 需要 setTimeout 50ms 延迟避开 handleClickOutside 立即收起
+   *   - 但期间用户可能点 nav-tab / navToggle 关闭 quickNav
+   *   - 如果不取消，setTimeout 触发后会"反弹"展开
+   * 解决：
+   *   - 每次 trigger() 自动 clearTimeout 上一次 pending
+   *   - 外部可主动 cancel() 提前取消
+   * 与 debounce 的区别：
+   *   - debounce：高频触发合并为最后一次执行（合并型）
+   *   - delayedToggle：只保留最新一次待执行（替代型 + 可外部取消）
+   *
+   * @param {Function} fn - 延迟到期执行的函数
+   * @param {number} [delay=50] - 延迟毫秒数
+   * @returns {{ trigger: Function, cancel: Function, isPending: Function }}
+   *   - trigger(): 排队执行 fn（自动取消上一次的 pending）
+   *   - cancel(): 主动取消当前 pending
+   *   - isPending(): 当前是否有 pending 任务
+   *
+   * 用法：
+   *   const h = Utils.delayedToggle(() => toggleQuickNav(), 50);
+   *   h.trigger();  // 排队 50ms 后切换
+   *   h.cancel();   // 主动取消
+   */
+  delayedToggle: (fn, delay = 50) => {
+    let timer = null;
+    const handle = {
+      trigger: function() {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function() {
+          timer = null;
+          fn();
+        }, delay);
+      },
+      cancel: function() {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      },
+      isPending: function() {
+        return timer !== null;
+      }
+    };
+    return handle;
+  },
+
+  /**
    * 深拷贝对象
    * @param {any} obj - 要拷贝的对象
    * @returns {any} 拷贝后的对象

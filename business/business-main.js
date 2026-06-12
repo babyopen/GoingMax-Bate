@@ -342,67 +342,8 @@ const Business = {
     return { overlapNums, totalSchemes: savedFilters.length };
   },
 
-  // ====================== 导航相关 ======================
-  /**
-   * 当前底部导航索引（用于判断是否为重复点击）
-   * 初始为 0（主页）：页面刷新后首次点击主页按钮即可触发快捷导航栏
-   * 其他页面（资料/广播/我的）首次点击时不触发，需停留后再次点击才触发
-   */
-  _currentBottomNavIndex: 0,
-
-  /**
-   * 底部导航 → 页面的子 tab 记忆配置
-   * index: 底部导航索引（0=主页 / 1=广播 / 2=资料 / 3=我的）
-   * page:  TAB_MEMORY 配置名（profile / analysis / random；主页无子 tab，传 null）
-   * restore: 恢复函数（接收 tab 参数；主页无需恢复，传空函数）
-   * toggleQuickNav: 是否支持重复点击切换快捷导航展开/收起（默认 true，"我的"页面除外）
-   */
-  _BOTTOM_NAV_TAB_MEMORY: [
-    { index: 0, page: null,       toggleQuickNav: true,  restore: function() {} },
-    { index: 1, page: 'analysis', toggleQuickNav: true,  restore: function(tab) { Business.switchAnalysisTab(tab); } },
-    { index: 2, page: 'random',   toggleQuickNav: true,  restore: function(tab) { Business.switchZodiacTab(tab); } },
-    { index: 3, page: 'profile',  toggleQuickNav: false, restore: function(tab) {
-        if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
-          ViewProfile.switchProfileTabUI(tab);
-        }
-      } }
-  ],
-
-  /**
-   * 切换底部导航
-   * @param {number} index - 导航索引
-   */
-  switchBottomNav: (index) => {
-    ViewFilter.switchBottomNavUI(index);
-    if(index === 1) {
-      Business.initAnalysisPage();
-    }
-    // 底部导航栏快捷导航逻辑（复用 Business.toggleQuickNav 通用切换逻辑）：
-    // 1) 重复点击当前页面（toggleQuickNav=true）：切换展开/收起
-    // 2) 切换到其他页面：收起快捷导航栏
-    var memory = Business._BOTTOM_NAV_TAB_MEMORY;
-    var memItem = null;
-    for (var i = 0; i < memory.length; i++) {
-      if (memory[i].index === index) { memItem = memory[i]; break; }
-    }
-    var isRepeatClick = memItem && memItem.toggleQuickNav && Business._currentBottomNavIndex === index;
-    if (isRepeatClick) {
-      // 重复点击：延迟执行（避开 handleClickOutside 立即收起），复用通用切换逻辑
-      setTimeout(function() {
-        Business.toggleQuickNav();
-      }, 50);
-    } else if (Business._currentBottomNavIndex !== index && Business.isQuickNavExpanded()) {
-      // 切换到其他页面：主动收起（同步执行，无需延迟）
-      Business.toggleQuickNav(false);
-    }
-    // 更新当前底部导航索引
-    Business._currentBottomNavIndex = index;
-    // 按配置表恢复对应页面的子 tab（新增页面只需在 _BOTTOM_NAV_TAB_MEMORY 加一行）
-    if (memItem && typeof Storage !== 'undefined' && Storage.getLastTab) {
-      var lastTab = Storage.getLastTab(memItem.page);
-      if (lastTab) memItem.restore(lastTab);
-    }
-  },
+  // ====================== 导航相关（2026-06-13 拆分至 business/business-quick-nav.js）======================
+  switchBottomNav: (index) => BusinessQuickNav.handleBottomNavClick(index),
 
   // ============================================================
   // 新增：当前主页临时筛选状态持久化（2026-06-07）
@@ -1434,22 +1375,11 @@ const Business = {
     Business.toggleQuickNav(false);
   },
 
-  /**
-   * 切换快捷导航展开/收起（通用入口，业务层封装）
-   * @param {boolean|null} isOpen - 强制指定展开/收起；传 null 时自动切换
-   */
-  toggleQuickNav: (isOpen = null) => {
-    const shouldOpen = isOpen === null ? !Business.isQuickNavExpanded() : isOpen;
-    ViewFilter.toggleQuickNavUI(shouldOpen);
-  },
+  /** @param {boolean|null} [isOpen] - true 展开，false 收起，null 反转 */
+  toggleQuickNav: (isOpen = null) => BusinessQuickNav.toggle(isOpen),
 
-  /**
-   * 判断快捷导航栏是否处于展开状态（业务层封装）
-   * @returns {boolean}
-   */
-  isQuickNavExpanded: () => {
-    return ViewFilter.isQuickNavExpanded();
-  },
+  /** @returns {boolean} 快捷导航栏是否展开 */
+  isQuickNavExpanded: () => BusinessQuickNav.isExpanded(),
 
   /**
    * 返回顶部
