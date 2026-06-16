@@ -188,24 +188,83 @@ const Render = {
       const displayList = state.showAllFilters ? savedList : savedList.slice(0, showCount);
       const fragment = document.createDocumentFragment();
 
-      displayList.forEach((item, index) => {
-        // 修复预览一致性：使用方案自带的 locked，避免受当前 state.locked 影响
-        const previewList = Filter.getFilteredList(item.selected, item.excluded, item.locked || {});
-        const previewFragment = Utils.createFragment(previewList, (num) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'num-item';
-          // P2-2 防御：num.color 白名单（来源 DataQuery 内部映射但仍加白名单保险）
-          const safeColor = (num.color === '红' || num.color === '蓝' || num.color === '绿') ? num.color : '红';
-          wrapper.innerHTML = `<div class="num-ball ${Utils.escapeHtml(safeColor)}色">${Utils.escapeHtml(num.s)}</div><div class="tag-zodiac">${Utils.escapeHtml(num.zodiac)}</div>`;
-          return wrapper;
-        });
+      // 循环外缓存：避免每次迭代重复解析/访问（V8 局部变量优化）
+      const escapeHtml = Utils.escapeHtml;
+      const markSlots = StateManager.MARK_SLOTS || [];
+      // 颜色白名单 Set（O(1) 查找替代三元判断）
+      const SAFE_COLORS = new Set(['红', '蓝', '绿']);
+
+      for (let i = 0, len = displayList.length; i < len; i++) {
+        const item = displayList[i];
+        const index = i;
+        // 生肖方案（scope='zodiac'）：只展示生肖标签，不展示号码
+        // 普通方案：按原逻辑展示号码 + 生肖
+        const isZodiacScheme = item.scope === 'zodiac';
+        let previewFragment;
+        if (isZodiacScheme) {
+          // 一次性提取并缓存字段，避免重复属性查找
+          const lockedArr = (item.locked && item.locked.zodiac) || [];
+          const markedMap = (item.marked && item.marked.zodiac) || {};
+          const selectedZodiacs = (item.selected && item.selected.zodiac) || [];
+          const markedKeys = Object.keys(markedMap);
+
+          // 单次循环直接生成 DOM 节点（消除中间 renderItems 数组 + 减少两次遍历）
+          // 分组渲染：已选 → 已锁 → 已标记，组间插入"分隔胶囊"增强视觉分组
+          previewFragment = document.createDocumentFragment();
+          const groupLists = [selectedZodiacs, lockedArr, markedKeys];
+          const groupClasses = ['selected', 'locked', 'marked'];
+          let isFirst = true;
+
+          for (let gi = 0; gi < 3; gi++) {
+            const list = groupLists[gi];
+            if (list.length === 0) continue;
+            if (!isFirst) {
+              const sep = document.createElement('div');
+              sep.className = 'zodiac-preview-divider';
+              previewFragment.appendChild(sep);
+            }
+            isFirst = false;
+
+            const cls = groupClasses[gi];
+            const isMarked = (gi === 2);
+            for (let li = 0, lLen = list.length; li < lLen; li++) {
+              const zodiac = list[li];
+              const wrapper = document.createElement('div');
+              let badgeHTML = '';
+              if (isMarked) {
+                const slots = markedMap[zodiac] || [];
+                const lastSlot = markSlots[slots.length - 1];
+                if (lastSlot && lastSlot.color) {
+                  badgeHTML = '<span class="zodiac-preview-badge" style="background:' + lastSlot.color + '">' + slots.length + '</span>';
+                }
+              }
+              wrapper.className = 'zodiac-preview-tag ' + cls;
+              wrapper.innerHTML = escapeHtml(zodiac) + badgeHTML;
+              previewFragment.appendChild(wrapper);
+            }
+          }
+        } else {
+          // 修复预览一致性：使用方案自带的 locked，避免受当前 state.locked 影响
+          const previewList = Filter.getFilteredList(item.selected, item.excluded, item.locked || {});
+          previewFragment = Utils.createFragment(previewList, (num) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'num-item';
+            // P2-2 防御：num.color 白名单（来源 DataQuery 内部映射但仍加白名单保险）
+            const safeColor = SAFE_COLORS.has(num.color) ? num.color : '红';
+            wrapper.innerHTML = `<div class="num-ball ${escapeHtml(safeColor)}色">${escapeHtml(num.s)}</div><div class="tag-zodiac">${escapeHtml(num.zodiac)}</div>`;
+            return wrapper;
+          });
+        }
 
         const itemWrapper = document.createElement('div');
         itemWrapper.className = 'filter-item';
         itemWrapper.setAttribute('role', 'listitem');
+        const isLocked = !!item.lockedScheme;
+        // 生肖方案与号码方案共用 .filter-preview 容器，显示不下时横向滚动
         itemWrapper.innerHTML = `
           <div class="filter-row">
-            <div class="filter-item-name">${Utils.escapeHtml(item.name)}</div>
+            <div class="filter-item-name">${escapeHtml(item.name)}</div>
+            <button type="button" class="filter-lock-btn ${isLocked ? 'locked' : ''}" data-action="${CONFIG.ACTIONS.LOCK_FILTER}" data-index="${index}" aria-label="${isLocked ? '解锁方案' : '锁定方案'}" aria-pressed="${isLocked}"><i class="fa-solid ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i></button>
             <div class="filter-preview"></div>
           </div>
           <div class="filter-item-btns">
@@ -216,9 +275,11 @@ const Render = {
             <button class="del" data-action="${CONFIG.ACTIONS.DELETE_FILTER}" data-index="${index}">删除</button>
           </div>
         `;
-        itemWrapper.querySelector('.filter-preview').appendChild(previewFragment);
+        // .filter-row 是 itemWrapper 的第一个子元素，.filter-preview 是 .filter-row 的最后一个子元素
+        // 用 firstElementChild/lastElementChild 直接定位，避免 querySelector 字符串解析
+        itemWrapper.firstElementChild.lastElementChild.appendChild(previewFragment);
         fragment.appendChild(itemWrapper);
-      });
+      }
 
       if(savedList.length > showCount){
         // P1-4: 用 button 替代 div（原生 button 语义，键盘 / 屏幕阅读器友好）

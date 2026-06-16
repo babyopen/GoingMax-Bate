@@ -242,6 +242,7 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.SELECT_ALL) Filter.selectAllFilters();
       else if(action === CONFIG.ACTIONS.CLEAR_ALL) Filter.clearAllFilters();
       else if(action === CONFIG.ACTIONS.SAVE_FILTER) Business.saveFilterPrompt();
+      else if(action === CONFIG.ACTIONS.SAVE_ZODIAC_FILTER) Business.saveZodiacFilterPrompt();
       else if(action === CONFIG.ACTIONS.CLEAR_ALL_SAVED) Business.clearAllSavedFilters();
       // 排除号码操作
       else if(action === CONFIG.ACTIONS.INVERT_EXCLUDE) Business.invertExclude();
@@ -253,6 +254,7 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.RENAME_FILTER) Business.renameFilter(Number(index));
       else if(action === CONFIG.ACTIONS.COPY_FILTER) Business.copyFilterNums(Number(index));
       else if(action === CONFIG.ACTIONS.TOP_FILTER) Business.topFilter(Number(index));
+      else if(action === CONFIG.ACTIONS.LOCK_FILTER) Business.toggleLockFilter(Number(index));
       else if(action === CONFIG.ACTIONS.DELETE_FILTER) Business.deleteFilter(Number(index));
       // 复制主推与备选生肖（终极推荐卡片右上角按钮，DOM 顺序拼接，空格分隔）
       else if(action === 'copyMainZodiacs') {

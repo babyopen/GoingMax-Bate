@@ -59,10 +59,6 @@ const BusinessUltimate = {
     return map;
   })(),
 
-  init: function() {
-    // 已由 IIFE 在加载时构建，无需重复执行
-  },
-
   ADAPTIVE_CONFIG: {
     BASE_MAIN_COUNT: 4,
     BASE_BACKUP_COUNT: 3,
@@ -269,11 +265,8 @@ const BusinessUltimate = {
       var freq12 = currFreq12[num] || 0;
       var freq11 = currFreq11[num] || 0;
 
-      if (freq12 >= this.DOWN_WEIGHT_THRESHOLD) {
-        if (freq11 <= this.RELEASE_THRESHOLD) {
-        } else {
-          blackList.push(num);
-        }
+      if (freq12 >= this.DOWN_WEIGHT_THRESHOLD && freq11 > this.RELEASE_THRESHOLD) {
+        blackList.push(num);
       }
     }
 
@@ -855,18 +848,6 @@ const BusinessUltimate = {
       });
 
       this.updateAdaptiveState(totalHitRank > 0);
-      if (i >= maxBacktest - 5) {
-      }
-
-      if (backupNums.length > 0) {
-      }
-      if (hitRank > 0) {
-      } else if (backupHitRank > 0) {
-      } else {
-        if (actualInBlackList) {
-        } else {
-        }
-      }
     }
 
     if (!records.length) return null;
@@ -947,11 +928,6 @@ const BusinessUltimate = {
       records: records
     };
 
-    var totalMiss = summary.total - summary.totalHits;
-    if (totalMiss > 0) {
-    } else {
-    }
-
     Storage.set(this.BACKTEST_KEY, summary);
     return summary;
   },
@@ -960,145 +936,9 @@ const BusinessUltimate = {
     return Storage.get(this.BACKTEST_KEY, null);
   },
 
-  analyzeHitRateOptimization: function(historyData) {
-    var backtestResult = this.runBacktest(historyData);
-    if (!backtestResult || !backtestResult.records) return null;
-
-    var records = backtestResult.records;
-    var self = this;
-
-
-    var stageStats = {};
-    var numberFreq = {};
-    var blackListImpact = { inBlackList: 0, notInBlackList: 0 };
-    var positionStats = { rank1: 0, rank2: 0, rank3: 0, miss: 0 };
-    var consecutiveMiss = 0;
-    var maxConsecutiveMiss = 0;
-
-    for (var i = 0; i < records.length; i++) {
-      var r = records[i];
-      var stage = r.stage || 'UNKNOWN';
-
-      if (!stageStats[stage]) {
-        stageStats[stage] = { total: 0, hits: 0, hitRate: 0 };
-      }
-      stageStats[stage].total++;
-      if (r.hit) {
-        stageStats[stage].hits++;
-        consecutiveMiss = 0;
-        positionStats['rank' + r.hitRank]++;
-        
-        var actualNum = self._getZodiacNum(r.actualZodiac);
-        if (actualNum) {
-          numberFreq[actualNum] = (numberFreq[actualNum] || 0) + 1;
-        }
-      } else {
-        consecutiveMiss++;
-        if (consecutiveMiss > maxConsecutiveMiss) {
-          maxConsecutiveMiss = consecutiveMiss;
-        }
-        positionStats.miss++;
-
-        if (r.actualInBlackList) {
-          blackListImpact.inBlackList++;
-        } else {
-          blackListImpact.notInBlackList++;
-        }
-      }
-    }
-
-    for (var s in stageStats) {
-      stageStats[s].hitRate = Math.round((stageStats[s].hits / stageStats[s].total) * 100);
-    }
-
-    var totalMiss = backtestResult.total - backtestResult.hits;
-
-    var sortedNumbers = Object.keys(numberFreq).sort(function(a, b) { return numberFreq[b] - numberFreq[a]; });
-    sortedNumbers.forEach(function(num, idx) {
-      var freq = numberFreq[num];
-      var pct = Math.round(freq / totalMiss * 100);
-      var analysis = '';
-      if (pct >= 20) analysis = '🔴 高频未命中，需关注';
-      else if (pct >= 10) analysis = '🟡 中频，可能被过度降权';
-      else analysis = '🟢 正常';
-      
-    });
-
-
-    var suggestions = [];
-    
-    if (blackListImpact.inBlackList > totalMiss * 0.5) {
-      suggestions.push({
-        priority: '🔴 高',
-        title: '降权规则过严',
-        detail: '超过50%的未命中是因为实际号码在降权黑名单中。建议：放宽降权条件或缩短冷却期'
-      });
-    }
-
-    if (maxConsecutiveMiss >= 5) {
-      suggestions.push({
-        priority: '🔴 高',
-        title: '存在长连亏',
-        detail: '最长连亏' + maxConsecutiveMiss + '期，建议：连亏3期后切换策略或暂停'
-      });
-    }
-
-    for (var s in stageStats) {
-      if (stageStats[s].total >= 5 && stageStats[s].hitRate < 30) {
-        suggestions.push({
-          priority: '🟠 中',
-          title: s + '命中率偏低',
-          detail: '该阶段命中率仅' + stageStats[s].hitRate + '%%，建议调整该阶段的选号逻辑'
-        });
-      }
-    }
-
-    if (positionStats.rank1 < backtestResult.total * 0.15) {
-      suggestions.push({
-        priority: '🟡 低',
-        title: '第1名命中率不足',
-        detail: '当前仅' + Math.round(positionStats.rank1 / backtestResult.total * 100) + '%，建议调整顺延逻辑让热号更靠前'
-      });
-    }
-
-    if (suggestions.length === 0) {
-    } else {
-      suggestions.sort(function(a, b) {
-        var order = { '🔴 高': 0, '🟠 中': 1, '🟡 低': 2 };
-        return order[a.priority] - order[b.priority];
-      });
-
-      suggestions.forEach(function(sug, idx) {
-      });
-    }
-
-
-    return {
-      stageStats: stageStats,
-      blackListImpact: blackListImpact,
-      numberFreq: numberFreq,
-      positionStats: positionStats,
-      maxConsecutiveMiss: maxConsecutiveMiss,
-      suggestions: suggestions
-    };
-  },
-
-  _padLeft: function(str, len) {
-    str = String(str);
-    while (str.length < len) str = ' ' + str;
-    return str;
-  },
-
-  _padRight: function(str, len) {
-    str = String(str);
-    while (str.length < len) str += ' ';
-    return str;
-  },
-
-  _getZodiacNum: function(zodiacName) {
-    var map = { '马': 1, '蛇': 2, '龙': 3, '兔': 4, '虎': 5, '牛': 6, '鼠': 7, '猪': 8, '狗': 9, '鸡': 10, '猴': 11, '羊': 12 };
-    return map[zodiacName] || null;
-  }
+  // 2026-06-17 优化：移除以下未使用函数（原 ~180 行）
+  // - analyzeHitRateOptimization（grep 全项目 0 调用）
+  // - _padLeft（grep 全项目 0 调用）
+  // - _padRight（grep 全项目 0 调用）
+  // - _getZodiacNum（与 ZODIAC_TO_NUM 重复；唯一调用方已一并删除）
 };
-
-BusinessUltimate.init();

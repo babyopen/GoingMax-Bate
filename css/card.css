@@ -14,11 +14,58 @@
 /* 筛选方案列表 */
 .filter-save-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .filter-item{background:var(--bg-secondary);padding:10px 12px;border-radius:12px}
-.filter-row{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.filter-item-name{font-weight:600;font-size:11px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.filter-preview{display:flex;gap:5px;max-width:100%;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.filter-item-name{flex:1;min-width:0;font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filter-lock-btn{
+  flex-shrink:0;
+  width:26px;height:26px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:none;background:transparent;color:var(--sub-text);
+  border-radius:6px;font-size:13px;
+  cursor:pointer;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  transition:color 0.15s ease;
+}
+.filter-lock-btn.locked{color:var(--danger)}
+.filter-lock-btn:active{opacity:0.6}
+.filter-preview{flex:1 0 100%;display:flex;gap:5px;max-width:100%;overflow-x:auto;overflow-y:visible;align-items:center;padding:6px 2px 4px;scrollbar-width:thin}
 .filter-preview::-webkit-scrollbar{height:4px}
 .filter-preview::-webkit-scrollbar-thumb{background:var(--sub-text);border-radius:2px;opacity:0.3}
+.zodiac-preview-tag{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:30px;height:24px;padding:0 9px;
+  border:1px solid transparent;
+  border-radius:10px;font-size:12px;font-weight:600;
+  white-space:nowrap;flex-shrink:0;
+}
+.zodiac-preview-tag.selected{
+  background:rgba(0,122,255,0.14);color:var(--primary);
+  border-color:rgba(0,122,255,0.3);
+}
+.zodiac-preview-tag.locked{
+  background:rgba(255,59,48,0.12);
+  color:var(--danger);
+  border-color:rgba(255,59,48,0.4);
+}
+.zodiac-preview-tag.marked{
+  background:var(--bg);color:var(--text);
+  border-color:rgba(0,0,0,0.1);
+}
+.zodiac-preview-divider{
+  width:1px;height:16px;margin:0 6px;
+  background:rgba(0,0,0,0.08);
+  align-self:center;flex-shrink:0;
+}
+.zodiac-preview-badge{
+  position:absolute;top:-4px;right:-4px;
+  min-width:14px;height:14px;line-height:14px;
+  text-align:center;border-radius:7px;
+  color:#fff;font-size:9px;font-weight:700;
+  padding:0 3px;box-sizing:border-box;
+  box-shadow:0 1px 2px rgba(0,0,0,0.2);
+  pointer-events:none;
+}
 .filter-item-btns{display:flex;gap:6px;margin-top:8px}
 .filter-item-btns button{
   flex:1;padding:6px;border-radius:10px;border:none;background:var(--bg);color:var(--primary);

@@ -145,10 +145,12 @@ const CONFIG = Object.freeze({
     RESET_GROUP:'resetGroup', SELECT_GROUP:'selectGroup', INVERT_GROUP:'invertGroup',
     CLEAR_GROUP:'clearGroup', MARK_GROUP:'markGroup', LOCK_GROUP:'lockGroup',
     SELECT_ALL:'selectAllFilters', CLEAR_ALL:'clearAllFilters', SAVE_FILTER:'saveFilterPrompt',
+    SAVE_ZODIAC_FILTER:'saveZodiacFilterPrompt',
     CLEAR_ALL_SAVED:'clearAllSavedFilters', INVERT_EXCLUDE:'invertExclude', UNDO_EXCLUDE:'undoExclude',
     BATCH_EXCLUDE:'batchExcludePrompt', CLEAR_EXCLUDE:'clearExclude',
     TOGGLE_SHOW_ALL:'toggleShowAllFilters', LOAD_FILTER:'loadFilter', RENAME_FILTER:'renameFilter',
     COPY_FILTER:'copyFilterNums', TOP_FILTER:'topFilter', DELETE_FILTER:'deleteFilter',
+    LOCK_FILTER:'toggleLockFilter',
     SWITCH_NAV:'switchBottomNav'
   }),
 

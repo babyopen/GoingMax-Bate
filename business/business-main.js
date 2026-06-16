@@ -89,6 +89,24 @@ const Business = {
 
   // ====================== 方案管理相关 ======================
   /**
+   * 提交保存的新方案：持久化 + 渲染 + 智能重命名提示
+   * @param {Object} filterItem - 完整方案对象
+   * @param {string} rawName - 用户输入的原始名
+   * @param {string} filterName - 去重后的最终名
+   * @param {string} toastPrefix - Toast 文案前缀（如：保存成功 / 已保存生肖方案（5肖））
+   */
+  _commitSaveFilter: (filterItem, rawName, filterName, toastPrefix) => {
+    const success = Storage.saveFilter(filterItem);
+    if(!success) return;
+    Render.renderFilterList();
+    if(filterName !== rawName){
+      Toast.show(`${toastPrefix}（重名自动调整为：${filterName}）`);
+    } else {
+      Toast.show(toastPrefix);
+    }
+  },
+
+  /**
    * 保存方案弹窗
    */
   saveFilterPrompt: () => {
@@ -109,23 +127,59 @@ const Business = {
         name: filterName,
         selected: Utils.deepClone(state.selected),
         excluded: Utils.deepClone(state.excluded),
-        locked: Utils.deepClone(state.locked)
+        locked: Utils.deepClone(state.locked),
+        lockedScheme: false
       };
-      const success = Storage.saveFilter(filterItem);
-      if(success){
-        Render.renderFilterList();
-        // 若发生自动重命名，附带给用户提示
-        if(filterName !== rawName){
-          Toast.show(`已保存（重名自动调整为：${filterName}）`);
-        } else {
-          Toast.show('保存成功');
-        }
-      }
+      Business._commitSaveFilter(filterItem, rawName, filterName, '保存成功');
+    });
+  },
+
+  /**
+   * 保存生肖方案弹窗
+   * 仅保存生肖卡片内的已选生肖 + 已锁定生肖 + 已标记生肖，其他筛选条件不保存
+   */
+  saveZodiacFilterPrompt: () => {
+    const state = StateManager._state;
+    if(state.savedFilters.length >= CONFIG.MAX_SAVE_COUNT){
+      Toast.show(`最多只能保存${CONFIG.MAX_SAVE_COUNT}个方案`);
+      return;
+    }
+
+    const selectedZodiacs = (state.selected && state.selected.zodiac) ? state.selected.zodiac : [];
+    const lockedZodiacs = (state.locked && state.locked.zodiac) ? state.locked.zodiac : [];
+    const markedMap = (state.marked && state.marked.zodiac) ? state.marked.zodiac : {};
+    if(selectedZodiacs.length === 0 && lockedZodiacs.length === 0 && Object.keys(markedMap).length === 0){
+      Toast.show('请先选择、标记或锁定生肖');
+      return;
+    }
+
+    // 默认名带"生肖方案"前缀
+    const count = selectedZodiacs.length + lockedZodiacs.length + Object.keys(markedMap).length;
+    const defaultName = Utils.nextDefaultName(state.savedFilters, '生肖方案');
+    GIONGBETA_INPUT_MODAL.show('请输入生肖方案名称', '请输入生肖方案名称', defaultName, (name) => {
+      if(name === null) return;
+      const rawName = (name.trim() || defaultName).slice(0, 20);
+      const filterName = Utils.ensureUniqueName(rawName, state.savedFilters);
+      // 仅保存 zodiac 维度的选择 / 锁定 / 标记，其他字段保持空
+      const filterItem = {
+        name: filterName,
+        selected: { zodiac: Utils.deepClone(selectedZodiacs) },
+        excluded: [],
+        locked: lockedZodiacs.length > 0 ? { zodiac: Utils.deepClone(lockedZodiacs) } : {},
+        marked: Object.keys(markedMap).length > 0 ? { zodiac: Utils.deepClone(markedMap) } : {},
+        // 标记为生肖方案，便于加载时识别
+        scope: 'zodiac',
+        // 锁定方案标记（默认未锁定，避免与 state.locked 字段混淆）
+        lockedScheme: false
+      };
+      Business._commitSaveFilter(filterItem, rawName, filterName, `已保存生肖方案（${count}肖）`);
     });
   },
 
   /**
    * 加载保存的方案
+   * 普通方案：完整覆盖 selected/excluded/locked/marked/markCount
+   * 生肖方案（scope='zodiac'）：仅合并 zodiac 维度的 selected/locked/marked，不影响其他卡片
    * @param {number} index - 方案索引
    */
   loadFilter: (index) => {
@@ -133,12 +187,76 @@ const Business = {
     const item = state.savedFilters[index];
     if(!item) return;
 
-    StateManager.setState({
-      selected: Utils.deepClone(item.selected),
-      excluded: Utils.deepClone(item.excluded),
-      locked: Utils.deepClone(item.locked || {})
-    });
-    Toast.show('加载成功');
+    if(item.scope === 'zodiac') {
+      // 校验：生肖方案为空（已选/已锁/已标记都没有生肖数据）时拒绝加载，避免误清空当前选中
+      const selectedZodiacs = (item.selected && item.selected.zodiac) || [];
+      const lockedZodiacs = (item.locked && item.locked.zodiac) || [];
+      const markedMap = (item.marked && item.marked.zodiac) || {};
+      if(selectedZodiacs.length === 0 && lockedZodiacs.length === 0 && Object.keys(markedMap).length === 0){
+        Toast.show('该生肖方案为空，无法加载');
+        return;
+      }
+
+      // 生肖方案：仅更新 zodiac 维度的 selected / locked / marked，其他卡片保留
+      const newSelected = { ...state.selected };
+      newSelected.zodiac = Utils.deepClone(selectedZodiacs);
+
+      const newLocked = { ...state.locked };
+      if(lockedZodiacs.length > 0) {
+        newLocked.zodiac = Utils.deepClone(lockedZodiacs);
+      } else {
+        delete newLocked.zodiac;
+      }
+
+      const newMarked = { ...state.marked };
+      const newMarkCount = { ...state.markCount };
+      if(Object.keys(markedMap).length > 0) {
+        newMarked.zodiac = Utils.deepClone(markedMap);
+        // markCount.zodiac 恢复为该组最大槽位索引 + 1，保证下次 mark 不冲突
+        let maxSlot = -1;
+        Object.keys(markedMap).forEach(k => {
+          const slots = markedMap[k] || [];
+          slots.forEach(s => { if(s > maxSlot) maxSlot = s; });
+        });
+        newMarkCount.zodiac = maxSlot + 1;
+      } else {
+        delete newMarked.zodiac;
+        delete newMarkCount.zodiac;
+      }
+
+      StateManager.setState({
+        selected: newSelected,
+        locked: newLocked,
+        marked: newMarked,
+        markCount: newMarkCount
+      });
+      const zodiacCount = (newSelected.zodiac || []).length
+        + (newLocked.zodiac || []).length
+        + Object.keys(newMarked.zodiac || {}).length;
+      Toast.show(`已加载生肖方案（${zodiacCount}肖）`);
+    } else {
+      // 普通方案：完整覆盖（与旧版行为一致）
+      const newMarked = Utils.deepClone(item.marked || {});
+      const newMarkCount = Utils.deepClone(item.markCount || {});
+      // 旧方案可能没有 markCount，从 marked 重建（取每个分组最大槽位 + 1）
+      Object.keys(newMarked).forEach(g => {
+        if(typeof newMarkCount[g] !== 'number') {
+          let maxSlot = -1;
+          Object.keys(newMarked[g] || {}).forEach(k => {
+            (newMarked[g][k] || []).forEach(s => { if(s > maxSlot) maxSlot = s; });
+          });
+          newMarkCount[g] = maxSlot + 1;
+        }
+      });
+      StateManager.setState({
+        selected: Utils.deepClone(item.selected),
+        excluded: Utils.deepClone(item.excluded),
+        locked: Utils.deepClone(item.locked || {}),
+        marked: newMarked,
+        markCount: newMarkCount
+      });
+      Toast.show('加载成功');
+    }
   },
 
   /**
@@ -172,13 +290,33 @@ const Business = {
   },
 
   /**
-   * 复制方案号码
+   * 复制方案号码 / 生肖
+   * 普通方案：复制筛选出的号码
+   * 生肖方案（scope='zodiac'）：只复制已选生肖（按 12 生肖顺序拼接，空格分隔）
    * @param {number} index - 方案索引
    */
   copyFilterNums: (index) => {
     const state = StateManager._state;
     const item = state.savedFilters[index];
     if(!item) return;
+
+    // 生肖方案：仅复制"已选"生肖，不复制已锁/已标记
+    if(item.scope === 'zodiac') {
+      const selected = (item.selected && item.selected.zodiac) || [];
+      if(selected.length === 0){
+        Toast.show('该生肖方案暂无已选生肖');
+        return;
+      }
+      const ordered = CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => selected.indexOf(z) !== -1);
+      const zodiacStr = ordered.join(' ');
+      Utils.copyToClipboard(zodiacStr, {
+        successMsg: '复制成功',
+        fallback: (text) => {
+          GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', text, () => {});
+        }
+      });
+      return;
+    }
 
     // 修复复制一致性：使用方案自带的 locked，避免受当前 state.locked 影响
     const list = Filter.getFilteredList(item.selected, item.excluded, item.locked || {});
@@ -277,19 +415,59 @@ const Business = {
   },
 
   /**
-   * 清空所有方案
+   * 清空所有方案（锁定方案会被保留）
    */
   clearAllSavedFilters: () => {
+    const state = StateManager._state;
+    const lockedCount = state.savedFilters.filter(i => i.lockedScheme).length;
+    const confirmText = lockedCount > 0
+      ? `确定清空未锁定的方案？将保留${lockedCount}个锁定方案`
+      : '确定清空所有方案？';
+
     const doClear = () => {
-      Storage.remove(Storage.KEYS.SAVED_FILTERS);
-      StateManager.setState({ savedFilters: [] }, false);
-      Render.renderFilterList();
-      Toast.show('已清空所有方案');
+      const unlocked = state.savedFilters.filter(item => !item.lockedScheme);
+      if(unlocked.length === state.savedFilters.length){
+        // 没有锁定项：走原清空逻辑
+        Storage.remove(Storage.KEYS.SAVED_FILTERS);
+        StateManager.setState({ savedFilters: [] }, false);
+        Render.renderFilterList();
+        Toast.show('已清空所有方案');
+      } else if(unlocked.length === 0){
+        // 全部都被锁定
+        Toast.show('所有方案都已锁定，无法清空');
+      } else {
+        const success = Storage.set(Storage.KEYS.SAVED_FILTERS, unlocked);
+        if(success){
+          StateManager.setState({ savedFilters: unlocked }, false);
+          Render.renderFilterList();
+          Toast.show(`已清空（${lockedCount}个锁定方案保留）`);
+        }
+      }
     };
 
-    GIONGBETA_CONFIRM_MODAL.show('确定清空所有方案？', (result) => {
+    GIONGBETA_CONFIRM_MODAL.show(confirmText, (result) => {
       if(result) doClear();
     });
+  },
+
+  /**
+   * 切换方案锁定状态（锁定后不被"清空全部"影响）
+   * 状态使用独立字段 lockedScheme，避免与方案保存的分组锁定标签 item.locked 混淆
+   * @param {number} index - 方案索引
+   */
+  toggleLockFilter: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    if(!item) return;
+
+    const newList = [...state.savedFilters];
+    newList[index] = { ...item, lockedScheme: !item.lockedScheme };
+    const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
+    if(success){
+      StateManager.setState({ savedFilters: newList }, false);
+      Render.renderFilterList();
+      Toast.show(newList[index].lockedScheme ? '已锁定方案' : '已解锁方案');
+    }
   },
 
   /**
