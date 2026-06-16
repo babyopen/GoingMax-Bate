@@ -180,7 +180,8 @@ const Business = {
     const item = state.savedFilters[index];
     if(!item) return;
 
-    const list = Filter.getFilteredList(item.selected, item.excluded);
+    // 修复复制一致性：使用方案自带的 locked，避免受当前 state.locked 影响
+    const list = Filter.getFilteredList(item.selected, item.excluded, item.locked || {});
     if(list.length === 0){
       // P2-1: 空态提示更详细（让用户知道为什么没有号码）
       const excludedCount = (item.excluded || []).length;
@@ -316,7 +317,8 @@ const Business = {
     const numMap = {};
     
     savedFilters.forEach((scheme, index) => {
-      const filteredList = Filter.getFilteredList(scheme.selected, scheme.excluded);
+      // 修复重叠一致性：每个方案使用各自的 locked，互不干扰
+      const filteredList = Filter.getFilteredList(scheme.selected, scheme.excluded, scheme.locked || {});
       
       filteredList.forEach(item => {
         const numKey = item.num;

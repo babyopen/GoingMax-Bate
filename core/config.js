@@ -67,7 +67,7 @@ var _TAIL_MAP = Object.freeze((function() {
 // CONFIG 主对象（只读常量）
 // ============================================================
 const CONFIG = Object.freeze({
-  VERSION: '2.0.6',
+  VERSION: '2.0.7',
   DATA_VERSION: 1,
   API: Object.freeze({
     HISTORY: 'https://history.macaumarksix.com/history/macaujc2/y/'

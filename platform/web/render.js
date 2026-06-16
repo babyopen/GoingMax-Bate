@@ -189,7 +189,8 @@ const Render = {
       const fragment = document.createDocumentFragment();
 
       displayList.forEach((item, index) => {
-        const previewList = Filter.getFilteredList(item.selected, item.excluded);
+        // 修复预览一致性：使用方案自带的 locked，避免受当前 state.locked 影响
+        const previewList = Filter.getFilteredList(item.selected, item.excluded, item.locked || {});
         const previewFragment = Utils.createFragment(previewList, (num) => {
           const wrapper = document.createElement('div');
           wrapper.className = 'num-item';

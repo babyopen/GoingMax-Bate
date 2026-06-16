@@ -164,6 +164,11 @@ const ViewOverlapModal = {
         if (modal.parentNode) {
           modal.parentNode.removeChild(modal);
         }
+        // 修复内存泄漏：关闭时清理暗色样式（防止多次打开累积 <style> 元素）
+        const existingDarkStyle = document.getElementById('overlapModal-dark-style');
+        if (existingDarkStyle && existingDarkStyle.parentNode) {
+          existingDarkStyle.parentNode.removeChild(existingDarkStyle);
+        }
       }, 300);
     };
 
@@ -183,35 +188,39 @@ const ViewOverlapModal = {
       });
     });
 
-    const darkStyle = document.createElement('style');
-    darkStyle.id = 'overlapModal-dark-style';
-    darkStyle.textContent = `
-      @media (prefers-color-scheme: dark) {
-        #overlapModal > div {
-          background: #1C1C1E !important;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    // 修复内存泄漏：若暗色样式已存在则复用（去重），避免重复创建
+    let darkStyle = document.getElementById('overlapModal-dark-style');
+    if (!darkStyle) {
+      darkStyle = document.createElement('style');
+      darkStyle.id = 'overlapModal-dark-style';
+      darkStyle.textContent = `
+        @media (prefers-color-scheme: dark) {
+          #overlapModal > div {
+            background: #1C1C1E !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+          }
+          #overlapModal > div > div:first-child {
+            color: #FFFFFF !important;
+          }
+          #overlapModal > div > div:nth-child(2) {
+            color: #98989F !important;
+          }
+          #overlapModal div[style*="background: #f5f5f5"] {
+            background: #2C2C2E !important;
+          }
+          #overlapModal div[style*="background: #fff"] {
+            background: #3A3A3C !important;
+          }
+          #overlapModal div[style*="color: #666"] {
+            color: #98989F !important;
+          }
+          #overlapModal .copy-nums-btn {
+            background: #0A84FF !important;
+          }
         }
-        #overlapModal > div > div:first-child {
-          color: #FFFFFF !important;
-        }
-        #overlapModal > div > div:nth-child(2) {
-          color: #98989F !important;
-        }
-        #overlapModal div[style*="background: #f5f5f5"] {
-          background: #2C2C2E !important;
-        }
-        #overlapModal div[style*="background: #fff"] {
-          background: #3A3A3C !important;
-        }
-        #overlapModal div[style*="color: #666"] {
-          color: #98989F !important;
-        }
-        #overlapModal .copy-nums-btn {
-          background: #0A84FF !important;
-        }
-      }
-    `;
-    document.head.appendChild(darkStyle);
+      `;
+      document.head.appendChild(darkStyle);
+    }
   }
 };
 
