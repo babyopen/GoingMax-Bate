@@ -1,9 +1,45 @@
+# ============ 操作系统 ============
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 
 # Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# IDE
+# ============ IDE / 编辑器 ============
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# ============ Node.js（如果未来引入）============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ============ 日志与临时文件 ============
+*.log
+*.tmp
+*.temp
+.cache/
+.tmp/
+
+# ============ 环境配置 ============
+.env
+.env.local
+.env.*.local
+
+# ============ 系统文件 ============
+.DS_Store?
+.profile
+.bash_history
+.nyc_output
