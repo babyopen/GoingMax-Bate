@@ -10,9 +10,12 @@ const EventBinder = {
     // 键盘回车/空格事件（无障碍支持）
     document.addEventListener('keydown', EventBinder.handleKeyDown);
     // 滚动事件（已节流）
-    window.addEventListener('scroll', Business.handleScroll);
+    window.addEventListener('scroll', Business.handleScroll, { passive: true });
     // 点击空白关闭快捷导航
     document.addEventListener('click', EventBinder.handleClickOutside);
+    // 触摸事件 passive 监听（移动端滚动性能优化）
+    document.addEventListener('touchstart', () => {}, { passive: true });
+    document.addEventListener('touchmove', () => {}, { passive: true });
     // 页面卸载清理
     window.addEventListener('beforeunload', Business.handlePageUnload);
     // 全局错误捕获

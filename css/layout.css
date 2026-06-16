@@ -187,6 +187,31 @@
   :root{--top-card-height:180px;--top-offset:210px}
 }
 
+/* 横屏号码/排除网格自适应（修复 49 个号码在 10/12 列下最后一行不对称）
+   手机横屏用 7 列（49=7×7 完美方阵），大屏用 auto-fit 自适应
+   - 手机横屏(高度<500px): 7 列无不对称，节省垂直空间
+   - 大屏(高度≥500px): auto-fit 自适应列数，充分利用横向空间 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .num-tags{grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0}
+  .num-tags .tag{font-size:clamp(10px,1.3vw,12px);border-radius:8px}
+  .exclude-grid{grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0}
+  .exclude-tag{font-size:clamp(10px,1.3vw,12px)}
+}
+@media (orientation: landscape) and (min-height: 501px) {
+  .num-tags{grid-template-columns:repeat(auto-fit,minmax(40px,1fr));gap:6px}
+  .exclude-grid{grid-template-columns:repeat(auto-fit,minmax(40px,1fr));gap:6px}
+  .num-tags .tag{font-size:clamp(11px,1.4vw,14px)}
+  .exclude-tag{font-size:clamp(11px,1.4vw,14px)}
+}
+
+/* 终极算法 grid 修复（修复 3 个项目中 1 跨 2 列时的 8 个空格漏洞）
+   旧版: 6 列 + 1 跨 2 + 2 普通 = 8 个空格
+   新版: 4 列 + 1 跨 2 + 2 普通 = 完美 1 行 4 格
+   .db-number-grid 用 auto-fit 让 3 个备选码自适应为 3 列
+   （覆盖 card.css 的 6 列/4 列默认值，因 layout.css 加载顺序在 card.css 之后） */
+.db-miss-grid{grid-template-columns:repeat(4,1fr)}
+.db-number-grid{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
+
 /* 小屏全局优化 */
 @media (max-width: 375px) {
   :root{--top-card-height:190px;--top-offset:220px}

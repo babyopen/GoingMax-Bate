@@ -483,7 +483,11 @@ const Business = {
 
     try {
       const year = new Date().getFullYear();
-      const res = await fetch(CONFIG.API.HISTORY + year);
+      // 网络请求超时控制（弱网环境避免无限等待）
+      const abortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const timeoutId = abortController ? setTimeout(() => abortController.abort(), 10000) : null;
+      const res = await fetch(CONFIG.API.HISTORY + year, abortController ? { signal: abortController.signal } : {});
+      if(timeoutId) clearTimeout(timeoutId);
       const data = await res.json();
       let rawData = data.data || [];
 

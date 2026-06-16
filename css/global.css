@@ -262,3 +262,14 @@ body.low-performance-mode .tag,
 body.low-performance-mode .exclude-tag{
   box-shadow:none !important;
 }
+
+/* 尊重用户系统级动画偏好（无障碍 a11y）
+   对前庭功能敏感用户、晕动症用户友好 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
