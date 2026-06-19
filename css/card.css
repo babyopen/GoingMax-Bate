@@ -2848,46 +2848,53 @@
   flex-wrap: wrap;
   gap: 4px;
   padding-top: 2px;
+  /* 2026-06-20 用户需求：允许长按号码 chip 选中/复制
+     （body 全局 user-select:none 是为了页面静态展示，
+     此处给号码 chip 开例外） */
+  user-select: text;
+  -webkit-user-select: text;
 }
 .tj-num-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
+  min-width: 26px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  background: rgba(120,120,128,0.10);
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+  /* 2026-06-20 用户反馈：与项目统一配色
+     - 文字用 var(--text)：亮色主题 = #000000（黑），暗色主题 = #FFFFFF（白）
+     - 底色用 var(--bg-secondary)：自动适配
+     - 边框用 var(--border)：自动适配 */
+  background: var(--bg-secondary);
   color: var(--text);
-  letter-spacing: 0.3px;
+  border: 1px solid var(--border);
   line-height: 1;
-  border: 1px solid transparent;
 }
-/* 2026-06-20 用户反馈：暗色背景下号码不清晰 → 文字色全部升级为"亮色系"
-   并给 chip 加 1px 等级色描边，让 chip 与底色边界清晰 */
+/* 4 等级：仅用低 alpha 同色背景 + 同色描边区分等级，
+   文字色统一用 var(--text)（与项目 db-miss-tag 风格一致） */
 .tj-num-chip.tj-level-hot  {
-  background: rgba(48,209,88,0.22);
-  color: #34C759;
-  border-color: rgba(48,209,88,0.55);
+  background: rgba(52,199,89,0.12);
+  border-color: rgba(52,199,89,0.35);
 }
 .tj-num-chip.tj-level-warm {
-  background: rgba(255,214,10,0.28);
-  color: #FFD60A;
-  border-color: rgba(255,214,10,0.65);
-  text-shadow: 0 0 1px rgba(0,0,0,0.25);
+  background: rgba(255,204,0,0.16);
+  border-color: rgba(255,204,0,0.45);
 }
 .tj-num-chip.tj-level-cold {
-  background: rgba(255,149,0,0.25);
-  color: #FF9F0A;
-  border-color: rgba(255,149,0,0.60);
+  background: rgba(255,149,0,0.14);
+  border-color: rgba(255,149,0,0.40);
 }
 .tj-num-chip.tj-level-deep {
-  background: rgba(255,69,58,0.25);
-  color: #FF453A;
-  border-color: rgba(255,69,58,0.60);
+  background: rgba(255,59,48,0.12);
+  border-color: rgba(255,59,48,0.35);
 }
 .tj-num-empty {
   color: var(--sub-text);
