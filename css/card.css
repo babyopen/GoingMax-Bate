@@ -179,18 +179,6 @@
 
 /* 生肖统计摘要行 */
 .hot-summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;margin-top:8px}
-
-/* 01-49 号码统计表 */
-.num-statistics-table{width:100%;font-size:11px}
-.num-stat-row{display:grid;grid-template-columns:42px repeat(6,1fr);padding:4px 6px;border-bottom:1px solid var(--border-color,rgba(255,255,255,0.06))}
-.num-stat-row:nth-child(even){background:var(--bg-secondary)}
-.num-stat-head{font-weight:600;background:var(--bg-tertiary,rgba(255,255,255,0.08));position:sticky;top:0}
-.num-stat-cell{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.num-stat-num{font-weight:600;color:var(--accent,#0a84ff)}
-.num-stat-hot .num-stat-num{color:var(--danger,#ff3b30)}
-.num-stat-warm .num-stat-num{color:var(--warning,#ff9500)}
-.num-stat-cold .num-stat-num{color:var(--text-tertiary,#8e8e93)}
-.num-stat-empty{padding:20px;text-align:center;color:var(--text-tertiary,#8e8e93);font-size:12px}
 .hot-summary-text{font-size:13px;color:var(--text)}
 .hot-zodiac-list{color:var(--danger);font-weight:700}
 .hot-value{color:var(--danger);font-weight:600}
@@ -2666,88 +2654,297 @@
   background: rgba(0,122,255,0.08);
 }
 
-/* ============================================================
-   资料页 - 数据统计面板（2026-06 新增）
-   包含：12 生肖统计 / 49 号码分级 / 01-49 号码统计
-   ============================================================ */
-.stats-meta{
-  font-size:11px;
-  color:var(--sub-text);
-  font-weight:400;
+/* ===================================
+   TongJi 资料页统计（2026-06-20 新增）
+   =================================== */
+.tj-section {
+  margin-top: 16px;
 }
-.stats-table-wrap{
-  overflow-x:auto;
+.tj-section:first-child {
+  margin-top: 0;
 }
-.stats-table-scroll{
-  max-height:520px;
-  overflow-y:auto;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
+.tj-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 6px 0 8px;
+  border-left: 3px solid var(--primary);
+  padding-left: 8px;
+  margin-bottom: 8px;
 }
-.stats-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:12px;
-  color:var(--text);
+
+/* 生肖统计表格 */
+.tj-zodiac-table-wrap,
+.tj-level-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 6px 0;
 }
-.stats-table thead th{
-  position:sticky;
-  top:0;
-  background:var(--bg-secondary);
-  font-weight:600;
-  text-align:center;
-  padding:8px 6px;
-  border-bottom:1px solid var(--border);
-  white-space:nowrap;
-  z-index:1;
+.tj-zodiac-table,
+.tj-level-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--text);
+  min-width: 0;
 }
-.stats-table tbody td{
-  padding:6px 6px;
-  border-bottom:1px solid var(--border);
-  text-align:center;
-  white-space:nowrap;
+.tj-zodiac-table th,
+.tj-zodiac-table td,
+.tj-level-table th,
+.tj-level-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
-.stats-table tbody tr:last-child td{
-  border-bottom:none;
+.tj-zodiac-table tr:last-child td,
+.tj-level-table tr:last-child td {
+  border-bottom: none;
 }
-.stats-table tbody tr:nth-child(odd){
-  background:rgba(255,255,255,0.02);
+.tj-zodiac-table thead th,
+.tj-level-table thead th {
+  background: rgba(255,255,255,0.04);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sub-text);
+  position: sticky;
+  top: 0;
 }
-.stats-zodiac{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  font-weight:500;
+.tj-td-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
-.stats-grade-dot{
-  display:inline-block;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  margin-right:4px;
-  vertical-align:middle;
+.tj-td-zod {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
 }
-.stats-samples-cell{
-  text-align:left;
-  white-space:normal;
-  line-height:1.6;
+.tj-zod-name {
+  font-size: 13px;
+  font-weight: 700;
 }
-.stats-samples-cell .num-ball{
-  display:inline-block;
-  margin:1px 2px;
-  font-size:11px;
-  min-width:22px;
-  height:22px;
-  line-height:22px;
+.tj-cell-warn {
+  color: var(--danger);
+  font-weight: 700;
 }
-.stats-omit-tip{
-  display:inline-block;
-  margin-left:6px;
-  color:var(--sub-text);
-  font-size:11px;
+.tj-zodiac-footer,
+.tj-level-footer {
+  font-size: 11px;
+  color: var(--sub-text);
+  text-align: right;
+  padding: 8px 4px 0;
 }
-.stats-empty-num{
-  color:var(--sub-text);
-  font-size:11px;
+
+/* 号码等级表格 */
+.tj-td-level {
+  text-align: center;
+}
+.tj-level-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+/* 2026-06-20 用户需求：4 等级（热 / 温 / 冷 / 极冷） */
+/* 2026-06-20 用户反馈：暗色背景下号码不清晰 → 文字色统一用更高饱和度的"亮色系" */
+.tj-level-tag.tj-level-hot {
+  background: rgba(48,209,88,0.20);
+  color: #34C759;
+  box-shadow: inset 0 0 0 1px rgba(48,209,88,0.55);
+}
+.tj-level-tag.tj-level-warm {
+  background: rgba(255,214,10,0.25);
+  color: #FFD60A;
+  text-shadow: 0 0 1px rgba(0,0,0,0.25);
+  box-shadow: inset 0 0 0 1px rgba(255,214,10,0.65);
+}
+.tj-level-tag.tj-level-cold {
+  background: rgba(255,149,0,0.25);
+  color: #FF9F0A;
+  box-shadow: inset 0 0 0 1px rgba(255,149,0,0.60);
+}
+.tj-level-tag.tj-level-deep {
+  background: rgba(255,69,58,0.25);
+  color: #FF453A;
+  box-shadow: inset 0 0 0 1px rgba(255,69,58,0.60);
+}
+.tj-td-range {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+}
+/* 2026-06-20：号码等级表格整体卡片化（主行 + 副行 两行一组） */
+.tj-level-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+.tj-level-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub-text);
+  padding: 10px 6px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.tj-level-table thead th:first-child { border-top-left-radius: 10px; }
+.tj-level-table thead th:last-child  { border-top-right-radius: 10px; }
+/* 每个等级组：主行 + 副行 */
+.tj-row-main > td {
+  background: var(--bg-secondary);
+  border-bottom: none;
+  padding: 12px 6px;
+  font-size: 13px;
+}
+.tj-row-main > td:first-child {
+  border-top-left-radius: 10px;
+}
+/* 主行最后一个 td 的右侧圆角，由当前组是不是最后一组决定（这里统一去掉，交给容器） */
+.tj-row-rep > .tj-td-rep {
+  background: var(--bg-secondary);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text);
+  text-align: left;
+  padding: 4px 10px 12px !important;
+  white-space: normal;
+  word-break: normal;
+  line-height: 1.6;
+  border-bottom: 2px solid var(--border);
+}
+.tj-row-rep:last-of-type > .tj-td-rep {
+  border-bottom: none;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+/* 2026-06-20 优化 UI：主行最左 td 左侧加 3px 等级色条（用 box-shadow inset） */
+/* 2026-06-20 用户反馈：暗色背景下号码不清晰 → 提升色条饱和度，warm 从 #C8A100 改为 #FFD60A */
+.tj-row-main.tj-level-hot    > td:first-child { box-shadow: inset 3px 0 0 #34C759; }
+.tj-row-main.tj-level-warm   > td:first-child { box-shadow: inset 3px 0 0 #FFD60A; }
+.tj-row-main.tj-level-cold   > td:first-child { box-shadow: inset 3px 0 0 #FF9F0A; }
+.tj-row-main.tj-level-deep   > td:first-child { box-shadow: inset 3px 0 0 #FF453A; }
+/* 副行最左 td 也加同样色条，保持视觉连贯 */
+.tj-row-rep.tj-level-hot     > .tj-td-rep    { box-shadow: inset 3px 0 0 #34C759; }
+.tj-row-rep.tj-level-warm    > .tj-td-rep    { box-shadow: inset 3px 0 0 #FFD60A; }
+.tj-row-rep.tj-level-cold    > .tj-td-rep    { box-shadow: inset 3px 0 0 #FF9F0A; }
+.tj-row-rep.tj-level-deep    > .tj-td-rep    { box-shadow: inset 3px 0 0 #FF453A; }
+/* 等级之间分组：主行 top 加 6px 间距（除第一组外） */
+.tj-level-table tbody tr.tj-row-main:not(:first-of-type) > td {
+  border-top: 6px solid var(--card);
+}
+/* 2026-06-20 优化 UI：号码 chip 化（每个号码一个圆角小方块） */
+.tj-num-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+.tj-num-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(120,120,128,0.10);
+  color: var(--text);
+  letter-spacing: 0.3px;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+/* 2026-06-20 用户反馈：暗色背景下号码不清晰 → 文字色全部升级为"亮色系"
+   并给 chip 加 1px 等级色描边，让 chip 与底色边界清晰 */
+.tj-num-chip.tj-level-hot  {
+  background: rgba(48,209,88,0.22);
+  color: #34C759;
+  border-color: rgba(48,209,88,0.55);
+}
+.tj-num-chip.tj-level-warm {
+  background: rgba(255,214,10,0.28);
+  color: #FFD60A;
+  border-color: rgba(255,214,10,0.65);
+  text-shadow: 0 0 1px rgba(0,0,0,0.25);
+}
+.tj-num-chip.tj-level-cold {
+  background: rgba(255,149,0,0.25);
+  color: #FF9F0A;
+  border-color: rgba(255,149,0,0.60);
+}
+.tj-num-chip.tj-level-deep {
+  background: rgba(255,69,58,0.25);
+  color: #FF453A;
+  border-color: rgba(255,69,58,0.60);
+}
+.tj-num-empty {
+  color: var(--sub-text);
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* 小屏：让代表号码列允许换行 */
+@media (max-width: 420px) {
+  .tj-td-rep {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .tj-zodiac-table th,
+  .tj-zodiac-table td,
+  .tj-level-table th,
+  .tj-level-table td {
+    padding: 6px 3px;
+    font-size: 11px;
+  }
+  .tj-zod-name {
+    font-size: 12px;
+  }
+  .tj-num-chip {
+    min-width: 24px;
+    height: 20px;
+    font-size: 10px;
+    padding: 0 4px;
+  }
+}
+
+/* 2026-06-20 用户需求：生肖表头可点击排序 */
+/*   - sortable th：cursor pointer + 触屏点击反馈（无 hover 效果） */
+.tj-th-sortable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.05);
+  user-select: none;
+  position: relative;
+}
+.tj-th-sortable .tj-th-label {
+  display: inline-block;
+  vertical-align: middle;
+}
+/* 排序图标：未排序显示淡灰↕，激活时变高对比色 */
+.tj-sort-icon {
+  display: inline-block;
+  margin-left: 2px;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--sub-text);
+  opacity: 0.45;
+  vertical-align: middle;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, monospace;
+}
+.tj-sort-icon.tj-sort-icon-active {
+  opacity: 1;
+  color: var(--primary);
 }
 

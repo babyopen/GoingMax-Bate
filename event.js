@@ -290,7 +290,6 @@ const EventBinder = {
       else if(action === 'syncAnalyze') Business.syncAnalyze();
       else if(action === 'syncZodiacAnalyze') Business.syncZodiacAnalyze();
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
-      else if(action === 'toggleNumStatistics') Business.toggleNumStatistics();
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
       // 大小回测操作
@@ -345,6 +344,19 @@ const EventBinder = {
       }
       else if(action === 'closeBacktestDetail') {
         ViewZodiacUltimate.toggleBacktestDetailModal(false);
+      }
+      // TongJi 生肖表头排序（2026-06-20 用户需求：表头点击升序降序）
+      //   - 业务层计算下一排序方向并触发视图重渲染
+      //   - 此处提到 if-else 链之前优先匹配（确保不被其它分支吞掉）
+      if(action === 'zodiac-tongji-sort') {
+        // 阻止冒泡到外层可能的 click 拦截（iOS Safari 触屏场景）
+        e.preventDefault();
+        e.stopPropagation();
+        var sortKey = actionBtn.dataset.sortKey;
+        if (sortKey && Business && Business.toggleZodiacTongjiSort) {
+          Business.toggleZodiacTongjiSort(sortKey);
+        }
+        return;
       }
       // 区域变动追踪展开/折叠
       else if(action === 'toggleZoneChangeList') {

@@ -387,14 +387,6 @@
         </div>
 
         <div class="analysis-sub-title">
-          <span>号码统计 <span class="hot-tag">01-49</span></span>
-          <button class="toggle-btn" data-action="toggleNumStatistics">展开号码统计</button>
-        </div>
-        <div class="detail-box" id="numStatisticsBox" style="display:none">
-          <div id="numStatisticsTable" class="num-statistics-table"></div>
-        </div>
-
-        <div class="analysis-sub-title">
           <span>单双 & 大小 <span class="hot-tag">热门</span></span>
         </div>
         <div class="hot-summary-row">
@@ -603,9 +595,10 @@
   <!-- 资料页面 -->
   <div class="page" id="randomPage" style="display:none">
     <div class="zodiac-tab-bar">
-      <button class="zodiac-tab-btn active" data-zodiac-tab="ultimate">终极算法</button>
-      <button class="zodiac-tab-btn" data-zodiac-tab="predict">生肖预测</button>
+      <button class="zodiac-tab-btn active" data-zodiac-tab="ultimate">算法</button>
+      <button class="zodiac-tab-btn" data-zodiac-tab="predict">Gemini</button>
       <button class="zodiac-tab-btn" data-zodiac-tab="giong">Giong</button>
+      <button class="zodiac-tab-btn" data-zodiac-tab="tongji">TongJi</button>
     </div>
 
     <!-- 主推面板（滑动窗口预测算法） -->
@@ -744,6 +737,9 @@
       </div>
     </div>
 
+    <!-- TongJi 面板 -->
+    <div class="zodiac-tab-panel" id="zodiacTongJiPanel"></div>
+
     <div class="disclaimer">仅供娱乐，非投注建议</div>
   </div>
 
@@ -881,6 +877,8 @@
 <script src="business/zodiac/business-zodiac-zones.js"></script>
 <script src="business/zodiac/business-zodiac-stats.js"></script>
 <script src="business/zodiac/business-zodiac-backtest.js"></script>
+<!-- TongJi 资料页统计（2026-06-20 新增） -->
+<script src="business/zodiac/business-zodiac-tongji.js"></script>
 <script src="business/business-ultimate.js"></script>
 <script src="business/business-giong.js"></script>
 <!-- 滑动窗口（2026-06-05 整理到 business/sliding-window/） -->
@@ -912,7 +910,7 @@
 <script src="views/zodiac/view-zodiac-giong-color.js"></script>
 <script src="views/zodiac/view-zodiac-ultimate.js"></script>
 <script src="views/view-profile.js"></script>
-<script src="views/view-profile-statistics.js"></script>
+<script src="views/zodiac/view-zodiac-tongji.js"></script>
 
 <!-- 事件层：统一事件委托 -->
 <script src="event.js"></script>

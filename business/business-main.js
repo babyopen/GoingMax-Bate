@@ -884,9 +884,6 @@ const Business = {
     const numCount = {};
     for(let i = 1; i <= 49; i++) numCount[Utils.formatNum(i)] = 0;
 
-    const numPositions = {};
-    for(let i = 0; i <= 49; i++) numPositions[i] = [];
-
     const lastAppearIdx = {};
     for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
     
@@ -914,8 +911,7 @@ const Business = {
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
       numCount[Utils.formatNum(s.te)]++;
-      numPositions[s.te].push(idx);
-
+      
       if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
       if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
       else if(!s.odd && lastAppearSD['双'] === -1) lastAppearSD['双'] = idx;
@@ -1010,47 +1006,9 @@ const Business = {
     const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
     const hotNum = Object.entries(numCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(i => i[0]).join(' ');
 
-    // 号码 7 列统计：出现次数 / 出现概率 / 平均间隔 / 最大间隔 / 最小间隔 / 当前遗漏
-    const numStatistics = [];
-    const totalCodes = total * 7;
-    for(let n = 1; n <= 49; n++) {
-      const key = Utils.formatNum(n);
-      const positions = numPositions[n];
-      const count = positions.length;
-      const rate = totalCodes > 0 ? ((count / totalCodes) * 100) : 0;
-      const avgGap = count > 0 ? (totalCodes / count) : 0;
-      let maxGap = 0, minGap = total;
-      if(positions.length > 1) {
-        maxGap = positions[0];
-        minGap = positions[0];
-        for(let p = 1; p < positions.length; p++) {
-          const gap = positions[p] - positions[p - 1];
-          if(gap > maxGap) maxGap = gap;
-          if(gap < minGap) minGap = gap;
-        }
-      } else if(positions.length === 1) {
-        minGap = 0;
-        maxGap = 0;
-      } else {
-        minGap = 0;
-        maxGap = 0;
-      }
-      const currentMiss = positions.length === 0 ? total : positions[0];
-      numStatistics.push({
-        num: key,
-        count: count,
-        rate: Number(rate.toFixed(2)),
-        avgGap: Number(avgGap.toFixed(1)),
-        maxGap: maxGap,
-        minGap: minGap,
-        currentMiss: currentMiss
-      });
-    }
-
     return {
       total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
       hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
-      numStatistics,
       miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
       streak: { curStreak, maxStreak },
       sdMiss, bsMiss, rangeMiss, headMiss, tailMiss, colorMiss, wuxingMiss, animalMiss, zodiacMiss
@@ -1481,10 +1439,6 @@ const Business = {
     ViewAnalysis.toggleDetail(targetId);
   },
 
-  toggleNumStatistics: () => {
-    ViewAnalysis.toggleNumStatistics();
-  },
-
   /**
    * 切换分析标签页
    * @param {string} tab - 标签名
@@ -1698,8 +1652,76 @@ const Business = {
     if (tab === 'predict') Business.renderZodiacPrediction();
     if (tab === 'giong') Business.initGiongTab();
     if (tab === 'ultimate') Business.initUltimateAlgorithm();
+    if (tab === 'tongji' && typeof ViewZodiacTongJi !== 'undefined' && ViewZodiacTongJi.render) {
+      Business.initTongJiTab();
+    }
     // 记录『资料』页面当前子 tab（用于再次进入『资料』时恢复）
     Storage.saveLastTab('random', tab);
+  },
+
+  /**
+   * 初始化 TongJi 标签页（2026-06-20 新增）
+   * 流程：加载历史数据 → 调业务层计算 → 交由视图层渲染
+   */
+  initTongJiTab: () => {
+    var state = StateManager._state;
+    var historyData = state.analysis.historyData;
+    if (!historyData || !historyData.length) {
+      Business.loadHistoryCache();
+      historyData = StateManager._state.analysis.historyData;
+    }
+    if (!historyData || !historyData.length) {
+      ViewZodiacTongJi.render(null);
+      return;
+    }
+
+    var zodiacStats = ZodiacPrediction.calcZodiacTongJiStats(historyData);
+    var numLevelStats = ZodiacPrediction.calcNumLevelStats(historyData);
+    // 缓存 stats，供排序切换时重渲染（2026-06-20 用户需求：表头点击升序降序）
+    var stats = {
+      zodiac: zodiacStats,
+      numLevel: numLevelStats
+    };
+    if (typeof ZodiacPrediction.setStats === 'function') {
+      ZodiacPrediction.setStats(stats);
+    }
+    ViewZodiacTongJi.render(stats, ZodiacPrediction.getSort());
+  },
+
+  /**
+   * 切换 TongJi 生肖表头排序（2026-06-20 用户需求）
+   *  流程：计算下一排序方向 → 更新 _sort → 用 _stats 重渲染
+   *  兜底：若 _stats 未初始化（极少见），主动 initTongJiTab 后再排序
+   */
+  toggleZodiacTongjiSort: (key) => {
+    if (!key) return;
+    // 兜底：_stats 缺失时主动初始化一次
+    if (!ZodiacPrediction._stats && typeof Business.initTongJiTab === 'function') {
+      Business.initTongJiTab();
+      if (!ZodiacPrediction._stats) return;
+    }
+    var next = ZodiacPrediction.computeNextSort(key);
+    ZodiacPrediction._sort = next;
+    try {
+      ViewZodiacTongJi.render(ZodiacPrediction._stats, next);
+    } catch (err) {
+      // 2026-06-20 增强调试：打印完整堆栈 + 关键变量，便于定位 render 失败根因
+      if (typeof console !== 'undefined' && console.error) {
+        console.error(
+          '[toggleZodiacTongjiSort] render error',
+          '\n  key:', key,
+          '\n  next:', JSON.stringify(next),
+          '\n  hasStats:', !!ZodiacPrediction._stats,
+          '\n  statsKeys:', ZodiacPrediction._stats ? Object.keys(ZodiacPrediction._stats) : null,
+          '\n  hasView:', typeof ViewZodiacTongJi,
+          '\n  hasViewRender:', typeof (ViewZodiacTongJi && ViewZodiacTongJi.render),
+          '\n  err:', err && err.message,
+          '\n  stack:', err && err.stack
+        );
+      }
+      // render 抛错时回退到完整重新初始化（避免 UI 卡死）
+      try { Business.initTongJiTab(); } catch (e2) { /* 静默兜底 */ }
+    }
   },
 
   /**
