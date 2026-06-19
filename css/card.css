@@ -2666,3 +2666,88 @@
   background: rgba(0,122,255,0.08);
 }
 
+/* ============================================================
+   资料页 - 数据统计面板（2026-06 新增）
+   包含：12 生肖统计 / 49 号码分级 / 01-49 号码统计
+   ============================================================ */
+.stats-meta{
+  font-size:11px;
+  color:var(--sub-text);
+  font-weight:400;
+}
+.stats-table-wrap{
+  overflow-x:auto;
+}
+.stats-table-scroll{
+  max-height:520px;
+  overflow-y:auto;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.stats-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  color:var(--text);
+}
+.stats-table thead th{
+  position:sticky;
+  top:0;
+  background:var(--bg-secondary);
+  font-weight:600;
+  text-align:center;
+  padding:8px 6px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+  z-index:1;
+}
+.stats-table tbody td{
+  padding:6px 6px;
+  border-bottom:1px solid var(--border);
+  text-align:center;
+  white-space:nowrap;
+}
+.stats-table tbody tr:last-child td{
+  border-bottom:none;
+}
+.stats-table tbody tr:nth-child(odd){
+  background:rgba(255,255,255,0.02);
+}
+.stats-zodiac{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-weight:500;
+}
+.stats-grade-dot{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  margin-right:4px;
+  vertical-align:middle;
+}
+.stats-samples-cell{
+  text-align:left;
+  white-space:normal;
+  line-height:1.6;
+}
+.stats-samples-cell .num-ball{
+  display:inline-block;
+  margin:1px 2px;
+  font-size:11px;
+  min-width:22px;
+  height:22px;
+  line-height:22px;
+}
+.stats-omit-tip{
+  display:inline-block;
+  margin-left:6px;
+  color:var(--sub-text);
+  font-size:11px;
+}
+.stats-empty-num{
+  color:var(--sub-text);
+  font-size:11px;
+}
+
