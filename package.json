@@ -1,0 +1,32 @@
+{
+  "name": "gomini-project",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Gemini 彩票预测分析前端项目（Gomini 架构）",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:business": "eslint business/ --rule '{\"no-restricted-globals\":[\"error\",{\"name\":\"document\",\"message\":\"业务层禁止使用 document\"},{\"name\":\"window\",\"message\":\"业务层禁止使用 window\"}]}'",
+    "lint:views": "eslint views/",
+    "lint:event": "eslint event.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "eslint"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "lottery",
+    "zodiac",
+    "analysis",
+    "gomini"
+  ]
+}

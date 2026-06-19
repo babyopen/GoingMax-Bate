@@ -1,0 +1,21 @@
+# 依赖与产物
+node_modules/
+dist/
+build/
+.cache/
+.tmp/
+
+# IDE 与系统
+.vscode/
+.idea/
+.DS_Store
+*.log
+*.tmp
+
+# 临时测试与草稿
+/tmp/
+*.test.js
+*.spec.js
+
+# 历史归档（仅作参考，禁止参与 lint）
+指令、逻辑说明等/
