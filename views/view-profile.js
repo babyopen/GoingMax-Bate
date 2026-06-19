@@ -73,15 +73,5 @@ const ViewProfile = {
       },
       navBtnSelector: '.nav-tab[data-page="profile"]'
     }, tab);
-  },
-
-  /**
-   * 渲染『数据统计』面板（动态注入，不破坏已有 DOM）
-   * 委托 ViewProfileStatistics 实现：包含 12 生肖统计、49 号码分级、01-49 号码统计
-   */
-  renderStatistics: function() {
-    if (typeof ViewProfileStatistics !== 'undefined' && ViewProfileStatistics.renderStatisticsPanel) {
-      ViewProfileStatistics.renderStatisticsPanel();
-    }
   }
 };

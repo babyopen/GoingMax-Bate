@@ -33,9 +33,10 @@ const ViewQuickNav = {
     ],
     random: [
       { label: '主推', type: 'tab', page: 'random', tabName: 'main' },
-      { label: '终极算法', type: 'tab', page: 'random', tabName: 'ultimate' },
-      { label: '生肖预测', type: 'tab', page: 'random', tabName: 'predict' },
-      { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' }
+      { label: '算法', type: 'tab', page: 'random', tabName: 'ultimate' },
+      { label: 'Gemini', type: 'tab', page: 'random', tabName: 'predict' },
+      { label: 'Giong', type: 'tab', page: 'random', tabName: 'giong' },
+      { label: 'TongJi', type: 'tab', page: 'random', tabName: 'tongji' }
     ],
     profile: [
       { label: '我的', type: 'tab', page: 'profile', tabName: 'mine' },

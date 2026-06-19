@@ -22,8 +22,6 @@ async function initApp() {
     ViewFilter.refreshQuickNav('filter');
     // 10.1 注入主页生肖卡片的"复制已选生肖"按钮（仅主页生肖卡片，不影响其它页面）
     ViewFilter.injectZodiacCopyBtn();
-    // 10.2 资料页：注入"数据统计"面板（生肖统计/号码分级/号码统计）
-    ViewProfile.renderStatistics();
     // 11. 初始化事件绑定
     EventBinder.init();
     // 12. 启动分析页面倒计时和自动刷新检查
@@ -35,8 +33,6 @@ async function initApp() {
     Business.initFilterPersistence();
     // 15. 重新渲染一次以反映从 localStorage 恢复的筛选状态
     Render.renderAll();
-    // 15.1 资料页：历史数据就绪后刷新"数据统计"面板（异步更新）
-    ViewProfile.renderStatistics();
     // 16. 隐藏加载遮罩
     Render.hideLoading();
     
