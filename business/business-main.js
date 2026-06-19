@@ -397,9 +397,16 @@ const Business = {
    * @param {number} index - 方案索引
    */
   deleteFilter: (index) => {
+    const state = StateManager._state;
+    const item = state.savedFilters[index];
+    // 2026-06-20 用户需求：方案被锁定时不允许删除（与 clearAllSavedFilters 保留锁定方案的语义一致）
+    if(item && item.lockedScheme){
+      Toast.show('方案已锁定，请先解锁后再删除');
+      return;
+    }
+
     const doDelete = () => {
-      const state = StateManager._state;
-      const newList = [...state.savedFilters];
+      const newList = [...StateManager._state.savedFilters];
       newList.splice(index, 1);
       const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
       if(success){
