@@ -27,6 +27,50 @@ const ViewAnalysis = {
   },
 
   /**
+   * 切换号码统计表显示（纯DOM操作）
+   */
+  toggleNumStatistics: function() {
+    var el = document.getElementById('numStatisticsBox');
+    if(!el) return;
+    var isVisible = window.getComputedStyle(el).display !== 'none';
+    el.style.display = isVisible ? 'none' : 'block';
+    var btn = document.querySelector('[data-action="toggleNumStatistics"]');
+    if(btn) btn.textContent = isVisible ? '展开号码统计' : '收起号码统计';
+    // 展开时立即渲染（绕过 renderFullAnalysis 可能的失败路径）
+    if(!isVisible) {
+      var wrap = document.getElementById('numStatisticsTable');
+      var stats = (typeof Business !== 'undefined' && Business.calcFullAnalysis) ? Business.calcFullAnalysis().numStatistics : null;
+      if(wrap && stats && stats.length) {
+        var html = '<div class="num-stat-row num-stat-head">'
+          + '<div class="num-stat-cell">号码</div>'
+          + '<div class="num-stat-cell">出现次数</div>'
+          + '<div class="num-stat-cell">出现概率</div>'
+          + '<div class="num-stat-cell">平均间隔</div>'
+          + '<div class="num-stat-cell">最大间隔</div>'
+          + '<div class="num-stat-cell">最小间隔</div>'
+          + '<div class="num-stat-cell">当前遗漏</div>'
+          + '</div>';
+        for(var i = 0; i < stats.length; i++) {
+          var ns = stats[i];
+          var colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
+          html += '<div class="num-stat-row num-stat-' + colorClass + '">'
+            + '<div class="num-stat-cell num-stat-num">' + ns.num + '</div>'
+            + '<div class="num-stat-cell">' + ns.count + '</div>'
+            + '<div class="num-stat-cell">' + ns.rate + '%</div>'
+            + '<div class="num-stat-cell">' + ns.avgGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.maxGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.minGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.currentMiss + '</div>'
+            + '</div>';
+        }
+        wrap.innerHTML = html;
+      } else {
+        wrap.innerHTML = '<div class="num-stat-empty">号码统计未生成，请在控制台运行: Business.calcFullAnalysis().numStatistics 查看</div>';
+      }
+    }
+  },
+
+  /**
    * 切换分析标签页UI（仅DOM操作）
    * @param {string} tab - 标签名
    */

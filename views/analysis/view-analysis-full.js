@@ -78,6 +78,39 @@ const ViewAnalysisFull = {
         if(el && data.rankHtmls[k]) el.innerHTML = data.rankHtmls[k];
       });
     }
+
+    // 渲染 01-49 号码统计表
+    var numStatWrap = document.getElementById('numStatisticsTable');
+    if(numStatWrap) {
+      if(data.numStatistics && data.numStatistics.length > 0) {
+        var html = '<div class="num-stat-row num-stat-head">'
+          + '<div class="num-stat-cell">号码</div>'
+          + '<div class="num-stat-cell">出现次数</div>'
+          + '<div class="num-stat-cell">出现概率</div>'
+          + '<div class="num-stat-cell">平均间隔</div>'
+          + '<div class="num-stat-cell">最大间隔</div>'
+          + '<div class="num-stat-cell">最小间隔</div>'
+          + '<div class="num-stat-cell">当前遗漏</div>'
+          + '</div>';
+        for(var i = 0; i < data.numStatistics.length; i++) {
+          var ns = data.numStatistics[i];
+          var colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
+          html += '<div class="num-stat-row num-stat-' + colorClass + '">'
+            + '<div class="num-stat-cell num-stat-num">' + ns.num + '</div>'
+            + '<div class="num-stat-cell">' + ns.count + '</div>'
+            + '<div class="num-stat-cell">' + ns.rate + '%</div>'
+            + '<div class="num-stat-cell">' + ns.avgGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.maxGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.minGap + '</div>'
+            + '<div class="num-stat-cell">' + ns.currentMiss + '</div>'
+            + '</div>';
+        }
+        numStatWrap.innerHTML = html;
+      } else {
+        // 数据未生成（缓存旧 JS 或 calcFullAnalysis 抛错）
+        numStatWrap.innerHTML = '<div class="num-stat-empty">号码统计未生成，请刷新页面或检查控制台错误（尝试:Business.calcFullAnalysis().numStatistics）</div>';
+      }
+    }
   },
 
   /**

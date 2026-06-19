@@ -884,6 +884,9 @@ const Business = {
     const numCount = {};
     for(let i = 1; i <= 49; i++) numCount[Utils.formatNum(i)] = 0;
 
+    const numPositions = {};
+    for(let i = 0; i <= 49; i++) numPositions[i] = [];
+
     const lastAppearIdx = {};
     for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
     
@@ -911,7 +914,8 @@ const Business = {
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
       numCount[Utils.formatNum(s.te)]++;
-      
+      numPositions[s.te].push(idx);
+
       if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
       if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
       else if(!s.odd && lastAppearSD['双'] === -1) lastAppearSD['双'] = idx;
@@ -1006,9 +1010,47 @@ const Business = {
     const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
     const hotNum = Object.entries(numCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(i => i[0]).join(' ');
 
+    // 号码 7 列统计：出现次数 / 出现概率 / 平均间隔 / 最大间隔 / 最小间隔 / 当前遗漏
+    const numStatistics = [];
+    const totalCodes = total * 7;
+    for(let n = 1; n <= 49; n++) {
+      const key = Utils.formatNum(n);
+      const positions = numPositions[n];
+      const count = positions.length;
+      const rate = totalCodes > 0 ? ((count / totalCodes) * 100) : 0;
+      const avgGap = count > 0 ? (totalCodes / count) : 0;
+      let maxGap = 0, minGap = total;
+      if(positions.length > 1) {
+        maxGap = positions[0];
+        minGap = positions[0];
+        for(let p = 1; p < positions.length; p++) {
+          const gap = positions[p] - positions[p - 1];
+          if(gap > maxGap) maxGap = gap;
+          if(gap < minGap) minGap = gap;
+        }
+      } else if(positions.length === 1) {
+        minGap = 0;
+        maxGap = 0;
+      } else {
+        minGap = 0;
+        maxGap = 0;
+      }
+      const currentMiss = positions.length === 0 ? total : positions[0];
+      numStatistics.push({
+        num: key,
+        count: count,
+        rate: Number(rate.toFixed(2)),
+        avgGap: Number(avgGap.toFixed(1)),
+        maxGap: maxGap,
+        minGap: minGap,
+        currentMiss: currentMiss
+      });
+    }
+
     return {
       total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
       hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
+      numStatistics,
       miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
       streak: { curStreak, maxStreak },
       sdMiss, bsMiss, rangeMiss, headMiss, tailMiss, colorMiss, wuxingMiss, animalMiss, zodiacMiss
@@ -1437,6 +1479,10 @@ const Business = {
    */
   toggleDetail: (targetId) => {
     ViewAnalysis.toggleDetail(targetId);
+  },
+
+  toggleNumStatistics: () => {
+    ViewAnalysis.toggleNumStatistics();
   },
 
   /**

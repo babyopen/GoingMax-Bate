@@ -290,6 +290,7 @@ const EventBinder = {
       else if(action === 'syncAnalyze') Business.syncAnalyze();
       else if(action === 'syncZodiacAnalyze') Business.syncZodiacAnalyze();
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
+      else if(action === 'toggleNumStatistics') Business.toggleNumStatistics();
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
       // 大小回测操作

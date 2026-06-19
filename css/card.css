@@ -179,6 +179,18 @@
 
 /* 生肖统计摘要行 */
 .hot-summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;margin-top:8px}
+
+/* 01-49 号码统计表 */
+.num-statistics-table{width:100%;font-size:11px}
+.num-stat-row{display:grid;grid-template-columns:42px repeat(6,1fr);padding:4px 6px;border-bottom:1px solid var(--border-color,rgba(255,255,255,0.06))}
+.num-stat-row:nth-child(even){background:var(--bg-secondary)}
+.num-stat-head{font-weight:600;background:var(--bg-tertiary,rgba(255,255,255,0.08));position:sticky;top:0}
+.num-stat-cell{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num-stat-num{font-weight:600;color:var(--accent,#0a84ff)}
+.num-stat-hot .num-stat-num{color:var(--danger,#ff3b30)}
+.num-stat-warm .num-stat-num{color:var(--warning,#ff9500)}
+.num-stat-cold .num-stat-num{color:var(--text-tertiary,#8e8e93)}
+.num-stat-empty{padding:20px;text-align:center;color:var(--text-tertiary,#8e8e93);font-size:12px}
 .hot-summary-text{font-size:13px;color:var(--text)}
 .hot-zodiac-list{color:var(--danger);font-weight:700}
 .hot-value{color:var(--danger);font-weight:600}
