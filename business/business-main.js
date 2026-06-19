@@ -628,6 +628,11 @@ const Business = {
       Business.renderZodiacPrediction();
       Business.initZodiacBacktest();
       Business.initGiongTab();
+      // 2026-06-20 修复：缓存加载后同步刷新 TongJi 标签页
+      //   解决：首次切到 TongJi 时数据为空 → render(null) → 之后加载数据但 TongJi 不刷新
+      if (typeof Business.initTongJiTab === 'function') {
+        Business.initTongJiTab();
+      }
       ViewAnalysis.updateLoadMoreBtn(
         StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
       );
