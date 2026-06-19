@@ -256,6 +256,35 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.TOP_FILTER) Business.topFilter(Number(index));
       else if(action === CONFIG.ACTIONS.LOCK_FILTER) Business.toggleLockFilter(Number(index));
       else if(action === CONFIG.ACTIONS.DELETE_FILTER) Business.deleteFilter(Number(index));
+      // 2026-06-20 新增：方案分组相关 action（路由到 Business.FilterGroup.*）
+      else if(action === 'addFilterGroup') {
+        // 弹窗输入分组名（默认"分组一"，由 Business.FilterGroup._genDefaultName 自动取下一个序号）
+        const defaultName = (typeof Business.FilterGroup === 'object') ? Business.FilterGroup._genDefaultName() : '分组一';
+        GIONGBETA_INPUT_MODAL.show('新建分组', '请输入分组名称', defaultName, (val) => {
+          if (!val || !val.trim()) return;
+          if (typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.createGroup === 'function') {
+            Business.FilterGroup.createGroup(val);
+          }
+        });
+      }
+      else if(action === 'switchFilterGroup') {
+        const groupId = actionBtn.dataset.groupId;
+        if (groupId && typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.switchGroup === 'function') {
+          Business.FilterGroup.switchGroup(groupId);
+        }
+      }
+      else if(action === 'renameFilterGroup') {
+        const groupId = actionBtn.dataset.groupId;
+        if (groupId && typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.renameGroup === 'function') {
+          Business.FilterGroup.renameGroup(groupId);
+        }
+      }
+      else if(action === 'deleteFilterGroup') {
+        const groupId = actionBtn.dataset.groupId;
+        if (groupId && typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.deleteGroup === 'function') {
+          Business.FilterGroup.deleteGroup(groupId);
+        }
+      }
       // 复制主推与备选生肖（终极推荐卡片右上角按钮，DOM 顺序拼接，空格分隔）
       else if(action === 'copyMainZodiacs') {
         const card = actionBtn.closest('.db-result-container');

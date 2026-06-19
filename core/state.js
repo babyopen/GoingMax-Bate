@@ -21,6 +21,11 @@ const StateManager = {
     currentZodiac: '',
     zodiacCycle: [],
     scrollTimer: null,
+    // 2026-06-20 新增：方案分组（每分组独立方案列表 + 完整快照恢复）
+    //   filterGroups: 分组元数据列表，每项包含 id/name/createdAt 与完整快照(savedFilters/selected/excluded/...)
+    //   currentGroupId: 当前激活分组 ID；null 表示未启用分组
+    filterGroups: [],
+    currentGroupId: null,
     // 分析模块状态
     analysis: {
       historyData: [],

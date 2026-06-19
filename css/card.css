@@ -2955,3 +2955,114 @@
   color: var(--primary);
 }
 
+/* ===================================
+   方案分组标签栏（2026-06-20 新增）
+   - 仅显示分组标签按钮 + 添加按钮
+   - 当前激活分组高亮
+   - 长按弹出操作菜单（重命名/删除）
+   =================================== */
+.filter-group-bar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px dashed var(--border);
+}
+.filter-group-tab{
+  flex-shrink:0;
+  min-width:64px;
+  max-width:140px;
+  height:30px;
+  padding:0 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--card);
+  color:var(--sub-text);
+  font-size:13px;
+  font-weight:500;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+  transition:color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.filter-group-tab.active{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+  font-weight:600;
+  box-shadow:0 1px 4px rgba(0,122,255,0.3);
+}
+.filter-group-add{
+  flex-shrink:0;
+  width:30px;
+  height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed var(--border);
+  border-radius:15px;
+  background:transparent;
+  color:var(--sub-text);
+  font-size:13px;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  transition:color 0.15s ease, border-color 0.15s ease;
+}
+.filter-group-add:active{opacity:0.55}
+
+/* 分组长按弹出菜单（z-index 950 < 弹窗 1000/1001，避免遮挡 confirm/input 弹窗） */
+.filter-group-menu{
+  position:fixed;
+  z-index:950;
+  min-width:140px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.15);
+  padding:6px 0;
+  animation:filterGroupMenuIn 0.15s ease-out;
+}
+@keyframes filterGroupMenuIn{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.filter-group-menu-title{
+  padding:6px 14px 8px;
+  font-size:12px;
+  color:var(--sub-text);
+  border-bottom:1px solid var(--border);
+  margin-bottom:4px;
+  max-width:200px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.filter-group-menu-item{
+  width:100%;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:none;
+  background:transparent;
+  color:var(--text);
+  font-size:14px;
+  text-align:left;
+  cursor:pointer;
+  transition:background 0.15s ease;
+}
+.filter-group-menu-item.danger{color:var(--danger)}
+.filter-group-menu-item:active{background:var(--bg-secondary)}
+

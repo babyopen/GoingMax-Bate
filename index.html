@@ -868,6 +868,8 @@
 <script src="business/business-quick-nav.js"></script>
 <script src="business/business-cross-exclusion.js"></script>
 <script src="business/business-main.js"></script>
+<!-- 方案分组管理（2026-06-20 新增，依赖 business-main.js 之后挂载到 Business 命名空间） -->
+<script src="business/business-filter-group.js"></script>
 <!-- 生肖预测（门面 + 5 个子模块，2026-06-05 按文件夹整理到 business/zodiac/） -->
 <script src="business/zodiac/business-zodiac-prediction.js"></script>
 <!-- 兼容路径：business-zodiac-prediction.js 拆分出的子模块（2026-06-05），自动挂载到 ZodiacPrediction 上 -->
@@ -890,6 +892,8 @@
 
 <script src="views/view-common.js"></script>
     <script src="views/view-filter.js"></script>
+    <!-- 方案分组视图（2026-06-20 新增） -->
+    <script src="views/view-filter-group.js"></script>
 <!-- 兼容路径：view-filter.js 拆分出的子模块（2026-06-05），自动挂载到 ViewFilter 上 -->
 <!-- 弹窗视图子模块（2026-06-05 整理到 views/modals/） -->
 <script src="views/modals/view-batch-modal.js"></script>

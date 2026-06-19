@@ -15,7 +15,12 @@ const Storage = {
     // 用户偏好（区域变动追踪卡片展开状态）
     ZONE_CHANGE_EXPANDED: 'zoneChangeExpanded',
     // 当前主页临时筛选状态（新增：用于后台返回/页面刷新后恢复未保存的筛选）
-    CURRENT_FILTER: 'currentFilter'
+    CURRENT_FILTER: 'currentFilter',
+    // 2026-06-20 新增：方案分组相关存储
+    //   FILTER_GROUPS: 分组列表（含每分组的完整快照：savedFilters/selected/excluded/locked/marked/markCount/excludeHistory/lockExclude/showAllFilters）
+    //   CURRENT_GROUP_ID: 当前激活分组 ID
+    FILTER_GROUPS: 'filterGroups',
+    CURRENT_GROUP_ID: 'currentGroupId'
     // 注：页面子标签记忆（profile/analysis/random）改由 TAB_MEMORY 配置表管理，见下方
   }),
 

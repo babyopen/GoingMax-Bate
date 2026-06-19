@@ -14,10 +14,27 @@ async function initApp() {
     Render.renderExcludeGrid();
     // 7. 加载本地存储的方案
     Storage.loadSavedFilters();
+    // 7.1 加载本地存储的方案分组（2026-06-20 新增）
+    Business.FilterGroup.loadGroupsFromStorage();
+    // 7.2 如果有当前激活分组，将分组的快照覆盖 state（覆盖 savedFilters 等）
+    try {
+      const s = StateManager._state;
+      if (s.currentGroupId) {
+        const target = (s.filterGroups || []).find(g => g && g.id === s.currentGroupId);
+        if (target) {
+          // 委托 FilterGroup.applyGroupSnapshot 应用快照（含 DOM 同步）
+          Business.FilterGroup.applyGroupSnapshot(target);
+        }
+      }
+    } catch (e) {
+      console.warn('分组快照应用失败:', e);
+    }
     // 8. 加载历史记录缓存
     Business.loadHistoryCache();
     // 9. 渲染方案列表
     Render.renderFilterList();
+    // 9.1 渲染方案分组标签栏（2026-06-20 新增）
+    ViewFilterGroup.render();
     // 10. 初始化快捷导航（主页默认 filter 页签）
     ViewFilter.refreshQuickNav('filter');
     // 10.1 注入主页生肖卡片的"复制已选生肖"按钮（仅主页生肖卡片，不影响其它页面）
@@ -31,6 +48,17 @@ async function initApp() {
     Business.refreshHistory(true);
     // 14. 新增：初始化当前主页临时筛选状态持久化（必须在 renderAll 之前完成恢复）
     Business.initFilterPersistence();
+    // 14.1 新增：注册方案分组的兜底持久化（iOS WebView 切后台/页面隐藏时立即保存分组数据）
+    //   由入口层注册 window/document 事件（业务层不能直接使用 window/document）
+    (function initFilterGroupFlushPersist() {
+      const flush = function() {
+        try { Business.FilterGroup._persistGroups(); } catch(_) {}
+      };
+      window.addEventListener('pagehide', flush);
+      document.addEventListener('visibilitychange', function() {
+        if(document.visibilityState === 'hidden') flush();
+      });
+    })();
     // 15. 重新渲染一次以反映从 localStorage 恢复的筛选状态
     Render.renderAll();
     // 16. 隐藏加载遮罩
