@@ -10,8 +10,7 @@ async function initApp() {
     Render.renderZodiacTags();
     // 5. 渲染号码选择标签
     Render.renderNumTags();
-    // 6. 渲染排除号码网格
-    Render.renderExcludeGrid();
+    // 6. 排除号码网格由第 15 步 Render.renderAll() 统一渲染，避免重复创建 49 个 DOM 节点（2026-06-21 性能优化）
     // 7. 加载本地存储的方案
     Storage.loadSavedFilters();
     // 7.1 加载本地存储的方案分组（2026-06-20 新增）

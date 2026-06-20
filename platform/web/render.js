@@ -49,7 +49,14 @@ const Render = {
       const allGroups = new Set(groups);
       Object.keys(state.marked).forEach(g => allGroups.add(g));
       Object.keys(state.locked).forEach(g => allGroups.add(g));
-      
+
+      // 2026-06-21 性能优化：缓存 lockBtn 节点引用，避免每个分组重复 querySelectorAll
+      if (!Render._lockBtnCache || Render._lockBtnCacheInvalid) {
+        Render._lockBtnCache = Array.from(document.querySelectorAll('.btn-mini[data-action="lockGroup"]'));
+        Render._lockBtnCacheInvalid = false;
+      }
+      const allLockBtns = Render._lockBtnCache;
+
       allGroups.forEach(g => {
         const selectedList = state.selected[g] || [];
         const markedMap = state.marked[g] || {};
@@ -79,12 +86,8 @@ const Render = {
           }
         });
 
-        // 更新锁定按钮样式
-        let lockBtn = document.querySelector(`.btn-mini[data-action="lockGroup"][data-group="${g}"]`);
-        if (!lockBtn) {
-          lockBtn = Array.from(document.querySelectorAll('.btn-mini[data-action="lockGroup"]'))
-            .find(btn => (btn.dataset.group || '').split(',').includes(g));
-        }
+        // 更新锁定按钮样式（2026-06-21 优化：用缓存的 allLockBtns 查找）
+        let lockBtn = allLockBtns.find(btn => (btn.dataset.group || '').split(',').includes(g));
         if (lockBtn) {
           const btnGroups = (lockBtn.dataset.group || '').split(',');
           const anyLocked = btnGroups.some(bg => (state.locked[bg] || []).length > 0);
@@ -96,29 +99,63 @@ const Render = {
     }
   },
 
+  /** lockBtn 节点缓存（2026-06-21 新增） */
+  _lockBtnCache: null,
+  /** lockBtn 缓存失效标记（2026-06-21 新增） */
+  _lockBtnCacheInvalid: false,
+
   /**
    * 渲染排除号码网格
+   * 2026-06-21 优化：增量更新模式
+   *   - 首次调用：创建 49 个 DOM 节点（缓存到 _excludeTagCache）
+   *   - 后续调用：仅更新 className 和 aria-checked（O(49) 但无 DOM 创建/销毁）
+   *   - 检测 DOM 重建（如 filterPage 重渲染）后自动重建缓存
    */
   renderExcludeGrid: () => {
     try {
       const state = StateManager._state;
-      const fragment = Utils.createFragment(Array.from({length:49}, (_,i)=>i+1), (num) => {
-        const isExcluded = state.excluded.includes(num);
-        const wrapper = document.createElement('div');
-        wrapper.className = `exclude-tag ${isExcluded ? 'excluded' : ''}`;
-        wrapper.dataset.num = num;
-        wrapper.setAttribute('aria-checked', isExcluded);
-        wrapper.setAttribute('tabindex', '0');
-        wrapper.innerText = Utils.formatNum(num);
-        return wrapper;
-      });
+      const container = DOM.excludeGrid;
+      // 首次渲染 或 DOM 被外部清空时：全量创建
+      const needFullRender = !Render._excludeTagCache
+        || Render._excludeTagCache.length !== 49
+        || Render._excludeTagCache[0].parentNode !== container;
 
-      DOM.excludeGrid.innerHTML = '';
-      DOM.excludeGrid.appendChild(fragment);
+      if (needFullRender) {
+        const fragment = Utils.createFragment(Array.from({length:49}, (_,i)=>i+1), (num) => {
+          const isExcluded = state.excluded.includes(num);
+          const wrapper = document.createElement('div');
+          wrapper.className = `exclude-tag ${isExcluded ? 'excluded' : ''}`;
+          wrapper.dataset.num = num;
+          wrapper.setAttribute('aria-checked', isExcluded);
+          wrapper.setAttribute('tabindex', '0');
+          wrapper.innerText = Utils.formatNum(num);
+          return wrapper;
+        });
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        // 缓存所有 exclude-tag 元素引用，避免后续每次重新 querySelectorAll
+        Render._excludeTagCache = Array.from(container.querySelectorAll('.exclude-tag'));
+      } else {
+        // 增量更新：仅切换 excluded 样式
+        const excludedSet = new Set(state.excluded);
+        for (let i = 0; i < Render._excludeTagCache.length; i++) {
+          const el = Render._excludeTagCache[i];
+          const num = Number(el.dataset.num);
+          const isExcluded = excludedSet.has(num);
+          if (el.classList.contains('excluded') !== isExcluded) {
+            el.classList.toggle('excluded', isExcluded);
+            el.setAttribute('aria-checked', isExcluded);
+          }
+        }
+      }
     } catch(e) {
       console.error('[Render.renderExcludeGrid] 渲染排除号码网格失败:', e);
     }
   },
+
+  /** 排除号码网格的 DOM 元素缓存（2026-06-21 新增） */
+  _excludeTagCache: null,
 
   /**
    * 渲染生肖标签
