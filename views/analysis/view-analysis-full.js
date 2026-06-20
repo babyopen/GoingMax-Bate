@@ -118,7 +118,7 @@ const ViewAnalysisFull = {
    */
   buildRankHtml: function(dataObj, total, missMap) {
     if(total === 0 || !dataObj) return '';
-    var entries = Object.entries(dataObj).sort(function(a, b) { return b[1] - a[1]; });
+    var entries = BusinessCommonSort.sortEntriesByValueDesc(Object.entries(dataObj));
     var html = '<div class="rank-header"><div class="rank-no">名次</div><div class="rank-name">分类</div><div class="rank-count">次数</div><div class="rank-rate">占比</div><div class="rank-miss">遗漏</div></div>';
     entries.forEach(function(entry, idx) {
       var name = entry[0], count = entry[1];

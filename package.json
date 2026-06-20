@@ -1,6 +1,6 @@
 {
   "name": "gomini-project",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Gemini 彩票预测分析前端项目（Gomini 架构）",
   "scripts": {

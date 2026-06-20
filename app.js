@@ -49,9 +49,11 @@ async function initApp() {
     Business.initFilterPersistence();
     // 14.1 新增：注册方案分组的兜底持久化（iOS WebView 切后台/页面隐藏时立即保存分组数据）
     //   由入口层注册 window/document 事件（业务层不能直接使用 window/document）
+    // v2.0.8 重构：同时 flush 分组 + 当前筛选状态（共用一个监听器）
     (function initFilterGroupFlushPersist() {
       const flush = function() {
         try { Business.FilterGroup._persistGroups(); } catch(_) {}
+        try { if (Business._flushCurrentFilter) Business._flushCurrentFilter(); } catch(_) {}
       };
       window.addEventListener('pagehide', flush);
       document.addEventListener('visibilitychange', function() {

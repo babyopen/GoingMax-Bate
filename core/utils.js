@@ -41,7 +41,7 @@ const Utils = {
   /**
    * 创建 LRU 缓存（限制最大数量）
    * @param {number} maxSize - 最大缓存数量
-   * @returns {{get: Function, set: Function, clear: Function}}
+   * @returns {{get: Function, set: Function, clear: Function, has: Function, size: number}}
    */
   createLRU: (maxSize) => {
     var cache = new Map();
@@ -61,7 +61,34 @@ const Utils = {
         }
         cache.set(key, value);
       },
-      clear: function() { cache.clear(); }
+      clear: function() { cache.clear(); },
+      has: function(key) { return cache.has(key); },
+      get size() { return cache.size; }
+    };
+  },
+
+  /**
+   * 创建带 LRU 缓存的记忆化函数（v2.0.8 新增）
+   * 与 memoize 区别：带容量上限，长期运行避免内存无限增长
+   * @param {Function} fn - 要缓存的原函数
+   * @param {number} [maxSize=500] - LRU 最大条目数
+   * @param {Function} [keyFn] - 自定义 key 生成函数，默认 JSON.stringify(args)
+   * @returns {Function} 带 LRU 缓存的函数
+   */
+  memoizeLRU: (fn, maxSize, keyFn) => {
+    var cache = Utils.createLRU(maxSize || 500);
+    if (!keyFn) {
+      keyFn = function(args) {
+        try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
+      };
+    }
+    return function() {
+      var key = keyFn(arguments);
+      var cached = cache.get(key);
+      if (cached !== undefined) return cached;
+      var value = fn.apply(this, arguments);
+      cache.set(key, value);
+      return value;
     };
   },
 

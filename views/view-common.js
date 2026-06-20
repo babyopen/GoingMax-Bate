@@ -189,11 +189,33 @@ const ViewCommon = {
   },
 
   /**
-   * 滑动卡片初始化（touch/mouse 通用）
+   * 滑动卡片初始化（v2.0.8 重写：纯触屏版本）
    * 共用：ViewZodiacPredict.initPredSwiper / ViewZodiacGiong.initFreqSwiper
    * 2026-06-09 从 view-zodiac-predict.js 提取
+   * 2026-06-22 重构：拆分纯触屏版 + 鼠标兼容版，移除红线 12（鼠标事件）
+   *
+   * 行为差异：
+   *   - 默认 initSwiper：仅响应 touchstart/touchmove/touchend/touchcancel（移动端）
+   *   - PC 调试需要鼠标拖拽时手动调用 initLegacySwiper（兼容 PC 浏览器测试场景）
+   *
+   * config 字段：
+   *   - wrapperId: 容器 ID
+   *   - cardSelector: 卡片选择器
+   *   - dotsId / dotClass: 分页指示器
+   *   - initialIndex: 初始索引
+   *   - updateRef: 全局函数引用（用于外部切换）
+   *   - dataAttr: [attrName, attrValue] 数据属性
    */
   _createSwiper: function(config) {
+    return ViewCommon._createTouchSwiper(config);
+  },
+
+  /**
+   * 纯触屏 swiper（v2.0.8 新增）
+   * 仅使用 touchstart/touchmove/touchend/touchcancel，不含任何鼠标事件
+   * 满足红线 12（禁止 mouseover/mouseenter/mouseleave 等鼠标事件）
+   */
+  _createTouchSwiper: function(config) {
     var w = document.getElementById(config.wrapperId);
     if (!w) return;
     if (w.dataset.swiperInit) return;
@@ -239,33 +261,32 @@ const ViewCommon = {
     }
 
     function start(e) {
-      if (e.type === 'mousedown' && e.pointerType === 'touch') return;
-      var touch = e.type === 'mousedown' ? null : (e.touches && e.touches[0]);
-      if (!touch && e.type !== 'mousedown') return;
+      var touch = e.touches && e.touches[0];
+      if (!touch) return;
       var ww = getWidth();
       if (!ww) return;
       dragging = true;
       w.style.transition = 'none';
       if (animTimer) clearTimeout(animTimer);
       animating = false;
-      sx = touch ? touch.clientX : e.clientX;
+      sx = touch.clientX;
       cx = sx;
       lastX = sx;
-      lastY = touch ? touch.clientY : 0;
+      lastY = touch.clientY;
       lastT = Date.now();
     }
 
     var moveHandler = function(e) {
       if (!dragging) return;
-      var touch = e.type === 'mousemove' ? null : (e.touches && e.touches[0]);
-      if (!touch && e.type !== 'mousemove') return;
-      var nowX = touch ? touch.clientX : e.clientX;
-      var nowY = touch ? touch.clientY : lastY;
+      var touch = e.touches && e.touches[0];
+      if (!touch) return;
+      var nowX = touch.clientX;
+      var nowY = touch.clientY;
 
       var dx = Math.abs(nowX - lastX);
       var dy = Math.abs(nowY - lastY);
 
-      if (e.type === 'touchmove' && e.cancelable !== false && dx > 2 && dx > dy) {
+      if (e.cancelable !== false && dx > 2 && dx > dy) {
         e.preventDefault();
       }
 
@@ -283,7 +304,7 @@ const ViewCommon = {
     function end(e) {
       if (!dragging) return;
       dragging = false;
-      if (e.type === 'touchend' && e.changedTouches && e.changedTouches.length) {
+      if (e.changedTouches && e.changedTouches.length) {
         cx = e.changedTouches[0].clientX;
       }
       var d = sx - cx;
@@ -312,12 +333,152 @@ const ViewCommon = {
     w.addEventListener('touchmove', moveHandler, { passive: false });
     w.addEventListener('touchend', end, { passive: true });
     w.addEventListener('touchcancel', end, { passive: true });
+
+    // 性能优化：提供清理方法，避免内存泄漏
+    var cleanup = function() {
+      w.removeEventListener('touchstart', start);
+      w.removeEventListener('touchmove', moveHandler);
+      w.removeEventListener('touchend', end);
+      w.removeEventListener('touchcancel', end);
+      if (animTimer) clearTimeout(animTimer);
+      delete w.dataset.swiperInit;
+    };
+    w._cleanupSwiper = cleanup;
+
+    if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
+    var updateRef = config.updateRef;
+    if (updateRef) {
+      if (updateRef.indexOf('.') !== -1) {
+        var parts = updateRef.split('.');
+        var target = window;
+        for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+        target[parts[parts.length - 1]] = slide;
+      } else {
+        window[updateRef] = slide;
+      }
+    }
+    setTimeout(function() { slide(idx, false); }, 50);
+  },
+
+  /**
+   * 兼容鼠标 swiper（PC 调试用，v2.0.8 保留为可选）
+   * ⚠️ 包含鼠标事件，仅用于 PC 浏览器调试；移动端正式环境请用 _createSwiper / _createTouchSwiper
+   * 默认不调用此函数
+   */
+  _createLegacySwiper: function(config) {
+    // 与原 _createSwiper 实现一致，仅作历史兜底
+    var w = document.getElementById(config.wrapperId);
+    if (!w) return;
+    if (w.dataset.swiperInit) return;
+    w.dataset.swiperInit = '1';
+    var cards = w.querySelectorAll(config.cardSelector);
+    if (!cards || !cards.length) return;
+    var idx = config.initialIndex || 0;
+    var total = cards.length;
+    var sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
+    var animating = false;
+    var animTimer = null;
+
+    function getWidth() { return w.offsetWidth || 0; }
+
+    function setTransform(offsetPercent, animate) {
+      if (animate) {
+        w.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      } else {
+        w.style.transition = 'none';
+      }
+      w.style.transform = 'translate3d(' + offsetPercent + '%, 0, 0)';
+    }
+
+    function updateDots() {
+      var dc = document.getElementById(config.dotsId);
+      if (dc) {
+        var dots = dc.querySelectorAll('.' + config.dotClass);
+        dots.forEach(function(d, di) { d.classList.toggle('active', di === idx); });
+      }
+    }
+
+    function slide(i, animate) {
+      if (i < 0) i = 0;
+      if (i >= total) i = total - 1;
+      idx = i;
+      animating = true;
+      if (animTimer) clearTimeout(animTimer);
+      setTransform(-i * 100, animate !== false);
+      updateDots();
+      animTimer = setTimeout(function() { animating = false; }, 320);
+    }
+
+    function start(e) {
+      var touch = e.type === 'mousedown' ? null : (e.touches && e.touches[0]);
+      if (!touch && e.type !== 'mousedown') return;
+      var ww = getWidth();
+      if (!ww) return;
+      dragging = true;
+      w.style.transition = 'none';
+      if (animTimer) clearTimeout(animTimer);
+      animating = false;
+      sx = touch ? touch.clientX : e.clientX;
+      cx = sx;
+      lastX = sx;
+      lastY = touch ? touch.clientY : 0;
+      lastT = Date.now();
+    }
+
+    var moveHandler = function(e) {
+      if (!dragging) return;
+      var touch = e.type === 'mousemove' ? null : (e.touches && e.touches[0]);
+      if (!touch && e.type !== 'mousemove') return;
+      var nowX = touch ? touch.clientX : e.clientX;
+      var nowY = touch ? touch.clientY : lastY;
+      var dx = Math.abs(nowX - lastX);
+      var dy = Math.abs(nowY - lastY);
+      if (e.type === 'touchmove' && e.cancelable !== false && dx > 2 && dx > dy) {
+        e.preventDefault();
+      }
+      cx = nowX;
+      lastX = nowX;
+      lastY = nowY;
+      lastT = Date.now();
+      var d = sx - cx;
+      var ww = getWidth();
+      if (!ww) return;
+      var offsetPercent = -(idx * 100) - (d / ww * 100);
+      w.style.transform = 'translate3d(' + offsetPercent + '%, 0, 0)';
+    };
+
+    function end(e) {
+      if (!dragging) return;
+      dragging = false;
+      if (e.type === 'touchend' && e.changedTouches && e.changedTouches.length) {
+        cx = e.changedTouches[0].clientX;
+      }
+      var d = sx - cx;
+      var ad = Math.abs(d);
+      var now = Date.now();
+      var elapsed = Math.max(now - lastT, 16);
+      var vel = ad / elapsed;
+      var ww = getWidth();
+      if (!ww) { slide(idx, true); return; }
+      var cardW = ww / total;
+      var swipeThreshold = cardW * 0.04;
+      var velThreshold = 0.12;
+      if (ad > swipeThreshold || (ad > cardW * 0.02 && vel > velThreshold)) {
+        if (d > 0 && idx < total - 1) idx++;
+        else if (d < 0 && idx > 0) idx--;
+      }
+      slide(idx, true);
+    }
+
+    w.addEventListener('touchstart', start, { passive: true });
+    w.addEventListener('touchmove', moveHandler, { passive: false });
+    w.addEventListener('touchend', end, { passive: true });
+    w.addEventListener('touchcancel', end, { passive: true });
     w.addEventListener('mousedown', start);
     w.addEventListener('mousemove', moveHandler);
     w.addEventListener('mouseup', end);
     w.addEventListener('mouseleave', end);
 
-    // 性能优化：提供清理方法，避免内存泄漏
     var cleanup = function() {
       w.removeEventListener('touchstart', start);
       w.removeEventListener('touchmove', moveHandler);

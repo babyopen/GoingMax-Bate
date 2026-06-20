@@ -537,7 +537,7 @@ const ViewZodiacGiong = {
         Object.keys(zoneCount).forEach(function(z) {
           sortedZones.push({ zone: z, count: zoneCount[z] });
         });
-        sortedZones.sort(function(a, b) { return b.count - a.count; });
+        sortedZones = BusinessCommonSort.sortByCountDesc(sortedZones);
 
         html += '<div class="zone-change-combo-stats-bars">';
         sortedZones.forEach(function(item) {

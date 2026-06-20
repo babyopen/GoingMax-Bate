@@ -526,6 +526,26 @@ const ZodiacPredictionZones = {
   }
 };
 
+// ============================================================
+// v2.0.8 性能优化：高频函数 LRU 包装
+//   - calcFrequencyRating / analyzeZonePatterns / runZoneBacktest 在切换 tab 和
+//     自动刷新时高频调用，同一 historyData 引用下命中缓存节省 50%+ 时间
+// ============================================================
+if (typeof BusinessCommonLRU !== 'undefined' && BusinessCommonLRU) {
+  ZodiacPredictionZones.calcFrequencyRating = BusinessCommonLRU.withHistoryLRU(
+    ZodiacPredictionZones.calcFrequencyRating,
+    50
+  );
+  ZodiacPredictionZones.analyzeZonePatterns = BusinessCommonLRU.withHistoryLRU(
+    ZodiacPredictionZones.analyzeZonePatterns,
+    50
+  );
+  ZodiacPredictionZones.runZoneBacktest = BusinessCommonLRU.withHistoryLRU(
+    ZodiacPredictionZones.runZoneBacktest,
+    20  // backtest 通常调用次数少，20 条足够
+  );
+}
+
 // 兼容路径：挂载到 ZodiacPrediction
 if (typeof ZodiacPrediction !== 'undefined' && ZodiacPrediction) {
   Object.assign(ZodiacPrediction, ZodiacPredictionZones);

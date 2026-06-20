@@ -573,6 +573,19 @@ const ZodiacPredictionScores = {
   }
 };
 
+// ============================================================
+// v2.0.8 性能优化：高频函数 LRU 包装（以 historyData 引用为 key）
+//   - 视图层频繁刷新（如切换标签、重新渲染）时，同一 historyData 引用命中缓存
+//   - historyData 数组重新生成（数据刷新）时自动失效旧缓存
+//   - 仅包装 read-only 计算函数，不包装有副作用或依赖随机数的函数
+// ============================================================
+if (typeof BusinessCommonLRU !== 'undefined' && BusinessCommonLRU) {
+  ZodiacPredictionScores.calcContinuousScores = BusinessCommonLRU.withHistoryLRU(
+    ZodiacPredictionScores.calcContinuousScores,
+    20  // 历史数据通常 1-2 份（当前 + 预加载），20 条容量足够
+  );
+}
+
 // 兼容路径：挂载到 ZodiacPrediction，使所有业务/视图/event.js 中 ZodiacPrediction.xxx() 调用不变
 if (typeof ZodiacPrediction !== 'undefined' && ZodiacPrediction) {
   Object.assign(ZodiacPrediction, ZodiacPredictionScores);

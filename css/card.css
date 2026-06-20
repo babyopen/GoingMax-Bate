@@ -1784,10 +1784,7 @@
   border-bottom: 2px solid transparent;
 }
 
-.combined-tab:hover {
-  background: rgba(255,255,255,0.04);
-  color: var(--text);
-}
+/* v2.0.8 修复：移除 .combined-tab:hover（违反红线 11：禁止鼠标悬停效果） */
 
 .combined-tab.active {
   color: #9333EA;

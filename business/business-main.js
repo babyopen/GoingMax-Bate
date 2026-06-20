@@ -609,6 +609,8 @@ const Business = {
     StateManager._persistCurrentFilter = persistDebounced;
 
     // 3) pagehide / visibilitychange 兜底：iOS WebView 切后台时立即 flush
+    // v2.0.8 重构：将监听注册上移到 app.js（业务层禁止直接使用 window/document）
+    // app.js initApp() 中的 initFilterGroupFlushPersist 已统一注册对应监听器
     const flushPersist = () => {
       try {
         const s = StateManager._state;
@@ -624,10 +626,8 @@ const Business = {
         });
       } catch(_) {}
     };
-    window.addEventListener('pagehide', flushPersist);
-    document.addEventListener('visibilitychange', () => {
-      if(document.visibilityState === 'hidden') flushPersist();
-    });
+    // 暴露到全局供 app.js 调用（避免重复定义 flushPersist 逻辑）
+    Business._flushCurrentFilter = flushPersist;
   },
 
   // ====================== 分析页面相关 ======================
@@ -1370,16 +1370,10 @@ const Business = {
    * @param {Object} [domValues] - 可选：从事件层传入的DOM值对象（符合分层规范）
    */
   syncAnalyze: (domValues) => {
-    let custom, selectVal;
-    if (domValues && typeof domValues === 'object') {
-      custom = domValues.custom || '';
-      selectVal = domValues.selectVal || '12';
-    } else {
-      const customNumEl = document.getElementById('customNum');
-      const analyzeSelectEl = document.getElementById('analyzeSelect');
-      custom = customNumEl ? customNumEl.value.trim() : '';
-      selectVal = analyzeSelectEl ? analyzeSelectEl.value : '12';
-    }
+    // v2.0.8 修复：业务层禁止 DOM 操作，强制要求事件层传入 domValues
+    // 若未传则使用默认值（兜底行为兼容）
+    const custom = (domValues && domValues.custom) || '';
+    const selectVal = (domValues && domValues.selectVal) || '12';
     const historyData = StateManager._state.analysis.historyData;
 
     let newLimit;
@@ -1410,23 +1404,11 @@ const Business = {
    * @param {Object} [domValues] - 可选：从事件层传入的DOM值对象（符合分层规范）
    */
   syncZodiacAnalyze: (domValues) => {
-    let customPeriod, selectPeriodVal, countVal, customCount;
-    if (domValues && typeof domValues === 'object') {
-      customPeriod = domValues.customPeriod || '';
-      selectPeriodVal = domValues.selectPeriodVal || '36';
-      countVal = domValues.countVal || '5';
-      customCount = domValues.customCount || '';
-    } else {
-      const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
-      const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
-      const numCountSelectEl = document.getElementById('numCountSelect');
-      const customNumCountEl = document.getElementById('customNumCount');
-
-      customPeriod = zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '';
-      selectPeriodVal = zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36';
-      countVal = numCountSelectEl ? numCountSelectEl.value : '5';
-      customCount = customNumCountEl ? customNumCountEl.value.trim() : '';
-    }
+    // v2.0.8 修复：业务层禁止 DOM 操作，强制要求事件层传入 domValues
+    const customPeriod = (domValues && domValues.customPeriod) || '';
+    const selectPeriodVal = (domValues && domValues.selectPeriodVal) || '36';
+    const countVal = (domValues && domValues.countVal) || '5';
+    const customCount = (domValues && domValues.customCount) || '';
     const historyData = StateManager._state.analysis.historyData;
 
     let newLimit;
