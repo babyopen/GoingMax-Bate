@@ -15,6 +15,8 @@ const ViewFilterGroup = {
   CONTAINER_ID: 'filterGroupBar',
   /** 长按阈值（毫秒） */
   LONG_PRESS_MS: 500,
+  /** 当前菜单的 doc click 监听器引用（用于清理，避免长按多个标签时累积泄漏） */
+  _currentMenuDocClickHandler: null,
 
   /**
    * 注入分组标签容器到"我的筛选方案"卡片末尾（幂等）
@@ -210,6 +212,18 @@ const ViewFilterGroup = {
   },
 
   /**
+   * 清理上一份菜单的 doc click 监听器（修复长按多个标签时累积泄漏的漏洞）
+   */
+  _cleanupPrevMenuListener: () => {
+    if (ViewFilterGroup._currentMenuDocClickHandler) {
+      document.removeEventListener('click', ViewFilterGroup._currentMenuDocClickHandler, true);
+      ViewFilterGroup._currentMenuDocClickHandler = null;
+    }
+    const old = document.getElementById('filterGroupMenu');
+    if (old) old.remove();
+  },
+
+  /**
    * 显示分组操作菜单（重命名 / 删除）
    */
   _showGroupMenu: (groupId, anchor) => {
@@ -218,8 +232,7 @@ const ViewFilterGroup = {
     const target = list.find(g => g && g.id === groupId);
     if (!target) return;
 
-    const old = document.getElementById('filterGroupMenu');
-    if (old) old.remove();
+    ViewFilterGroup._cleanupPrevMenuListener();
 
     const menu = ViewFilterGroup._buildMenuEl(groupId, target.name);
     document.body.appendChild(menu);
@@ -228,11 +241,14 @@ const ViewFilterGroup = {
     // 点击空白关闭（长按后用户抬手会产生 click，需忽略触发的 anchor 自身）
     setTimeout(() => {
       const onDocClick = (ev) => {
-        // 菜单内点击 或 触发的标签自身点击（长按抬手场景）→ 不关闭
         if (menu.contains(ev.target) || anchor.contains(ev.target)) return;
         menu.remove();
         document.removeEventListener('click', onDocClick, true);
+        if (ViewFilterGroup._currentMenuDocClickHandler === onDocClick) {
+          ViewFilterGroup._currentMenuDocClickHandler = null;
+        }
       };
+      ViewFilterGroup._currentMenuDocClickHandler = onDocClick;
       document.addEventListener('click', onDocClick, true);
     }, 0);
   },

@@ -190,7 +190,10 @@ const FilterGroup = {
     const s = StateManager._state;
     const finalName = (typeof name === 'string' && name.trim()) ? name.trim() : FilterGroup._genDefaultName();
     const isFirstGroup = !s.currentGroupId;
-    const newId = 'g_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    // ID 生成：优先使用 crypto.randomUUID（浏览器原生，碰撞概率 < 2^-122）；不支持时降级为 Date.now + Math.random
+    const newId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? 'g_' + crypto.randomUUID()
+      : 'g_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
 
     // 步骤 1 (a)：保存当前完整状态到原激活分组（现有分组保留其包含的筛选方案）
     //   返回包含步骤 1 更新的 filterGroups 副本，后续 push 新分组后再 setState
@@ -257,19 +260,22 @@ const FilterGroup = {
 
   /**
    * 重命名分组（弹窗输入新名称）
+   * 修复：在副本上修改再 setState，避免直接修改 s.filterGroups（防御性编程，防止回调期间其他代码读取到中间态）
    * @param {string} groupId
    */
   renameGroup: (groupId) => {
-    const list = StateManager._state.filterGroups || [];
-    const idx = list.findIndex(g => g && g.id === groupId);
+    const oldList = StateManager._state.filterGroups || [];
+    const idx = oldList.findIndex(g => g && g.id === groupId);
     if (idx < 0) return;
-    const oldName = list[idx].name;
+    const oldName = oldList[idx].name;
     GIONGBETA_INPUT_MODAL.show('重命名分组', '请输入新分组名', oldName, (val) => {
       if (!val || !val.trim()) return;
       const newName = val.trim();
       if (newName === oldName) return;
-      list[idx] = Object.assign({}, list[idx], { name: newName });
-      StateManager.setState({ filterGroups: list.slice() }, false);
+      // 先在副本上修改，避免直接污染 s.filterGroups
+      const newList = oldList.slice();
+      newList[idx] = Object.assign({}, newList[idx], { name: newName });
+      StateManager.setState({ filterGroups: newList }, false);
       FilterGroup._persistGroups();
       if (typeof ViewFilterGroup !== 'undefined') ViewFilterGroup.render();
       Toast.show('已重命名为：' + newName);
