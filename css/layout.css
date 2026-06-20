@@ -75,19 +75,22 @@
   text-align:center;
 }
 
-/* 频率Swiper容器 */
+/* 频率Swiper容器
+   v2.0.9 修复手机端滑动卡顿：去掉 touch-action 中的 pan-y
+   原 pan-x pan-y 会让 swiper 拦截所有方向的手势，导致用户垂直滚动外层 .page-scroll 时被拦截
+   改 pan-x pinch-zoom 后：垂直滚动穿透到外层，水平滚动由 swiper 内部 touchmove 处理
+   （swiper 内部的 touchmove 仍会判断 dx > dy 时 preventDefault 防止外层响应） */
 .zodiac-prediction-swiper{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;touch-action:pan-y}
 .freq-swiper-container{
   position:relative;overflow:hidden;width:100%;flex:1;min-height:0;background:var(--card);
   box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--border);display:flex;
-  flex-direction:column;touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
-  -webkit-overflow-scrolling:touch;
+  flex-direction:column;touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain;
 }
 .freq-swiper-wrapper{
   display:flex;flex:1;min-height:0;
-  touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
+  touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain;
   user-select:none;-webkit-user-select:none;
-  transform:translateZ(0);backface-visibility:hidden;-webkit-overflow-scrolling:touch;
+  backface-visibility:hidden;
 }
 .freq-swiper-wrapper .freq-card{
   min-width:100%;flex-shrink:0;margin-bottom:0;box-shadow:none;border:none;border-radius:0;
@@ -102,16 +105,15 @@
 .freq-swiper-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s ease;cursor:pointer}
 .freq-swiper-dot.active{width:24px;border-radius:4px;background:var(--primary)}
 
-/* 区域Swiper容器 */
+/* 区域Swiper容器（v2.0.9 同样去掉 pan-y 让垂直滚动穿透外层） */
 .zone-swiper-container{
   position:relative;overflow:hidden;margin:0 calc(-1 * clamp(12px,3vw,20px));padding-bottom:8px;
-  touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain;
 }
 .zone-swiper-wrapper{
   display:flex;
-  touch-action:pan-x pan-y pinch-zoom;overscroll-behavior-x:contain;
-  user-select:none;-webkit-user-select:none;transform:translateZ(0);backface-visibility:hidden;
-  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain;
+  user-select:none;-webkit-user-select:none;backface-visibility:hidden;
 }
 .zone-swiper-wrapper .freq-section{
   min-width:100%;flex-shrink:0;padding:0 clamp(12px,3vw,20px);box-sizing:border-box;opacity:1;

@@ -51,15 +51,17 @@ body{
   -webkit-overflow-scrolling:none; /* 禁用iOS弹性滚动(在body上) */
   overscroll-behavior:none; /* 防止过度滚动 */
 }
+/* v2.0.9 优化：手机端滚动卡顿修复
+   - 移除 will-change: scroll-position（长期挂载 = 持续占用 GPU 内存）
+   - 移除 translateZ(0)（避免与 will-change 双重合成层）
+   - 移除 -webkit-overflow-scrolling:touch（iOS 14+ 已废弃，启用反而卡顿）
+   - 保留 overscroll-behavior-y:contain（防止过度滚动传递到 body）
+   - 保留 touch-action:pan-y（明确声明只允许垂直滚动） */
 .page-scroll{
   position:absolute;top:0;left:0;right:0;bottom:0;
   overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch; /* iOS弹性滚动 */
-  overscroll-behavior-y:contain; /* 防止过度滚动传递到父元素 */
-  touch-action:pan-y; /* 明确声明只允许垂直滚动 */
-  -webkit-transform:translateZ(0); /* GPU加速 */
-  transform:translateZ(0);
-  will-change:scroll-position; /* 提示浏览器这个元素会滚动 */
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
 }
 
 /* 加载遮罩 */

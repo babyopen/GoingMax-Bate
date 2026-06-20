@@ -10,7 +10,12 @@ const EventBinder = {
     // 键盘回车/空格事件（无障碍支持）
     document.addEventListener('keydown', EventBinder.handleKeyDown);
     // 滚动事件（已节流）
-    window.addEventListener('scroll', Business.handleScroll, { passive: true });
+    // v2.0.9 修复：html/body 都被设为 overflow:hidden，window 永远不滚动
+    // 真实滚动容器是 .page-scroll，scroll 监听必须挂到它上面
+    var _pageScrollEl = document.querySelector('.page-scroll');
+    if (_pageScrollEl) {
+      _pageScrollEl.addEventListener('scroll', Business.handleScroll, { passive: true });
+    }
     // 点击空白关闭快捷导航
     document.addEventListener('click', EventBinder.handleClickOutside);
     // 触摸事件 passive 监听（移动端滚动性能优化）

@@ -115,9 +115,14 @@ const ViewFilter = {
 
   /**
    * 返回顶部
+   * v2.0.9 修复：html/body 都被设为 overflow:hidden，真正的滚动容器是 .page-scroll
+   * 改用 .page-scroll.scrollTo 而不是 window.scrollTo（window 不能滚动）
    */
   backToTop: () => {
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    var scrollContainer = document.querySelector('.page-scroll');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({top: 0, behavior: 'smooth'});
+    }
   },
 
   /**
@@ -134,17 +139,24 @@ const ViewFilter = {
 
   /**
    * 获取滚动位置
+   * v2.0.9 修复：html/body 都是 overflow:hidden，scrollTop 永远为 0
+   * 改读 .page-scroll 的 scrollTop
    * @returns {number}
    */
   getScrollTop: () => {
-    return document.documentElement.scrollTop || document.body.scrollTop;
+    var scrollContainer = document.querySelector('.page-scroll');
+    return scrollContainer ? scrollContainer.scrollTop : 0;
   },
 
   /**
    * 页面卸载清理DOM事件
+   * v2.0.9 修复：scroll 监听已迁移到 .page-scroll，清理时也要从 .page-scroll 上解绑
    */
   cleanupPageEvents: (scrollHandler, unloadHandler) => {
-    window.removeEventListener('scroll', scrollHandler);
+    var scrollContainer = document.querySelector('.page-scroll');
+    if (scrollContainer) {
+      scrollContainer.removeEventListener('scroll', scrollHandler);
+    }
     window.removeEventListener('beforeunload', unloadHandler);
   },
 

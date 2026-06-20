@@ -1,3 +1,26 @@
+// v2.0.9 新增：requestIdleCallback polyfill + 业务层工具
+// 原因：业务层 initGiongTab / initUltimateAlgorithm 中用 setTimeout(100/150ms) 推迟回测渲染，
+//       这些 setTimeout 会在用户进入资料页时立即触发，与滚动争抢主线程。
+//       改用 requestIdleCallback：浏览器空闲时才执行，用户滚动时不会被打断。
+//       兼容：Safari 16.4 之前不支持，回退到 setTimeout(150ms)（行为与原来一致）
+const _requestIdleCallback = window.requestIdleCallback || function(fn) {
+  return setTimeout(function() {
+    var start = Date.now();
+    fn({
+      didTimeout: false,
+      timeRemaining: function() { return Math.max(0, 50 - (Date.now() - start)); }
+    });
+  }, 150);
+};
+const _cancelIdleCallback = window.cancelIdleCallback || function(id) {
+  clearTimeout(id);
+};
+// 业务层专用：在资料页初始化时调度的回测/重计算，统一走空闲回调
+// 用法：Business._scheduleIdle(workFn) 返回一个可取消的 id
+const _scheduleIdle = function(workFn) {
+  return _requestIdleCallback(workFn, { timeout: 500 });
+};
+
 const Business = {
   // ====================== 排除号码相关 ======================
   /**
@@ -1481,6 +1504,10 @@ const Business = {
 
   /**
    * 开始倒计时（使用统一定时器管理器）
+   * v2.0.9 优化：只在秒数变化时调用 updateCountdown（避免每秒固定 DOM 写入）
+   *   原版每秒都调用一次 updateCountdown，在低端机上与滚动争抢主线程
+   *   优化后：定时器仍每秒触发，但内部对比上次字符串，相同则跳过 DOM 更新
+   *   配合新增的 _lastCountdownText 缓存
    */
   startCountdown: () => {
     const state = StateManager._state;
@@ -1498,7 +1525,12 @@ const Business = {
       const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
       const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
       const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-      ViewAnalysis.updateCountdown(h + ':' + m + ':' + s);
+      const text = h + ':' + m + ':' + s;
+      // v2.0.9：仅在文本变化时调用 DOM 更新，省掉 59/60 次重复写入
+      if(text !== Business._lastCountdownText) {
+        Business._lastCountdownText = text;
+        ViewAnalysis.updateCountdown(text);
+      }
     }, 1000);
 
     const newAnalysis = { ...state.analysis, countdownTimer: timer };
@@ -1652,14 +1684,15 @@ const Business = {
     }
     ViewZodiacPredict.renderBacktestEmpty();
     ViewZodiacPredict.renderStrategyPanel(null);
-    setTimeout(function() {
+    // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
+    _scheduleIdle(function() {
       var result = ZodiacPrediction.runBacktest(historyData);
       ViewZodiacPredict.renderBacktest(result);
       if (result) {
         var newTuned = ZodiacPrediction.analyzeBacktest(result);
         ViewZodiacPredict.renderStrategyPanel(newTuned);
       }
-    }, 100);
+    });
   },
 
   switchZodiacTab: (tab) => {
@@ -1819,10 +1852,11 @@ const Business = {
     }
 
     ViewZodiacGiong.renderZoneBacktestEmpty();
-    setTimeout(function() {
+    // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
+    _scheduleIdle(function() {
       var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
       if (zoneBt) ViewZodiacGiong.renderZoneBacktest(zoneBt);
-    }, 150);
+    });
 
     // 区域变动追踪
     var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
@@ -1897,10 +1931,11 @@ const Business = {
     if (ultimateHistory.length >= 25) {
       ViewZodiacUltimate.renderUltimateBacktestEmpty();
       var currentBackupCount = (report.numbers && report.numbers.alternativeNumbers) ? report.numbers.alternativeNumbers.length : (BusinessUltimate.getAdaptiveState().currentBackupCount || 3);
-      setTimeout(function() {
+      // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
+      _scheduleIdle(function() {
         var btSummary = BusinessUltimate.runBacktest(ultimateHistory);
         if (btSummary) ViewZodiacUltimate.renderUltimateBacktest(btSummary, currentBackupCount);
-      }, 100);
+      });
     } else {
       ViewZodiacUltimate.renderUltimateBacktestEmpty();
     }
