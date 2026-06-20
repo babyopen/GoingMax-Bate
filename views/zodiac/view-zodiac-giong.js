@@ -493,9 +493,9 @@ const ViewZodiacGiong = {
 
     var html = '<div class="zone-change-card zone-change-multi-card">';
     html += '<div class="zone-change-header">';
-    html += '<span class="zone-change-title">区域变动追踪（多窗口组合）</span>';
-    html += '<span class="zone-change-top-info">每期：12/24/36期窗口【变动前】所属区域</span>';
+    html += '<span class="zone-change-title">区域追踪</span>';
     html += '</div>';
+    html += '<div class="zone-change-sub-line"><span class="zone-change-top-info">每期：12/24/36期窗口【变动前】所属区域</span></div>';
 
     if (!baseRecords.length) {
       html += '<div class="zone-change-empty-tip">数据不足（需至少13期历史数据）</div>';
@@ -510,6 +510,11 @@ const ViewZodiacGiong = {
       { ws: 24, label: '24期窗口', data: p24Data },
       { ws: 36, label: '36期窗口', data: p36Data }
     ];
+    html += '<div class="zone-change-combo-stats-section">';
+    html += '<div class="zone-change-combo-stats-header" data-action="toggleComboStatsGrid">';
+    html += '<span class="zone-change-combo-stats-header-text">三窗口变动统计</span>';
+    html += '<span class="zone-change-combo-stats-header-icon">▼</span>';
+    html += '</div>';
     html += '<div class="zone-change-combo-stats-grid">';
     statsList.forEach(function(s) {
       html += '<div class="zone-change-combo-stats-col">';
@@ -553,6 +558,7 @@ const ViewZodiacGiong = {
 
       html += '</div>';
     });
+    html += '</div>';
     html += '</div>';
 
     html += '<div class="zone-change-combo-list">';

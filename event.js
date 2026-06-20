@@ -409,6 +409,12 @@ const EventBinder = {
         if (comboToggleText) comboToggleText.textContent = isComboExpanded ? '收起' : '展开更多';
         if (comboToggleIcon) comboToggleIcon.textContent = isComboExpanded ? '▲' : '▼';
       }
+      // 多窗口组合统计区折叠/展开（默认折叠，只显示 header）
+      else if(action === 'toggleComboStatsGrid') {
+        var statsSection = actionBtn.closest('.zone-change-combo-stats-section');
+        if (!statsSection) return;
+        statsSection.classList.toggle('expanded');
+      }
       else if(action === 'showZodiacStat') {
         var zodiac = actionBtn.dataset.zodiac;
         if (zodiac && ViewZodiacGiong._cachedFreqResult) {

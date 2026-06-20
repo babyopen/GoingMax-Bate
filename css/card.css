@@ -2030,6 +2030,13 @@
   align-items: center;
   gap: 4px;
 }
+.zone-change-sub-line {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-top: -6px;
+  margin-bottom: 10px;
+  text-align: left;
+}
 .zone-change-top-count {
   font-weight: 700;
   color: var(--primary);
@@ -2239,11 +2246,41 @@
 /* ===================================
    多窗口组合统计区（三列：12/24/36 期窗口独立统计）
    =================================== */
+/* 多窗口统计折叠容器（默认折叠） */
+.zone-change-combo-stats-section {
+  margin-bottom: 12px;
+}
+.zone-change-combo-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  user-select: none;
+}
+.zone-change-combo-stats-header-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.zone-change-combo-stats-header-icon {
+  font-size: 10px;
+  color: var(--sub-text);
+  transition: transform 0.2s;
+}
+.zone-change-combo-stats-section.expanded .zone-change-combo-stats-header-icon {
+  transform: rotate(180deg);
+}
+.zone-change-combo-stats-section:not(.expanded) .zone-change-combo-stats-grid {
+  display: none;
+}
 .zone-change-combo-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
+  margin-top: 10px;
 }
 .zone-change-combo-stats-col {
   background: rgba(255,255,255,0.03);
