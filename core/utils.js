@@ -598,6 +598,17 @@ const Utils = {
   },
 
   /**
+   * 解析 openCode 为字符串数组（2026-06-21 通用化抽取）
+   * 替代业务层重复的 `(item.openCode || '0,0,0,0,0,0,0').split(',')`
+   * 与 parseOpenCodeArr 区别：本方法返回字符串数组（保留原始位值）
+   * @param {Object} item - 历史数据单项 { openCode: '1,2,3,4,5,6,7' }
+   * @returns {string[]} 7 个字符串数组（默认 '0'）
+   */
+  parseCodeArr: (item) => {
+    return (item && item.openCode || '0,0,0,0,0,0,0').split(',');
+  },
+
+  /**
    * 通用剪贴板复制（兼容降级，3 处共用，2026-06-09 重构合并）
    * 1. 优先 navigator.clipboard.writeText（HTTPS / localhost）
    * 2. 降级 document.execCommand('copy') + 隐藏 textarea
@@ -687,6 +698,42 @@ const Utils = {
     // 仅接受 1-49 的有效整数号码
     if (!Number.isInteger(n) || n < 1 || n > 49) return '00';
     return String(n).padStart(2, '0');
+  },
+
+  /**
+   * 按 12 生肖固定顺序拼接选中的生肖列表（2026-06-21 通用化抽取）
+   * 替代业务层重复的 `CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => selected.indexOf(z) !== -1).join(sep)`
+   * @param {Array<string>} selected - 选中的生肖数组（顺序任意）
+   * @param {string} [separator=' '] - 分隔符（默认空格）
+   * @returns {string} 按固定生肖顺序拼接的字符串
+   */
+  formatZodiacList: (selected, separator) => {
+    if (!Array.isArray(selected) || selected.length === 0) return '';
+    var sep = (separator === undefined || separator === null) ? ' ' : separator;
+    var zodiacOrder = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
+    return zodiacOrder.filter(function(z) { return selected.indexOf(z) !== -1; }).join(sep);
+  },
+
+  /**
+   * 从计数对象中取 Top N 并格式化（2026-06-21 通用化抽取）
+   * 替代业务层重复的 `Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n).map(formatter).join(sep)`
+   * @param {Object} obj - 计数对象，如 {红:5, 蓝:3}
+   * @param {number} n - 取前 N 项
+   * @param {Function} [formatter] - 格式化函数，默认 `e => e[0]`（返回 key）
+   * @param {string} [separator=''] - 拼接分隔符（默认无）
+   * @returns {string} 格式化后的字符串
+   */
+  getTopN: (obj, n, formatter, separator) => {
+    if (!obj || typeof obj !== 'object') return '';
+    var fmt = (typeof formatter === 'function') ? formatter : function(e) { return e[0]; };
+    var sep = (separator === undefined || separator === null) ? '' : separator;
+    var n2 = Number(n) || 0;
+    return Object.keys(obj)
+      .map(function(k) { return [k, obj[k]]; })
+      .sort(function(a, b) { return b[1] - a[1]; })
+      .slice(0, n2)
+      .map(fmt)
+      .join(sep);
   },
 
   // ============================================================
