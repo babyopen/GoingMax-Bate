@@ -105,36 +105,44 @@ const ViewFilterGroup = {
   },
 
   /**
+   * 判断节点是否仍在 DOM 中（用于长按 timer 回调兜底）
+   * @param {HTMLElement} el
+   * @returns {boolean}
+   */
+  _isInDOM: (el) => !!el && el.isConnected && document.body.contains(el),
+
+  /**
+   * 长按 timer 到达阈值后的回调（tab 已被移除则不弹菜单）
+   */
+  _onLongPress: (tab, state) => {
+    state.timer = null;
+    if (!ViewFilterGroup._isInDOM(tab)) return;
+    state.triggered = true;
+    const groupId = tab.getAttribute('data-group-id');
+    ViewFilterGroup._showGroupMenu(groupId, tab);
+  },
+
+  /**
    * 绑定单个标签的长按事件
    */
   _bindTabLongPress: (tab) => {
-    let timer = null;
-    let triggered = false;
+    const state = { timer: null, triggered: false };
     const cancel = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
+      if (state.timer) { clearTimeout(state.timer); state.timer = null; }
     };
     const start = () => {
-      triggered = false;
+      state.triggered = false;
       cancel();
-      timer = setTimeout(() => {
-        triggered = true;
-        const groupId = tab.getAttribute('data-group-id');
-        ViewFilterGroup._showGroupMenu(groupId, tab);
-      }, ViewFilterGroup.LONG_PRESS_MS);
+      state.timer = setTimeout(() => ViewFilterGroup._onLongPress(tab, state), ViewFilterGroup.LONG_PRESS_MS);
     };
-    // 触屏
     tab.addEventListener('touchstart', start, { passive: true });
     tab.addEventListener('touchend', cancel);
     tab.addEventListener('touchmove', cancel);
     tab.addEventListener('touchcancel', cancel);
-    // 鼠标（开发调试）
     tab.addEventListener('mousedown', start);
     tab.addEventListener('mouseup', cancel);
     tab.addEventListener('mouseleave', cancel);
-    ViewFilterGroup._bindSuppressClickAfterLongPress(tab, () => triggered);
+    ViewFilterGroup._bindSuppressClickAfterLongPress(tab, () => state.triggered);
   },
 
   /**
@@ -190,11 +198,11 @@ const ViewFilterGroup = {
     menu.className = 'filter-group-menu';
     menu.setAttribute('role', 'menu');
     menu.innerHTML = `
-      <div class="filter-group-menu-title">${Utils.escapeHtml(groupName)}</div>
-      <button type="button" data-action="renameFilterGroup" data-group-id="${groupId}" class="filter-group-menu-item">
+      <div class="filter-group-menu-title" role="presentation">${Utils.escapeHtml(groupName)}</div>
+      <button type="button" role="menuitem" data-action="renameFilterGroup" data-group-id="${Utils.escapeHtml(groupId)}" class="filter-group-menu-item">
         <i class="fa-solid fa-pen"></i>重命名
       </button>
-      <button type="button" data-action="deleteFilterGroup" data-group-id="${groupId}" class="filter-group-menu-item danger">
+      <button type="button" role="menuitem" data-action="deleteFilterGroup" data-group-id="${Utils.escapeHtml(groupId)}" class="filter-group-menu-item danger">
         <i class="fa-solid fa-trash"></i>删除
       </button>
     `;

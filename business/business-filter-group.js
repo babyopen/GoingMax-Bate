@@ -60,6 +60,24 @@ const FilterGroup = {
   },
 
   /**
+   * 返回完整默认快照（用于新建分组场景，避免在 createGroup 中重复定义 9 个字段）
+   * @returns {Object} 含 savedFilters/selected/excluded/excludeHistory/lockExclude/locked/marked/markCount/showAllFilters
+   */
+  _defaultSnapshot: () => {
+    return {
+      savedFilters: [],
+      selected: FilterGroup._defaultSelected(),
+      excluded: [],
+      excludeHistory: [],
+      lockExclude: false,
+      locked: {},
+      marked: {},
+      markCount: {},
+      showAllFilters: false
+    };
+  },
+
+  /**
    * 提取当前主页完整状态快照（不含方案列表，清空 savedFilters 以满足"新建分组清空方案"）
    * @returns {Object} 快照对象
    */
@@ -131,15 +149,21 @@ const FilterGroup = {
 
   /**
    * 把当前完整状态写回当前分组快照（用于切换前保存）
+   * 纯函数：不修改全局 s.filterGroups，返回包含本次更新的副本，避免被调用方的 setState 覆盖
+   * 修复用户反馈"点击 + 添加，旧的分组内容没有了"的根因：
+   *   此前实现直接修改 s.filterGroups[idx]，但 createGroup 又以副本 list 重新 setState，
+   *   导致步骤 1 的保存被步骤 3 的 setState({filterGroups: list}) 覆盖
    * @param {boolean} emptySavedFilters - true 时清空当前 savedFilters（用于新建分组场景）
+   * @returns {Array} 更新后的 filterGroups 副本
    */
   _saveCurrentIntoActiveGroup: (emptySavedFilters) => {
     const s = StateManager._state;
-    if (!s.currentGroupId) return;
-    const list = s.filterGroups || [];
+    const list = (s.filterGroups || []).slice();
+    if (!s.currentGroupId) return list;
     const idx = list.findIndex(g => g && g.id === s.currentGroupId);
-    if (idx < 0) return;
+    if (idx < 0) return list;
     list[idx] = Object.assign({}, list[idx], FilterGroup._captureSnapshot(emptySavedFilters));
+    return list;
   },
 
   /**
@@ -155,57 +179,39 @@ const FilterGroup = {
 
   /**
    * 创建新分组
-   * 行为（按用户需求 2026-06-20）：
-   *   a) 保存当前 div 的筛选方案配置（包括所有已设置的筛选条件、参数和选项）→ 写回当前激活分组
-   *   b) 将 div 重置为初始化状态 → 重置当前 state 为默认初始
-   *   c) 创建并应用一个新的筛选方案（默认初始状态）→ 创建新分组并切换为激活
+   * 行为（按用户需求 2026-06-20 演进 v3）：
+   *   a) 保存当前 div 的筛选方案配置（含所有筛选条件、参数、选项）→ 写回当前激活分组（现有分组保留）
+   *   b) 创建并应用一个新的筛选方案（仅新创建的分组初始化为空状态）→ 不包含任何筛选方案
+   *   c) 切换激活到新分组，UI 显示空状态（filterList 显示"暂无保存的方案"）
+   *   + 修复：_saveCurrentIntoActiveGroup 改为返回副本，避免步骤 3 的 setState 覆盖步骤 1 的保存
    *   + 首次创建分组时（之前无 currentGroupId），同步清空 SAVED_FILTERS 避免孤儿数据
    * @param {string} [name] - 用户输入名称；空则使用默认"分组一"
    */
   createGroup: (name) => {
     const s = StateManager._state;
     const finalName = (typeof name === 'string' && name.trim()) ? name.trim() : FilterGroup._genDefaultName();
-    const list = (s.filterGroups || []).slice();
     const isFirstGroup = !s.currentGroupId;
     const newId = 'g_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
-    // 步骤 1 (a)：保存当前完整状态到原激活分组（含所有筛选条件、参数、选项）
-    FilterGroup._saveCurrentIntoActiveGroup(false);
+    // 步骤 1 (a)：保存当前完整状态到原激活分组（现有分组保留其包含的筛选方案）
+    //   返回包含步骤 1 更新的 filterGroups 副本，后续 push 新分组后再 setState
+    const newList = FilterGroup._saveCurrentIntoActiveGroup(false);
 
-    // 步骤 2：构造新分组的默认初始快照（独立构造，不依赖当前 state，避免继承）
-    const defaultSnap = {
-      savedFilters: [],
-      selected: FilterGroup._defaultSelected(),
-      excluded: [],
-      excludeHistory: [],
-      lockExclude: false,
-      locked: {},
-      marked: {},
-      markCount: {},
-      showAllFilters: false
-    };
+    // 步骤 2 (c)：创建新分组 - 严格遵循"仅新创建的分组才初始化为空状态"
+    //   新分组的快照为默认初始（savedFilters=[], selected=14个[], excluded=[], locked={} 等）
     const newGroup = {
       id: newId,
       name: finalName,
       createdAt: Date.now(),
-      ...defaultSnap
+      ...FilterGroup._defaultSnapshot()
     };
-    list.push(newGroup);
+    newList.push(newGroup);
 
-    // 步骤 3 (b + c)：同时切换激活 + 重置当前 state 为默认初始（让 UI 显示新分组的空状态）
-    //   新分组的快照本身就是默认初始，state 重置后与新分组一致
+    // 步骤 3：切换激活 + 重置 state 为新分组的默认初始（让 UI 显示空状态）
     StateManager.setState({
-      filterGroups: list,
+      filterGroups: newList,
       currentGroupId: newId,
-      savedFilters: [],
-      selected: FilterGroup._defaultSelected(),
-      excluded: [],
-      excludeHistory: [],
-      lockExclude: false,
-      locked: {},
-      marked: {},
-      markCount: {},
-      showAllFilters: false
+      ...FilterGroup._defaultSnapshot()
     }, false);
 
     // 首次创建分组时清空 SAVED_FILTERS（避免原方案成为孤儿数据）
@@ -238,11 +244,11 @@ const FilterGroup = {
       return;
     }
 
-    // 步骤 1：把当前完整状态写回原激活分组
-    FilterGroup._saveCurrentIntoActiveGroup(false);
+    // 步骤 1：把当前完整状态写回原激活分组（接收返回的副本，保证步骤 2 setState 不丢失步骤 1 的保存）
+    const newList = FilterGroup._saveCurrentIntoActiveGroup(false);
 
-    // 步骤 2：加载目标分组到 state
-    StateManager.setState({ currentGroupId: groupId }, false);
+    // 步骤 2：加载目标分组到 state（用 newList 保持一致引用）
+    StateManager.setState({ filterGroups: newList, currentGroupId: groupId }, false);
     FilterGroup._applySnapshot(target);
 
     FilterGroup._persistGroups();
@@ -294,8 +300,10 @@ const FilterGroup = {
       if (!ok) return;
       const newList = list.filter(g => g.id !== groupId);
       // 如果删除的是当前分组，切换到第一个剩余分组（直接切换，不再保存即将被删除的分组）
+      let switchToName = null;
       if (isCurrent) {
         const next = newList[0];
+        switchToName = next.name;
         StateManager.setState({ filterGroups: newList, currentGroupId: next.id }, false);
         FilterGroup._applySnapshot(next);
       } else {
@@ -305,7 +313,11 @@ const FilterGroup = {
       FilterGroup._persistGroups();
       Render.renderFilterList();
       if (typeof ViewFilterGroup !== 'undefined') ViewFilterGroup.render();
-      Toast.show('已删除分组：' + target.name);
+      // 提示文案：当前激活分组被删除时告知用户已自动切换到哪个分组
+      const msg = switchToName
+        ? '已删除分组：' + target.name + '，已切换到：' + switchToName
+        : '已删除分组：' + target.name;
+      Toast.show(msg);
     });
   }
 };
