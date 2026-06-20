@@ -78,13 +78,13 @@ const FilterGroup = {
   },
 
   /**
-   * 提取当前主页完整状态快照（不含方案列表，清空 savedFilters 以满足"新建分组清空方案"）
+   * 提取当前主页完整状态快照
    * @returns {Object} 快照对象
    */
-  _captureSnapshot: (emptySavedFilters) => {
+  _captureSnapshot: () => {
     const s = StateManager._state;
     return {
-      savedFilters: emptySavedFilters ? [] : (Array.isArray(s.savedFilters) ? Utils.deepClone(s.savedFilters) : []),
+      savedFilters: Array.isArray(s.savedFilters) ? Utils.deepClone(s.savedFilters) : [],
       selected: Utils.deepClone(s.selected || {}),
       excluded: Array.isArray(s.excluded) ? Utils.deepClone(s.excluded) : [],
       excludeHistory: Array.isArray(s.excludeHistory) ? Utils.deepClone(s.excludeHistory) : [],
@@ -153,16 +153,15 @@ const FilterGroup = {
    * 修复用户反馈"点击 + 添加，旧的分组内容没有了"的根因：
    *   此前实现直接修改 s.filterGroups[idx]，但 createGroup 又以副本 list 重新 setState，
    *   导致步骤 1 的保存被步骤 3 的 setState({filterGroups: list}) 覆盖
-   * @param {boolean} emptySavedFilters - true 时清空当前 savedFilters（用于新建分组场景）
    * @returns {Array} 更新后的 filterGroups 副本
    */
-  _saveCurrentIntoActiveGroup: (emptySavedFilters) => {
+  _saveCurrentIntoActiveGroup: () => {
     const s = StateManager._state;
     const list = (s.filterGroups || []).slice();
     if (!s.currentGroupId) return list;
     const idx = list.findIndex(g => g && g.id === s.currentGroupId);
     if (idx < 0) return list;
-    list[idx] = Object.assign({}, list[idx], FilterGroup._captureSnapshot(emptySavedFilters));
+    list[idx] = Object.assign({}, list[idx], FilterGroup._captureSnapshot());
     return list;
   },
 
@@ -195,7 +194,7 @@ const FilterGroup = {
 
     // 步骤 1 (a)：保存当前完整状态到原激活分组（现有分组保留其包含的筛选方案）
     //   返回包含步骤 1 更新的 filterGroups 副本，后续 push 新分组后再 setState
-    const newList = FilterGroup._saveCurrentIntoActiveGroup(false);
+    const newList = FilterGroup._saveCurrentIntoActiveGroup();
 
     // 步骤 2 (c)：创建新分组 - 严格遵循"仅新创建的分组才初始化为空状态"
     //   新分组的快照为默认初始（savedFilters=[], selected=14个[], excluded=[], locked={} 等）
@@ -245,7 +244,7 @@ const FilterGroup = {
     }
 
     // 步骤 1：把当前完整状态写回原激活分组（接收返回的副本，保证步骤 2 setState 不丢失步骤 1 的保存）
-    const newList = FilterGroup._saveCurrentIntoActiveGroup(false);
+    const newList = FilterGroup._saveCurrentIntoActiveGroup();
 
     // 步骤 2：加载目标分组到 state（用 newList 保持一致引用）
     StateManager.setState({ filterGroups: newList, currentGroupId: groupId }, false);
