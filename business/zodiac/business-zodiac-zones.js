@@ -17,13 +17,22 @@ const ZodiacPredictionZones = {
   ZONE_MAP: { 0: '冷号区', 1: '穿插区', 2: '活跃区', 3: '热号区', 4: '过热区', 5: '降权区', 6: '封顶区' },
   ZONE_ORDER: ['冷号区', '穿插区', '活跃区', '热号区', '过热区', '降权区', '封顶区'],
 
-  calcFrequencyRating: function(historyData) {
+  calcFrequencyRating: function(historyData, precomputedSpecials) {
     if (!historyData || historyData.length < 12) return null;
 
+    // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组（避免内层循环重复 getSpecial）
+    //   - 不传时：保持原行为，逐项 getSpecial（向后兼容）
+    //   - 传入时：与 historyData 等长的 specials 数组，specials[i] 对应 historyData[i]
+    var specials = precomputedSpecials;
+    if (!specials) {
+      specials = historyData.map(function(item) {
+        return Utils.SpecialCalculator.getSpecial(item);
+      });
+    }
+
     // 性能优化：一次性扁平化预处理（避免多次调用 _getSpecial）
-    var flatData = historyData.map(function(item) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
-      return { expect: Number(item.expect || 0), zod: s.zod };
+    var flatData = historyData.map(function(item, i) {
+      return { expect: Number(item.expect || 0), zod: specials[i].zod };
     });
 
     var windows = [12, 24, 36];
@@ -35,8 +44,8 @@ const ZodiacPredictionZones = {
 
     var missLastIdx = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { missLastIdx[z] = -1; });
-    missList.forEach(function(item, idx) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
+    missList.forEach(function(_, idx) {
+      var s = specials[idx];
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
         if (missLastIdx[s.zod] === -1) missLastIdx[s.zod] = idx;
       }
@@ -101,8 +110,16 @@ const ZodiacPredictionZones = {
     return result;
   },
 
-  analyzeZonePatterns: function(historyData) {
+  analyzeZonePatterns: function(historyData, precomputedSpecials) {
     if (!historyData || historyData.length < 37) return null;
+
+    // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组
+    var specials = precomputedSpecials;
+    if (!specials) {
+      specials = historyData.map(function(item) {
+        return Utils.SpecialCalculator.getSpecial(item);
+      });
+    }
 
     var windows = [12, 24, 36];
     var result = {};
@@ -119,12 +136,13 @@ const ZodiacPredictionZones = {
 
         var freq = {};
         ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { freq[z] = 0; });
-        windowData.forEach(function(item) {
-          var s = Utils.SpecialCalculator.getSpecial(item);
+        // 2026-06-21 优化：用 specials 替代 getSpecial 调用
+        for (var wi = 0; wi < windowData.length; wi++) {
+          var s = specials[offset + 1 + wi];
           if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) freq[s.zod]++;
-        });
+        }
 
-        var nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
+        var nextSpecial = specials[offset];
         var nextZod = nextSpecial.zod;
 
         ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
@@ -313,15 +331,25 @@ const ZodiacPredictionZones = {
   runZoneBacktest: function(historyData) {
     if (!historyData || historyData.length < 16) return null;
 
+    // 2026-06-21 性能优化：预计算 specials（一次性，复用 LRU 缓存）
+    //  - 后续 calcFrequencyRating / analyzeZonePatterns 内部循环每次只切片 specials 数组引用
+    //  - 避免 40 次外循环 × 多次内循环 × getSpecial 调用
+    var specials = new Array(historyData.length);
+    for (var si = 0; si < historyData.length; si++) {
+      specials[si] = Utils.SpecialCalculator.getSpecial(historyData[si]);
+    }
+
     var results = [];
     var maxOffset = historyData.length - 14;
     for (var offset = 0; offset < Math.min(maxOffset, 40); offset++) {
       var testData = historyData.slice(offset + 1);
+      var testSpecials = specials.slice(offset + 1);
       var targetItem = historyData[offset];
       if (!targetItem || testData.length < 14) continue;
 
-      var freqResult = ZodiacPrediction.calcFrequencyRating(testData);
-      var patternResult = ZodiacPrediction.analyzeZonePatterns(testData);
+      // 传入预计算的 specials 子数组（从 offset+1 开始），避免内层循环重复 getSpecial
+      var freqResult = ZodiacPrediction.calcFrequencyRating(testData, testSpecials);
+      var patternResult = ZodiacPrediction.analyzeZonePatterns(testData, testSpecials);
       if (!freqResult) continue;
 
       var recommend = ZodiacPrediction.getZoneRecommend(testData, freqResult, patternResult);
@@ -329,7 +357,8 @@ const ZodiacPredictionZones = {
 
       var top6 = recommend.slice(0, 6);
 
-      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      // targetSpecial 直接从预计算 specials 数组取（O(1) 而非 getSpecial 调用）
+      var actualSpecial = specials[offset];
       var actualZod = actualSpecial.zod;
 
       var hitRank = 0;
