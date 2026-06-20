@@ -57,11 +57,24 @@ const Render = {
       }
       const allLockBtns = Render._lockBtnCache;
 
+      // 2026-06-21 性能优化：缓存 .tag 节点按 group 分组（renderZodiacTags/renderNumTags 重建时自动失效）
+      if (!Render._tagByGroupCache || Render._tagByGroupCacheInvalid) {
+        Render._tagByGroupCache = {};
+        document.querySelectorAll('.tag[data-group]').forEach(function(tag) {
+          var tg = tag.dataset.group;
+          if (!Render._tagByGroupCache[tg]) Render._tagByGroupCache[tg] = [];
+          Render._tagByGroupCache[tg].push(tag);
+        });
+        Render._tagByGroupCacheInvalid = false;
+      }
+
       allGroups.forEach(g => {
         const selectedList = state.selected[g] || [];
         const markedMap = state.marked[g] || {};
         const lockedList = state.locked[g] || [];
-        document.querySelectorAll(`.tag[data-group="${g}"]`).forEach(tag => {
+        // 2026-06-21 性能优化：用 tagByGroup 缓存替代每次 querySelectorAll
+        const tagsForGroup = Render._tagByGroupCache[g] || [];
+        tagsForGroup.forEach(tag => {
           const tagValue = Utils.formatTagValue(tag.dataset.value, g);
           const isActive = selectedList.includes(tagValue);
           const isLocked = lockedList.includes(tagValue);
@@ -103,6 +116,10 @@ const Render = {
   _lockBtnCache: null,
   /** lockBtn 缓存失效标记（2026-06-21 新增） */
   _lockBtnCacheInvalid: false,
+  /** .tag 节点按 group 分组缓存（2026-06-21 新增） */
+  _tagByGroupCache: null,
+  /** .tag 缓存失效标记（renderZodiacTags/renderNumTags 重建时置 true，2026-06-21 新增） */
+  _tagByGroupCacheInvalid: false,
 
   /**
    * 渲染排除号码网格
@@ -176,6 +193,8 @@ const Render = {
 
       DOM.zodiacTags.innerHTML = '';
       DOM.zodiacTags.appendChild(fragment);
+      // 2026-06-21 性能优化：清空容器后使 tag 节点缓存失效，下次 renderTagStatus 时重建
+      Render._tagByGroupCacheInvalid = true;
     } catch(e) {
       console.error('[Render.renderZodiacTags] 渲染生肖标签失败:', e);
     }
@@ -203,6 +222,8 @@ const Render = {
 
       DOM.numTags.innerHTML = '';
       DOM.numTags.appendChild(fragment);
+      // 2026-06-21 性能优化：清空容器后使 tag 节点缓存失效
+      Render._tagByGroupCacheInvalid = true;
     } catch(e) {
       console.error('[Render.renderNumTags] 渲染号码标签失败:', e);
     }

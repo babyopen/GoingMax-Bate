@@ -12,7 +12,7 @@
  * - 内部使用 `Utils.SpecialCalculator.getSpecial` 引用门面上的共享工具（运行时查找）
  */
 const ZodiacPredictionStats = {
-  getLatestSizeStats: function(historyData, period) {
+  getLatestSizeStats: function(historyData, period, precomputedSpecials) {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
@@ -21,8 +21,11 @@ const ZodiacPredictionStats = {
     var bigCount = 0;
     var smallCount = 0;
 
-    recentData.forEach(function(item) {
-      var special = Utils.SpecialCalculator.getSpecial(item);
+    // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组（前 N 项与 recentData 对齐）
+    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+
+    recentData.forEach(function(item, idx) {
+      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
       var te = special.te;
       var isBig = te >= CONFIG.BIG_RANGE[0] && te <= CONFIG.BIG_RANGE[1];
       sizeSequence.push({
@@ -200,7 +203,7 @@ const ZodiacPredictionStats = {
     return { prediction: prediction, confidence: confidence, reason: topReasons };
   },
 
-  getLatestOddEvenStats: function(historyData, period) {
+  getLatestOddEvenStats: function(historyData, period, precomputedSpecials) {
   if (!historyData || !historyData.length) return null;
 
   period = period || 10;
@@ -209,8 +212,11 @@ const ZodiacPredictionStats = {
   var oddCount = 0;
   var evenCount = 0;
 
-  recentData.forEach(function(item) {
-    var special = Utils.SpecialCalculator.getSpecial(item);
+  // 2026-06-21 性能优化：复用调用方传入的预计算 specials（前 N 项与 recentData 对齐）
+  var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+
+  recentData.forEach(function(item, idx) {
+    var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
     var te = special.te;
     var isOdd = te % 2 !== 0;
     oddEvenSequence.push({
@@ -388,7 +394,7 @@ _predictOddEvenTrend: function(sequence) {
   return { prediction: prediction, confidence: confidence, reason: topReasons };
 },
 
-  getLatestWuxingStats: function(historyData, period) {
+  getLatestWuxingStats: function(historyData, period, precomputedSpecials) {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
@@ -396,8 +402,11 @@ _predictOddEvenTrend: function(sequence) {
     var wuxingSequence = [];
     var wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
 
-    recentData.forEach(function(item) {
-      var special = Utils.SpecialCalculator.getSpecial(item);
+    // 2026-06-21 性能优化：复用调用方传入的预计算 specials
+    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+
+    recentData.forEach(function(item, idx) {
+      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
       var wuxing = special.wuxing;
       wuxingSequence.push({
         expect: item.expect,
@@ -541,7 +550,7 @@ _predictOddEvenTrend: function(sequence) {
     return { prediction: prediction, confidence: confidence, reason: topReasons };
   },
 
-  getLatestColorStats: function(historyData, period) {
+  getLatestColorStats: function(historyData, period, precomputedSpecials) {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
@@ -549,8 +558,11 @@ _predictOddEvenTrend: function(sequence) {
     var colorSequence = [];
     var colorCount = { '红': 0, '蓝': 0, '绿': 0 };
 
-    recentData.forEach(function(item) {
-      var special = Utils.SpecialCalculator.getSpecial(item);
+    // 2026-06-21 性能优化：复用调用方传入的预计算 specials
+    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+
+    recentData.forEach(function(item, idx) {
+      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
       var colorName = special.colorName;
       colorSequence.push({
         expect: item.expect,
