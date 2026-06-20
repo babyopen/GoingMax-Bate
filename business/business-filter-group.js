@@ -48,6 +48,18 @@ const FilterGroup = {
   },
 
   /**
+   * 返回默认 selected 状态对象（14 个 group 全为空数组）
+   * @returns {Object}
+   */
+  _defaultSelected: () => {
+    return {
+      zodiac:[], color:[], colorsx:[], type:[], element:[],
+      head:[], tail:[], sum:[], sumOdd:[], sumSize:[], tailSize:[], bs:[], hot:[],
+      num:[]
+    };
+  },
+
+  /**
    * 提取当前主页完整状态快照（不含方案列表，清空 savedFilters 以满足"新建分组清空方案"）
    * @returns {Object} 快照对象
    */
@@ -143,11 +155,11 @@ const FilterGroup = {
 
   /**
    * 创建新分组
-   * 行为：
-   *   1) 把当前完整状态写回当前激活分组（保留原分组数据）
-   *   2) 新建分组，savedFilters 为空（满足"清空当前的保存方案"）
-   *   3) currentGroupId 指向新分组
-   *   4) 首次创建分组时（之前无 currentGroupId），同步清空 SAVED_FILTERS 避免孤儿数据
+   * 行为（按用户需求 2026-06-20）：
+   *   a) 保存当前 div 的筛选方案配置（包括所有已设置的筛选条件、参数和选项）→ 写回当前激活分组
+   *   b) 将 div 重置为初始化状态 → 重置当前 state 为默认初始
+   *   c) 创建并应用一个新的筛选方案（默认初始状态）→ 创建新分组并切换为激活
+   *   + 首次创建分组时（之前无 currentGroupId），同步清空 SAVED_FILTERS 避免孤儿数据
    * @param {string} [name] - 用户输入名称；空则使用默认"分组一"
    */
   createGroup: (name) => {
@@ -155,23 +167,46 @@ const FilterGroup = {
     const finalName = (typeof name === 'string' && name.trim()) ? name.trim() : FilterGroup._genDefaultName();
     const list = (s.filterGroups || []).slice();
     const isFirstGroup = !s.currentGroupId;
+    const newId = 'g_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
-    // 步骤 1：保存当前状态到原激活分组
+    // 步骤 1 (a)：保存当前完整状态到原激活分组（含所有筛选条件、参数、选项）
     FilterGroup._saveCurrentIntoActiveGroup(false);
 
-    // 步骤 2：创建新分组（savedFilters 强制为空）
+    // 步骤 2：构造新分组的默认初始快照（独立构造，不依赖当前 state，避免继承）
+    const defaultSnap = {
+      savedFilters: [],
+      selected: FilterGroup._defaultSelected(),
+      excluded: [],
+      excludeHistory: [],
+      lockExclude: false,
+      locked: {},
+      marked: {},
+      markCount: {},
+      showAllFilters: false
+    };
     const newGroup = {
-      id: 'g_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      id: newId,
       name: finalName,
       createdAt: Date.now(),
-      // 其余快照字段保持当前状态（用户已选/排除/锁定等延续到新分组）
-      ...FilterGroup._captureSnapshot(true)
+      ...defaultSnap
     };
-    // savedFilters 必须为空（强制覆盖 captureSnapshot 中的 savedFilters）
-    newGroup.savedFilters = [];
     list.push(newGroup);
 
-    StateManager.setState({ filterGroups: list, currentGroupId: newGroup.id }, false);
+    // 步骤 3 (b + c)：同时切换激活 + 重置当前 state 为默认初始（让 UI 显示新分组的空状态）
+    //   新分组的快照本身就是默认初始，state 重置后与新分组一致
+    StateManager.setState({
+      filterGroups: list,
+      currentGroupId: newId,
+      savedFilters: [],
+      selected: FilterGroup._defaultSelected(),
+      excluded: [],
+      excludeHistory: [],
+      lockExclude: false,
+      locked: {},
+      marked: {},
+      markCount: {},
+      showAllFilters: false
+    }, false);
 
     // 首次创建分组时清空 SAVED_FILTERS（避免原方案成为孤儿数据）
     if (isFirstGroup) {
@@ -180,7 +215,12 @@ const FilterGroup = {
 
     FilterGroup._persistGroups();
     Render.renderFilterList();
-    if (typeof ViewFilterGroup !== 'undefined') ViewFilterGroup.render();
+    Render.renderAll(); // 重新渲染结果区、标签状态、排除号码网格等
+    // 委托视图层同步 DOM 控件（业务层不直接操作 DOM）
+    if (typeof ViewFilterGroup !== 'undefined') {
+      ViewFilterGroup.render();
+      ViewFilterGroup.syncLockExcludeUI(false);
+    }
     Toast.show('已新建分组：' + finalName);
   },
 
