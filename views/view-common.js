@@ -431,7 +431,7 @@ const ViewCommon = {
 
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
       html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
-      html += '<span style="font-size:14px;font-weight:700;">' + item.value + '</span>';
+      html += '<span style="font-size:14px;font-weight:700;">' + (item.actualNumber !== undefined ? item.actualNumber : '-') + '</span>';
       html += '<span style="font-size:12px;font-weight:600;">' + labels.predicted + ':' + fmtVal.pred + '</span>';
       html += '<span style="font-size:12px;font-weight:600;">' + labels.actual + ':' + fmtVal.actual + '</span>';
       html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';

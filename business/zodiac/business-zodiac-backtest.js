@@ -18,86 +18,102 @@ const ZodiacPredictionBacktest = {
     var results = [];
     var maxOffset = Math.min(testCount, historyData.length - 6);
 
+    // 2026-06-21 新增：与实际推荐算法一致模式
+    //   - 当 config 提供 trendPredictor + buildSequence 时，启用"模拟当时推荐"路径：
+    //     用 targetItem 之前 10 期构造 sequence，调 config.trendPredictor 计算预测值
+    //   - 这样回测追踪每期的"预测" = 当时实际推荐算法的预测，确保回测与实际推荐一致
+    var useTrendPredictor = !!config.trendPredictor && typeof config.buildSequence === 'function';
+
     for (var offset = 0; offset < maxOffset; offset++) {
       var targetItem = historyData[offset];
       if (!targetItem) continue;
 
-      var recentData = historyData.slice(offset + 1, offset + 7);
-      if (recentData.length < 5) continue;
-
-      var lastValues = [];
-      for (var i = 0; i < Math.min(5, recentData.length); i++) {
-        var val = config.extractValue(recentData[i]);
-        if (config.categories.indexOf(val) !== -1) {
-          lastValues.push(val);
-        } else {
-          lastValues.push(config.categories[0]);
-        }
-      }
-
       var predictedValue = '-';
       var confidence = 45;
 
-      if (lastValues.length >= 3) {
-        var scores = {};
-        config.categories.forEach(function(cat) { scores[cat] = 0; });
+      if (useTrendPredictor) {
+        // 新增路径：用实际推荐算法（_predictXxxTrend）+ 当时 10 期数据
+        var trendSequence = config.buildSequence(historyData, offset);
+        if (!trendSequence || trendSequence.length < 5) continue;
+        var trendResult = config.trendPredictor(trendSequence);
+        predictedValue = trendResult.prediction;
+        confidence = trendResult.confidence || 45;
+      } else {
+        // 原算法路径（完全保留，未做任何修改）
+        var recentData = historyData.slice(offset + 1, offset + 7);
+        if (recentData.length < 5) continue;
 
-        var last3 = lastValues.slice(0, 3);
-        var allSame3 = last3.every(function(v) { return v === last3[0]; });
-
-        if (allSame3) {
-          var others = config.categories.filter(function(c) { return c !== last3[0]; });
-          others.forEach(function(c) { scores[c] += config.weights.consecutive; });
-        } else if (last3[0] !== last3[1] && last3[1] !== last3[2]) {
-          scores[last3[0]] += config.weights.alternate;
-        }
-
-        var valueCount = {};
-        lastValues.forEach(function(v) { valueCount[v] = (valueCount[v] || 0) + 1; });
-
-        Object.keys(valueCount).forEach(function(val) {
-          if (valueCount[val] >= 3) {
-            var bonus = (valueCount[val] - 2) * 8;
-            var otherVals = config.categories.filter(function(c) { return c !== val; });
-            otherVals.forEach(function(c) { scores[c] += Math.max(5, bonus); });
+        var lastValues = [];
+        for (var i = 0; i < Math.min(5, recentData.length); i++) {
+          var val = config.extractValue(recentData[i]);
+          if (config.categories.indexOf(val) !== -1) {
+            lastValues.push(val);
+          } else {
+            lastValues.push(config.categories[0]);
           }
-        });
-
-        if (lastValues.length >= 4 && lastValues[2] === last3[0]) {
-          scores[last3[0]] += config.weights.repeat;
         }
 
-        if (last3[0] === last3[1]) {
-          scores[last3[0]] += config.weights.inertia;
-        }
+        if (lastValues.length >= 3) {
+          var scores = {};
+          config.categories.forEach(function(cat) { scores[cat] = 0; });
 
-        if (config.weights.statistical && config.categories.length === 2) {
-          var firstRatio = (valueCount[lastValues[0]] || 0) / lastValues.length;
-          if (firstRatio > 0.4 && firstRatio < 0.6) {
-            if (firstRatio > 0.5) {
-              scores[lastValues[0]] += config.weights.statistical;
-            } else {
-              var otherCat = config.categories.find(function(c) { return c !== lastValues[0]; });
-              if (otherCat) scores[otherCat] += config.weights.statistical;
+          var last3 = lastValues.slice(0, 3);
+          var allSame3 = last3.every(function(v) { return v === last3[0]; });
+
+          if (allSame3) {
+            var others = config.categories.filter(function(c) { return c !== last3[0]; });
+            others.forEach(function(c) { scores[c] += config.weights.consecutive; });
+          } else if (last3[0] !== last3[1] && last3[1] !== last3[2]) {
+            scores[last3[0]] += config.weights.alternate;
+          }
+
+          var valueCount = {};
+          lastValues.forEach(function(v) { valueCount[v] = (valueCount[v] || 0) + 1; });
+
+          Object.keys(valueCount).forEach(function(val) {
+            if (valueCount[val] >= 3) {
+              var bonus = (valueCount[val] - 2) * 8;
+              var otherVals = config.categories.filter(function(c) { return c !== val; });
+              otherVals.forEach(function(c) { scores[c] += Math.max(5, bonus); });
+            }
+          });
+
+          if (lastValues.length >= 4 && lastValues[2] === last3[0]) {
+            scores[last3[0]] += config.weights.repeat;
+          }
+
+          if (last3[0] === last3[1]) {
+            scores[last3[0]] += config.weights.inertia;
+          }
+
+          if (config.weights.statistical && config.categories.length === 2) {
+            var firstRatio = (valueCount[lastValues[0]] || 0) / lastValues.length;
+            if (firstRatio > 0.4 && firstRatio < 0.6) {
+              if (firstRatio > 0.5) {
+                scores[lastValues[0]] += config.weights.statistical;
+              } else {
+                var otherCat = config.categories.find(function(c) { return c !== lastValues[0]; });
+                if (otherCat) scores[otherCat] += config.weights.statistical;
+              }
             }
           }
-        }
 
-        var maxScore = -1;
-        var bestValue = '-';
-        Object.keys(scores).forEach(function(val) {
-          if (scores[val] > maxScore) {
-            maxScore = scores[val];
-            bestValue = val;
+          var maxScore = -1;
+          var bestValue = '-';
+          Object.keys(scores).forEach(function(val) {
+            if (scores[val] > maxScore) {
+              maxScore = scores[val];
+              bestValue = val;
+            }
+          });
+
+          if (maxScore > 0) {
+            predictedValue = bestValue;
+            confidence = Math.min(config.maxConfidence !== undefined ? config.maxConfidence : 72, (config.baseConfidence !== undefined ? config.baseConfidence : 42) + Math.round((maxScore / 50) * (config.confidenceRange !== undefined ? config.confidenceRange : 28)));
+          } else {
+            predictedValue = lastValues[0];
+            confidence = config.fallbackConfidence !== undefined ? config.fallbackConfidence : 40;
           }
-        });
-
-        if (maxScore > 0) {
-          predictedValue = bestValue;
-          confidence = Math.min(config.maxConfidence !== undefined ? config.maxConfidence : 72, (config.baseConfidence !== undefined ? config.baseConfidence : 42) + Math.round((maxScore / 50) * (config.confidenceRange !== undefined ? config.confidenceRange : 28)));
-        } else {
-          predictedValue = lastValues[0];
-          confidence = config.fallbackConfidence !== undefined ? config.fallbackConfidence : 40;
         }
       }
 
@@ -162,16 +178,31 @@ const ZodiacPredictionBacktest = {
       },
       fieldNames: { predicted: 'predictedSize', actual: 'actualSize' },
       weights: {
-        consecutive: 35,
-        alternate: 25,
+        consecutive: 20,
+        alternate: 0,
         repeat: 15,
-        inertia: 10,
-        statistical: 12
+        inertia: 12,
+        statistical: 0
       },
-      maxConfidence: 72,
-      baseConfidence: 48,
-      confidenceRange: 24,
-      fallbackConfidence: 45
+      maxConfidence: 70,
+      baseConfidence: 42,
+      confidenceRange: 28,
+      fallbackConfidence: 40,
+      // 2026-06-21 新增：与实际推荐算法一致（_predictSizeTrend）+ 当时 10 期数据
+      trendPredictor: function(sequence) {
+        return ZodiacPrediction._predictSizeTrend(sequence);
+      },
+      buildSequence: function(historyData, offset) {
+        return historyData.slice(offset + 1, offset + 11).map(function(item) {
+          var special = Utils.SpecialCalculator.getSpecial(item);
+          var isBig = special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1];
+          return {
+            expect: item.expect,
+            number: special.te,
+            size: isBig ? '大' : '小'
+          };
+        });
+      }
     });
   },
 
@@ -196,7 +227,21 @@ const ZodiacPredictionBacktest = {
       maxConfidence: 72,
       baseConfidence: 48,
       confidenceRange: 24,
-      fallbackConfidence: 45
+      fallbackConfidence: 45,
+      // 2026-06-21 新增：与实际推荐算法一致（_predictOddEvenTrend）+ 当时 10 期数据
+      trendPredictor: function(sequence) {
+        return ZodiacPrediction._predictOddEvenTrend(sequence);
+      },
+      buildSequence: function(historyData, offset) {
+        return historyData.slice(offset + 1, offset + 11).map(function(item) {
+          var special = Utils.SpecialCalculator.getSpecial(item);
+          return {
+            expect: item.expect,
+            number: special.te,
+            type: special.te % 2 !== 0 ? '单' : '双'
+          };
+        });
+      }
     });
   },
 
@@ -221,7 +266,21 @@ const ZodiacPredictionBacktest = {
       maxConfidence: 70,
       baseConfidence: 42,
       confidenceRange: 28,
-      fallbackConfidence: 40
+      fallbackConfidence: 40,
+      // 2026-06-21 新增：与实际推荐算法一致（_predictWuxingTrend）+ 当时 10 期数据
+      trendPredictor: function(sequence) {
+        return ZodiacPrediction._predictWuxingTrend(sequence);
+      },
+      buildSequence: function(historyData, offset) {
+        return historyData.slice(offset + 1, offset + 11).map(function(item) {
+          var special = Utils.SpecialCalculator.getSpecial(item);
+          return {
+            expect: item.expect,
+            number: special.te,
+            wuxing: special.wuxing || '金'
+          };
+        });
+      }
     });
   },
 
@@ -248,7 +307,23 @@ const ZodiacPredictionBacktest = {
       maxConfidence: 70,
       baseConfidence: 42,
       confidenceRange: 28,
-      fallbackConfidence: 40
+      fallbackConfidence: 40,
+      // 2026-06-21 新增：与实际推荐算法一致（_predictColorTrend）+ 当时 10 期数据
+      trendPredictor: function(sequence) {
+        return ZodiacPrediction._predictColorTrend(sequence);
+      },
+      buildSequence: function(historyData, offset) {
+        return historyData.slice(offset + 1, offset + 11).map(function(item) {
+          var special = Utils.SpecialCalculator.getSpecial(item);
+          var colorName = special.colorName || '红';
+          if (!['红', '蓝', '绿'].includes(colorName)) colorName = '红';
+          return {
+            expect: item.expect,
+            number: special.te,
+            color: colorName
+          };
+        });
+      }
     });
   },
 
