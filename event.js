@@ -316,8 +316,28 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
       else if(action === 'refreshHistory') Business.refreshHistory();
-      else if(action === 'syncAnalyze') Business.syncAnalyze();
-      else if(action === 'syncZodiacAnalyze') Business.syncZodiacAnalyze();
+      else if(action === 'syncAnalyze') {
+        // 2026-06-21 架构修复：业务层禁止 DOM 操作，由 event.js 读取 DOM value 后传入 domValues
+        const _customNumEl = document.getElementById('customNum');
+        const _analyzeSelectEl = document.getElementById('analyzeSelect');
+        Business.syncAnalyze({
+          custom: _customNumEl ? _customNumEl.value.trim() : '',
+          selectVal: _analyzeSelectEl ? _analyzeSelectEl.value : '12'
+        });
+      }
+      else if(action === 'syncZodiacAnalyze') {
+        // 2026-06-21 架构修复：业务层禁止 DOM 操作，由 event.js 读取 DOM value 后传入 domValues
+        const _zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
+        const _zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
+        const _numCountSelectEl = document.getElementById('numCountSelect');
+        const _customNumCountEl = document.getElementById('customNumCount');
+        Business.syncZodiacAnalyze({
+          customPeriod: _zodiacCustomNumEl ? _zodiacCustomNumEl.value.trim() : '',
+          selectPeriodVal: _zodiacAnalyzeSelectEl ? _zodiacAnalyzeSelectEl.value : '36',
+          countVal: _numCountSelectEl ? _numCountSelectEl.value : '5',
+          customCount: _customNumCountEl ? _customNumCountEl.value.trim() : ''
+        });
+      }
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
       else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();

@@ -53,6 +53,9 @@ const ZodiacPrediction = {
   /**
    * 兼容路径：_getSpecial 包装层已删除（2026-06-05 重构，统一使用 Utils.SpecialCalculator.getSpecial）
    * 原 _getSpecial: function(item) { return Utils.SpecialCalculator.getSpecial(item); }
-   * 已无任何调用方（5 个子模块 ~30 处调用已统一替换为 Utils.SpecialCalculator.getSpecial）
+   * 当前所有子模块（scores/stats/miss/tongji/zones）的 getSpecial 调用都已统一走 Utils.SpecialCalculator.getSpecial
+   * 部分高频函数（如 calcFrequencyRating/analyzeZonePatterns/runZoneBacktest/getLatest*Stats）已支持
+   *   预计算 specials 数组（precomputedSpecials 参数）以减少 LRU 缓存查询开销
+   *   详见 business-zodiac-zones.js runZoneBacktest / business-zodiac-stats.js getLatest*Stats
    */
 };

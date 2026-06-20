@@ -283,9 +283,8 @@ const Business = {
       Toast.show('暂未选择生肖');
       return;
     }
-    // 按12生肖固定顺序拼接（使用 CONFIG 共享常量，2026-06-09 重构）
-    const ordered = CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => selected.indexOf(z) !== -1);
-    const zodiacStr = ordered.join(' ');
+    // 2026-06-21 通用化：复用 Utils.formatZodiacList（按12生肖固定顺序拼接）
+    const zodiacStr = Utils.formatZodiacList(selected, ' ');
     Business.copyMainZodiacs(zodiacStr);
   },
 
@@ -307,8 +306,8 @@ const Business = {
         Toast.show('该生肖方案暂无已选生肖');
         return;
       }
-      const ordered = CONFIG.ANALYSIS.ZODIAC_ALL.filter(z => selected.indexOf(z) !== -1);
-      const zodiacStr = ordered.join(' ');
+      // 2026-06-21 通用化：复用 Utils.formatZodiacList
+      const zodiacStr = Utils.formatZodiacList(selected, ' ');
       Utils.copyToClipboard(zodiacStr, {
         successMsg: '复制成功',
         fallback: (text) => {
@@ -527,6 +526,25 @@ const Business = {
       .sort((a, b) => b.count - a.count);
 
     return { overlapNums, totalSchemes: savedFilters.length };
+  },
+
+  /**
+   * 按重叠次数分组号码（2026-06-21 架构修复）
+   * 从 view-overlap-modal.js 抽取到业务层，视图层只负责渲染
+   * @param {Array} overlapNums - calcOverlapNumbers() 返回的 overlapNums
+   * @returns {Object} { groupedNums: { [count]: Array }, sortedCounts: number[] }
+   */
+  groupOverlapNums: (overlapNums) => {
+    const groupedNums = {};
+    overlapNums.forEach(item => {
+      const count = item.count;
+      if (!groupedNums[count]) groupedNums[count] = [];
+      groupedNums[count].push(item);
+    });
+    const sortedCounts = Object.keys(groupedNums)
+      .map(Number)
+      .sort((a, b) => b - a);
+    return { groupedNums, sortedCounts };
   },
 
   // ====================== 导航相关（2026-06-13 拆分至 business/business-quick-nav.js）======================
@@ -814,7 +832,8 @@ const Business = {
    */
   renderLatest: (item) => {
     if(!item) return;
-    const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
+    // 2026-06-21 通用化：复用 Utils.parseCodeArr
+    const codeArr = Utils.parseCodeArr(item);
     const s = Utils.SpecialCalculator.getSpecial(item);
     const zodArr = s.fullZodArr;
 
@@ -856,7 +875,8 @@ const Business = {
     }
 
     const historyHtml = list.map(item => {
-      const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
+      // 2026-06-21 通用化：复用 Utils.parseCodeArr
+      const codeArr = Utils.parseCodeArr(item);
       const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
       const s = Utils.SpecialCalculator.getSpecial(item);
       const zodArr = s.fullZodArr;
@@ -1014,9 +1034,10 @@ const Business = {
     const hotTail = Object.entries(tail).sort((a, b) => b[1] - a[1])[0];
     const hotColor = Object.entries(color).sort((a, b) => b[1] - a[1])[0];
     const hotWx = Object.entries(wuxing).sort((a, b) => b[1] - a[1])[0];
-    const hotZod = Object.entries(zodiac).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => i[0]).join('、');
+    // 2026-06-21 通用化：复用 Utils.getTopN
+    const hotZod = Utils.getTopN(zodiac, 3, undefined, '、');
     const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
-    const hotNum = Object.entries(numCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(i => i[0]).join(' ');
+    const hotNum = Utils.getTopN(numCount, 5, undefined, ' ');
 
     return {
       total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
@@ -1065,7 +1086,7 @@ const Business = {
       _hotColor2: Business.getTopHot(Object.entries(data.color)),
       _hotWuxing2: Business.getTopHot(Object.entries(data.wuxing)),
       _hotAnimal: Business.getTopHot(Object.entries(data.animal)),
-      _hotZodiac2: Object.entries(data.zodiac).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5).map(function(i) { return i[0] + '(' + i[1] + ')'; }).join(' '),
+      _hotZodiac2: Utils.getTopN(data.zodiac, 5, function(i) { return i[0] + '(' + i[1] + ')'; }, ' '),
       hotNum: data.hotNum,
       missCur: data.miss.curMaxMiss, missAvg: data.miss.avgMiss, missMax: data.miss.maxMiss,
       missHot: data.miss.hot, missWarm: data.miss.warm, missCold: data.miss.cold,
@@ -1252,10 +1273,11 @@ const Business = {
     });
 
     // ========== 4. 提取热头/热尾/热色/热五行 TOP ==========
-    const topHeads   = Object.entries(headCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => Number(e[0]));
-    const topTails   = Object.entries(tailCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => Number(e[0]));
-    const topColors  = Object.entries(colorCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0]);
-    const topWuxing  = Object.entries(wuxingCount).sort((a, b) => b[1] - a[1]).slice(0, 2).map(e => e[0]);
+    // 2026-06-21 通用化：复用 Utils.getTopN（用空格分隔输出便于后续 Number 转换）
+    const topHeads   = Utils.getTopN(headCount, 2, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
+    const topTails   = Utils.getTopN(tailCount, 3, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
+    const topColors  = Utils.getTopN(colorCount, 2, undefined, ' ').split(' ').filter(Boolean);
+    const topWuxing  = Utils.getTopN(wuxingCount, 2, undefined, ' ').split(' ').filter(Boolean);
     const topFollowZodiacs = Array.isArray(followZodiacs) ? followZodiacs : [];
 
     // ========== 5. 1-49 号码 5 维加权打分 ==========
@@ -1790,13 +1812,19 @@ const Business = {
     var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
     ViewZodiacGiong.renderFrequencyRating(freqResult);
 
+    // 2026-06-21 性能优化：一次性预计算 recentSpecials（前 12 期），后续 4 个 stats 函数复用
+    // 节省 ~48 次 Utils.SpecialCalculator.getSpecial 调用（4 函数 × 12 期）
+    var recentSpecials = historyData.slice(0, 12).map(function(item) {
+      return Utils.SpecialCalculator.getSpecial(item);
+    });
+
     var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
     ViewZodiacGiong.renderLatestFollowStats(latestFollowStats);
 
-    var latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12);
-    var latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12);
-    var latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12);
-    var latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12);
+    var latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12, recentSpecials);
+    var latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12, recentSpecials);
+    var latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12, recentSpecials);
+    var latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12, recentSpecials);
 
     ViewZodiacGiong.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
 
@@ -1823,6 +1851,9 @@ const Business = {
     var zoneChangeP24 = ZodiacPrediction.calcZoneChangeTracking(historyData, 24);
     var zoneChangeP36 = ZodiacPrediction.calcZoneChangeTracking(historyData, 36);
     ViewZodiacGiong.renderZoneChangeTrackingMulti(zoneChangeP12, zoneChangeP24, zoneChangeP36);
+
+    // 2026-06-21 架构修复：用业务层标志代替 DOM 查询，避免业务层违规使用 document
+    Business._giongCardsRendered = true;
   },
 
   initUltimateAlgorithm: () => {
@@ -1875,8 +1906,8 @@ const Business = {
 
     // 渲染未推荐生肖卡片（直接从三个推荐源 DOM 中读取，不依赖业务层）
     // 兜底：若 v2 卡片尚未渲染（如用户直接进入终极 tab），先触发一次
-    var giongPanel = document.getElementById('giongRecommendPanel');
-    if (giongPanel && !giongPanel.querySelector('.zodiac-static-card')) {
+    // 2026-06-21 架构修复：用业务层 _giongCardsRendered 标志代替 DOM 查询
+    if (!Business._giongCardsRendered) {
       Business.initGiongTab();
     }
     ViewZodiacUltimate.renderUnrecommendedZodiacs(null);

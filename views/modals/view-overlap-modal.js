@@ -25,18 +25,8 @@ const ViewOverlapModal = {
       return;
     }
 
-    const groupedNums = {};
-    overlapData.overlapNums.forEach(item => {
-      const count = item.count;
-      if (!groupedNums[count]) {
-        groupedNums[count] = [];
-      }
-      groupedNums[count].push(item);
-    });
-
-    const sortedCounts = Object.keys(groupedNums)
-      .map(Number)
-      .sort((a, b) => b - a);
+    // 2026-06-21 架构修复：分组/排序逻辑抽到业务层（Business.groupOverlapNums）
+    const { groupedNums, sortedCounts } = Business.groupOverlapNums(overlapData.overlapNums);
 
     const modal = document.createElement('div');
     modal.id = 'overlapModal';
