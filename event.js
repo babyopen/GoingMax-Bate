@@ -192,6 +192,9 @@ const EventBinder = {
           Business.switchZodiacTab(tabName);
         } else if (page === 'profile') {
           EventBinder._switchProfileTab(tabName);
+        } else if (page === 'exclude') {
+          // v2.0.9 新增：主页面快捷导航里的"排除"按钮，切换到独立标签页 excludePage
+          Business.switchExcludePage();
         }
       }
       Business.toggleQuickNav(false);

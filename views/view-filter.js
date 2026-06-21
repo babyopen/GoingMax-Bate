@@ -24,7 +24,7 @@ const ViewFilter = {
       el.classList.toggle('active', i === index);
     });
 
-    var pages = ['filterPage', 'analysisPage', 'randomPage', 'profilePage'];
+    var pages = ['filterPage', 'analysisPage', 'randomPage', 'profilePage', 'excludePage'];
     pages.forEach(function(pageId, i) {
       var pageEl = document.getElementById(pageId);
       if(pageEl) {

@@ -573,6 +573,14 @@ const Business = {
   // ====================== 导航相关（2026-06-13 拆分至 business/business-quick-nav.js）======================
   switchBottomNav: (index) => BusinessQuickNav.handleBottomNavClick(index),
 
+  /**
+   * v2.0.9 新增：切换到排除页（独立标签页，入口在主页面快捷导航）
+   * 委托给视图层 ViewExclude.render 执行 DOM 操作（业务层禁止 DOM）
+   */
+  switchExcludePage: () => {
+    ViewExclude.render();
+  },
+
   // ============================================================
   // 新增：当前主页临时筛选状态持久化（2026-06-07）
   // 解决问题：主页筛选后切到后台，被系统杀掉进程或刷新页面后丢失未保存的筛选

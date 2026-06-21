@@ -24,7 +24,9 @@ const ViewQuickNav = {
       { id: 'mod-sum', label: '尾合', type: 'scroll' },
       { id: 'mod-bs', label: '大小', type: 'scroll' },
       { id: 'mod-num', label: '号码选择', type: 'scroll' },
-      { id: 'mod-exclude', label: '号码排除', type: 'scroll' }
+      { id: 'mod-exclude', label: '号码排除', type: 'scroll' },
+      // v2.0.9 新增：独立标签页入口（在主页面快捷导航，type='tab' 切换到独立 page）
+      { label: '排除', type: 'tab', page: 'exclude', tabName: '' }
     ],
     analysis: [
       { label: '历史记录', type: 'tab', page: 'analysis', tabName: 'history' },

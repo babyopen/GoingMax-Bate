@@ -777,6 +777,19 @@
   </div>
 </div>
 
+<!-- v2.0.9 新增：排除页（独立标签页，入口在主页面快捷导航） -->
+<!-- 内容暂时为空，后续在此页面内部扩展排除功能（号码排除 / 多维排除 / 智能排除） -->
+<div class="page" id="excludePage" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <h2>排除</h2>
+    </div>
+    <div class="card-body">
+      <p style="text-align:center;color:var(--text-secondary);padding:60px 20px;">功能即将上线</p>
+    </div>
+  </div>
+</div>
+
 <!-- 快捷导航 -->
 <div class="quick-nav collapsed" id="quickNav" role="navigation" aria-label="模块快捷导航">
   <div class="nav-tabs" id="navTabs" style="display:none" role="tablist">
@@ -903,6 +916,8 @@
 <script src="views/modals/view-batch-modal.js"></script>
 <script src="views/view-quick-nav.js"></script>
 <script src="views/modals/view-overlap-modal.js"></script>
+<!-- v2.0.9 新增：排除页视图（独立标签页） -->
+<script src="views/exclude/view-exclude.js"></script>
 <script src="views/analysis/view-analysis.js"></script>
 <!-- 分析页标签页子模块（2026-06-09 整理到 views/analysis/） -->
 <script src="views/analysis/view-analysis-history.js"></script>
