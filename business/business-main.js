@@ -1687,19 +1687,13 @@ const Business = {
     var historyData = state.analysis.historyData;
     if (!historyData || !historyData.length) {
       ViewZodiacPredict.renderBacktest(null);
-      ViewZodiacPredict.renderStrategyPanel(null);
       return;
     }
     ViewZodiacPredict.renderBacktestEmpty();
-    ViewZodiacPredict.renderStrategyPanel(null);
     // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
     _scheduleIdle(function() {
       var result = ZodiacPrediction.runBacktest(historyData);
       ViewZodiacPredict.renderBacktest(result);
-      if (result) {
-        var newTuned = ZodiacPrediction.analyzeBacktest(result);
-        ViewZodiacPredict.renderStrategyPanel(newTuned);
-      }
     });
   },
 
@@ -1734,10 +1728,13 @@ const Business = {
 
     var zodiacStats = ZodiacPrediction.calcZodiacTongJiStats(historyData);
     var numLevelStats = ZodiacPrediction.calcNumLevelStats(historyData);
+    // 2026-06-24 用户需求：每期"特码开出前"的等级分布
+    var preDrawStats = ZodiacPrediction.calcPreDrawLevelHistory(historyData);
     // 缓存 stats，供排序切换时重渲染（2026-06-20 用户需求：表头点击升序降序）
     var stats = {
       zodiac: zodiacStats,
-      numLevel: numLevelStats
+      numLevel: numLevelStats,
+      preDraw: preDrawStats
     };
     if (typeof ZodiacPrediction.setStats === 'function') {
       ZodiacPrediction.setStats(stats);

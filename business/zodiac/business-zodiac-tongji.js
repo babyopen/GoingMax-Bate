@@ -124,10 +124,18 @@ const ZodiacTongJi = {
   /**
    * 计算 1-49 号码的"冷热等级"分布
    * 等级阈值（基于"当前遗漏期数"，即距上次出现的期数）：
-   *   - 热  (0-14)   : 0 ≤ miss ≤ 14
-   *   - 温  (15-49)  : 15 ≤ miss ≤ 49
-   *   - 冷  (50-99)  : 50 ≤ miss ≤ 99
-   *   - 极冷(≥100)   : miss ≥ 100
+   *   - 极热  (0-15)   : 0 ≤ miss ≤ 15
+   *   - 热号  (16-25)  : 16 ≤ miss ≤ 25
+   *   - 温号  (26-35)  : 26 ≤ miss ≤ 35
+   *   - 温冷  (36-49)  : 36 ≤ miss ≤ 49
+   *   - 冷号  (50-99)  : 50 ≤ miss ≤ 99
+   *   - 极冷(≥100)    : miss ≥ 100
+   *
+   * 备注：
+   *   - miss=0 表示"最近一期刚开出"，理应归属"最热"区间；
+   *     用户原话"极热：1-15"以 1 为起点是描述遗漏≥1 的范围，
+   *     实际业务把 0 也归入极热（与"最近一期刚开=最热"语义一致），
+   *     不会丢数据。
    *
    * @param {Array} historyData - 历史数据数组（按 expect 倒序）
    * @returns {Object|null} 统计结果
@@ -170,12 +178,15 @@ const ZodiacTongJi = {
     }
 
     // 3) 等级配置（仅新增；不修改 CONFIG）
-    //    2026-06-20 用户需求更新：4 等级（热 / 温 / 冷 / 极冷）
+    //    2026-06-24 用户需求更新：6 等级（极热 / 热号 / 温号 / 温冷 / 冷号 / 极冷）
+    //    颜色按"温度"递进：红 → 橙 → 黄 → 青 → 蓝 → 紫
     var levelConfigs = [
-      { key: 'hot',    name: '热',     emoji: '🟢', range: [0, 14] },
-      { key: 'warm',   name: '温',     emoji: '🟡', range: [15, 49] },
-      { key: 'cold',   name: '冷',     emoji: '🟠', range: [50, 99] },
-      { key: 'deep',   name: '极冷',   emoji: '🔴', range: [100, Infinity] }
+      { key: 'superhot', name: '极热',   emoji: '🔴', range: [0, 15] },
+      { key: 'hot',      name: '热号',   emoji: '🟠', range: [16, 25] },
+      { key: 'warm',     name: '温号',   emoji: '🟡', range: [26, 35] },
+      { key: 'cool',     name: '温冷',   emoji: '🟢', range: [36, 49] },
+      { key: 'cold',     name: '冷号',   emoji: '🔵', range: [50, 99] },
+      { key: 'deep',     name: '极冷',   emoji: '🟣', range: [100, Infinity] }
     ];
 
     // 4) 分组
@@ -219,6 +230,148 @@ const ZodiacTongJi = {
       historyLength: total,
       levels: levels,
       totalMiss: totalMiss
+    };
+  },
+
+  /**
+   * 计算每期"特码开出前的等级位置"分布（2026-06-24 用户需求）
+   *
+   * 业务说明：
+   *   - 对 historyData 中每一期，看该期特码 te 在"它开出之前"遗漏了多少期，
+   *     再按 calcNumLevelStats 同样的 6 等级阈值，定位到该期特码在"开出前"
+   *     所属的等级区间。
+   *   - 倒序数据中 historyData[0] = 最新一期，idx 越大越旧。
+   *   - 对 historyData[i] 期特码 te：
+   *       * 找 te 在 i 之后（更旧）最近一次出现的位置 p（p > i 且最小）
+   *       * miss = p - i - 1
+   *         - p = i+1 → miss=0（紧挨着上一期刚开，归"极热"）
+   *         - p = i+20 → miss=19（隔了 19 期没开）
+   *       * 若 p 不存在（te 在 i 之后从未出现，即 i 是 te 出现过的最早位置
+   *         或 te 只在 i 出现过一次），miss = total - i - 1
+   *   - 例：2026174 期特码 41，在 2026174 期之前 41 已有约 19 期没开，
+   *     miss=19 → 按 6 等级归入"热号"（16-25）。
+   *
+   * @param {Array} historyData - 历史数据数组（按 expect 倒序，index 0 最新）
+   * @returns {Object|null}
+   *   {
+   *     total: Number,         // 参与统计的期数（≈ historyLength）
+   *     historyLength: Number, // 入参总期数
+   *     levels: [             // 按等级分组的统计
+   *       {
+   *         key, name, emoji,                 // 等级标识
+   *         count, percent,                   // 该等级次数 / 占比
+   *         avgMiss: Number,                  // 该等级在"开出前"的平均遗漏
+   *         records: [                        // 该等级下的明细（按期数倒序）
+   *           { expect, num, miss, level, levelName, levelEmoji }
+   *         ]
+   *       }
+   *     ],
+   *     records: [...]         // 全量明细（按期数倒序：index 0 为最新一期）
+   *   }
+   */
+  calcPreDrawLevelHistory: function(historyData) {
+    if (!historyData || historyData.length < 2) return null;
+
+    // 1) 复用 calcNumLevelStats 的同一套 6 等级阈值
+    //    单独定义，避免修改 CONFIG；与 calcNumLevelStats 保持完全一致
+    var levelConfigs = [
+      { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
+      { key: 'hot',      name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm',     name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool',     name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold',     name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep',     name: '极冷', emoji: '🟣', range: [100, Infinity] }
+    ];
+
+    // 工具：按 miss 找等级
+    function findLevelByMiss(miss) {
+      for (var li = 0; li < levelConfigs.length; li++) {
+        var cfg = levelConfigs[li];
+        if (miss >= cfg.range[0] && miss <= cfg.range[1]) return cfg;
+      }
+      return null;
+    }
+
+    var total = historyData.length;
+
+    // 2) 收集每个号码的所有出现位置（升序）
+    //    positionMap[num] = [idx0, idx1, ...]（idx 越小越旧）
+    var positionMap = {};
+    for (var n = 1; n <= 49; n++) positionMap[n] = [];
+    for (var i = 0; i < total; i++) {
+      var item = historyData[i];
+      var s = Utils.SpecialCalculator.getSpecial(item);
+      var te = s && s.te;
+      if (te && te >= 1 && te <= 49) positionMap[te].push(i);
+    }
+    for (var n2 = 1; n2 <= 49; n2++) {
+      positionMap[n2].sort(function(a, b) { return a - b; });
+    }
+
+    // 3) 遍历每一期，计算"该期特码在开出前的遗漏"
+    //    - 找 p = min{ positions[k] | positions[k] > i }  （i 之后最近一次出现）
+    //    - miss = p - i - 1
+    //    - 若 p 不存在（i 是该号码出现过的最早位置，或之后没出现过）：
+    //        miss = total - i - 1
+    var records = [];
+    for (var i3 = 0; i3 < total; i3++) {
+      var item3 = historyData[i3];
+      var s3 = Utils.SpecialCalculator.getSpecial(item3);
+      var te3 = s3 && s3.te;
+      if (!te3 || te3 < 1 || te3 > 49) continue;
+
+      var positions = positionMap[te3];
+      var p = -1;
+      for (var k = 0; k < positions.length; k++) {
+        if (positions[k] > i3) {
+          p = positions[k];
+          break;
+        }
+      }
+      var miss = p === -1 ? (total - i3 - 1) : (p - i3 - 1);
+
+      var lv = findLevelByMiss(miss);
+      records.push({
+        expect: item3.expect,
+        num: te3,
+        miss: miss,
+        level: lv ? lv.key : 'unknown',
+        levelName: lv ? lv.name : '未知',
+        levelEmoji: lv ? lv.emoji : '❓'
+      });
+    }
+
+    // 4) 按等级分组统计
+    var levelStats = levelConfigs.map(function(cfg) {
+      var matched = [];
+      var sumMiss = 0;
+      for (var ri = 0; ri < records.length; ri++) {
+        if (records[ri].level === cfg.key) {
+          matched.push(records[ri]);
+          sumMiss += records[ri].miss;
+        }
+      }
+      var avgMiss = matched.length > 0
+        ? Math.round((sumMiss / matched.length) * 10) / 10
+        : 0;
+      return {
+        key: cfg.key,
+        name: cfg.name,
+        emoji: cfg.emoji,
+        count: matched.length,
+        percent: records.length > 0
+          ? Math.round((matched.length / records.length) * 1000) / 10
+          : 0,
+        avgMiss: avgMiss,
+        records: matched
+      };
+    });
+
+    return {
+      total: records.length,
+      historyLength: total,
+      levels: levelStats,
+      records: records
     };
   }
 };

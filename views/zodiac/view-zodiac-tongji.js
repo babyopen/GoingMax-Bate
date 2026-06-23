@@ -50,6 +50,7 @@ const ViewZodiacTongJi = {
       '<div class="card-body">' +
         ViewZodiacTongJi._renderZodiacTable(stats.zodiac, sort) +
         ViewZodiacTongJi._renderNumLevelTable(stats.numLevel) +
+        ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw) +
       '</div>';
 
     panel.appendChild(card);
@@ -63,7 +64,8 @@ const ViewZodiacTongJi = {
     if (!body) return;
     body.innerHTML =
       ViewZodiacTongJi._renderZodiacTable(stats.zodiac, sort) +
-      ViewZodiacTongJi._renderNumLevelTable(stats.numLevel);
+      ViewZodiacTongJi._renderNumLevelTable(stats.numLevel) +
+      ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw);
   },
 
   /**
@@ -189,8 +191,8 @@ const ViewZodiacTongJi = {
       var levelCls = 'tj-level-' + lv.key;
 
       // 主行：等级 / 区间 / 号码数 / 占比
-      //   - 用 inline style 在最左侧加 3px 等级色条（避免给 td 加 class）
-      //   - lv.key 已被 CSS 选择器覆盖（.tj-level-hot / warm / cold / deep）
+      //   - lv.key 已被 CSS 选择器覆盖（.tj-level-superhot / hot / warm / cool / cold / deep）
+      //   2026-06-24 用户需求：6 等级（极热 / 热号 / 温号 / 温冷 / 冷号 / 极冷）
       html += '<tr class="tj-row-main ' + levelCls + '">';
       html += '<td class="tj-td-level"><span class="tj-level-tag ' + levelCls + '">' +
         lv.emoji + ' ' + lv.name +
@@ -222,6 +224,79 @@ const ViewZodiacTongJi = {
 
     html += '<div class="tj-level-footer">';
     html += '基于最近 ' + (numStats.historyLength || 0) + ' 期数据（共 ' + numStats.total + ' 个号码）';
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+  },
+
+  /**
+   * 渲染"特码开出前的等级位置"区块（2026-06-24 用户需求）
+   *   - 上半：6 等级次数 / 占比 / 平均遗漏（复用 .tj-level-table 视觉）
+   *   - 下半：最近 20 期明细（期号 / 特码 / 箭头 / 等级 tag / 漏 N 期）
+   *
+   * 依赖业务层：stats.preDraw 由 ZodiacTongJi.calcPreDrawLevelHistory 计算
+   */
+  _renderPreDrawLevelTable: function(preStats) {
+    var html = '';
+    html += '<div class="tj-section">';
+    html += '<div class="tj-section-title">特码开出前等级分布</div>';
+
+    if (!preStats || !preStats.levels || !preStats.levels.length) {
+      html += '<div class="empty-tip">数据不足</div>';
+      html += '</div>';
+      return html;
+    }
+
+    // 上半：等级分布表（复用 .tj-level-table 视觉，6 行）
+    html += '<div class="tj-level-table-wrap">';
+    html += '<table class="tj-level-table">';
+    html += '<thead><tr>';
+    html += '<th class="tj-th-level">等级</th>';
+    html += '<th class="tj-th-num">次数</th>';
+    html += '<th class="tj-th-num">占比</th>';
+    html += '<th class="tj-th-num">平均遗漏</th>';
+    html += '</tr></thead>';
+    html += '<tbody>';
+
+    preStats.levels.forEach(function(lv) {
+      var levelCls = 'tj-level-' + lv.key;
+      // 平均遗漏 0 时展示 0，不展示 -
+      var avgMissText = lv.count > 0 ? lv.avgMiss : '—';
+      html += '<tr class="tj-row-main ' + levelCls + '">';
+      html += '<td class="tj-td-level"><span class="tj-level-tag ' + levelCls + '">' +
+        lv.emoji + ' ' + lv.name +
+        '</span></td>';
+      html += '<td class="tj-td-num">' + lv.count + '</td>';
+      html += '<td class="tj-td-num">' + lv.percent + '%</td>';
+      html += '<td class="tj-td-num">' + avgMissText + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    html += '</div>';
+
+    // 下半：最近 N 期明细（默认 20 期）
+    var recentN = 20;
+    var recent = (preStats.records || []).slice(0, recentN);
+
+    html += '<div class="tj-predraw-recent-title">最近 ' + recent.length + ' 期明细</div>';
+    html += '<div class="tj-predraw-recent-list">';
+    recent.forEach(function(r) {
+      var levelCls = 'tj-level-' + r.level;
+      var numStr = r.num < 10 ? '0' + r.num : '' + r.num;
+      html += '<div class="tj-predraw-item">';
+      html += '<span class="tj-predraw-expect">' + r.expect + '</span>';
+      html += '<span class="tj-predraw-num">' + numStr + '</span>';
+      html += '<span class="tj-predraw-arrow">←</span>';
+      html += '<span class="tj-level-tag ' + levelCls + '">' + r.levelEmoji + ' ' + r.levelName + '</span>';
+      html += '<span class="tj-predraw-miss">漏 ' + r.miss + ' 期</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tj-level-footer">';
+    html += '基于最近 ' + preStats.historyLength + ' 期数据（共 ' + preStats.total + ' 条记录）';
     html += '</div>';
 
     html += '</div>';
