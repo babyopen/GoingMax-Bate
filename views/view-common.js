@@ -585,8 +585,9 @@ const ViewCommon = {
     html += '<div style="display:flex;flex-direction:column;gap:6px;">';
 
     (bd.details || []).forEach(function(item) {
-      var hitBg = item.isHit ? hl + '1f' : 'rgba(255,69,58,0.12)';
-      var hitColor = item.isHit ? hl : '#FF453A';
+      // 2026-06-23 优化：预测正确固定显示蓝色（#3B82F6），与 highlightColor 主题色区分
+      var hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
+      var hitColor = item.isHit ? '#3B82F6' : '#FF453A';
       var hitIcon = item.isHit ? '✓' : '✗';
       var fmtVal = config.formatValue ? config.formatValue(item) : { pred: item.predicted, actual: item.actual };
 
