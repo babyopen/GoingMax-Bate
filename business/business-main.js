@@ -1811,16 +1811,19 @@ const Business = {
     var crossResult = BusinessCrossExclusion.collectAllRecommend(historyData);
 
     // 调用滑动窗口预测算法（传入完整 crossResult）
-    var result = BusinessSlidingWindow.predict(historyData, { crossResult: crossResult });
+    var result = BusinessSlidingWindow._predictWithLRU(historyData, { crossResult: crossResult });
     ViewZodiacMain.renderSlidingWindowPrediction(result, cacheTimestamp, ageHours);
 
     // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
-    var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
+    // 2026-06-23 V1.4.5 优化：使用带缓存的 enhanced 入口（含 signal 维度统计）
+    var backtestCached = BusinessSlidingWindowHistory.runBacktestEnrichedWithCache(historyData, 30);
+    var backtestRecords = backtestCached.records;
+    var signalStats = backtestCached.signalStats || [];
     var pendingPrediction = {
       nextExpect: result.nextExpect,
       candidates: result.candidates
     };
-    ViewSlidingWindowHistory.render(backtestRecords, pendingPrediction);
+    ViewSlidingWindowHistory.render(backtestRecords, pendingPrediction, signalStats);
   },
 
   initGiongTab: () => {
