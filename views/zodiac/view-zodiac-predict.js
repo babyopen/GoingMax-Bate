@@ -179,6 +179,57 @@ const ViewZodiacPredict = {
     container.innerHTML = '<div class="empty-tip">运行中…</div>';
   },
 
+  renderStrategyPanel: function(tuned) {
+    var panel = document.getElementById('zodiacStrategyPanel');
+    if (!panel) return;
+
+    if (!tuned) {
+      panel.innerHTML = '';
+      return;
+    }
+
+    var strategyClass;
+    if (tuned.strategy === '强追热') strategyClass = 'strategy-hot';
+    else if (tuned.strategy === '追冷搏反弹') strategyClass = 'strategy-cold';
+    else strategyClass = 'strategy-balanced';
+
+    var dims = [
+      { key: 'base', label: '热度', max: 30 },
+      { key: 'shape', label: '形态', max: 20 },
+      { key: 'interval', label: '间隔', max: 20 },
+      { key: 'trend', label: '趋势', max: 15 },
+      { key: 'momentum', label: '动量', max: 15 }
+    ];
+
+    var html = '<div class="strategy-panel">';
+    html += '<div class="strategy-panel-title">动态策略调整</div>';
+    html += '<div class="strategy-mode-row">';
+    html += '<span class="strategy-mode-label">当前模式：</span>';
+    html += '<span class="strategy-mode-value ' + strategyClass + '">' + tuned.strategy + '</span>';
+    html += '</div>';
+    html += '<div class="strategy-heat-row">';
+    html += '<span>热号命中 ' + tuned.hotHitRatio + '%</span>';
+    html += '<span>冷号命中 ' + tuned.coldHitRatio + '%</span>';
+    html += '</div>';
+    html += '<div class="strategy-weights">';
+    html += '<div class="strategy-weights-title">维度权重（基于回测优化）</div>';
+    html += '<div class="strategy-weight-bars">';
+    dims.forEach(function(d) {
+      var pct = tuned.dimensionEff[d.key] || 0;
+      var w = tuned.detail[d.key] || 0;
+      var barClass = pct >= 80 ? 'bar-high' : (pct >= 50 ? 'bar-mid' : 'bar-low');
+      html += '<div class="strategy-weight-item">';
+      html += '<div class="strategy-weight-header"><span>' + d.label + '</span><span>' + w + '%</span></div>';
+      html += '<div class="strategy-weight-track"><div class="strategy-weight-fill ' + barClass + '" style="width:' + pct + '%"></div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    panel.innerHTML = html;
+  },
+
   /**
    * 切换顶 6 名 / 后 6 名子面板
    */

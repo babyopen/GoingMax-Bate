@@ -713,5 +713,43 @@ const ViewCommon = {
     }
 
     return html;
+  },
+
+  // ============================================================
+  // 卡片 rank class 选择器（2026-06-24 新增）
+  // 替代 view-zodiac-predict.js / view-zodiac-giong.js / view-zodiac-main.js /
+  //         view-zodiac-ultimate.js 中 5 处 if-else 链 / 三元嵌套
+  // ============================================================
+
+  /**
+   * 根据排名数字返回对应的卡片样式 class
+   * 抽取原因：5 个视图文件中存在完全相同的判断逻辑
+   *   - view-zodiac-predict.js:41-44（4 行 if-else 链）
+   *   - view-zodiac-giong.js:180-183（4 行 if-else 链）
+   *   - view-zodiac-main.js:75-78（4 行 if-else 链）
+   *   - view-zodiac-ultimate.js:84（三元嵌套）
+   *   - view-zodiac-ultimate.js:121（三元嵌套）
+   *
+   * CSS 对应（在 css/card.css 中定义）：
+   *   - card-rank-1：金（第 1 名）
+   *   - card-rank-2：银（第 2 名）
+   *   - card-rank-3：铜（第 3 名）
+   *   - card-rank-other：普通（第 4 名及以后）
+   *
+   * @param {number} rankNum - 排名数字（1-based）
+   * @returns {string} CSS class 名
+   *
+   * @example
+   *   ViewCommon.getRankCardClass(1);  // 'card-rank-1'
+   *   ViewCommon.getRankCardClass(2);  // 'card-rank-2'
+   *   ViewCommon.getRankCardClass(3);  // 'card-rank-3'
+   *   ViewCommon.getRankCardClass(4);  // 'card-rank-other'
+   *   ViewCommon.getRankCardClass(0);  // 'card-rank-other'（兜底）
+   */
+  getRankCardClass: function(rankNum) {
+    if (rankNum === 1) return 'card-rank-1';
+    if (rankNum === 2) return 'card-rank-2';
+    if (rankNum === 3) return 'card-rank-3';
+    return 'card-rank-other';
   }
 };

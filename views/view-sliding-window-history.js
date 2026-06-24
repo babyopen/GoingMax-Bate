@@ -15,9 +15,8 @@ const ViewSlidingWindowHistory = {
    * 主渲染入口（仅回测追踪）
    * @param {Array} backtestRecords - 回测记录列表
    * @param {Object} [pendingPrediction] - 当前预测（未开奖），{ nextExpect, candidates }
-   * @param {Array} [signalStats] - 2026-06-23 新增：按 signal 维度统计的命中率
    */
-  render: function(backtestRecords, pendingPrediction, signalStats) {
+  render: function(backtestRecords, pendingPrediction) {
     var listCard = document.getElementById('mainHistoryListCard');
     if (!listCard) return;
 
@@ -29,7 +28,7 @@ const ViewSlidingWindowHistory = {
 
     // 动态注入回测追踪区块（在 cardBody 末尾）
     this._ensureBacktestContainer();
-    this._renderBacktestSection(backtestRecords, pendingPrediction, signalStats);
+    this._renderBacktestSection(backtestRecords, pendingPrediction);
   },
 
   /**
@@ -64,7 +63,6 @@ const ViewSlidingWindowHistory = {
    *   .sw-backtest-divider      分隔线
    *   .sw-backtest-title         "回测追踪（最近30期）" + 说明
    *   #mainBacktestStats         回测统计面板（命中率等）
-   *   #mainBacktestSignalStats   2026-06-23 新增：按 signal 维度统计表
    *   #mainBacktestList          回测记录列表
    * @private
    */
@@ -89,7 +87,6 @@ const ViewSlidingWindowHistory = {
         '</button>' +
       '</div>' +
       '<div id="mainBacktestStats" class="sw-backtest-content"></div>' +
-      '<div id="mainBacktestSignalStats" class="sw-backtest-content"></div>' +
       '<div id="mainBacktestList" class="sw-backtest-content"></div>';
     cardBody.appendChild(section);
   },
@@ -97,19 +94,15 @@ const ViewSlidingWindowHistory = {
   /**
    * 渲染回测追踪区块（统计 + 列表）
    * @param {Array} [backtestRecords] - 回测记录列表
-   * @param {Object} [pendingPrediction] - 当前预测（未开奖）
-   * @param {Array} [signalStats] - 2026-06-23 新增：按 signal 维度统计
    * @private
    */
-  _renderBacktestSection: function(backtestRecords, pendingPrediction, signalStats) {
+  _renderBacktestSection: function(backtestRecords, pendingPrediction) {
     if (!Array.isArray(backtestRecords) || !backtestRecords.length) {
       this._renderBacktestEmpty();
       return;
     }
     var stats = BusinessSlidingWindowHistory.computeBacktestStats(backtestRecords);
     this._renderBacktestStats(stats);
-    // 2026-06-23 新增：渲染按 signal 维度统计的命中率
-    this._renderSignalStats(signalStats);
     this._renderBacktestList(backtestRecords, pendingPrediction);
   },
 
@@ -177,93 +170,6 @@ const ViewSlidingWindowHistory = {
     }
 
     container.innerHTML = html;
-  },
-
-  /**
-   * 渲染按 signal 维度统计的命中率（2026-06-23 新增）
-   * 输入数据由 BusinessSlidingWindowHistory.computeSignalStats 产出：
-   *   [{ signal, total, hit, miss, hitRate, rank1Hit, rank2Hit, rank3Hit, top3HitRate }, ...]
-   * 默认显示前 10 个（按 hitRate 降序，业务层已排序）
-   *
-   * @param {Array} [signalStats] - signal 维度统计数组
-   * @private
-   */
-  _renderSignalStats: function(signalStats) {
-    var container = document.getElementById('mainBacktestSignalStats');
-    if (!container) return;
-    if (!Array.isArray(signalStats) || signalStats.length === 0) {
-      container.innerHTML = '';
-      return;
-    }
-    var MAX_ROWS = 10;
-    var top = signalStats.slice(0, MAX_ROWS);
-    var parts = [];
-    parts.push(this._buildSignalTitleHtml(signalStats.length, top.length));
-    parts.push(this._buildSignalHeaderHtml());
-    for (var i = 0; i < top.length; i++) {
-      parts.push(this._buildSignalRowHtml(top[i]));
-    }
-    container.innerHTML = parts.join('');
-  },
-
-  /**
-   * 渲染 signal 表格标题
-   * @private
-   */
-  _buildSignalTitleHtml: function(totalCount, displayedCount) {
-    var sub = displayedCount < totalCount
-      ? '（前 ' + displayedCount + ' / 共 ' + totalCount + '）'
-      : '（共 ' + totalCount + '）';
-    return '<div style="font-size:13px;font-weight:600;color:var(--primary-text);margin:14px 0 6px;">' +
-      '信号命中率排名' +
-      '<span style="font-size:11px;font-weight:400;color:var(--sub-text);margin-left:6px;">' + sub + '</span>' +
-      '</div>';
-  },
-
-  /**
-   * 渲染 signal 表格表头
-   * @private
-   */
-  _buildSignalHeaderHtml: function() {
-    return '<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:11px;color:var(--sub-text);">' +
-      '<span style="flex:1;">信号</span>' +
-      '<span style="width:42px;text-align:right;">样本</span>' +
-      '<span style="width:42px;text-align:right;">命中</span>' +
-      '<span style="width:54px;text-align:right;">命中率</span>' +
-      '<span style="width:54px;text-align:right;">top3</span>' +
-      '</div>';
-  },
-
-  /**
-   * 渲染 signal 表格单行
-   * @private
-   */
-  _buildSignalRowHtml: function(item) {
-    var hitRate = item.hitRate || 0;
-    var top3Rate = item.top3HitRate || 0;
-    // 样本量 < 3 视为"样本不足"，颜色降级为灰
-    var lowSample = item.total < 3;
-    var rateColor = lowSample ? 'color:var(--sub-text);' : this._getHitRateColor(hitRate);
-    var top3Color = lowSample ? 'color:var(--sub-text);' : this._getHitRateColor(top3Rate);
-    return '<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">' +
-      '<span style="flex:1;color:var(--primary-text);" title="' + item.signal + '">' + item.signal + '</span>' +
-      '<span style="width:42px;text-align:right;color:var(--sub-text);">' + item.total + '</span>' +
-      '<span style="width:42px;text-align:right;color:var(--sub-text);">' + item.hit + '</span>' +
-      '<span style="width:54px;text-align:right;font-weight:600;' + rateColor + '">' + hitRate + '%</span>' +
-      '<span style="width:54px;text-align:right;font-weight:600;' + top3Color + '">' + top3Rate + '%</span>' +
-      '</div>';
-  },
-
-  /**
-   * 命中率数字 → 颜色（视图层辅助方法，不算业务计算）
-   * @param {number} rate - 命中率（0-100）
-   * @returns {string} 内联 style 片段
-   * @private
-   */
-  _getHitRateColor: function(rate) {
-    if (rate >= 50) return 'color:#30D158;';           // 绿：强势信号
-    if (rate >= 30) return 'color:#FF9F0A;';           // 黄：中等信号
-    return 'color:#FF453A;';                           // 红：弱信号
   },
 
   /**
@@ -359,12 +265,10 @@ const ViewSlidingWindowHistory = {
    */
   _renderBacktestEmpty: function() {
     var statsEl = document.getElementById('mainBacktestStats');
-    var signalEl = document.getElementById('mainBacktestSignalStats');
     var listEl = document.getElementById('mainBacktestList');
     var sectionEl = document.getElementById('mainBacktestSection');
     if (!sectionEl) return;
     if (statsEl) statsEl.innerHTML = '<div class="empty-tip" style="font-size:12px;color:var(--sub-text);">数据不足12期，无法回测</div>';
-    if (signalEl) signalEl.innerHTML = '';
     if (listEl) listEl.innerHTML = '';
   }
 };

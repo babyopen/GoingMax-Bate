@@ -122,10 +122,47 @@ const Business = {
     const success = Storage.saveFilter(filterItem);
     if(!success) return;
     Render.renderFilterList();
+    // 2026-06-25 修复：保存方案时同步到当前激活分组的快照，避免刷新页面后被
+    //   applyGroupSnapshot(target) 覆盖为分组内旧快照导致方案"消失"。
+    //   之前实现仅写入全局 SAVED_FILTERS，分组快照从不感知 savedFilters 变化。
+    Business._syncFilterToActiveGroup(filterItem);
     if(filterName !== rawName){
       Toast.show(`${toastPrefix}（重名自动调整为：${filterName}）`);
     } else {
       Toast.show(toastPrefix);
+    }
+  },
+
+  /**
+   * 同步当前保存的方案到激活分组的快照（2026-06-25 新增）
+   * 解决问题：用户保存方案后，刷新页面时被 FilterGroup.applyGroupSnapshot
+   *   覆盖回分组创建时的旧快照，导致新保存的方案"消失"。
+   * 设计原则：
+   *   - 仅在 currentGroupId 存在时生效（未启用分组场景无副作用）
+   *   - 在副本上修改再 setState，避免直接污染 s.filterGroups（防御性编程）
+   *   - 调用 FilterGroup._persistGroups() 持久化到 localStorage
+   * @param {Object} filterItem - 已保存的方案对象
+   */
+  _syncFilterToActiveGroup: (filterItem) => {
+    try {
+      const s = StateManager._state;
+      if(!s.currentGroupId) return; // 未启用分组，无须同步
+      const list = (s.filterGroups || []).slice();
+      const idx = list.findIndex(g => g && g.id === s.currentGroupId);
+      if(idx < 0) return;
+      // 在副本上修改，避免直接污染 s.filterGroups
+      const existed = Array.isArray(list[idx].savedFilters) ? list[idx].savedFilters : [];
+      list[idx] = Object.assign({}, list[idx], {
+        savedFilters: [Utils.deepClone(filterItem)].concat(existed)
+      });
+      StateManager.setState({ filterGroups: list }, false);
+      // 委托 FilterGroup 持久化（保持分层：业务层 FilterGroup 拥有分组存储细节）
+      if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup._persistGroups === 'function'){
+        Business.FilterGroup._persistGroups();
+      }
+    } catch(e) {
+      // 仅记录错误，不影响主流程（保存方案已经成功）
+      try { console.error('[Business._syncFilterToActiveGroup] 同步方案到分组失败:', e); } catch(_) {}
     }
   },
 
@@ -288,7 +325,7 @@ const Business = {
    */
   copyMainZodiacs: (zodiacStr) => {
     if(!zodiacStr) return;
-    Utils.copyToClipboard(zodiacStr, {
+    CommonPlatform.copyToClipboard(zodiacStr, {
       fallback: (text) => {
         GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', text, () => {});
       }
@@ -331,7 +368,7 @@ const Business = {
       }
       // 2026-06-21 通用化：复用 Utils.formatZodiacList
       const zodiacStr = Utils.formatZodiacList(selected, ' ');
-      Utils.copyToClipboard(zodiacStr, {
+      CommonPlatform.copyToClipboard(zodiacStr, {
         successMsg: '复制成功',
         fallback: (text) => {
           GIONGBETA_INPUT_MODAL.show('复制生肖', '点击选中并复制', text, () => {});
@@ -356,7 +393,7 @@ const Business = {
     }
 
     const numStr = list.map(n => n.s).join(' ');
-    Utils.copyToClipboard(numStr, {
+    CommonPlatform.copyToClipboard(numStr, {
       successMsg: '复制成功',
       fallback: (text) => {
         GIONGBETA_INPUT_MODAL.show('复制号码', '点击选中并复制', text, () => {});
@@ -587,44 +624,43 @@ const Business = {
   // ============================================================
   /**
    * 初始化筛选状态持久化
-   *   1) 启动时从 localStorage 恢复（仅在内存 state 全空时生效，避免覆盖已加载的状态）
+   *   1) 启动时从 localStorage 恢复（覆盖任何 applyGroupSnapshot 写入的分组旧快照）
    *   2) 注册 setState 钩子：所有状态变更节流（500ms）写入 localStorage
    *   3) 注册 pagehide / visibilitychange 兜底：iOS WebView 切后台时立即 flush
+   *
+   * 2026-06-25 修复：移除 hasAnyState 闸门
+   *   原实现"仅在 state 全空时恢复"会在有分组场景失效——
+   *   applyGroupSnapshot 在 initFilterPersistence 之前用分组的"创建/上次切换时"快照
+   *   覆盖 state.selected，导致 hasAnyState=true，闸门常闭，currentFilter 永远不被恢复。
+   *   修复后：只要 currentFilter 存在就恢复（currentFilter 总是反映 StateManager._state
+   *   的最新值，且 setState 钩子保证 500ms 内写入磁盘），保证用户最新筛选状态优先。
    */
   initFilterPersistence: () => {
-    // 1) 启动恢复：仅当 state 全空时从缓存恢复
+    // 1) 启动恢复：只要 currentFilter 存在就恢复（覆盖 applyGroupSnapshot 的旧快照）
     const cache = Storage.loadCurrentFilter();
     if(cache){
       const s = StateManager._state;
-      const hasAnyState =
-        Object.values(s.selected || {}).some(arr => Array.isArray(arr) && arr.length > 0) ||
-        (Array.isArray(s.excluded) && s.excluded.length > 0) ||
-        Object.values(s.locked || {}).some(arr => Array.isArray(arr) && arr.length > 0) ||
-        Object.values(s.marked || {}).some(obj => obj && typeof obj === 'object' && Object.keys(obj).length > 0);
-
-      if(!hasAnyState){
-        // 合并：以默认结构为底，覆盖缓存字段
-        const restored = {
-          selected: { ...s.selected, ...cache.selected },
-          excluded: cache.excluded,
-          locked: cache.locked,
-          marked: cache.marked,
-          markCount: cache.markCount,
-          excludeHistory: cache.excludeHistory,
-          lockExclude: cache.lockExclude,
-          showAllFilters: cache.showAllFilters
-        };
-        // 使用 needRender=false 避免初始化期重复渲染（Render.renderAll 会在 initApp 末尾被调用）
-        StateManager.setState(restored, false);
-        // 同步排除锁定复选框
-        if(typeof DOM !== 'undefined' && DOM.lockExclude){
-          DOM.lockExclude.checked = !!cache.lockExclude;
-        }
+      // 合并：以默认结构为底，覆盖缓存字段
+      const restored = {
+        selected: { ...s.selected, ...cache.selected },
+        excluded: cache.excluded,
+        locked: cache.locked,
+        marked: cache.marked,
+        markCount: cache.markCount,
+        excludeHistory: cache.excludeHistory,
+        lockExclude: cache.lockExclude,
+        showAllFilters: cache.showAllFilters
+      };
+      // 使用 needRender=false 避免初始化期重复渲染（Render.renderAll 会在 initApp 末尾被调用）
+      StateManager.setState(restored, false);
+      // 同步排除锁定复选框
+      if(typeof DOM !== 'undefined' && DOM.lockExclude){
+        DOM.lockExclude.checked = !!cache.lockExclude;
       }
     }
 
     // 2) 注册节流持久化钩子（500ms 合并连续点击）
-    const persistDebounced = Utils.debounce(() => {
+    const persistDebounced = CommonCache.debounce(() => {
       const s = StateManager._state;
       Storage.saveCurrentFilter({
         selected: s.selected,
@@ -667,7 +703,8 @@ const Business = {
    */
   loadHistoryCache: () => {
     const cache = Storage.getHistoryCache();
-    const currentLatestExpect = StateManager._state.analysis.historyData.length ? Number(StateManager._state.analysis.historyData[0].expect || 0) : 0;
+    const currentHistoryData = BusinessCommonData.getHistoryData(StateManager._state);
+    const currentLatestExpect = currentHistoryData.length ? Number(currentHistoryData[0].expect || 0) : 0;
     const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
 
     if(cache && cache.data && cache.data.length > 0 && cacheLatestExpect > currentLatestExpect) {
@@ -690,7 +727,7 @@ const Business = {
         Business.initTongJiTab();
       }
       ViewAnalysis.updateLoadMoreBtn(
-        StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
+        BusinessCommonData.getHistoryData(StateManager._state).length > StateManager._state.analysis.showCount
       );
     }
   },
@@ -701,7 +738,7 @@ const Business = {
   initAnalysisPage: () => {
     Business.loadHistoryCache();
     const state = StateManager._state;
-    if(state.analysis.historyData.length === 0) {
+    if(BusinessCommonData.getHistoryData(state).length === 0) {
       Business.refreshHistory();
     }
     Business.startCountdown();
@@ -716,7 +753,8 @@ const Business = {
     const state = StateManager._state;
     const cache = Storage.getHistoryCache();
     const cacheLatestExpect = cache && cache.data && cache.data.length ? Number(cache.data[0].expect || 0) : 0;
-    const currentLatestExpect = state.analysis.historyData.length ? Number(state.analysis.historyData[0].expect || 0) : 0;
+    const currentHistoryData = BusinessCommonData.getHistoryData(state);
+    const currentLatestExpect = currentHistoryData.length ? Number(currentHistoryData[0].expect || 0) : 0;
 
     if(!silentUpdate) ViewAnalysis.showHistoryLoading();
 
@@ -808,7 +846,7 @@ const Business = {
     }
 
     ViewAnalysis.updateLoadMoreBtn(
-      StateManager._state.analysis.historyData.length > StateManager._state.analysis.showCount
+      BusinessCommonData.getHistoryData(StateManager._state).length > StateManager._state.analysis.showCount
     );
   },
 
@@ -865,7 +903,7 @@ const Business = {
     if(!item) return;
     // 2026-06-21 通用化：复用 Utils.parseCodeArr
     const codeArr = Utils.parseCodeArr(item);
-    const s = Utils.SpecialCalculator.getSpecial(item);
+    const s = BusinessCommonSpecials.getOne(item);
     const zodArr = s.fullZodArr;
 
     let html = '';
@@ -898,7 +936,7 @@ const Business = {
    */
   renderHistory: () => {
     const state = StateManager._state;
-    const list = state.analysis.historyData.slice(0, state.analysis.showCount);
+    const list = BusinessCommonData.getHistoryData(state).slice(0, state.analysis.showCount);
 
     if(!list.length) {
       ViewAnalysis.renderHistory({ isEmpty: true });
@@ -909,7 +947,7 @@ const Business = {
       // 2026-06-21 通用化：复用 Utils.parseCodeArr
       const codeArr = Utils.parseCodeArr(item);
       const waveArr = (item.wave || 'red,red,red,red,red,red,red').split(',');
-      const s = Utils.SpecialCalculator.getSpecial(item);
+      const s = BusinessCommonSpecials.getOne(item);
       const zodArr = s.fullZodArr;
       let balls = '';
       for(let i = 0; i < 6; i++) balls += Business.buildBall(codeArr[i], waveArr[i], zodArr[i]);
@@ -917,7 +955,7 @@ const Business = {
       return '<div class="history-item"><div class="history-expect">第' + (item.expect || '') + '期</div><div class="ball-group">' + balls + '</div></div>';
     }).join('');
 
-    const loadMoreVisible = state.analysis.showCount < state.analysis.historyData.length;
+    const loadMoreVisible = state.analysis.showCount < BusinessCommonData.getHistoryData(state).length;
     ViewAnalysis.renderHistory({ historyHtml: historyHtml, isEmpty: false, loadMoreVisible: loadMoreVisible });
   },
 
@@ -945,7 +983,7 @@ const Business = {
     const zodiac = {};
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
     const numCount = {};
-    for(let i = 1; i <= 49; i++) numCount[Utils.formatNum(i)] = 0;
+    for(let i = 1; i <= 49; i++) numCount[CommonString.formatNum(i)] = 0;
 
     const lastAppearIdx = {};
     for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
@@ -962,7 +1000,7 @@ const Business = {
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => lastAppearZod[z] = -1);
 
     list.forEach((item, idx) => {
-      const s = Utils.SpecialCalculator.getSpecial(item);
+      const s = BusinessCommonSpecials.getOne(item);
       s.odd ? singleDouble['单']++ : singleDouble['双']++;
       s.big ? bigSmall['大']++ : bigSmall['小']++;
       const rangeKey = Utils.getRangeCategory(s.te);
@@ -973,7 +1011,7 @@ const Business = {
       wuxing[s.wuxing]++;
       animal[s.animal]++;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
-      numCount[Utils.formatNum(s.te)]++;
+      numCount[CommonString.formatNum(s.te)]++;
       
       if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
       if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
@@ -1037,17 +1075,17 @@ const Business = {
 
     let curStreak = 1, maxStreak = 1, current = 1;
     if(list.length >= 2) {
-      const firstS = Utils.SpecialCalculator.getSpecial(list[0]);
+      const firstS = BusinessCommonSpecials.getOne(list[0]);
       const firstShape = `${firstS.odd}_${firstS.big}`;
       for(let i = 1; i < list.length; i++) {
-        const s = Utils.SpecialCalculator.getSpecial(list[i]);
+        const s = BusinessCommonSpecials.getOne(list[i]);
         const shape = `${s.odd}_${s.big}`;
         if(shape === firstShape) curStreak++;
         else break;
       }
       let prevShape = firstShape;
       for(let i = 1; i < list.length; i++) {
-        const s = Utils.SpecialCalculator.getSpecial(list[i]);
+        const s = BusinessCommonSpecials.getOne(list[i]);
         const shape = `${s.odd}_${s.big}`;
         if(shape === prevShape) {
           current++;
@@ -1162,7 +1200,7 @@ const Business = {
     const followMap = {};
 
     list.forEach((item, idx) => {
-      const s = Utils.SpecialCalculator.getSpecial(item);
+      const s = BusinessCommonSpecials.getOne(item);
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
         zodCount[s.zod]++;
         if(lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
@@ -1173,8 +1211,8 @@ const Business = {
     });
 
     for(let i = 1; i < list.length; i++) {
-      const preZod = Utils.SpecialCalculator.getSpecial(list[i-1]).zod;
-      const curZod = Utils.SpecialCalculator.getSpecial(list[i]).zod;
+      const preZod = BusinessCommonSpecials.getOne(list[i-1]).zod;
+      const curZod = BusinessCommonSpecials.getOne(list[i]).zod;
       if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(preZod) && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curZod)) {
         if(!followMap[preZod]) followMap[preZod] = {};
         followMap[preZod][curZod] = (followMap[preZod][curZod] || 0) + 1;
@@ -1296,7 +1334,7 @@ const Business = {
     const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
     const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
     recentList.forEach(item => {
-      const s = Utils.SpecialCalculator.getSpecial(item);
+      const s = BusinessCommonSpecials.getOne(item);
       headCount[s.head]   = (headCount[s.head]   || 0) + 1;
       tailCount[s.tail]   = (tailCount[s.tail]   || 0) + 1;
       colorCount[s.colorName]  = (colorCount[s.colorName]  || 0) + 1;
@@ -1353,7 +1391,7 @@ const Business = {
     }
 
     if(numbers.length < targetCount) {
-      const historyFill = [...new Set(list.map(item => Utils.SpecialCalculator.getSpecial(item).te))]
+      const historyFill = [...new Set(list.map(item => BusinessCommonSpecials.getOne(item).te))]
         .filter(num => !numbers.includes(num))
         .slice(0, targetCount - numbers.length);
       numbers.push(...historyFill);
@@ -1392,7 +1430,7 @@ const Business = {
 
     // 3. 升序展示
     finalNums.sort((a, b) => a - b);
-    const finalFormatNums = finalNums.map(num => Utils.formatNum(num));
+    const finalFormatNums = finalNums.map(num => CommonString.formatNum(num));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
 
@@ -1405,7 +1443,7 @@ const Business = {
     // 若未传则使用默认值（兜底行为兼容）
     const custom = (domValues && domValues.custom) || '';
     const selectVal = (domValues && domValues.selectVal) || '12';
-    const historyData = StateManager._state.analysis.historyData;
+    const historyData = BusinessCommonData.getHistoryData(StateManager._state);
 
     let newLimit;
     if(custom && !isNaN(custom) && custom > 0) {
@@ -1440,7 +1478,7 @@ const Business = {
     const selectPeriodVal = (domValues && domValues.selectPeriodVal) || '36';
     const countVal = (domValues && domValues.countVal) || '5';
     const customCount = (domValues && domValues.customCount) || '';
-    const historyData = StateManager._state.analysis.historyData;
+    const historyData = BusinessCommonData.getHistoryData(StateManager._state);
 
     let newLimit;
     if(customPeriod && !isNaN(customPeriod) && customPeriod > 0) {
@@ -1507,7 +1545,7 @@ const Business = {
     const newAnalysis = { ...state.analysis, showCount: newShowCount };
     StateManager.setState({ analysis: newAnalysis }, false);
     Business.renderHistory();
-    ViewAnalysis.updateLoadMoreBtn(newShowCount < StateManager._state.analysis.historyData.length);
+    ViewAnalysis.updateLoadMoreBtn(newShowCount < BusinessCommonData.getHistoryData(StateManager._state).length);
   },
 
   /**
@@ -1521,10 +1559,10 @@ const Business = {
     const state = StateManager._state;
     if(state.analysis.countdownTimer) {
       clearInterval(state.analysis.countdownTimer);
-      Utils.TimerManager.clearInterval('countdown');
+      CommonCache.TimerManager.clearInterval('countdown');
     }
 
-    const timer = Utils.TimerManager.setInterval('countdown', () => {
+    const timer = CommonCache.TimerManager.setInterval('countdown', () => {
       const now = new Date();
       const target = new Date();
       target.setHours(21, 32, 32, 0);
@@ -1563,14 +1601,14 @@ const Business = {
     const state = StateManager._state;
     if(state.analysis.autoRefreshTimer) {
       clearInterval(state.analysis.autoRefreshTimer);
-      Utils.TimerManager.clearInterval('autoRefresh');
+      CommonCache.TimerManager.clearInterval('autoRefresh');
     }
 
-    const newTimer = Utils.TimerManager.setInterval('autoRefresh', () => {
+    const newTimer = CommonCache.TimerManager.setInterval('autoRefresh', () => {
       if(Business.isInDrawTime()) {
         Business.refreshHistory();
       } else {
-        Utils.TimerManager.clearInterval('autoRefresh');
+        CommonCache.TimerManager.clearInterval('autoRefresh');
         const newAnalysis = {
           ...StateManager._state.analysis,
           autoRefreshTimer: null
@@ -1593,10 +1631,10 @@ const Business = {
     const state = StateManager._state;
     if(state.analysis.drawTimeLoopTimer) {
       clearInterval(state.analysis.drawTimeLoopTimer);
-      Utils.TimerManager.clearInterval('drawTimeLoop');
+      CommonCache.TimerManager.clearInterval('drawTimeLoop');
     }
 
-    const timer = Utils.TimerManager.setInterval('drawTimeLoop', () => {
+    const timer = CommonCache.TimerManager.setInterval('drawTimeLoop', () => {
       if(Business.isInDrawTime() && !StateManager._state.analysis.autoRefreshTimer) {
         Business.startAutoRefresh();
       }
@@ -1631,7 +1669,7 @@ const Business = {
   /**
    * 滚动事件处理（已节流优化）
    */
-  handleScroll: Utils.throttle(() => {
+  handleScroll: CommonCache.throttle(() => {
     const state = StateManager._state;
     const scrollTop = ViewFilter.getScrollTop();
     clearTimeout(state.scrollTimer);
@@ -1651,25 +1689,21 @@ const Business = {
    */
   handlePageUnload: () => {
     StateManager.clearAllTimers();
-    Utils.TimerManager.clearAll(); // 清理所有通过TimerManager管理的定时器
+    CommonCache.TimerManager.clearAll(); // 清理所有通过TimerManager管理的定时器
     ViewFilter.cleanupPageEvents(Business.handleScroll, Business.handlePageUnload);
   },
 
   // ====================== 生肖预测相关 ======================
   initZodiacPrediction: () => {
-    var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-    }
+    // 2026-06-24 完整迁移：使用 BusinessCommonData.ensureHistoryData
+    var historyData = BusinessCommonData.ensureHistoryData();
     Business.renderZodiacPrediction();
     Business.initZodiacBacktest();
   },
 
   renderZodiacPrediction: () => {
     var state = StateManager._state;
-    var historyData = state.analysis.historyData;
+    var historyData = BusinessCommonData.getHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacPredict.renderEmpty();
       return;
@@ -1684,7 +1718,7 @@ const Business = {
 
   initZodiacBacktest: () => {
     var state = StateManager._state;
-    var historyData = state.analysis.historyData;
+    var historyData = BusinessCommonData.getHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacPredict.renderBacktest(null);
       return;
@@ -1716,11 +1750,7 @@ const Business = {
    */
   initTongJiTab: () => {
     var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-    }
+    var historyData = BusinessCommonData.ensureHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacTongJi.render(null);
       return;
@@ -1782,15 +1812,18 @@ const Business = {
    * 初始化主推标签页（滑动窗口预测算法）
    */
   initMainTab: () => {
+    // 2026-06-24 完整迁移：使用 BusinessCommonData.getDataWithTimestamp / ensureHistoryData
     var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    var cacheTimestamp = state.analysis.historyTimestamp || 0;
+    var data = BusinessCommonData.getDataWithTimestamp(state);
+    var historyData = data.historyData;
+    var cacheTimestamp = data.timestamp;
 
     // 尝试加载缓存
     if (!historyData || !historyData.length) {
       Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-      cacheTimestamp = StateManager._state.analysis.historyTimestamp || 0;
+      var retry = BusinessCommonData.getDataWithTimestamp();
+      historyData = retry.historyData;
+      cacheTimestamp = retry.timestamp;
     }
 
     if (!historyData || !historyData.length) {
@@ -1824,12 +1857,8 @@ const Business = {
   },
 
   initGiongTab: () => {
-    var state = StateManager._state;
-    var historyData = state.analysis.historyData;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-    }
+    // 2026-06-24 完整迁移：使用 BusinessCommonData.ensureHistoryData
+    var historyData = BusinessCommonData.ensureHistoryData();
     if (!historyData || !historyData.length) return;
 
     var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
@@ -1837,9 +1866,7 @@ const Business = {
 
     // 2026-06-21 性能优化：一次性预计算 recentSpecials（前 12 期），后续 4 个 stats 函数复用
     // 节省 ~48 次 Utils.SpecialCalculator.getSpecial 调用（4 函数 × 12 期）
-    var recentSpecials = historyData.slice(0, 12).map(function(item) {
-      return Utils.SpecialCalculator.getSpecial(item);
-    });
+    var recentSpecials = BusinessCommonSpecials.precompute(historyData.slice(0, 12));
 
     var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
     ViewZodiacGiong.renderLatestFollowStats(latestFollowStats);
@@ -1882,21 +1909,18 @@ const Business = {
 
   initUltimateAlgorithm: () => {
     var state = StateManager._state;
-    var historyData = state.analysis.historyData;
+    var historyData = BusinessCommonData.getHistoryData(state);
     // 缓存优化：若终极算法标签页已经渲染过且历史数据未变化，则跳过重复渲染
     // 避免重复点击底部导航按钮时整页闪烁
-    if (Business._ultimateInitialized && state.analysis.historyData && state.analysis.historyData.length) {
+    if (Business._ultimateInitialized && historyData.length) {
       var cachedExpect = Business._ultimateCachedExpect;
-      var currentExpect = state.analysis.historyData[0] ? state.analysis.historyData[0].expect : null;
+      var currentExpect = historyData[0] ? historyData[0].expect : null;
       if (cachedExpect === currentExpect) {
         return;
       }
     }
     Business._ultimateInitialized = true;
-    if (!historyData || !historyData.length) {
-      Business.loadHistoryCache();
-      historyData = StateManager._state.analysis.historyData;
-    }
+    historyData = BusinessCommonData.ensureHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacUltimate.renderUltimateAlgorithm(null);
       ViewZodiacUltimate.renderUltimateBacktestEmpty();

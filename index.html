@@ -848,6 +848,14 @@
 <!-- 核心层：配置 → 工具 → 状态 → 存储 -->
 <script src="core/config.js"></script>
 <script src="core/utils.js"></script>
+<!-- 核心层通用工具 - 缓存 / 高频优化 / 定时器管理（2026-06-24 新增） -->
+<script src="core/common-cache.js"></script>
+<!-- 核心层通用工具 - 数据验证（2026-06-24 新增） -->
+<script src="core/common-validator.js"></script>
+<!-- 核心层通用工具 - 字符串与格式化（2026-06-24 新增） -->
+<script src="core/common-string.js"></script>
+<!-- 核心层通用工具 - 平台能力（设备 / 安全区 / 剪贴板 / 网络）（2026-06-24 新增） -->
+<script src="core/common-platform.js"></script>
 
 <!-- 平台层：Toast → DOM → 渲染 -->
 <script src="platform/web/toast.js"></script>
@@ -871,6 +879,16 @@
 <script src="business/business-common-sort.js"></script>
 <script src="business/business-common-time.js"></script>
 <script src="business/business-common-lru.js"></script>
+<!-- 业务层通用工具 - 统计预测（2026-06-24 新增） -->
+<script src="business/business-common-stats.js"></script>
+<!-- 业务层通用工具 - 回测（2026-06-24 新增） -->
+<script src="business/business-common-backtest.js"></script>
+<!-- 业务层通用工具 - 特码信息批处理（2026-06-24 新增） -->
+<script src="business/business-common-specials.js"></script>
+<!-- 业务层通用工具 - 历史数据加载（2026-06-24 新增） -->
+<script src="business/business-common-data.js"></script>
+<!-- 视图层通用工具 - Giong 综合分析（2026-06-24 新增） -->
+<script src="views/view-common-giong.js"></script>
 <!-- 快捷导航 + 底部导航统一管理（2026-06-13 拆分自 business-main.js），需在 business-main.js 之前加载 -->
 <script src="business/business-quick-nav.js"></script>
 <script src="business/business-cross-exclusion.js"></script>
