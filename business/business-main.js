@@ -1845,15 +1845,14 @@ const Business = {
     ViewZodiacMain.renderSlidingWindowPrediction(result, cacheTimestamp, ageHours);
 
     // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
-    // 2026-06-23 V1.4.5 优化：使用带缓存的 enhanced 入口（含 signal 维度统计）
-    var backtestCached = BusinessSlidingWindowHistory.runBacktestEnrichedWithCache(historyData, 30);
-    var backtestRecords = backtestCached.records;
-    var signalStats = backtestCached.signalStats || [];
+    // 2026-06-25 适配：runBacktestEnrichedWithCache 在 bcdd524 精简时被移除，
+    //                   暂退回 runBacktest（仅 records）。signalStats 功能后续按需恢复。
+    var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
     var pendingPrediction = {
       nextExpect: result.nextExpect,
       candidates: result.candidates
     };
-    ViewSlidingWindowHistory.render(backtestRecords, pendingPrediction, signalStats);
+    ViewSlidingWindowHistory.render(backtestRecords, pendingPrediction);
   },
 
   initGiongTab: () => {
