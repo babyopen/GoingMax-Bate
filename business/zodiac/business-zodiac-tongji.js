@@ -198,8 +198,18 @@ const ZodiacTongJi = {
           nums.push(num);
         }
       }
-      // 排序（让代表号码按号码大小升序展示）
-      nums.sort(function(a, b) { return a - b; });
+      // 排序（2026-06-25 用户需求：按"开出顺序"展示，最新期开出的号码排前面）
+      //   - latestIdxMap[num] 越小表示越新（idx=0 = 最新一期）
+      //   - 从未开出的号码 latestIdxMap[num] === -1，排在最后
+      nums.sort(function(a, b) {
+        var ia = latestIdxMap[a];
+        var ib = latestIdxMap[b];
+        // 未开出的（-1）排到末尾
+        if (ia === -1 && ib === -1) return a - b;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
 
       var count = nums.length;
       var percent = count > 0 ? Math.round((count / 49) * 1000) / 10 : 0;
