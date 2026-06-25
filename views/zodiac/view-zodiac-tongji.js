@@ -12,6 +12,25 @@
 const ViewZodiacTongJi = {
 
   /**
+   * 号码 → 波色（红/蓝/绿）查表
+   * 2026-06-25 用户需求：号码 chip 底色改为对应波色
+   * @param {number} num - 1~49 整数
+   * @returns {'red'|'blue'|'green'|''} 波色英文标识，无匹配返回空串
+   */
+  _getWaveOfNum: function(num) {
+    var cmap = (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) || {};
+    var numStr = String(num);
+    for (var color in cmap) {
+      if (Object.prototype.hasOwnProperty.call(cmap, color) && cmap[color].indexOf(num) >= 0) {
+        // color 是中文'红/蓝/绿'，映射到英文用于 data-wave
+        var nameMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
+        return nameMap[color] || '';
+      }
+    }
+    return '';
+  },
+
+  /**
    * 渲染 TongJi 面板到 #zodiacTongJiPanel（幂等）
    * @param {Object} [stats] - 业务层计算结果，可选
    *   {
@@ -209,7 +228,10 @@ const ViewZodiacTongJi = {
         html += '<div class="tj-num-chips">';
         lv.nums.forEach(function(n) {
           var numStr = n < 10 ? '0' + n : '' + n;
-          html += '<span class="tj-num-chip ' + levelCls + '">' + numStr + '</span>';
+          // 2026-06-25 用户需求：chip 底色改为对应波色（红/蓝/绿）
+          var wave = ViewZodiacTongJi._getWaveOfNum(n);
+          var waveAttr = wave ? ' data-wave="' + wave + '"' : '';
+          html += '<span class="tj-num-chip ' + levelCls + '"' + waveAttr + '>' + numStr + '</span>';
         });
         html += '</div>';
       } else {

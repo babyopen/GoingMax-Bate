@@ -2930,6 +2930,21 @@
   background: rgba(175,82,222,0.12);
   border-color: rgba(175,82,222,0.40);
 }
+/* 2026-06-25 用户需求：号码 chip 底色改为对应波色（红/蓝/绿）
+   用属性选择器提升优先级，覆盖等级底色（.tj-level-*）
+   2026-06-25 用户反馈：提升饱和度（alpha: 0.16→0.32, 0.45→0.70） */
+.tj-num-chip[data-wave="red"] {
+  background: rgba(255,59,48,0.32);
+  border-color: rgba(255,59,48,0.70);
+}
+.tj-num-chip[data-wave="blue"] {
+  background: rgba(0,122,255,0.32);
+  border-color: rgba(0,122,255,0.70);
+}
+.tj-num-chip[data-wave="green"] {
+  background: rgba(52,199,89,0.32);
+  border-color: rgba(52,199,89,0.70);
+}
 .tj-num-empty {
   color: var(--sub-text);
   font-size: 12px;
