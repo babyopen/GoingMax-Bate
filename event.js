@@ -1,5 +1,14 @@
 const EventBinder = {
   /**
+   * 自定义双击检测状态（解决 .tag 双击易误触问题）
+   * 浏览器原生 dblclick 默认 500ms 内两次 click 即触发，过于宽松
+   * 改为：同元素 + 200ms 内 + 8px 内 才算双击
+   */
+  _lastTagClick: { target: null, time: 0, x: 0, y: 0 },
+  // 自定义双击触发后 500ms 保护窗，期间内原生 dblclick 不处理 .tag（防重复触发）
+  _tagDblClickGuardUntil: 0,
+
+  /**
    * 初始化所有事件绑定
    */
   init: () => {
@@ -147,6 +156,8 @@ const EventBinder = {
     // 标签双击：锁定/解锁
     const tag = target.closest('.tag[data-group]');
     if (tag) {
+      // 自定义双击保护窗：click 序列检测已命中后，期间内原生 dblclick 直接跳过（防重复触发）
+      if (Date.now() < EventBinder._tagDblClickGuardUntil) return;
       const group = tag.dataset.group;
       const value = Utils.formatTagValue(tag.dataset.value, group);
       StateManager.toggleTagLock(group, value);
@@ -165,6 +176,24 @@ const EventBinder = {
     if(tag){
       const group = tag.dataset.group;
       const value = Utils.formatTagValue(tag.dataset.value, group);
+      // 自定义双击检测：同元素 + 200ms 内 + 8px 内（解决原生 dblclick 易误触问题）
+      const now = Date.now();
+      const lc = EventBinder._lastTagClick;
+      if (
+        lc.target === tag &&
+        now - lc.time < 200 &&
+        Math.abs(e.clientX - lc.x) < 8 &&
+        Math.abs(e.clientY - lc.y) < 8
+      ) {
+        // 自定义双击命中：执行锁定/解锁，并设置 500ms 保护窗
+        // 期间内原生 dblclick 会被 handleDoubleClick 跳过，避免重复触发
+        StateManager.toggleTagLock(group, value);
+        EventBinder._lastTagClick = { target: null, time: 0, x: 0, y: 0 };
+        EventBinder._tagDblClickGuardUntil = now + 500;
+        return;
+      }
+      // 首次点击 / 不构成双击：记录状态并执行选中
+      EventBinder._lastTagClick = { target: tag, time: now, x: e.clientX, y: e.clientY };
       StateManager.updateSelected(group, value);
       return;
     }
