@@ -64,7 +64,16 @@ async function initApp() {
     Render.renderAll();
     // 16. 隐藏加载遮罩
     Render.hideLoading();
-    
+
+    // 17. 同步顶部版本号显示（2026-06-28 用户需求：迭代版本号）
+    //   index.html 中 .top-title 最后一个 span 硬编码了版本号文本（受宪法保护不能改 HTML），
+    //   此处用 CONFIG.VERSION 作为单一数据源在启动时动态注入，
+    //   后续升级版本只需改 core/config.js 的 VERSION 字段即可，无需再改 HTML
+    if(typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
+      const versionSpan = document.querySelector('.top-title > span:last-child');
+      if(versionSpan) versionSpan.textContent = 'v' + CONFIG.VERSION;
+    }
+
     console.log(`Gemini v${CONFIG.VERSION} 初始化完成，当前农历生肖：${StateManager._state.currentZodiac}`);
   } catch(e) {
     console.error('应用初始化失败', e);
