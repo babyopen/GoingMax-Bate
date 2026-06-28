@@ -420,6 +420,10 @@ const Business = {
       const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
       if(success){
         StateManager.setState({ savedFilters: newList }, false);
+        // 2026-06-28 修复：重命名方案后同步当前激活分组的快照
+        if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+          try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+        }
         Render.renderFilterList();
         if(finalName !== rawName){
           Toast.show(`已重命名（重名自动调整为：${finalName}）`);
@@ -446,6 +450,10 @@ const Business = {
     
     if(success){
       StateManager.setState({ savedFilters: newList }, false);
+      // 2026-06-28 修复：置顶方案后同步当前激活分组的快照
+      if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+        try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+      }
       Render.renderFilterList();
       Toast.show('置顶成功');
     }
@@ -470,6 +478,11 @@ const Business = {
       const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
       if(success){
         StateManager.setState({ savedFilters: newList }, false);
+        // 2026-06-28 修复：删除方案后同步当前激活分组的快照
+        // 背景：仅更新 SAVED_FILTERS 不更新分组快照，启动时 applyGroupSnapshot 会用旧快照覆盖回来
+        if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+          try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+        }
         Render.renderFilterList();
         Toast.show('删除成功');
       }
@@ -496,6 +509,10 @@ const Business = {
         // 没有锁定项：走原清空逻辑
         Storage.remove(Storage.KEYS.SAVED_FILTERS);
         StateManager.setState({ savedFilters: [] }, false);
+        // 2026-06-28 修复：清空所有方案后同步当前激活分组的快照
+        if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+          try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+        }
         Render.renderFilterList();
         Toast.show('已清空所有方案');
       } else if(unlocked.length === 0){
@@ -505,6 +522,10 @@ const Business = {
         const success = Storage.set(Storage.KEYS.SAVED_FILTERS, unlocked);
         if(success){
           StateManager.setState({ savedFilters: unlocked }, false);
+          // 2026-06-28 修复：清空方案后同步当前激活分组的快照
+          if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+            try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+          }
           Render.renderFilterList();
           Toast.show(`已清空（${lockedCount}个锁定方案保留）`);
         }
@@ -531,6 +552,10 @@ const Business = {
     const success = Storage.set(Storage.KEYS.SAVED_FILTERS, newList);
     if(success){
       StateManager.setState({ savedFilters: newList }, false);
+      // 2026-06-28 修复：切换方案锁定后同步当前激活分组的快照
+      if(typeof Business !== 'undefined' && Business.FilterGroup && typeof Business.FilterGroup.syncActiveGroupSnapshot === 'function'){
+        try { Business.FilterGroup.syncActiveGroupSnapshot(); } catch(_) {}
+      }
       Render.renderFilterList();
       Toast.show(newList[index].lockedScheme ? '已锁定方案' : '已解锁方案');
     }

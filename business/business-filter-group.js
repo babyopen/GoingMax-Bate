@@ -148,6 +148,38 @@ const FilterGroup = {
   },
 
   /**
+   * 同步当前激活分组的快照（修复 2026-06-28 用户反馈：
+   *   "方案点击删除后，刷新或者切后台后再打开出现删除的还在"）
+   *
+   * 背景：business-main.js 中 deleteFilter/renameFilter/topFilter/toggleLockFilter
+   *   /clearAllSavedFilters 等操作只更新了 Storage.KEYS.SAVED_FILTERS 与 state.savedFilters，
+   *   未同步更新当前激活分组的 savedFilters 快照。当启动时 app.js 会调用
+   *   applyGroupSnapshot 用分组中的旧快照覆盖 state.savedFilters，导致已删除/修改的方案
+   *   "复活"。
+   *
+   * 行为：
+   *   - 未启用分组（currentGroupId 为 null）→ 直接返回 false，不做任何操作
+   *   - 已启用分组 → 用当前 _captureSnapshot 覆盖对应分组快照，并 setState + _persistGroups
+   *   - 捕获整个快照（savedFilters/selected/excluded 等），保证后续切换分组时数据一致
+   *
+   * 调用方在修改 savedFilters 后调用即可，不影响未启用分组用户的体验。
+   * @returns {boolean} 是否实际执行了同步（用于调用方可选地决定是否要 Toast）
+   */
+  syncActiveGroupSnapshot: () => {
+    const s = StateManager._state;
+    if(!s.currentGroupId) return false;
+    const list = (s.filterGroups || []).slice();
+    const idx = list.findIndex(g => g && g.id === s.currentGroupId);
+    if(idx < 0) return false;
+    // 在副本上修改并 setState，避免直接污染 s.filterGroups（防御性编程）
+    const newList = list.slice();
+    newList[idx] = Object.assign({}, list[idx], FilterGroup._captureSnapshot());
+    StateManager.setState({ filterGroups: newList }, false);
+    FilterGroup._persistGroups();
+    return true;
+  },
+
+  /**
    * 把当前完整状态写回当前分组快照（用于切换前保存）
    * 纯函数：不修改全局 s.filterGroups，返回包含本次更新的副本，避免被调用方的 setState 覆盖
    * 修复用户反馈"点击 + 添加，旧的分组内容没有了"的根因：
