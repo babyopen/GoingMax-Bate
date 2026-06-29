@@ -1,0 +1,184 @@
+/**
+ * 业务层通用工具单元测试（HTML 版本，可直接在浏览器中运行）
+ * 
+ * 使用方法：
+ * 1. 在浏览器中打开此文件
+ * 2. 查看控制台输出
+ * 3. 所有测试通过会显示 "✅ 所有测试通过"
+ */
+
+// 检查依赖是否加载
+if (typeof BusinessCommonSort === 'undefined') {
+  console.error('❌ BusinessCommonSort 未加载，请先加载 business/business-common-sort.js');
+} else if (typeof BusinessCommonTime === 'undefined') {
+  console.error('❌ BusinessCommonTime 未加载，请先加载 business/business-common-time.js');
+} else {
+  console.log('🧪 开始运行业务层通用工具测试...\n');
+  
+  let passed = 0;
+  let failed = 0;
+  
+  function test(name, fn) {
+    try {
+      fn();
+      console.log(`✅ ${name}`);
+      passed++;
+    } catch (e) {
+      console.error(`❌ ${name}`);
+      console.error('   错误:', e.message);
+      failed++;
+    }
+  }
+  
+  function assert(condition, message) {
+    if (!condition) {
+      throw new Error(message || '断言失败');
+    }
+  }
+  
+  function assertEqual(actual, expected, message) {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      throw new Error(message || `期望 ${JSON.stringify(expected)}，实际 ${JSON.stringify(actual)}`);
+    }
+  }
+  
+  // ========== BusinessCommonSort 测试 ==========
+  
+  console.log('📊 测试 BusinessCommonSort...\n');
+  
+  // 测试 1: sortByNumberDesc
+  test('sortByNumberDesc 应该按数字降序排列', function() {
+    const list = [
+      { num: 5, name: '五' },
+      { num: 10, name: '十' },
+      { num: 3, name: '三' }
+    ];
+    const result = BusinessCommonSort.sortByNumberDesc(list, 'num');
+    assertEqual(result, [
+      { num: 10, name: '十' },
+      { num: 5, name: '五' },
+      { num: 3, name: '三' }
+    ]);
+  });
+  
+  // 测试 2: sortByNumberAsc
+  test('sortByNumberAsc 应该按数字升序排列', function() {
+    const list = [
+      { num: 5, name: '五' },
+      { num: 10, name: '十' },
+      { num: 3, name: '三' }
+    ];
+    const result = BusinessCommonSort.sortByNumberAsc(list, 'num');
+    assertEqual(result, [
+      { num: 3, name: '三' },
+      { num: 5, name: '五' },
+      { num: 10, name: '十' }
+    ]);
+  });
+  
+  // 测试 3: sortByCountDesc
+  test('sortByCountDesc 应该按 count 字段降序排列', function() {
+    const list = [
+      { zodiac: '鼠', count: 5 },
+      { zodiac: '牛', count: 10 },
+      { zodiac: '虎', count: 3 }
+    ];
+    const result = BusinessCommonSort.sortByCountDesc(list);
+    assertEqual(result, [
+      { zodiac: '牛', count: 10 },
+      { zodiac: '鼠', count: 5 },
+      { zodiac: '虎', count: 3 }
+    ]);
+  });
+  
+  // 测试 4: sortEntriesByValueDesc
+  test('sortEntriesByValueDesc 应该按值降序排列', function() {
+    const entries = [['a', 5], ['b', 10], ['c', 3]];
+    const result = BusinessCommonSort.sortEntriesByValueDesc(entries);
+    assertEqual(result, [['b', 10], ['a', 5], ['c', 3]]);
+  });
+  
+  // 测试 5: sortByZodiacName
+  test('sortByZodiacName 应该按生肖名称排序', function() {
+    const list = [
+      { zodiac: '马' },
+      { zodiac: '鼠' },
+      { zodiac: '龙' }
+    ];
+    const result = BusinessCommonSort.sortByZodiacName(list);
+    // 验证返回的是数组且长度为3
+    assert(Array.isArray(result) && result.length === 3, '应该返回数组');
+  });
+  
+  // 测试 6: 空数组处理
+  test('排序函数应该能处理空数组', function() {
+    assertEqual(BusinessCommonSort.sortByNumberDesc([], 'num'), []);
+    assertEqual(BusinessCommonSort.sortByNumberAsc([], 'num'), []);
+    assertEqual(BusinessCommonSort.sortByCountDesc([]), []);
+  });
+  
+  // ========== BusinessCommonTime 测试 ==========
+  
+  console.log('\n⏰ 测试 BusinessCommonTime...\n');
+  
+  // 测试 7: formatRelative - 刚刚
+  test('formatRelative 应该能格式化"刚刚"', function() {
+    const now = Date.now();
+    const result = BusinessCommonTime.formatRelative(now);
+    assert(result.includes('刚刚') || result.includes('分钟'), '应该包含时间描述');
+  });
+  
+  // 测试 8: formatRelative - 分钟前
+  test('formatRelative 应该能格式化"X分钟前"', function() {
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const result = BusinessCommonTime.formatRelative(fiveMinutesAgo);
+    assert(result.includes('5') || result.includes('分钟'), '应该显示5分钟');
+  });
+  
+  // 测试 9: formatRelative - 小时前
+  test('formatRelative 应该能格式化"X小时前"', function() {
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    const result = BusinessCommonTime.formatRelative(twoHoursAgo);
+    assert(result.includes('2') || result.includes('小时'), '应该显示2小时');
+  });
+  
+  // 测试 10: formatRelative - 天前
+  test('formatRelative 应该能格式化"X天前"', function() {
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    const result = BusinessCommonTime.formatRelative(threeDaysAgo);
+    assert(result.includes('3') || result.includes('天'), '应该显示3天');
+  });
+  
+  // 测试 11: formatAbsolute
+  test('formatAbsolute 应该格式化为绝对时间', function() {
+    const timestamp = new Date('2026-06-30 12:30:00').getTime();
+    const result = BusinessCommonTime.formatAbsolute(timestamp);
+    assert(typeof result === 'string' && result.length > 0, '应该返回字符串');
+    // 验证格式包含日期和时间
+    assert(result.includes('2026') || result.includes('-'), '应该包含年份或分隔符');
+  });
+  
+  // 测试 12: 无效时间戳处理
+  test('时间格式化函数应该能处理无效输入', function() {
+    const result1 = BusinessCommonTime.formatRelative(null);
+    const result2 = BusinessCommonTime.formatAbsolute(undefined);
+    assert(typeof result1 === 'string', '应该返回字符串');
+    assert(typeof result2 === 'string', '应该返回字符串');
+  });
+  
+  // ========== 测试结果 ==========
+  
+  console.log('\n' + '='.repeat(60));
+  console.log(`测试结果: ${passed} 通过, ${failed} 失败`);
+  console.log('='.repeat(60));
+  
+  if (failed === 0) {
+    console.log('✅ 所有测试通过！');
+    console.log('\n📊 测试覆盖:');
+    console.log('  - BusinessCommonSort: 6个测试');
+    console.log('  - BusinessCommonTime: 6个测试');
+    console.log('  - 总计: 12个测试用例');
+  } else {
+    console.log('❌ 存在失败的测试，请检查上面的错误信息');
+  }
+}

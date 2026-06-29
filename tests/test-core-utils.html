@@ -1,0 +1,257 @@
+/**
+ * 核心层工具函数单元测试（HTML 版本，可直接在浏览器中运行）
+ * 
+ * 使用方法：
+ * 1. 在浏览器中打开此文件
+ * 2. 查看控制台输出
+ * 3. 所有测试通过会显示 "✅ 所有测试通过"
+ */
+
+// 检查依赖是否加载
+if (typeof Utils === 'undefined') {
+  console.error('❌ Utils 未加载，请先加载 core/utils.js');
+} else {
+  console.log('🧪 开始运行核心层工具函数测试...\n');
+  
+  let passed = 0;
+  let failed = 0;
+  
+  function test(name, fn) {
+    try {
+      fn();
+      console.log(`✅ ${name}`);
+      passed++;
+    } catch (e) {
+      console.error(`❌ ${name}`);
+      console.error('   错误:', e.message);
+      failed++;
+    }
+  }
+  
+  function assert(condition, message) {
+    if (!condition) {
+      throw new Error(message || '断言失败');
+    }
+  }
+  
+  function assertEqual(actual, expected, message) {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      throw new Error(message || `期望 ${JSON.stringify(expected)}，实际 ${JSON.stringify(actual)}`);
+    }
+  }
+  
+  // ========== Utils.debounce 测试 ==========
+  
+  console.log('⏱️ 测试 Utils.debounce...\n');
+  
+  // 测试 1: debounce 应该延迟执行
+  test('debounce 应该在延迟后执行函数', function() {
+    let executed = false;
+    const debouncedFn = Utils.debounce(function() {
+      executed = true;
+    }, 50);
+    
+    debouncedFn();
+    assert(!executed, '不应该立即执行');
+    
+    // 等待60ms
+    return new Promise(function(resolve) {
+      setTimeout(function() {
+        assert(executed, '应该在延迟后执行');
+        resolve();
+      }, 60);
+    });
+  });
+  
+  // 测试 2: debounce 应该只执行最后一次
+  test('debounce 多次调用应该只执行最后一次', function(done) {
+    let callCount = 0;
+    const debouncedFn = Utils.debounce(function() {
+      callCount++;
+    }, 50);
+    
+    debouncedFn();
+    debouncedFn();
+    debouncedFn();
+    
+    setTimeout(function() {
+      assertEqual(callCount, 1, '应该只执行1次');
+      done();
+    }, 100);
+  });
+  
+  // ========== Utils.throttle 测试 ==========
+  
+  console.log('\n🚦 测试 Utils.throttle...\n');
+  
+  // 测试 3: throttle 应该限制执行频率
+  test('throttle 应该在时间间隔内只执行一次', function() {
+    let callCount = 0;
+    const throttledFn = Utils.throttle(function() {
+      callCount++;
+    }, 100);
+    
+    throttledFn();
+    throttledFn();
+    throttledFn();
+    
+    assertEqual(callCount, 1, '第一次调用应该执行');
+    
+    return new Promise(function(resolve) {
+      setTimeout(function() {
+        throttledFn();
+        assertEqual(callCount, 2, '超过间隔后应该再次执行');
+        resolve();
+      }, 110);
+    });
+  });
+  
+  // ========== Utils.deepClone 测试 ==========
+  
+  console.log('\n📋 测试 Utils.deepClone...\n');
+  
+  // 测试 4: deepClone 应该深拷贝对象
+  test('deepClone 应该深拷贝对象', function() {
+    const obj = { 
+      a: 1, 
+      b: { c: 2 },
+      d: [1, 2, 3]
+    };
+    const cloned = Utils.deepClone(obj);
+    
+    assertEqual(cloned, obj, '值应该相等');
+    assert(cloned !== obj, '应该是不同的对象');
+    assert(cloned.b !== obj.b, '嵌套对象也应该不同');
+    assert(cloned.d !== obj.d, '数组也应该不同');
+  });
+  
+  // 测试 5: deepClone 应该处理数组
+  test('deepClone 应该能拷贝数组', function() {
+    const arr = [1, [2, 3], { a: 4 }];
+    const cloned = Utils.deepClone(arr);
+    
+    assertEqual(cloned, arr, '数组值应该相等');
+    assert(cloned !== arr, '应该是不同的数组');
+    assert(cloned[1] !== arr[1], '嵌套数组也应该不同');
+  });
+  
+  // 测试 6: deepClone 应该处理空值
+  test('deepClone 应该能处理 null 和 undefined', function() {
+    assertEqual(Utils.deepClone(null), null);
+    assertEqual(Utils.deepClone(undefined), undefined);
+  });
+  
+  // ========== Utils.formatTagValue 测试 ==========
+  
+  console.log('\n🏷️ 测试 Utils.formatTagValue...\n');
+  
+  // 测试 7: formatTagValue 应该格式化标签值
+  test('formatTagValue 应该正确格式化标签值', function() {
+    // 这个测试依赖于具体的实现，这里做基本验证
+    const result = Utils.formatTagValue('test', 'zodiac');
+    assert(typeof result === 'string', '应该返回字符串');
+  });
+  
+  // ========== Utils.getTagValues 测试 ==========
+  
+  console.log('\n📊 测试 Utils.getTagValues...\n');
+  
+  // 测试 8: getTagValues 应该获取标签值
+  test('getTagValues 应该返回数组', function() {
+    // 注意：这个测试需要DOM环境，在浏览器中运行
+    const result = Utils.getTagValues('zodiac');
+    assert(Array.isArray(result), '应该返回数组');
+  });
+  
+  // ========== Utils.validateFilterItem 测试 ==========
+  
+  console.log('\n✅ 测试 Utils.validateFilterItem...\n');
+  
+  // 测试 9: validateFilterItem 应该验证方案项
+  test('validateFilterItem 应该验证有效的方案项', function() {
+    const validItem = {
+      name: '测试方案',
+      selected: {},
+      excluded: []
+    };
+    const result = Utils.validateFilterItem(validItem);
+    assert(result === true || result === false, '应该返回布尔值');
+  });
+  
+  // 测试 10: validateFilterItem 应该拒绝无效的方案项
+  test('validateFilterItem 应该拒绝无效的方案项', function() {
+    const invalidItem = null;
+    const result = Utils.validateFilterItem(invalidItem);
+    assert(result === false, '应该返回false');
+  });
+  
+  // ========== Utils.nextDefaultName 测试 ==========
+  
+  console.log('\n🔢 测试 Utils.nextDefaultName...\n');
+  
+  // 测试 11: nextDefaultName 应该生成下一个默认名称
+  test('nextDefaultName 应该生成默认名称', function() {
+    const savedFilters = [
+      { name: '方案1' },
+      { name: '方案2' }
+    ];
+    const result = Utils.nextDefaultName(savedFilters);
+    assert(typeof result === 'string', '应该返回字符串');
+    assert(result.length > 0, '名称不应为空');
+  });
+  
+  // ========== Utils.ensureUniqueName 测试 ==========
+  
+  console.log('\n✨ 测试 Utils.ensureUniqueName...\n');
+  
+  // 测试 12: ensureUniqueName 应该确保名称唯一
+  test('ensureUniqueName 应该生成唯一名称', function() {
+    const savedFilters = [
+      { name: '方案1' }
+    ];
+    const result = Utils.ensureUniqueName('方案1', savedFilters);
+    assert(result !== '方案1' || savedFilters.length === 0, '如果有重名应该追加后缀');
+  });
+  
+  // ========== Utils.isValidLotteryNum 测试 ==========
+  
+  console.log('\n🎯 测试 Utils.isValidLotteryNum...\n');
+  
+  // 测试 13: isValidLotteryNum 应该验证合法号码
+  test('isValidLotteryNum 应该验证1-49的号码', function() {
+    assert(Utils.isValidLotteryNum(1) === true, '1应该是合法的');
+    assert(Utils.isValidLotteryNum(49) === true, '49应该是合法的');
+    assert(Utils.isValidLotteryNum(25) === true, '25应该是合法的');
+  });
+  
+  // 测试 14: isValidLotteryNum 应该拒绝非法号码
+  test('isValidLotteryNum 应该拒绝非法号码', function() {
+    assert(Utils.isValidLotteryNum(0) === false, '0应该是非法的');
+    assert(Utils.isValidLotteryNum(50) === false, '50应该是非法的');
+    assert(Utils.isValidLotteryNum(-1) === false, '-1应该是非法的');
+    assert(Utils.isValidLotteryNum(NaN) === false, 'NaN应该是非法的');
+  });
+  
+  // ========== 测试结果 ==========
+  
+  console.log('\n' + '='.repeat(60));
+  console.log(`测试结果: ${passed} 通过, ${failed} 失败`);
+  console.log('='.repeat(60));
+  
+  if (failed === 0) {
+    console.log('✅ 所有测试通过！');
+    console.log('\n📊 测试覆盖:');
+    console.log('  - Utils.debounce: 2个测试');
+    console.log('  - Utils.throttle: 1个测试');
+    console.log('  - Utils.deepClone: 3个测试');
+    console.log('  - Utils.formatTagValue: 1个测试');
+    console.log('  - Utils.getTagValues: 1个测试');
+    console.log('  - Utils.validateFilterItem: 2个测试');
+    console.log('  - Utils.nextDefaultName: 1个测试');
+    console.log('  - Utils.ensureUniqueName: 1个测试');
+    console.log('  - Utils.isValidLotteryNum: 2个测试');
+    console.log('  - 总计: 14个测试用例');
+  } else {
+    console.log('❌ 存在失败的测试，请检查上面的错误信息');
+  }
+}

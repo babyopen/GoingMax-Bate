@@ -1,5 +1,24 @@
 async function initApp() {
   try {
+    // 0. 初始化性能监控（v2.0.9 新增）
+    if (typeof PerformanceMonitor !== 'undefined') {
+      PerformanceMonitor.init();
+      console.log('[App] 性能监控已初始化');
+    }
+    
+    // 0.5. 注册事件总线监听器（解耦核心层与平台层，v2.0.9 新增）
+    // StateManager 状态变更时自动触发渲染，替代 core/state.js 中直接调用 Render.renderAll()
+    if (typeof BusinessEventBus !== 'undefined') {
+      BusinessEventBus.on('state:change', function() {
+        try {
+          Render.renderAll();
+        } catch(e) {
+          console.error('[App] 状态变更渲染失败:', e);
+        }
+      });
+      console.log('[App] 事件总线监听器已注册');
+    }
+    
     // 1. 生成生肖数据
     Render.buildZodiacCycle();
     // 2. 生成号码基础数据

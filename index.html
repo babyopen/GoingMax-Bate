@@ -849,17 +849,19 @@
 <script src="core/config.js"></script>
 <script src="core/utils.js"></script>
 <!-- 核心层通用工具 - 缓存 / 高频优化 / 定时器管理（2026-06-24 新增） -->
-<script src="core/common-cache.js"></script>
+<script src="core/common/common-cache.js"></script>
 <!-- 核心层通用工具 - 数据验证（2026-06-24 新增） -->
-<script src="core/common-validator.js"></script>
+<script src="core/common/common-validator.js"></script>
 <!-- 核心层通用工具 - 字符串与格式化（2026-06-24 新增） -->
-<script src="core/common-string.js"></script>
+<script src="core/common/common-string.js"></script>
 <!-- 核心层通用工具 - 平台能力（设备 / 安全区 / 剪贴板 / 网络）（2026-06-24 新增） -->
-<script src="core/common-platform.js"></script>
+<script src="core/common/common-platform.js"></script>
 
 <!-- 平台层：Toast → DOM → 渲染 -->
 <script src="platform/web/toast.js"></script>
 <script src="platform/web/dom.js"></script>
+<!-- 性能监控（v2.0.9 新增） -->
+<script src="platform/web/performance-monitor.js"></script>
 
 <!-- 数据层：数据查询 → 筛选逻辑 -->
 <script src="data/data-query.js"></script>
@@ -876,25 +878,33 @@
 
 <!-- 业务层：禁止DOM操作 -->
 <!-- 业务层通用工具（v2.0.8 新增 LRU 工具，原有 sort/time 工具挂载） -->
-<script src="business/business-common-sort.js"></script>
-<script src="business/business-common-time.js"></script>
-<script src="business/business-common-lru.js"></script>
+<script src="business/common/business-common-sort.js"></script>
+<script src="business/common/business-common-time.js"></script>
+<script src="business/common/business-common-lru.js"></script>
 <!-- 业务层通用工具 - 统计预测（2026-06-24 新增） -->
-<script src="business/business-common-stats.js"></script>
+<script src="business/common/business-common-stats.js"></script>
 <!-- 业务层通用工具 - 回测（2026-06-24 新增） -->
-<script src="business/business-common-backtest.js"></script>
+<script src="business/common/business-common-backtest.js"></script>
 <!-- 业务层通用工具 - 特码信息批处理（2026-06-24 新增） -->
-<script src="business/business-common-specials.js"></script>
+<script src="business/common/business-common-specials.js"></script>
 <!-- 业务层通用工具 - 历史数据加载（2026-06-24 新增） -->
-<script src="business/business-common-data.js"></script>
+<script src="business/common/business-common-data.js"></script>
+<!-- 事件总线（2026-06-30 新增：解耦核心层与平台层） -->
+<script src="business/main/business-event-bus.js"></script>
+<!-- 业务层模块化拆分（v2.0.9 新增） -->
+<script src="business/exclude/business-exclude.js"></script>
+<script src="business/analysis/business-analysis.js"></script>
+<script src="business/filter/business-filter.js"></script>
+<!-- 视图辅助工具（v2.0.9 新增：从视图层抽取业务计算） -->
+<script src="business/main/business-view-helper.js"></script>
 <!-- 视图层通用工具 - Giong 综合分析（2026-06-24 新增） -->
-<script src="views/view-common-giong.js"></script>
+<script src="views/common/view-common-giong.js"></script>
 <!-- 快捷导航 + 底部导航统一管理（2026-06-13 拆分自 business-main.js），需在 business-main.js 之前加载 -->
-<script src="business/business-quick-nav.js"></script>
-<script src="business/business-cross-exclusion.js"></script>
-<script src="business/business-main.js"></script>
+<script src="business/main/business-quick-nav.js"></script>
+<script src="business/main/business-cross-exclusion.js"></script>
+<script src="business/main/business-main.js"></script>
 <!-- 方案分组管理（2026-06-20 新增，依赖 business-main.js 之后挂载到 Business 命名空间） -->
-<script src="business/business-filter-group.js"></script>
+<script src="business/filter/business-filter-group.js"></script>
 <!-- 生肖预测（门面 + 5 个子模块，2026-06-05 按文件夹整理到 business/zodiac/） -->
 <script src="business/zodiac/business-zodiac-prediction.js"></script>
 <!-- 兼容路径：business-zodiac-prediction.js 拆分出的子模块（2026-06-05），自动挂载到 ZodiacPrediction 上 -->
@@ -906,23 +916,23 @@
 <script src="business/zodiac/business-zodiac-backtest.js"></script>
 <!-- TongJi 资料页统计（2026-06-20 新增） -->
 <script src="business/zodiac/business-zodiac-tongji.js"></script>
-<script src="business/business-ultimate.js"></script>
-<script src="business/business-giong.js"></script>
+<script src="business/ultimate/business-ultimate.js"></script>
+<script src="business/giong/business-giong.js"></script>
 <!-- 滑动窗口（2026-06-05 整理到 business/sliding-window/） -->
 <script src="business/sliding-window/business-sliding-window.js"></script>
 <script src="business/sliding-window/business-sliding-window-history.js"></script>
-<script src="views/view-sliding-window-history.js"></script>
+<script src="views/sliding-window/view-sliding-window-history.js"></script>
 
 <!-- 视图层 -->
 
-<script src="views/view-common.js"></script>
-    <script src="views/view-filter.js"></script>
+<script src="views/common/view-common.js"></script>
+    <script src="views/filter/view-filter.js"></script>
     <!-- 方案分组视图（2026-06-20 新增） -->
-    <script src="views/view-filter-group.js"></script>
+    <script src="views/filter/view-filter-group.js"></script>
 <!-- 兼容路径：view-filter.js 拆分出的子模块（2026-06-05），自动挂载到 ViewFilter 上 -->
 <!-- 弹窗视图子模块（2026-06-05 整理到 views/modals/） -->
 <script src="views/modals/view-batch-modal.js"></script>
-<script src="views/view-quick-nav.js"></script>
+<script src="views/quick-nav/view-quick-nav.js"></script>
 <script src="views/modals/view-overlap-modal.js"></script>
 <!-- v2.0.9 新增：排除页视图（独立标签页） -->
 <script src="views/exclude/view-exclude.js"></script>
@@ -940,7 +950,7 @@
 <script src="views/zodiac/view-zodiac-giong-wuxing.js"></script>
 <script src="views/zodiac/view-zodiac-giong-color.js"></script>
 <script src="views/zodiac/view-zodiac-ultimate.js"></script>
-<script src="views/view-profile.js"></script>
+<script src="views/profile/view-profile.js"></script>
 <script src="views/zodiac/view-zodiac-tongji.js"></script>
 
 <!-- 事件层：统一事件委托 -->

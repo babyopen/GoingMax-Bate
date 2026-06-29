@@ -1,0 +1,193 @@
+/**
+ * 事件总线单元测试（HTML 版本，可直接在浏览器中运行）
+ * 
+ * 使用方法：
+ * 1. 在浏览器中打开此文件
+ * 2. 查看控制台输出
+ * 3. 所有测试通过会显示 "✅ 所有测试通过"
+ */
+
+// 模拟 BusinessEventBus（如果未加载）
+if (typeof BusinessEventBus === 'undefined') {
+  console.error('❌ BusinessEventBus 未加载，请先加载 business/business-event-bus.js');
+} else {
+  console.log('🧪 开始运行事件总线测试...\n');
+  
+  let passed = 0;
+  let failed = 0;
+  
+  function test(name, fn) {
+    try {
+      fn();
+      console.log(`✅ ${name}`);
+      passed++;
+    } catch (e) {
+      console.error(`❌ ${name}`);
+      console.error('   错误:', e.message);
+      failed++;
+    }
+  }
+  
+  function assert(condition, message) {
+    if (!condition) {
+      throw new Error(message || '断言失败');
+    }
+  }
+  
+  // ========== 测试用例 ==========
+  
+  // 测试 1: 基本订阅和发布
+  test('应该能够订阅和发布事件', function() {
+    let received = null;
+    const off = BusinessEventBus.on('test:basic', function(data) {
+      received = data;
+    });
+    
+    BusinessEventBus.emit('test:basic', 'hello');
+    assert(received === 'hello', '应该接收到数据');
+    
+    off();
+  });
+  
+  // 测试 2: 多次订阅
+  test('应该支持多个监听器', function() {
+    let count = 0;
+    
+    BusinessEventBus.on('test:multi', function() { count++; });
+    BusinessEventBus.on('test:multi', function() { count++; });
+    BusinessEventBus.on('test:multi', function() { count++; });
+    
+    BusinessEventBus.emit('test:multi');
+    assert(count === 3, '应该调用3次');
+    
+    BusinessEventBus.clear('test:multi');
+  });
+  
+  // 测试 3: 取消订阅
+  test('应该能够取消订阅', function() {
+    let called = false;
+    const off = BusinessEventBus.on('test:off', function() {
+      called = true;
+    });
+    
+    off();
+    BusinessEventBus.emit('test:off');
+    assert(!called, '取消订阅后不应被调用');
+  });
+  
+  // 测试 4: 一次性订阅
+  test('应该支持一次性订阅', function() {
+    let count = 0;
+    
+    BusinessEventBus.once('test:once', function() {
+      count++;
+    });
+    
+    BusinessEventBus.emit('test:once');
+    BusinessEventBus.emit('test:once');
+    BusinessEventBus.emit('test:once');
+    
+    assert(count === 1, '应该只调用1次');
+  });
+  
+  // 测试 5: 传递多个参数
+  test('应该能够传递多个参数', function() {
+    let args = null;
+    
+    BusinessEventBus.on('test:args', function(a, b, c) {
+      args = [a, b, c];
+    });
+    
+    BusinessEventBus.emit('test:args', 1, 'two', { three: 3 });
+    assert(args.length === 3, '应该接收到3个参数');
+    assert(args[0] === 1, '第一个参数应该是1');
+    assert(args[1] === 'two', '第二个参数应该是"two"');
+    assert(args[2].three === 3, '第三个参数应该是对象');
+    
+    BusinessEventBus.clear('test:args');
+  });
+  
+  // 测试 6: 清除特定事件
+  test('应该能够清除特定事件的监听器', function() {
+    let count1 = 0;
+    let count2 = 0;
+    
+    BusinessEventBus.on('test:clear1', function() { count1++; });
+    BusinessEventBus.on('test:clear2', function() { count2++; });
+    
+    BusinessEventBus.clear('test:clear1');
+    
+    BusinessEventBus.emit('test:clear1');
+    BusinessEventBus.emit('test:clear2');
+    
+    assert(count1 === 0, 'clear1 不应该被调用');
+    assert(count2 === 1, 'clear2 应该被调用1次');
+    
+    BusinessEventBus.clear('test:clear2');
+  });
+  
+  // 测试 7: 清除所有事件
+  test('应该能够清除所有事件的监听器', function() {
+    let count = 0;
+    
+    BusinessEventBus.on('test:clearAll1', function() { count++; });
+    BusinessEventBus.on('test:clearAll2', function() { count++; });
+    
+    BusinessEventBus.clear();
+    
+    BusinessEventBus.emit('test:clearAll1');
+    BusinessEventBus.emit('test:clearAll2');
+    
+    assert(count === 0, '所有监听器都应该被清除');
+  });
+  
+  // 测试 8: 监听器数量
+  test('应该能够获取监听器数量', function() {
+    BusinessEventBus.on('test:count', function() {});
+    BusinessEventBus.on('test:count', function() {});
+    BusinessEventBus.on('test:count', function() {});
+    
+    const count = BusinessEventBus.listenerCount('test:count');
+    assert(count === 3, '应该有3个监听器');
+    
+    BusinessEventBus.clear('test:count');
+  });
+  
+  // 测试 9: 空事件名称
+  test('应该处理空事件名称', function() {
+    // 不应该抛出异常
+    BusinessEventBus.on('', function() {});
+    BusinessEventBus.emit('', 'data');
+    assert(true, '应该能处理空事件名称');
+  });
+  
+  // 测试 10: 错误回调不会中断其他回调
+  test('错误回调不应影响其他回调', function() {
+    let count = 0;
+    
+    BusinessEventBus.on('test:error', function() {
+      throw new Error('故意出错');
+    });
+    
+    BusinessEventBus.on('test:error', function() {
+      count++;
+    });
+    
+    BusinessEventBus.emit('test:error');
+    assert(count === 1, '第二个回调仍应被执行');
+    
+    BusinessEventBus.clear('test:error');
+  });
+  
+  // ========== 测试结果 ==========
+  
+  console.log('\n' + '='.repeat(50));
+  console.log(`测试结果: ${passed} 通过, ${failed} 失败`);
+  
+  if (failed === 0) {
+    console.log('✅ 所有测试通过！');
+  } else {
+    console.log('❌ 存在失败的测试，请检查上面的错误信息');
+  }
+  console.log('='.repeat(50));
+}

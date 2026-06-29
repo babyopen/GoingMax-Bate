@@ -40,16 +40,19 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;-webkit-tap-highlight-color:transparent}
 html{
   scroll-behavior:smooth;
-  height:100%;
+  height:100%;width:100%;
   overflow:hidden; /* 防止html级别滚动 */
+  -webkit-text-size-adjust:100%;
 }
 body{
   background:var(--bg);color:var(--text);
-  position:fixed;top:0;left:0;width:100%;height:100%;
+  height:100%;width:100%;
   overflow:hidden; /* 禁止body滚动，由page-scroll接管 */
+  position:relative; /* 修复 iOS Safari 点击命中测试问题：body position:fixed 会导致全局点击失效 */
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
-  -webkit-overflow-scrolling:none; /* 禁用iOS弹性滚动(在body上) */
   overscroll-behavior:none; /* 防止过度滚动 */
+  touch-action:manipulation; /* iOS 点击延迟优化 + 确保事件正常触发 */
+  cursor:pointer; /* iOS Safari 事件委托需要 cursor:pointer 才能触发 click */
 }
 /* v2.0.9 优化：手机端滚动卡顿修复
    - 移除 will-change: scroll-position（长期挂载 = 持续占用 GPU 内存）

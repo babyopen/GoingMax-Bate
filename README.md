@@ -55,17 +55,24 @@ npm run lint:business
 │       ├── dom.js
 │       ├── render.js
 │       ├── toast.js
+│       ├── performance-monitor.js  # ⭐ 性能监控（v2.0.9）
 │       ├── input-modal.js
 │       └── modals/
 │
 ├── core/                   # 核心层（只读）
 │   ├── config.js
+│   ├── config-module.js    # ⭐ ES Module模板（v2.0.9）
 │   ├── utils.js
 │   ├── state.js
 │   └── storage.js
 │
 ├── business/               # 业务层（禁止 DOM）
 │   ├── business-*.js       # 通用业务
+│   ├── business-event-bus.js  # ⭐ 事件总线（v2.0.9）
+│   ├── business-exclude.js    # ⭐ 排除号码模块（v2.0.9）
+│   ├── business-analysis.js   # ⭐ 分析模块（v2.0.9）
+│   ├── business-filter.js     # ⭐ 方案管理模块（v2.0.9）
+│   ├── business-view-helper.js  # ⭐ 视图辅助工具（v2.0.9）
 │   ├── zodiac/             # 生肖类业务
 │   └── sliding-window/     # 滑动窗口业务
 │
@@ -79,6 +86,14 @@ npm run lint:business
 │   └── modals/             # 弹窗视图
 │
 ├── docs/                   # 项目文档与优化建议
+│   ├── 事件总线使用说明.md  # ⭐ v2.0.9
+│   └── 优化全面完成报告.md  # ⭐ v2.0.9 最终版
+│
+├── tests/                  # 测试文件
+│   ├── test-event-bus.html        # ⭐ 事件总线测试（10用例）
+│   ├── test-business-common.html  # ⭐ 业务工具测试（12用例）
+│   ├── test-core-utils.html       # ⭐ 核心工具测试（14用例）
+│   └── test-performance-monitor.html  # ⭐ 性能监控测试（10用例）
 │
 ├── .trae/rules/            # 架构宪法与规则
 ├── .eslintrc.js            # ESLint 强制校验
@@ -95,8 +110,12 @@ npm run lint:business
 
 ## 文档
 
+### 核心文档
+- [项目优化完整指南](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/项目优化完整指南.md) ⭐ **v2.0.9 推荐**
+- [事件总线使用说明](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/事件总线使用说明.md) - API参考
+- [优化验证清单](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/优化验证清单.md) - 验证步骤
+
+### 参考资料
 - [架构宪法](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/.trae/rules/Going.md)
-- [全面优化建议](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/项目优化建议.md)
-- [规则违规映射](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/规则违规映射表.md)
-- [VSCode 推荐配置](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/VSCode推荐配置.md)
-- [业务层通用工具使用说明](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/业务层通用工具使用说明.md)
+- [项目优化建议](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/项目优化建议.md)
+- [文档清理报告](file:///Users/macbook/Documents/Gemini-app/Bate/1.2版本/-3-1/docs/文档清理报告.md)

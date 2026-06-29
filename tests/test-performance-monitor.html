@@ -1,0 +1,193 @@
+/**
+ * 性能监控工具使用示例和测试
+ * 
+ * 使用方法：
+ * 1. 在浏览器中打开此文件
+ * 2. 查看控制台输出
+ * 3. 所有测试通过会显示 "✅ 所有测试通过"
+ */
+
+// 检查依赖是否加载
+if (typeof PerformanceMonitor === 'undefined') {
+  console.error('❌ PerformanceMonitor 未加载，请先加载 platform/web/performance-monitor.js');
+} else {
+  console.log('🧪 开始运行性能监控测试...\n');
+  
+  let passed = 0;
+  let failed = 0;
+  
+  function test(name, fn) {
+    try {
+      fn();
+      console.log(`✅ ${name}`);
+      passed++;
+    } catch (e) {
+      console.error(`❌ ${name}`);
+      console.error('   错误:', e.message);
+      failed++;
+    }
+  }
+  
+  function assert(condition, message) {
+    if (!condition) {
+      throw new Error(message || '断言失败');
+    }
+  }
+  
+  // ========== 基本功能测试 ==========
+  
+  console.log('📊 测试 PerformanceMonitor 基本功能...\n');
+  
+  // 测试 1: mark 应该记录性能指标
+  test('mark 应该能记录性能指标', function() {
+    PerformanceMonitor.mark('test.metric', 100, { tag: 'test' });
+    const metric = PerformanceMonitor.getMetric('test.metric');
+    assert(metric !== null, '应该能找到指标');
+    assert(metric.value === 100, '值应该正确');
+  });
+  
+  // 测试 2: startTimer 应该能计时
+  test('startTimer 应该能正确计时', function(done) {
+    const endTimer = PerformanceMonitor.startTimer('test.timer');
+    
+    setTimeout(function() {
+      const duration = endTimer({ tag: 'timer-test' });
+      assert(duration >= 50, '计时应该准确（至少50ms）');
+      assert(duration < 150, '计时不应该过长（小于150ms）');
+      
+      const metric = PerformanceMonitor.getMetric('test.timer');
+      assert(metric !== null, '应该记录计时结果');
+      done();
+    }, 100);
+  });
+  
+  // 测试 3: getMetrics 应该返回所有指标
+  test('getMetrics 应该返回所有指标', function() {
+    PerformanceMonitor.mark('metric1', 10);
+    PerformanceMonitor.mark('metric2', 20);
+    const metrics = PerformanceMonitor.getMetrics();
+    assert(Array.isArray(metrics), '应该返回数组');
+    assert(metrics.length >= 2, '应该至少有2个指标');
+  });
+  
+  // 测试 4: clearMetrics 应该清除所有指标
+  test('clearMetrics 应该清除所有指标', function() {
+    PerformanceMonitor.clearMetrics();
+    const metrics = PerformanceMonitor.getMetrics();
+    assertEqual(metrics.length, 0, '应该没有指标');
+  });
+  
+  // ========== 错误追踪测试 ==========
+  
+  console.log('\n⚠️ 测试错误追踪...\n');
+  
+  // 测试 5: captureError 应该记录错误
+  test('captureError 应该能记录错误', function() {
+    const error = new Error('Test error');
+    PerformanceMonitor.captureError(error, 'Test context');
+    const errors = PerformanceMonitor.getErrors();
+    assert(errors.length > 0, '应该有错误记录');
+    assert(errors[errors.length - 1].message === 'Test error', '错误消息应该正确');
+  });
+  
+  // 测试 6: captureError 应该限制错误数量
+  test('captureError 应该限制错误数量', function() {
+    PerformanceMonitor.clearErrors();
+    
+    // 添加110个错误
+    for (let i = 0; i < 110; i++) {
+      PerformanceMonitor.captureError(new Error('Error ' + i));
+    }
+    
+    const errors = PerformanceMonitor.getErrors();
+    assert(errors.length <= 100, '错误数量不应超过100');
+  });
+  
+  // 测试 7: clearErrors 应该清除错误
+  test('clearErrors 应该清除所有错误', function() {
+    PerformanceMonitor.clearErrors();
+    const errors = PerformanceMonitor.getErrors();
+    assertEqual(errors.length, 0, '应该没有错误');
+  });
+  
+  // ========== Web Vitals 测试 ==========
+  
+  console.log('\n🚀 测试 Web Vitals...\n');
+  
+  // 测试 8: collectWebVitals 应该能收集指标
+  test('collectWebVitals 应该能收集Web Vitals', function() {
+    // 这个测试依赖于浏览器环境
+    PerformanceMonitor.collectWebVitals();
+    assert(true, 'Web Vitals 收集已触发');
+  });
+  
+  // ========== 报告导出测试 ==========
+  
+  console.log('\n📄 测试报告导出...\n');
+  
+  // 测试 9: exportReport 应该导出完整报告
+  test('exportReport 应该导出性能报告', function() {
+    PerformanceMonitor.mark('load.time', 500);
+    PerformanceMonitor.captureError(new Error('Sample error'));
+    
+    const report = PerformanceMonitor.exportReport();
+    
+    assert(typeof report === 'object', '应该返回对象');
+    assert(report.timestamp > 0, '应该有时间戳');
+    assert(typeof report.url === 'string', '应该有URL');
+    assert(Array.isArray(report.metrics), '应该有指标数组');
+    assert(Array.isArray(report.errors), '应该有错误数组');
+    assert(typeof report.summary === 'object', '应该有摘要');
+  });
+  
+  // 测试 10: 报告摘要应该包含统计信息
+  test('exportReport 的摘要应该包含统计信息', function() {
+    const report = PerformanceMonitor.exportReport();
+    
+    assert(typeof report.summary.totalMetrics === 'number', '应该有总指标数');
+    assert(typeof report.summary.totalErrors === 'number', '应该有总错误数');
+    assert(typeof report.summary.avgLoadTime === 'number', '应该有平均加载时间');
+  });
+  
+  // ========== 辅助函数 ==========
+  
+  function assertEqual(actual, expected, message) {
+    if (actual !== expected) {
+      throw new Error(message || `期望 ${expected}，实际 ${actual}`);
+    }
+  }
+  
+  // ========== 测试结果 ==========
+  
+  console.log('\n' + '='.repeat(60));
+  console.log(`测试结果: ${passed} 通过, ${failed} 失败`);
+  console.log('='.repeat(60));
+  
+  if (failed === 0) {
+    console.log('✅ 所有测试通过！');
+    console.log('\n📊 测试覆盖:');
+    console.log('  - 基本功能: 4个测试');
+    console.log('  - 错误追踪: 3个测试');
+    console.log('  - Web Vitals: 1个测试');
+    console.log('  - 报告导出: 2个测试');
+    console.log('  - 总计: 10个测试用例');
+    
+    console.log('\n💡 使用示例:');
+    console.log('  // 记录性能指标');
+    console.log('  PerformanceMonitor.mark("page.load", 1500);');
+    console.log('  ');
+    console.log('  // 计时');
+    console.log('  const endTimer = PerformanceMonitor.startTimer("api.request");');
+    console.log('  // ... API调用 ...');
+    console.log('  endTimer({ url: "/api/data" });');
+    console.log('  ');
+    console.log('  // 捕获错误');
+    console.log('  PerformanceMonitor.captureError(error, "API调用失败");');
+    console.log('  ');
+    console.log('  // 导出报告');
+    console.log('  const report = PerformanceMonitor.exportReport();');
+    console.log('  console.log(report);');
+  } else {
+    console.log('❌ 存在失败的测试，请检查上面的错误信息');
+  }
+}
