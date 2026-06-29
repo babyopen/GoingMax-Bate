@@ -131,15 +131,7 @@ const BusinessQuickNav = {
    * 调用方：event.js handleGlobalClick → CONFIG.ACTIONS.SWITCH_NAV → 委托给 Business
    */
   handleBottomNavClick: (index) => {
-    // 1. 切换页面 UI
-    ViewFilter.switchBottomNavUI(index);
-
-    // 2. 初始化对应页面（仅广播需要）
-    if (index === 1) {
-      Business.initAnalysisPage();
-    }
-
-    // 3. 查找 memItem
+    // 0. 查找 memItem（提前判断是否重复点击）
     var memItem = null;
     for (var i = 0; i < BusinessQuickNav._TAB_MEMORY.length; i++) {
       if (BusinessQuickNav._TAB_MEMORY[i].index === index) {
@@ -147,11 +139,21 @@ const BusinessQuickNav = {
         break;
       }
     }
-
-    // 4. 快捷导航栏联动
     var isRepeatClick = memItem
                       && memItem.toggleQuickNav
                       && BusinessQuickNav._currentBottomNavIndex === index;
+
+    // 1. 仅在非重复点击时切换页面 UI
+    if (!isRepeatClick) {
+      ViewFilter.switchBottomNavUI(index);
+    }
+
+    // 2. 初始化对应页面（仅广播需要）
+    if (index === 1) {
+      Business.initAnalysisPage();
+    }
+
+    // 3. 快捷导航栏联动
     if (isRepeatClick) {
       // 重复点击当前页面：延迟切换展开/收起（避开 handleClickOutside 立即收起）
       BusinessQuickNav.toggleLater(50);
@@ -161,10 +163,10 @@ const BusinessQuickNav = {
       BusinessQuickNav.toggle(false);
     }
 
-    // 5. 更新当前底部导航索引
+    // 4. 更新当前底部导航索引
     BusinessQuickNav._currentBottomNavIndex = index;
 
-    // 6. 恢复对应页面的子 tab
+    // 5. 恢复对应页面的子 tab
     if (memItem && typeof Storage !== 'undefined' && Storage.getLastTab) {
       var lastTab = Storage.getLastTab(memItem.page);
       if (lastTab) memItem.restore(lastTab);
