@@ -44,7 +44,8 @@ const ViewQuickNav = {
       { label: '我的', type: 'tab', page: 'profile', tabName: 'mine' },
       { label: '官方', type: 'tab', page: 'profile', tabName: 'official' },
       { label: '凤凰', type: 'tab', page: 'profile', tabName: 'phoenix' },
-      { label: '大仙', type: 'tab', page: 'profile', tabName: 'daxian' }
+      { label: '大仙', type: 'tab', page: 'profile', tabName: 'daxian' },
+      { label: 'Max', type: 'tab', page: 'profile', tabName: 'max' }
     ]
   },
 

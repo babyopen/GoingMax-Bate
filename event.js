@@ -559,10 +559,10 @@ const EventBinder = {
       return;
     }
 
-    // 10. 更多功能开发中点击跳转
-    const emptyTip = target.closest('.empty-tip');
-    if(emptyTip && emptyTip.textContent.includes('更多功能开发中')){
-      window.location.href = 'https://aebhwxjgna.00512dh1.app:3728/00512.html';
+    // 9.1 我的页面标签切换
+    const profileTabBtn = target.closest('.zodiac-tab-btn[data-profile-tab]');
+    if(profileTabBtn){
+      EventBinder._switchProfileTab(profileTabBtn.dataset.profileTab);
       return;
     }
   },
@@ -764,7 +764,7 @@ const EventBinder = {
 
   /**
    * 我的页面标签切换（委托 ViewProfile 渲染）
-   * @param {string} tab - 标签名称：mine / official / phoenix / daxian
+   * @param {string} tab - 标签名称：mine / official / phoenix / daxian / max
    */
   _switchProfileTab: function(tab) {
     // 委托视图层渲染（与 ViewProfile.switchProfileTabUI 行为一致）
@@ -801,6 +801,14 @@ const EventBinder = {
         daxianFrame.src = 'https://rk3lx78d.66660149m.app:2026/66660149.app#66660149://01492026.com';
         daxianFrame.style.display = 'block';
         daxianLoading.style.display = 'none';
+      }
+    } else if (tab === 'max') {
+      var maxFrame = document.getElementById('maxFrame');
+      var maxLoading = document.getElementById('maxLoading');
+      if (maxFrame && !maxFrame.src) {
+        maxFrame.src = 'https://15549.rs-k1-gif.lzws0931.com/advice/site.k1/#15549';
+        maxFrame.style.display = 'block';
+        maxLoading.style.display = 'none';
       }
     }
   },

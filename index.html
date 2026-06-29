@@ -735,6 +735,14 @@
 
   <!-- 我的页面 -->
   <div class="page" id="profilePage" style="display:none">
+    <!-- Tab按钮 -->
+    <div class="zodiac-tab-row">
+      <button class="zodiac-tab-btn active" data-profile-tab="mine">我的</button>
+      <button class="zodiac-tab-btn" data-profile-tab="official">官方</button>
+      <button class="zodiac-tab-btn" data-profile-tab="phoenix">凤凰</button>
+      <button class="zodiac-tab-btn" data-profile-tab="daxian">大仙</button>
+      <button class="zodiac-tab-btn" data-profile-tab="max">Max</button>
+    </div>
     <!-- 我的面板 -->
     <div class="zodiac-tab-panel active" id="profileMinePanel">
       <div class="card">
@@ -742,7 +750,6 @@
           <h2>我的</h2>
         </div>
         <div class="card-body">
-          <div class="empty-tip">更多功能开发中...</div>
         </div>
       </div>
     </div>
@@ -763,6 +770,12 @@
     <div class="zodiac-tab-panel" id="profileDaxianPanel">
       <iframe id="daxianFrame" style="display:none;" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
       <div id="daxianLoading" class="empty-tip">正在加载大仙...</div>
+    </div>
+
+    <!-- Max面板 -->
+    <div class="zodiac-tab-panel" id="profileMaxPanel">
+      <iframe id="maxFrame" style="display:none;" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+      <div id="maxLoading" class="empty-tip">正在加载Max...</div>
     </div>
   </div>
 </div>

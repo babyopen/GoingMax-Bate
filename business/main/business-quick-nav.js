@@ -47,7 +47,7 @@ const BusinessQuickNav = {
     { index: 0, page: null,       toggleQuickNav: true,  restore: function() {} },
     { index: 1, page: 'analysis', toggleQuickNav: true,  restore: function(tab) { Business.switchAnalysisTab(tab); } },
     { index: 2, page: 'random',   toggleQuickNav: true,  restore: function(tab) { Business.switchZodiacTab(tab); } },
-    { index: 3, page: 'profile',  toggleQuickNav: false, restore: function(tab) {
+    { index: 3, page: 'profile',  toggleQuickNav: true,  restore: function(tab) {
         if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
           ViewProfile.switchProfileTabUI(tab);
         }

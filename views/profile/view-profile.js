@@ -59,7 +59,7 @@ const ViewProfile = {
 
   /**
    * 切换『我的』页面子 tab 的 UI（仅渲染 DOM，不做业务）
-   * @param {string} tab - mine / official / phoenix / daxian
+   * @param {string} tab - mine / official / phoenix / daxian / max
    */
   switchProfileTabUI: function(tab) {
     ViewCommon.switchTabUI({
@@ -69,7 +69,8 @@ const ViewProfile = {
         mine: 'profileMinePanel',
         official: 'profileOfficialPanel',
         phoenix: 'profilePhoenixPanel',
-        daxian: 'profileDaxianPanel'
+        daxian: 'profileDaxianPanel',
+        max: 'profileMaxPanel'
       },
       navBtnSelector: '.nav-tab[data-page="profile"]'
     }, tab);
