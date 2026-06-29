@@ -41,7 +41,7 @@ const BusinessQuickNav = {
    * restore:  恢复函数（接收 tab 参数；主页无需恢复，传空函数）
    * toggleQuickNav:
    *           是否支持重复点击切换快捷导航展开/收起
-   *           默认 true；"我的"页面（profile）设为 false
+   *           默认 true；所有页面均支持
    */
   _TAB_MEMORY: [
     { index: 0, page: null,       toggleQuickNav: true,  restore: function() {} },

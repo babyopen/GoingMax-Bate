@@ -275,7 +275,7 @@ const Storage = {
     profile: {
       key: 'profileLastTab',
       default: 'mine',
-      valid: ['mine', 'official', 'phoenix', 'daxian']
+      valid: ['mine', 'official', 'phoenix', 'daxian', 'max']
     },
     analysis: {
       key: 'analysisLastTab',
