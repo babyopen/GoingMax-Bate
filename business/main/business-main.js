@@ -103,10 +103,11 @@ const Business = {
 
   /**
    * 切换排除锁定状态
+   * v2.0.9 架构修复：参数 isLocked 由事件层传入，业务层不再直接读取 DOM
+   * @param {boolean} isLocked - 是否锁定（由事件层从 DOM 读取后传入）
    */
-  toggleExcludeLock: () => {
-    const isLocked = DOM.lockExclude.checked;
-    StateManager.setState({ lockExclude: isLocked }, false);
+  toggleExcludeLock: (isLocked) => {
+    StateManager.setState({ lockExclude: !!isLocked }, false);
     Toast.show(isLocked ? '已锁定排除号码' : '已解锁排除号码');
   },
 
@@ -678,9 +679,9 @@ const Business = {
       };
       // 使用 needRender=false 避免初始化期重复渲染（Render.renderAll 会在 initApp 末尾被调用）
       StateManager.setState(restored, false);
-      // 同步排除锁定复选框
-      if(typeof DOM !== 'undefined' && DOM.lockExclude){
-        DOM.lockExclude.checked = !!cache.lockExclude;
+      // v2.0.9 架构修复：业务层禁止直接操作 DOM，委托视图层同步
+      if(typeof ViewFilterGroup !== 'undefined' && typeof ViewFilterGroup.syncLockExcludeUI === 'function'){
+        ViewFilterGroup.syncLockExcludeUI(!!cache.lockExclude);
       }
     }
 
@@ -1697,11 +1698,12 @@ const Business = {
   handleScroll: CommonCache.throttle(() => {
     const state = StateManager._state;
     const scrollTop = ViewFilter.getScrollTop();
-    clearTimeout(state.scrollTimer);
+    // v2.0.9 修复：统一使用 TimerManager 管理定时器，避免内存泄漏
+    CommonCache.TimerManager.clearTimeout('backTopHide');
 
     if(scrollTop > CONFIG.BACK_TOP_THRESHOLD){
       ViewFilter.toggleBackTopBtn(true);
-      state.scrollTimer = setTimeout(() => {
+      CommonCache.TimerManager.setTimeout('backTopHide', () => {
         ViewFilter.toggleBackTopBtn(false);
       }, CONFIG.SCROLL_HIDE_DELAY);
     } else {

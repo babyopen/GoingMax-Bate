@@ -1505,21 +1505,18 @@ const BusinessSlidingWindow = {
   _storageSyncEnabled: false,
 
   /**
-   * 注册跨标签页 storage 事件监听（V1.4.9.4 新增）
-   * 只能注册 1 次（_storageSyncEnabled 标志）
-   * 在第一次 LRU 包装方法调用时自动触发
+   * v2.0.9 架构修复：业务层禁止直接使用 window.addEventListener
+   * 原 _setupStorageSync 方法已废弃，监听器注册移至 app.js（入口层）
+   * 此方法仅设置标志位，实际注册由 app.js 调用 setupStorageSyncListener() 完成
    */
   _setupStorageSync: function() {
     if (this._storageSyncEnabled) return;
     this._storageSyncEnabled = true;
-    if (typeof window === 'undefined' || !window.addEventListener) return;
-    var self = this;
-    window.addEventListener('storage', function(e) { self._handleStorageEvent(e); });
   },
 
   /**
-   * 处理 storage 事件（V1.4.9.4 新增）
-   * 监听 A 标签页的写入，实时更新 B 标签页的内存 LRU
+   * v2.0.9 新增：提供外部注册的 storage 事件处理函数
+   * 供 app.js（入口层）注册监听器时调用
    * @param {StorageEvent} event
    */
   _handleStorageEvent: function(event) {
@@ -1555,5 +1552,17 @@ const BusinessSlidingWindow = {
     } catch (err) {
       // 静默失败
     }
+  },
+
+  /**
+   * v2.0.9 新增：返回 storage 事件处理器函数引用
+   * 供 app.js（入口层）注册监听器时调用
+   * @returns {Function} storage 事件处理函数
+   */
+  getStorageEventHandler: function() {
+    var self = this;
+    return function(e) {
+      self._handleStorageEvent(e);
+    };
   }
 };

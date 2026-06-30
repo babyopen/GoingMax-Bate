@@ -69,6 +69,7 @@ async function initApp() {
     // 14.1 新增：注册方案分组的兜底持久化（iOS WebView 切后台/页面隐藏时立即保存分组数据）
     //   由入口层注册 window/document 事件（业务层不能直接使用 window/document）
     // v2.0.8 重构：同时 flush 分组 + 当前筛选状态（共用一个监听器）
+    // v2.0.9 修复：同时注册 storage 事件监听器，跨标签页同步 LRU 缓存
     (function initFilterGroupFlushPersist() {
       const flush = function() {
         try { Business.FilterGroup._persistGroups(); } catch(_) {}
@@ -77,6 +78,19 @@ async function initApp() {
       window.addEventListener('pagehide', flush);
       document.addEventListener('visibilitychange', function() {
         if(document.visibilityState === 'hidden') flush();
+      });
+      // v2.0.9 新增：storage 事件监听器（跨标签页同步）
+      // 1) 同步方案分组和筛选状态
+      // 2) 同步滑动窗口 LRU 缓存（由业务层提供处理函数）
+      window.addEventListener('storage', function(e) {
+        try { Business.FilterGroup._persistGroups(); } catch(_) {}
+        try { if (Business._flushCurrentFilter) Business._flushCurrentFilter(); } catch(_) {}
+        // 调用滑动窗口业务层提供的处理函数同步 LRU 缓存
+        try {
+          if (typeof BusinessSlidingWindow !== 'undefined' && typeof BusinessSlidingWindow._handleStorageEvent === 'function') {
+            BusinessSlidingWindow._handleStorageEvent(e);
+          }
+        } catch(_) {}
       });
     })();
     // 15. 重新渲染一次以反映从 localStorage 恢复的筛选状态

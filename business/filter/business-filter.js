@@ -266,19 +266,16 @@ const BusinessFilter = {
     const filteredList = Filter.getFilteredListWithState(tempState);
     const nums = filteredList.map(item => item.num).join(', ');
     
-    if (typeof Platform !== 'undefined' && Platform.copyToClipboard) {
-      Platform.copyToClipboard(nums);
+    // v2.0.9 架构修复：业务层禁止直接操作 DOM
+    // 使用核心层 CommonPlatform.copyToClipboard（内部已处理 3 级降级）
+    if (typeof CommonPlatform !== 'undefined' && CommonPlatform.copyToClipboard) {
+      CommonPlatform.copyToClipboard(nums, {
+        successMsg: `已复制 ${filteredList.length} 个号码`,
+        errorMsg: '复制失败，请手动选择复制'
+      });
     } else {
-      // 降级方案
-      const textarea = document.createElement('textarea');
-      textarea.value = nums;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      Toast.show('复制功能不可用');
     }
-    
-    Toast.show(`已复制 ${filteredList.length} 个号码`);
   },
   
   /**

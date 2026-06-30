@@ -377,7 +377,11 @@ const EventBinder = {
       }
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
       else if(action === 'loadMoreHistory') Business.loadMoreHistory();
-      else if(action === 'toggleExcludeLock') Business.toggleExcludeLock();
+      else if(action === 'toggleExcludeLock') {
+        // v2.0.9 架构修复：事件层读取 DOM 状态，传递给业务层（业务层禁止读取 DOM）
+        const isLocked = DOM.lockExclude.checked;
+        Business.toggleExcludeLock(isLocked);
+      }
       // 大小回测操作
       else if(action === 'showSizeBacktest') EventBinder._showSizeBacktest();
       // 单双回测操作
