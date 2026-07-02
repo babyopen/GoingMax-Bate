@@ -1503,8 +1503,19 @@ const Business = {
       return { num: num, score: 0 };
     });
     displayItems = displayItems.concat(randomFill);
+
+    // 5. 下一期预测：从 scoredNums 中取得分最高的前 5 名（即 sortedRecommendedNums 前 5）
+    //    这些号码是"算法选中"但未在本期展示集合中，作为下一期预测特写
+    var nextPeriodPred = scoredNums.slice(0, 5).map(function(item) {
+      return { num: item.num, score: item.score };
+    });
+
     const finalFormatNums = displayItems.map(item => CommonString.formatNum(item.num));
-    return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
+    const nextFormatNums = nextPeriodPred.map(item => CommonString.formatNum(item.num));
+    const nextSection = nextFormatNums.length > 0
+      ? '  ｜  🎯 下一期预测：' + nextFormatNums.join(' ')
+      : '';
+    return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无') + nextSection;
   },
 
   /**
