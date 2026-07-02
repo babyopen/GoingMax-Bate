@@ -1332,17 +1332,31 @@ const Business = {
   _calcFinalZodiacRecommend: (list, targetCount, followZodiacs) => {
     if(!list || list.length === 0) return { numbers: [], candidateNums: [] };
 
-    // ========== 1. 号码→生肖 映射（最新一期 openCode+zodiac）==========
-    const numZodiacMap = new Map();
-    const latestItem = list[0];
-    if(latestItem) {
-      const codeArr = (latestItem.openCode || '').split(',');
-      const zodArr = Utils.parseZodiacArr(latestItem);
+    // ========== 1. 号码→生肖 映射（修复 #2：原版只用 list[0] 一期，缺失号码全靠固定公式
+    //    (num-1)%12 兜底，导致 42/49 个号码生肖值相同→评分聚集→退化为按号码大小排序。
+    //    现改为：在 12 期窗口内对每个号码投票，取出现最频繁的生肖作为该号码生肖映射）==========
+    const numZodiacVotes = {};   // { num: { zodiac: count } }
+    list.forEach(item => {
+      const codeArr = (item.openCode || '').split(',');
+      const zodArr = Utils.parseZodiacArr(item);
       codeArr.forEach((num, idx) => {
         const numVal = Number(num);
-        if(numVal && zodArr[idx]) numZodiacMap.set(numVal, zodArr[idx]);
+        const zodVal = zodArr[idx];
+        if(numVal && zodVal) {
+          if(!numZodiacVotes[numVal]) numZodiacVotes[numVal] = {};
+          numZodiacVotes[numVal][zodVal] = (numZodiacVotes[numVal][zodVal] || 0) + 1;
+        }
       });
-    }
+    });
+    // 取每个号码得票最高的生肖
+    const numZodiacMap = new Map();
+    Object.keys(numZodiacVotes).forEach(numStr => {
+      const num = Number(numStr);
+      const votes = numZodiacVotes[num];
+      const bestZod = Object.entries(votes)
+        .sort((a, b) => b[1] - a[1])[0][0];
+      numZodiacMap.set(num, bestZod);
+    });
 
     // ========== 2. 1-49 号码 → 波色 / 五行 反查表 ==========
     const numColorMap = {};
@@ -1361,10 +1375,17 @@ const Business = {
     const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
     recentList.forEach(item => {
       const s = BusinessCommonSpecials.getOne(item);
+      // 修复 #3：边界保护 - 特码为 0 或空时跳过，防止 NaN/Undefined 污染统计
+      if(!s || !s.te || s.te < 1) return;
       headCount[s.head]   = (headCount[s.head]   || 0) + 1;
       tailCount[s.tail]   = (tailCount[s.tail]   || 0) + 1;
-      colorCount[s.colorName]  = (colorCount[s.colorName]  || 0) + 1;
-      wuxingCount[s.wuxing]    = (wuxingCount[s.wuxing]    || 0) + 1;
+      // 修复 #3：颜色/五行仅统计合法值，避免无意义 key 污染 topN 结果
+      if(['红','蓝','绿'].includes(s.colorName)) {
+        colorCount[s.colorName]  = (colorCount[s.colorName]  || 0) + 1;
+      }
+      if(['金','木','水','火','土'].includes(s.wuxing)) {
+        wuxingCount[s.wuxing]    = (wuxingCount[s.wuxing]    || 0) + 1;
+      }
     });
 
     // ========== 4. 提取热头/热尾/热色/热五行 TOP ==========
@@ -1373,7 +1394,11 @@ const Business = {
     const topTails   = Utils.getTopN(tailCount, 3, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
     const topColors  = Utils.getTopN(colorCount, 2, undefined, ' ').split(' ').filter(Boolean);
     const topWuxing  = Utils.getTopN(wuxingCount, 2, undefined, ' ').split(' ').filter(Boolean);
-    const topFollowZodiacs = Array.isArray(followZodiacs) ? followZodiacs : [];
+    // 修复 #8：topFollowZodiacs 长度兜底去重，限制最多 3 个合法生肖，防止外部传入错误数据导致权重过度放大
+    const zodiacAll = (CONFIG && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
+    const topFollowZodiacs = Array.isArray(followZodiacs)
+      ? Array.from(new Set(followZodiacs.filter(z => zodiacAll.includes(z)))).slice(0, 3)
+      : [];
 
     // ========== 5. 1-49 号码 5 维加权打分 ==========
     // 权重设计（满分 10）：
@@ -1384,19 +1409,20 @@ const Business = {
 
     const candidateNums = [];
     for(let num = 1; num <= 49; num++) {
-      // 优先从最新一期获取生肖，兜底用公式计算（确保所有49个号码都能参与评分）
+      // 优先使用 12 期窗口投票结果，兜底用公式计算（确保所有49个号码都能参与评分）
       const zod   = numZodiacMap.get(num) || (ZodiacPrediction && ZodiacPrediction.ZODIAC_ORDER ? ZodiacPrediction.ZODIAC_ORDER[(num - 1) % 12] : '');
-      const head  = Math.floor(num / 10);
-      const tail  = num % 10;
+      // 修复 #9：边界保护——头/尾计算只对合法号码生效，非数字 NaN 不参与评分
+      const head  = (typeof num === 'number' && num >= 1 && num <= 49) ? Math.floor(num / 10) : -1;
+      const tail  = (typeof num === 'number' && num >= 1 && num <= 49) ? num % 10 : -1;
       const color = numColorMap[num];
       const wx    = numWuxingMap[num];
 
       let score = 0;
-      if(topFollowZodiacs.includes(zod))    score += W_FOLLOW;
-      if(topHeads.includes(head))           score += W_HEAD;
-      if(topTails.includes(tail))           score += W_TAIL;
-      if(topColors.includes(color))         score += W_COLOR;
-      if(topWuxing.includes(wx))            score += W_WUXING;
+      if(zod && topFollowZodiacs.includes(zod)) score += W_FOLLOW;
+      if(head >= 0 && topHeads.includes(head))  score += W_HEAD;
+      if(tail >= 0 && topTails.includes(tail))  score += W_TAIL;
+      if(color && topColors.includes(color))    score += W_COLOR;
+      if(wx && topWuxing.includes(wx))          score += W_WUXING;
 
       candidateNums.push({ num, score });
     }
@@ -1453,17 +1479,31 @@ const Business = {
 
     // 2. 调用核心算法（固定30个，与回测一致）
     const result = Business._calcFinalZodiacRecommend(data.list, 30, topFollowZodiacs);
-    const finalNums = (result.numbers || []).slice();
 
     // 3. 按得分排序展示（得分高的在前）
-    const scoredNums = finalNums.map(num => {
+    const scoredNums = (result.numbers || []).map(num => {
       const candidate = (result.candidateNums || []).find(c => c.num === num);
       return { num, score: candidate ? candidate.score : 0 };
     }).sort((a, b) => b.score - a.score || a.num - b.num);
 
-    // 4. 排除前5名与最后5名，只显示中间段20个号码
-    const middleNums = scoredNums.slice(5, scoredNums.length - 5);
-    const finalFormatNums = middleNums.map(item => CommonString.formatNum(item.num));
+    // 4. 与回测保持一致：去掉前 5 名（算法选中），剩余 25 + 从 1-49 中 24 个非推荐号随机抽 5 个补足，共 30 个
+    //    实时推荐使用随机种子 0 保证每次刷新结果一致（前端只展示，不参与判定）
+    var displayItems = scoredNums.slice(5);
+    var existingSet = new Set(displayItems.map(function(it) { return it.num; }));
+    var pool = [];
+    for (var n = 1; n <= 49; n++) {
+      if (!existingSet.has(n)) pool.push(n);
+    }
+    // Fisher-Yates 洗牌（实时推荐与回测逻辑完全一致）
+    for (var si = pool.length - 1; si > 0; si--) {
+      var sj = Math.floor(Math.random() * (si + 1));
+      var tmp = pool[si]; pool[si] = pool[sj]; pool[sj] = tmp;
+    }
+    var randomFill = pool.slice(0, 5).map(function(num) {
+      return { num: num, score: 0 };
+    });
+    displayItems = displayItems.concat(randomFill);
+    const finalFormatNums = displayItems.map(item => CommonString.formatNum(item.num));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
 

@@ -102,7 +102,7 @@ const ViewAnalysisZodiac = {
     // 图片式回测记录
     html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:12px;">';
     html += '<div style="background:linear-gradient(180deg, #f7f7f7, #ececec);padding:8px 10px;font-size:12px;font-weight:700;color:#333;border-bottom:1px solid #e0e0e0;">';
-    html += '📋 近期 ' + backtestData.recentTests + ' 期回测明细（5 维算法：头/尾/色/五行 + 跟随生肖）';
+    html += '📋 近期 ' + backtestData.recentTests + ' 期回测明细（红字=算法25推荐，灰字=随机补足5个，蓝字=命中）';
     html += '</div>';
     html += '<div style="max-height:46vh;overflow-y:auto;padding:2px 0;">';
 
@@ -110,12 +110,17 @@ const ViewAnalysisZodiac = {
       var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
                                 : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">错</span>';
       var actualNumStr = Utils.formatNum(item.actualNumber || 0);
-      // 推荐号码：红色；若实际号码在其中则蓝色高亮（推荐号码已按得分排序）
+      // 推荐号码：算法推荐红字 + 随机补足灰字；若实际号码在其中则蓝色高亮
       var numsHtml = (item.recommendedNums || []).map(function(item2) {
         var n = typeof item2 === 'object' ? item2.num : item2;
+        var isRandom = typeof item2 === 'object' && item2.isRandom === true;
         var ns = Utils.formatNum(n);
         if (n === item.actualNumber) {
           return '<span style="color:#1e6dff;font-weight:700;">' + ns + '</span>';
+        }
+        // 随机补足号码用灰色显示，区别于算法推荐红字
+        if (isRandom) {
+          return '<span style="color:#9aa0a6;">' + ns + '</span>';
         }
         return '<span style="color:#e02020;">' + ns + '</span>';
       }).join(' ');
@@ -137,7 +142,7 @@ const ViewAnalysisZodiac = {
     // 底部说明
     html += '<div style="background:var(--bg-secondary);padding:10px 12px;border-radius:8px;font-size:11px;color:var(--sub-text);line-height:1.6;">';
     html += '• 算法：每期用其前 12 期窗口跑 5 维加权打分（头/尾/色/五行 + 跟随生肖）<br>';
-    html += '• 5维打分前5/后5排除，保留中间段20个号码 vs 实际特码对比判定命中<br>';
+    html += '• 展示 25 个算法推荐号 + 5 个从 1-49 随机补足号，共 30 个 vs 实际特码判定<br>';
     html += '• 最近 ' + backtestData.recentTests + ' 期命中 <strong style="color:#30D158;">' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>';
     html += '• 数据仅供参考，不构成投资建议';
     html += '</div>';

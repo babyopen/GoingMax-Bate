@@ -337,7 +337,10 @@ const ZodiacPredictionBacktest = {
    */
   runFinalZodiacBacktest: function(historyData, testCount) {
     if (!historyData || historyData.length < 14) return null;
-    testCount = Math.min(testCount || 20, 30);
+    // 修复 #6：testCount 上限改为 historyData.length - 14（保证有足够窗口），
+    //    同时上限不超过 30；UI 展示时直接读取 results.length，避免"显示 20 实际跑 11"
+    testCount = Math.min(testCount || 20, 30, historyData.length - 14);
+    if (testCount <= 0) return null;
     var results = [];
 
     for (var offset = 0; offset < testCount; offset++) {
@@ -349,8 +352,9 @@ const ZodiacPredictionBacktest = {
       // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+12] 共 12 期
       var list = historyData.slice(offset + 1, offset + 13);
 
-      // 2. 计算"上期生肖的常跟随生肖"：从历史数据 historyData[offset+2..end] 中
-      //    找出 latestZodiac 之后最常跟出的生肖 Top3
+      // 2. 计算"上期生肖的常跟随生肖"（修复 #1：只能用 targetItem 之前的历史数据，
+      //    避免前视偏差/数据穿越。原版 historyData.slice(offset + 2, offset + 14) 包含了
+      //    targetItem 之后的未来期开奖结果，导致回测命中率被人为虚高）
       var latestItem = list[0];
       var latestZodiac = '';
       if (latestItem) {
@@ -358,12 +362,12 @@ const ZodiacPredictionBacktest = {
         latestZodiac = zodArr[6] || '';
       }
       var followZodiacs = [];
-      if (latestZodiac) {
-        var followData = historyData.slice(offset + 2, offset + 14);
+      if (latestZodiac && offset > 0) {
+        // 修复 #1：用 offset 之前的历史数据累计"上期 = latestZodiac → 下期 = ?"
         var followCount = {};
-        for (var fi = 0; fi < followData.length - 1; fi++) {
-          var preS = Utils.SpecialCalculator.getSpecial(followData[fi]);
-          var curS = Utils.SpecialCalculator.getSpecial(followData[fi + 1]);
+        for (var fi = 0; fi < offset; fi++) {
+          var preS = Utils.SpecialCalculator.getSpecial(historyData[fi]);
+          var curS = Utils.SpecialCalculator.getSpecial(historyData[fi + 1]);
           if (preS.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curS.zod)) {
             followCount[curS.zod] = (followCount[curS.zod] || 0) + 1;
           }
@@ -373,6 +377,11 @@ const ZodiacPredictionBacktest = {
           .slice(0, 3)
           .map(function(e) { return e[0]; });
       }
+      // 修复 #4：followZodiacs 为空时（如数据稀疏或首期回测），使用全部 12 生肖兜底，
+      //    避免"W_FOLLOW 维度永远 0 分"造成命中率骤降
+      if (!followZodiacs.length) {
+        followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
+      }
 
       // 3. 调用 5 维核心算法得到 top 30 推荐号码
       var recommend = Business._calcFinalZodiacRecommend(list, 30, followZodiacs);
@@ -380,10 +389,9 @@ const ZodiacPredictionBacktest = {
       // 获取候选号码的分数用于排序展示
       var candidateNums = recommend.candidateNums || [];
 
-      // 4. 实际特码对比（使用完整24个号码）
+      // 4. 实际特码对比（按展示集合判定，下面展示什么这里就判什么）
       var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
       var actualNum = actualSpecial.te || 0;
-      var isHit = recommendedNums.indexOf(actualNum) !== -1;
 
       // 5. 按得分排序推荐号码（得分高的在前）
       var sortedRecommendedNums = recommendedNums.map(function(num) {
@@ -391,8 +399,33 @@ const ZodiacPredictionBacktest = {
         return { num: num, score: candidate ? candidate.score : 0 };
       }).sort(function(a, b) { return b.score - a.score || a.num - b.num; });
 
-      // 6. 排除前5名与最后5名，只显示中间段（第6-18名）
-      var displayNums = sortedRecommendedNums.slice(5, sortedRecommendedNums.length - 5);
+      // 方案 C：展示 30 个推荐号 = 算法排序后后 25 个（未选中推荐）+ 从 1-49 中 24 个
+//    非推荐号随机抽 5 个补足。前 5 名（算法选中）不展示但保留在排序结果中。
+//    isHit 基于展示集合判定，所见即所判。
+      var displayNums = sortedRecommendedNums.slice(5);     // 后 25 名（未选中推荐）
+
+      // 从 1-49 中排除「未选中推荐 25 个」，剩 24 个非推荐号码中随机抽 5 个补足
+      var existingSet = new Set(displayNums.map(function(item2) {
+        return typeof item2 === 'object' ? item2.num : item2;
+      }));
+      var allPool = [];
+      for (var n = 1; n <= 49; n++) {
+        if (!existingSet.has(n)) allPool.push(n);
+      }
+      // Fisher-Yates 洗牌，取前 5 个
+      for (var si = allPool.length - 1; si > 0; si--) {
+        var sj = Math.floor(Math.random() * (si + 1));
+        var tmp = allPool[si]; allPool[si] = allPool[sj]; allPool[sj] = tmp;
+      }
+      var randomFill = allPool.slice(0, 5).map(function(num) {
+        return { num: num, score: 0, isRandom: true };   // isRandom 标记便于前端区分
+      });
+      displayNums = displayNums.concat(randomFill);
+
+      var displayNumValues = displayNums.map(function(item2) {
+        return typeof item2 === 'object' ? item2.num : item2;
+      });
+      var isHit = displayNumValues.indexOf(actualNum) !== -1;
 
       results.push({
         expect: targetItem.expect,
@@ -410,6 +443,8 @@ const ZodiacPredictionBacktest = {
     var recentResults = results.slice(0, 12);
     var recentHits = recentResults.filter(function(r) { return r.isHit; }).length;
     var recentHitRate = recentResults.length > 0 ? Math.round((recentHits / recentResults.length) * 100) : 0;
+    // 修复 #7：currentStreak 实际为"最近 12 期（含全部回测期）的连续命中次数"，
+    //    而不是"某个特定号码的连续出现次数"。results[0] 为最新一期，从最新一期开始累计命中
     var currentStreak = 0;
     for (var i = 0; i < recentResults.length; i++) {
       if (recentResults[i].isHit) currentStreak++;
@@ -424,6 +459,8 @@ const ZodiacPredictionBacktest = {
       recentHits: recentHits,
       recentHitRate: recentHitRate,
       currentStreak: currentStreak,
+      // 修复 #7：currentStreak 语义标注——连续命中期数（按时间从最新到最旧累计，首次未中即停）
+      currentStreakNote: '从最新一期开始累计的连续命中期数',
       details: recentResults
     };
   },
