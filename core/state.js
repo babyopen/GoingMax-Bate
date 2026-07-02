@@ -31,7 +31,7 @@ const StateManager = {
       historyData: [],
       historyTimestamp: 0,
       analyzeLimit: 12,
-      selectedNumCount: 10,
+      selectedNumCount: 12,
       showCount: 20,
       currentTab: 'history',
       autoRefreshTimer: null

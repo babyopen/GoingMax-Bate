@@ -1384,8 +1384,8 @@ const Business = {
 
     const candidateNums = [];
     for(let num = 1; num <= 49; num++) {
-      const zod   = numZodiacMap.get(num);
-      if(!zod) continue;
+      // 优先从最新一期获取生肖，兜底用公式计算（确保所有49个号码都能参与评分）
+      const zod   = numZodiacMap.get(num) || (ZodiacPrediction && ZodiacPrediction.ZODIAC_ORDER ? ZodiacPrediction.ZODIAC_ORDER[(num - 1) % 12] : '');
       const head  = Math.floor(num / 10);
       const tail  = num % 10;
       const color = numColorMap[num];
@@ -1423,6 +1423,7 @@ const Business = {
       numbers.push(...historyFill);
     }
 
+    // 返回完整候选列表（包含分数）用于排序展示
     return { numbers, candidateNums };
   },
 
@@ -1450,13 +1451,19 @@ const Business = {
       }
     }
 
-    // 2. 调用核心算法
-    const result = Business._calcFinalZodiacRecommend(data.list, targetCount, topFollowZodiacs);
-    let finalNums = (result.numbers || []).slice();
+    // 2. 调用核心算法（固定30个，与回测一致）
+    const result = Business._calcFinalZodiacRecommend(data.list, 30, topFollowZodiacs);
+    const finalNums = (result.numbers || []).slice();
 
-    // 3. 升序展示
-    finalNums.sort((a, b) => a - b);
-    const finalFormatNums = finalNums.map(num => CommonString.formatNum(num));
+    // 3. 按得分排序展示（得分高的在前）
+    const scoredNums = finalNums.map(num => {
+      const candidate = (result.candidateNums || []).find(c => c.num === num);
+      return { num, score: candidate ? candidate.score : 0 };
+    }).sort((a, b) => b.score - a.score || a.num - b.num);
+
+    // 4. 排除前5名与最后5名，只显示中间段20个号码
+    const middleNums = scoredNums.slice(5, scoredNums.length - 5);
+    const finalFormatNums = middleNums.map(item => CommonString.formatNum(item.num));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
 

@@ -374,18 +374,29 @@ const ZodiacPredictionBacktest = {
           .map(function(e) { return e[0]; });
       }
 
-      // 3. 调用 5 维核心算法得到 top 10 推荐号码
-      var recommend = Business._calcFinalZodiacRecommend(list, 10, followZodiacs);
+      // 3. 调用 5 维核心算法得到 top 30 推荐号码
+      var recommend = Business._calcFinalZodiacRecommend(list, 30, followZodiacs);
       var recommendedNums = recommend.numbers || [];
+      // 获取候选号码的分数用于排序展示
+      var candidateNums = recommend.candidateNums || [];
 
-      // 4. 实际特码对比
+      // 4. 实际特码对比（使用完整24个号码）
       var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
       var actualNum = actualSpecial.te || 0;
       var isHit = recommendedNums.indexOf(actualNum) !== -1;
 
+      // 5. 按得分排序推荐号码（得分高的在前）
+      var sortedRecommendedNums = recommendedNums.map(function(num) {
+        var candidate = candidateNums.find(function(c) { return c.num === num; });
+        return { num: num, score: candidate ? candidate.score : 0 };
+      }).sort(function(a, b) { return b.score - a.score || a.num - b.num; });
+
+      // 6. 排除前5名与最后5名，只显示中间段（第6-18名）
+      var displayNums = sortedRecommendedNums.slice(5, sortedRecommendedNums.length - 5);
+
       results.push({
         expect: targetItem.expect,
-        recommendedNums: recommendedNums,
+        recommendedNums: displayNums,
         actualNumber: actualNum,
         actualZodiac: actualSpecial.zod || '-',
         isHit: isHit
