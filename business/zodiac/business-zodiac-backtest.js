@@ -383,8 +383,8 @@ const ZodiacPredictionBacktest = {
         followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
       }
 
-      // 3. 调用 5 维核心算法得到 top 30 推荐号码
-      var recommend = Business._calcFinalZodiacRecommend(list, 30, followZodiacs);
+      // 3. 调用 5 维核心算法得到 top 36 推荐号码
+      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs);
       var recommendedNums = recommend.numbers || [];
       // 获取候选号码的分数用于排序展示
       var candidateNums = recommend.candidateNums || [];
@@ -399,28 +399,9 @@ const ZodiacPredictionBacktest = {
         return { num: num, score: candidate ? candidate.score : 0 };
       }).sort(function(a, b) { return b.score - a.score || a.num - b.num; });
 
-      // 方案 C：展示 30 个推荐号 = 算法排序后后 25 个（未选中推荐）+ 从 1-49 中 24 个
-//    非推荐号随机抽 5 个补足。前 5 名（算法选中）不展示但保留在排序结果中。
-//    isHit 基于展示集合判定，所见即所判。
-      var displayNums = sortedRecommendedNums.slice(5);     // 后 25 名（未选中推荐）
-
-      // 从 1-49 中排除「未选中推荐 25 个」，剩 24 个非推荐号码中随机抽 5 个补足
-      var existingSet = new Set(displayNums.map(function(item2) {
-        return typeof item2 === 'object' ? item2.num : item2;
-      }));
-      var allPool = [];
-      for (var n = 1; n <= 49; n++) {
-        if (!existingSet.has(n)) allPool.push(n);
-      }
-      // Fisher-Yates 洗牌，取前 5 个
-      for (var si = allPool.length - 1; si > 0; si--) {
-        var sj = Math.floor(Math.random() * (si + 1));
-        var tmp = allPool[si]; allPool[si] = allPool[sj]; allPool[sj] = tmp;
-      }
-      var randomFill = allPool.slice(0, 5).map(function(num) {
-        return { num: num, score: 0, isRandom: true };   // isRandom 标记便于前端区分
-      });
-      displayNums = displayNums.concat(randomFill);
+      // 方案 D：展示 36 个推荐号 = 算法选中前 5 名排除 + 剩余 31 个按分排序展示
+      //    isHit 基于展示集合判定，所见即所判。
+      var displayNums = sortedRecommendedNums.slice(5);     // 后 31 名（未选中推荐）
 
       var displayNumValues = displayNums.map(function(item2) {
         return typeof item2 === 'object' ? item2.num : item2;

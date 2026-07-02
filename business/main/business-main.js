@@ -1477,8 +1477,8 @@ const Business = {
       }
     }
 
-    // 2. 调用核心算法（固定30个，与回测一致）
-    const result = Business._calcFinalZodiacRecommend(data.list, 30, topFollowZodiacs);
+    // 2. 调用核心算法（固定36个，与回测一致）
+    const result = Business._calcFinalZodiacRecommend(data.list, 36, topFollowZodiacs);
 
     // 3. 按得分排序展示（得分高的在前）
     const scoredNums = (result.numbers || []).map(num => {
@@ -1486,36 +1486,11 @@ const Business = {
       return { num, score: candidate ? candidate.score : 0 };
     }).sort((a, b) => b.score - a.score || a.num - b.num);
 
-    // 4. 与回测保持一致：去掉前 5 名（算法选中），剩余 25 + 从 1-49 中 24 个非推荐号随机抽 5 个补足，共 30 个
-    //    实时推荐使用随机种子 0 保证每次刷新结果一致（前端只展示，不参与判定）
+    // 4. 展示 36 个 = 算法选中前 5 名排除 + 剩余 31 个按分排序展示
+    //    与回测保持完全一致的口径，所见即所判
     var displayItems = scoredNums.slice(5);
-    var existingSet = new Set(displayItems.map(function(it) { return it.num; }));
-    var pool = [];
-    for (var n = 1; n <= 49; n++) {
-      if (!existingSet.has(n)) pool.push(n);
-    }
-    // Fisher-Yates 洗牌（实时推荐与回测逻辑完全一致）
-    for (var si = pool.length - 1; si > 0; si--) {
-      var sj = Math.floor(Math.random() * (si + 1));
-      var tmp = pool[si]; pool[si] = pool[sj]; pool[sj] = tmp;
-    }
-    var randomFill = pool.slice(0, 5).map(function(num) {
-      return { num: num, score: 0 };
-    });
-    displayItems = displayItems.concat(randomFill);
-
-    // 5. 下一期预测：从 scoredNums 中取得分最高的前 5 名（即 sortedRecommendedNums 前 5）
-    //    这些号码是"算法选中"但未在本期展示集合中，作为下一期预测特写
-    var nextPeriodPred = scoredNums.slice(0, 5).map(function(item) {
-      return { num: item.num, score: item.score };
-    });
-
     const finalFormatNums = displayItems.map(item => CommonString.formatNum(item.num));
-    const nextFormatNums = nextPeriodPred.map(item => CommonString.formatNum(item.num));
-    const nextSection = nextFormatNums.length > 0
-      ? '  ｜  🎯 下一期预测：' + nextFormatNums.join(' ')
-      : '';
-    return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无') + nextSection;
+    return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
 
   /**
