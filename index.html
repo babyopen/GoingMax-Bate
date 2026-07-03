@@ -744,14 +744,8 @@
       <button class="zodiac-tab-btn" data-profile-tab="max">Max</button>
     </div>
     <!-- 我的面板 -->
+    <!-- 2026-07-04 移除原空 card 容器（"我的" 标题 + 空 card-body），改由 ViewBookmark 动态注入书签管理卡片 -->
     <div class="zodiac-tab-panel active" id="profileMinePanel">
-      <div class="card">
-        <div class="card-header">
-          <h2>我的</h2>
-        </div>
-        <div class="card-body">
-        </div>
-      </div>
     </div>
 
     <!-- 官方面板 -->
@@ -916,6 +910,8 @@
 <script src="business/main/business-quick-nav.js"></script>
 <script src="business/main/business-cross-exclusion.js"></script>
 <script src="business/main/business-main.js"></script>
+<!-- 2026-07-04 新增：用户书签业务层（依赖 state/storage/utils） -->
+<script src="business/bookmark/business-bookmark.js"></script>
 <!-- 方案分组管理（2026-06-20 新增，依赖 business-main.js 之后挂载到 Business 命名空间） -->
 <script src="business/filter/business-filter-group.js"></script>
 <!-- 生肖预测（门面 + 5 个子模块，2026-06-05 按文件夹整理到 business/zodiac/） -->
@@ -964,6 +960,8 @@
 <script src="views/zodiac/view-zodiac-giong-color.js"></script>
 <script src="views/zodiac/view-zodiac-ultimate.js"></script>
 <script src="views/profile/view-profile.js"></script>
+<!-- 2026-07-04 新增：书签视图层（依赖 view-profile 与 business-bookmark） -->
+<script src="views/profile/view-bookmark.js"></script>
 <script src="views/zodiac/view-zodiac-tongji.js"></script>
 
 <!-- 事件层：统一事件委托 -->

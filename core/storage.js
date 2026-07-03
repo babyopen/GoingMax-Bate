@@ -20,7 +20,10 @@ const Storage = {
     //   FILTER_GROUPS: 分组列表（含每分组的完整快照：savedFilters/selected/excluded/locked/marked/markCount/excludeHistory/lockExclude/showAllFilters）
     //   CURRENT_GROUP_ID: 当前激活分组 ID
     FILTER_GROUPS: 'filterGroups',
-    CURRENT_GROUP_ID: 'currentGroupId'
+    CURRENT_GROUP_ID: 'currentGroupId',
+    // 2026-07-04 新增：用户书签（个人中心页长按 div 添加的外部网址收藏）
+    //   结构: [{ id: number, title: string, url: string, createdAt: number }, ...]
+    BOOKMARKS: 'userBookmarks'
     // 注：页面子标签记忆（profile/analysis/random）改由 TAB_MEMORY 配置表管理，见下方
   }),
 
@@ -313,5 +316,72 @@ const Storage = {
     if (!conf) return false;
     if (conf.valid.indexOf(tab) < 0) return false;
     return Storage.set(conf.key, tab);
+  },
+
+  // ============================================================
+  // 新增：用户书签（2026-07-04）
+  // 用途：个人中心页长按 div 弹出的菜单「输入网址跳转」会保存到书签
+  //       便于后续在个人中心内一键重新打开该网址
+  // 结构: [{ id: number, title: string, url: string, createdAt: number }, ...]
+  // ============================================================
+
+  /**
+   * 加载并校验书签列表
+   * @returns {Array} 合法的书签数组（最新在前）
+   */
+  loadBookmarks: () => {
+    const raw = Storage.get(Storage.KEYS.BOOKMARKS, []);
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(item => {
+      return item && typeof item === 'object'
+        && typeof item.id === 'number'
+        && typeof item.title === 'string'
+        && typeof item.url === 'string'
+        && typeof item.createdAt === 'number';
+    });
+  },
+
+  /**
+   * 保存书签列表（覆盖式）
+   * @param {Array} list - 完整书签列表
+   * @returns {boolean} 是否成功
+   */
+  saveBookmarks: (list) => {
+    if (!Array.isArray(list)) return false;
+    return Storage.set(Storage.KEYS.BOOKMARKS, list);
+  },
+
+  /**
+   * 添加一个书签
+   * @param {Object} item - { title, url }
+   * @returns {Object|null} 新书签对象；校验失败返回 null
+   */
+  addBookmark: (item) => {
+    if (!item || typeof item !== 'object') return null;
+    const title = (item.title || '').trim();
+    const url = (item.url || '').trim();
+    if (!title || !url) return null;
+    const bookmark = {
+      id: Date.now(),
+      title: title,
+      url: url,
+      createdAt: Date.now()
+    };
+    const list = Storage.loadBookmarks();
+    list.unshift(bookmark);
+    const ok = Storage.saveBookmarks(list);
+    return ok ? bookmark : null;
+  },
+
+  /**
+   * 删除指定 id 的书签
+   * @param {number} id - 书签 id
+   * @returns {boolean} 是否删除成功
+   */
+  removeBookmark: (id) => {
+    const list = Storage.loadBookmarks();
+    const next = list.filter(b => b.id !== id);
+    if (next.length === list.length) return false;
+    return Storage.saveBookmarks(next);
   }
 };

@@ -47,6 +47,10 @@ async function initApp() {
     } catch (e) {
       console.warn('分组快照应用失败:', e);
     }
+    // 7.3 加载本地存储的用户书签（2026-07-04 新增）
+    if (typeof BusinessBookmark !== 'undefined') {
+      BusinessBookmark.initBookmarks();
+    }
     // 8. 加载历史记录缓存
     Business.loadHistoryCache();
     // 9. 渲染方案列表

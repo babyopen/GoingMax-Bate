@@ -12,18 +12,18 @@ const ViewProfile = {
    * 已注入则跳过（幂等）。
    */
   renderHelpCard: function() {
-    var panel = document.getElementById('profileMinePanel');
+    const panel = document.getElementById('profileMinePanel');
     if (!panel) return;
 
     // 已存在则不再重复注入
     if (document.getElementById('profileHelpCard')) return;
 
-    var helpCard = document.createElement('div');
+    const helpCard = document.createElement('div');
     helpCard.className = 'card';
     helpCard.id = 'profileHelpCard';
 
-    var version = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.VERSION) ? CONFIG.VERSION : 'Beta';
-    var dataVersion = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.DATA_VERSION) ? CONFIG.DATA_VERSION : '-';
+    const version = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.VERSION) ? CONFIG.VERSION : 'Beta';
+    const dataVersion = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.DATA_VERSION) ? CONFIG.DATA_VERSION : '-';
 
     helpCard.innerHTML =
       '<div class="card-header">' +
@@ -58,10 +58,24 @@ const ViewProfile = {
   },
 
   /**
+   * 渲染"书签管理"卡片到 #profileMinePanel（动态注入，幂等）
+   * 2026-07-04 新增：用户长按 div 后输入网址跳转 + 保存书签
+   */
+  renderBookmarkCard: function() {
+    if (typeof ViewBookmark !== 'undefined' && ViewBookmark.renderBookmarkCard) {
+      ViewBookmark.renderBookmarkCard();
+    }
+  },
+
+  /**
    * 切换『我的』页面子 tab 的 UI（仅渲染 DOM，不做业务）
    * @param {string} tab - mine / official / phoenix / daxian / max
    */
   switchProfileTabUI: function(tab) {
+    // 切到「我的」时确保书签卡片已注入（幂等）
+    if (tab === 'mine') {
+      ViewProfile.renderBookmarkCard();
+    }
     ViewCommon.switchTabUI({
       tabSelector: '#profilePage .zodiac-tab-btn[data-profile-tab]',
       tabDataAttr: 'profileTab',

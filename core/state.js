@@ -26,6 +26,8 @@ const StateManager = {
     //   currentGroupId: 当前激活分组 ID；null 表示未启用分组
     filterGroups: [],
     currentGroupId: null,
+    // 2026-07-04 新增：用户书签列表（与 localStorage 同步，初始空数组）
+    bookmarks: [],
     // 分析模块状态
     analysis: {
       historyData: [],

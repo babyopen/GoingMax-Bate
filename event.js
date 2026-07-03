@@ -8,6 +8,19 @@ const EventBinder = {
   // 自定义双击触发后 500ms 保护窗，期间内原生 dblclick 不处理 .tag（防重复触发）
   _tagDblClickGuardUntil: 0,
 
+  // ============================================================
+  // 2026-07-04 新增：长按检测状态（个人中心页长按 div 弹出书签菜单）
+  // ============================================================
+  _longPressTimer: null,
+  _longPressResolved: null, // { kind, el, id?, title? }
+  _longPressStartX: 0,
+  _longPressStartY: 0,
+  _longPressTriggered: false,
+  // 长按阈值（毫秒）
+  LONG_PRESS_DURATION: 600,
+  // 滑动容差（超过则取消长按，避免误触发）
+  LONG_PRESS_MOVE_TOLERANCE: 12,
+
   /**
    * 初始化所有事件绑定
    */
@@ -21,15 +34,17 @@ const EventBinder = {
     // 滚动事件（已节流）
     // v2.0.9 修复：html/body 都被设为 overflow:hidden，window 永远不滚动
     // 真实滚动容器是 .page-scroll，scroll 监听必须挂到它上面
-    var _pageScrollEl = document.querySelector('.page-scroll');
+    const _pageScrollEl = document.querySelector('.page-scroll');
     if (_pageScrollEl) {
       _pageScrollEl.addEventListener('scroll', Business.handleScroll, { passive: true });
     }
     // 点击空白关闭快捷导航
     document.addEventListener('click', EventBinder.handleClickOutside);
     // 触摸事件 passive 监听（移动端滚动性能优化）
-    document.addEventListener('touchstart', () => {}, { passive: true });
-    document.addEventListener('touchmove', () => {}, { passive: true });
+    document.addEventListener('touchstart', EventBinder.handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', EventBinder.handleTouchMove, { passive: true });
+    document.addEventListener('touchend', EventBinder.handleTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', EventBinder.handleTouchEnd, { passive: true });
     // 页面卸载清理
     window.addEventListener('beforeunload', Business.handlePageUnload);
     // 全局错误捕获
@@ -349,6 +364,63 @@ const EventBinder = {
       else if(action === 'copySelectedZodiacs') {
         Business.copySelectedZodiacs();
       }
+      // ============================================================
+      // 2026-07-04 新增：书签相关 action（个人中心页）
+      // ============================================================
+      // 显示书签输入弹窗（双输入：标题 + URL）
+      else if(action === 'showBookmarkInput') {
+        if (typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.showInputModal();
+        }
+      }
+      // 书签输入弹窗：取消
+      else if(action === 'bookmarkInputCancel') {
+        if (typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.hideInputModal();
+        }
+      }
+      // 书签输入弹窗：保存并打开
+      else if(action === 'bookmarkInputConfirm') {
+        if (typeof ViewBookmark !== 'undefined') {
+          ViewBookmark._submitInput();
+        }
+      }
+      // 打开已保存的书签（点击列表项）
+      else if(action === 'openBookmark') {
+        const bookmarkId = Number(actionBtn.dataset.bookmarkId);
+        const bookmarkList = (typeof BusinessBookmark !== 'undefined') ? BusinessBookmark.getBookmarks() : [];
+        const bookmarkTarget = bookmarkList.find(function(b) { return b.id === bookmarkId; });
+        if (bookmarkTarget && typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.openInIframe(bookmarkTarget.url, bookmarkTarget.title);
+        }
+      }
+      // 删除书签
+      else if(action === 'deleteBookmark') {
+        const delId = Number(actionBtn.dataset.bookmarkId);
+        if (delId && typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.deleteBookmarkWithConfirm(delId);
+        }
+      }
+      // 长按书签标签菜单触发的删除（payload 存放 bookmarkId）
+      else if(action === 'deleteBookmarkFromMenu') {
+        const delId = Number(actionBtn.dataset.payload);
+        if (delId && typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.closeLongPressMenu();
+          ViewBookmark.deleteBookmarkWithConfirm(delId);
+        }
+      }
+      // 关闭 iframe 容器
+      else if(action === 'closeBookmarkIframe') {
+        if (typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.closeIframe();
+        }
+      }
+      // 关闭长按菜单
+      else if(action === 'closeLongPressMenu') {
+        if (typeof ViewBookmark !== 'undefined') {
+          ViewBookmark.closeLongPressMenu();
+        }
+      }
       // 导航操作
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
@@ -407,7 +479,7 @@ const EventBinder = {
         }
       }
       else if(action === 'toggleScoreCards') {
-        var cards = document.getElementById('swScoreCards');
+        const cards = document.getElementById('swScoreCards');
         if (!cards) return;
         var isExpanded = cards.classList.toggle('expanded');
         actionBtn.textContent = isExpanded
@@ -417,14 +489,14 @@ const EventBinder = {
       }
       // 回测追踪展开/折叠
       else if(action === 'toggleBacktestSection') {
-        var section = document.getElementById('mainBacktestSection');
+        const section = document.getElementById('mainBacktestSection');
         if (!section) return;
-        var contents = section.querySelectorAll('.sw-backtest-content');
+        const contents = section.querySelectorAll('.sw-backtest-content');
         var isExpanded = section.classList.toggle('expanded');
         contents.forEach(function(c) {
           c.style.display = isExpanded ? '' : 'none';
         });
-        var btn = actionBtn.querySelector('svg');
+        const btn = actionBtn.querySelector('svg');
         if (btn) {
           btn.style.transform = isExpanded ? 'rotate(180deg)' : '';
         }
@@ -442,7 +514,7 @@ const EventBinder = {
         // 阻止冒泡到外层可能的 click 拦截（iOS Safari 触屏场景）
         e.preventDefault();
         e.stopPropagation();
-        var sortKey = actionBtn.dataset.sortKey;
+        const sortKey = actionBtn.dataset.sortKey;
         if (sortKey && Business && Business.toggleZodiacTongjiSort) {
           Business.toggleZodiacTongjiSort(sortKey);
         }
@@ -450,11 +522,11 @@ const EventBinder = {
       }
       // 区域变动追踪展开/折叠
       else if(action === 'toggleZoneChangeList') {
-        var list = actionBtn.closest('.zone-change-list');
+        const list = actionBtn.closest('.zone-change-list');
         if (!list) return;
         var isExpanded = list.classList.toggle('expanded');
-        var toggleText = list.querySelector('.zone-change-toggle-text');
-        var toggleIcon = list.querySelector('.zone-change-toggle-icon');
+        const toggleText = list.querySelector('.zone-change-toggle-text');
+        const toggleIcon = list.querySelector('.zone-change-toggle-icon');
         if (toggleText) toggleText.textContent = isExpanded ? '收起' : '展开更多';
         if (toggleIcon) toggleIcon.textContent = isExpanded ? '▲' : '▼';
         // 持久化用户偏好
@@ -462,30 +534,30 @@ const EventBinder = {
       }
       // 多窗口组合列表展开/折叠
       else if(action === 'toggleZoneChangeComboList') {
-        var comboList = actionBtn.closest('.zone-change-combo-list');
+        const comboList = actionBtn.closest('.zone-change-combo-list');
         if (!comboList) return;
-        var isComboExpanded = comboList.classList.toggle('expanded');
-        var comboToggleText = comboList.querySelector('.zone-change-toggle-text');
-        var comboToggleIcon = comboList.querySelector('.zone-change-toggle-icon');
+        const isComboExpanded = comboList.classList.toggle('expanded');
+        const comboToggleText = comboList.querySelector('.zone-change-toggle-text');
+        const comboToggleIcon = comboList.querySelector('.zone-change-toggle-icon');
         if (comboToggleText) comboToggleText.textContent = isComboExpanded ? '收起' : '展开更多';
         if (comboToggleIcon) comboToggleIcon.textContent = isComboExpanded ? '▲' : '▼';
       }
       // 多窗口组合统计区折叠/展开（默认折叠，只显示 header）
       else if(action === 'toggleComboStatsGrid') {
-        var statsSection = actionBtn.closest('.zone-change-combo-stats-section');
+        const statsSection = actionBtn.closest('.zone-change-combo-stats-section');
         if (!statsSection) return;
         statsSection.classList.toggle('expanded');
       }
       else if(action === 'showZodiacStat') {
-        var zodiac = actionBtn.dataset.zodiac;
+        const zodiac = actionBtn.dataset.zodiac;
         if (zodiac && ViewZodiacGiong._cachedFreqResult) {
-          var freqResult = ViewZodiacGiong._cachedFreqResult;
-          var data = null;
-          var periods = ['p12', 'p24', 'p36'];
-          for (var i = 0; i < periods.length; i++) {
-            var periodData = freqResult[periods[i]];
+          const freqResult = ViewZodiacGiong._cachedFreqResult;
+          let data = null;
+          const periods = ['p12', 'p24', 'p36'];
+          for (let i = 0; i < periods.length; i++) {
+            const periodData = freqResult[periods[i]];
             if (periodData) {
-              for (var j = 0; j < periodData.length; j++) {
+              for (let j = 0; j < periodData.length; j++) {
                 if (periodData[j].zodiac === zodiac) {
                   data = periodData[j];
                   break;
@@ -495,10 +567,10 @@ const EventBinder = {
             }
           }
           
-          var missHistory = null;
-          var followStats = null;
-          var state = StateManager._state;
-          var historyData = state.analysis.historyData;
+          let missHistory = null;
+          let followStats = null;
+          const state = StateManager._state;
+          const historyData = state.analysis.historyData;
           if (historyData && historyData.length) {
             missHistory = ZodiacPrediction.calcZodiacMissHistory(historyData, zodiac);
             followStats = ZodiacPrediction.calcZodiacFollowers(historyData, zodiac, 4, 20);
@@ -510,23 +582,23 @@ const EventBinder = {
         }
       }
       else if(action === 'switchFreqCard') {
-        var freqIndex = Number(actionBtn.dataset.freqIndex);
+        const freqIndex = Number(actionBtn.dataset.freqIndex);
         if (ViewZodiacGiong.freqSwiperUpdate) {
           ViewZodiacGiong.freqSwiperUpdate(freqIndex);
         }
       }
       else if(action === 'switchFreqTab') {
-        var freqKey = actionBtn.dataset.freqKey;
+        const freqKey = actionBtn.dataset.freqKey;
         EventBinder._handleSwitchFreqTab(freqKey);
       }
       else if(action === 'switchPredCard') {
-        var predIndex = Number(actionBtn.dataset.predIndex);
+        const predIndex = Number(actionBtn.dataset.predIndex);
         if (ViewZodiacPredict.predSwiperUpdate) {
           ViewZodiacPredict.predSwiperUpdate(predIndex);
         }
       }
       else if(action === 'switchPredTab') {
-        var predTab = actionBtn.dataset.predTab;
+        const predTab = actionBtn.dataset.predTab;
         ViewZodiacPredict.switchPredTabUI(predTab);
       }
       else if(action === 'showOverlap') {
@@ -616,8 +688,8 @@ const EventBinder = {
    */
   _showSizeBacktest: function() {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
@@ -629,7 +701,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = ZodiacPrediction.runSizeBacktest(historyData, 15);
+      const backtestData = ZodiacPrediction.runSizeBacktest(historyData, 15);
 
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
@@ -648,8 +720,8 @@ const EventBinder = {
    */
   _showOddEvenBacktest: function() {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
@@ -661,7 +733,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = ZodiacPrediction.runOddEvenBacktest(historyData, 15);
+      const backtestData = ZodiacPrediction.runOddEvenBacktest(historyData, 15);
 
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
@@ -680,8 +752,8 @@ const EventBinder = {
    */
   _showWuxingBacktest: function() {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
@@ -693,7 +765,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = ZodiacPrediction.runWuxingBacktest(historyData, 15);
+      const backtestData = ZodiacPrediction.runWuxingBacktest(historyData, 15);
 
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
@@ -709,8 +781,8 @@ const EventBinder = {
 
   _showColorBacktest: function() {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
@@ -722,7 +794,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = ZodiacPrediction.runColorBacktest(historyData, 12);
+      const backtestData = ZodiacPrediction.runColorBacktest(historyData, 12);
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
         return;
@@ -740,8 +812,8 @@ const EventBinder = {
    */
   _showFinalBacktest: function() {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
@@ -753,7 +825,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 20);
+      const backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 20);
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
         return;
@@ -775,40 +847,38 @@ const EventBinder = {
     if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
       ViewProfile.switchProfileTabUI(tab);
     }
-    // 切换到『我的』面板时，动态注入"使用说明"卡片（仅一次）
-    if (tab === 'mine' && typeof ViewProfile !== 'undefined' && ViewProfile.renderHelpCard) {
-      ViewProfile.renderHelpCard();
-    }
+    // 2026-07-04 适配：原"使用说明"卡片已随空 card 一起移除，不再注入
+    // 保留书签管理卡片的注入（由 ViewProfile.switchProfileTabUI 内部触发）
     // 记录『我的』页面当前子 tab（用于再次进入『我的』时恢复）
     Storage.saveLastTab('profile', tab);
     // 懒加载iframe
     if (tab === 'official') {
-      var officialFrame = document.getElementById('officialFrame');
-      var officialLoading = document.getElementById('officialLoading');
+      const officialFrame = document.getElementById('officialFrame');
+      const officialLoading = document.getElementById('officialLoading');
       if (officialFrame && !officialFrame.src) {
         officialFrame.src = 'https://sjz-xl2.09567k.app:7022/#dh2/';
         officialFrame.style.display = 'block';
         officialLoading.style.display = 'none';
       }
     } else if (tab === 'phoenix') {
-      var phoenixFrame = document.getElementById('phoenixFrame');
-      var phoenixLoading = document.getElementById('phoenixLoading');
+      const phoenixFrame = document.getElementById('phoenixFrame');
+      const phoenixLoading = document.getElementById('phoenixLoading');
       if (phoenixFrame && !phoenixFrame.src) {
         phoenixFrame.src = 'https://176744.com';
         phoenixFrame.style.display = 'block';
         phoenixLoading.style.display = 'none';
       }
     } else if (tab === 'daxian') {
-      var daxianFrame = document.getElementById('daxianFrame');
-      var daxianLoading = document.getElementById('daxianLoading');
+      const daxianFrame = document.getElementById('daxianFrame');
+      const daxianLoading = document.getElementById('daxianLoading');
       if (daxianFrame && !daxianFrame.src) {
         daxianFrame.src = 'https://rk3lx78d.66660149m.app:2026/66660149.app#66660149://01492026.com';
         daxianFrame.style.display = 'block';
         daxianLoading.style.display = 'none';
       }
     } else if (tab === 'max') {
-      var maxFrame = document.getElementById('maxFrame');
-      var maxLoading = document.getElementById('maxLoading');
+      const maxFrame = document.getElementById('maxFrame');
+      const maxLoading = document.getElementById('maxLoading');
       if (maxFrame && !maxFrame.src) {
         maxFrame.src = 'https://15549.rs-k1-gif.lzws0931.com/advice/site.k1/#15549';
         maxFrame.style.display = 'block';
@@ -833,9 +903,84 @@ const EventBinder = {
    * @param {string} freqKey - 频率key（p12/p24/p36）
    */
   _renderZoneChangeDebounced: Utils.debounce(function(freqKey) {
-    var wSize = parseInt(freqKey.replace('p', '')) || 12;
-    var historyData = StateManager._state.analysis.historyData;
-    var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
+    const wSize = parseInt(freqKey.replace('p', '')) || 12;
+    const historyData = StateManager._state.analysis.historyData;
+    const zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, wSize);
     ViewZodiacGiong.renderZoneChangeTracking(zoneChangeData);
-  }, 200)
+  }, 200),
+
+  // ============================================================
+  // 2026-07-04 新增：长按检测（个人中心页长按 div 弹出书签菜单）
+  // 严格遵守分层规范：
+  //   ❌ 禁止渲染代码 → 长按触发后调用 ViewBookmark.showLongPressMenu
+  //   ❌ 禁止鼠标事件 → 使用 touchstart/touchmove/touchend
+  // ============================================================
+
+  /**
+   * 触摸开始：判定是否触发长按检测
+   * 架构修复：所有 DOM 查询委托给 ViewBookmark（event.js 禁止获取 DOM 元素）
+   * 2026-07-04 更新：resolveLongPressTarget 返回 { kind, el, id?, title? }
+   */
+  handleTouchStart: function(e) {
+    if (typeof ViewBookmark === 'undefined') return;
+
+    // 委托视图层判定目标元素（书签标签或 .card-body）
+    const resolved = ViewBookmark.resolveLongPressTarget(e.target);
+    if (!resolved || !resolved.el) return;
+
+    const touch = e.touches && e.touches[0];
+    if (!touch) return;
+
+    EventBinder._clearLongPress();
+    EventBinder._longPressResolved = resolved;
+    EventBinder._longPressStartX = touch.clientX;
+    EventBinder._longPressStartY = touch.clientY;
+    EventBinder._longPressTriggered = false;
+
+    EventBinder._longPressTimer = setTimeout(function() {
+      // 二次校验：目标元素必须仍在 DOM 中（委托视图层判断）
+      if (!EventBinder._longPressResolved) return;
+      if (!ViewBookmark.isElementAttached(EventBinder._longPressResolved.el)) return;
+
+      EventBinder._longPressTriggered = true;
+      // 委托视图层触发菜单（按 kind 分发：'add' 显示输入网址；'bookmark' 显示删除）
+      ViewBookmark.triggerLongPressMenu(EventBinder._longPressResolved);
+
+      // 触觉反馈（如果可用）
+      if (navigator.vibrate) {
+        try { navigator.vibrate(15); } catch (_) {}
+      }
+    }, EventBinder.LONG_PRESS_DURATION);
+  },
+
+  /**
+   * 触摸移动：超过容差取消长按（避免误触）
+   */
+  handleTouchMove: function(e) {
+    if (!EventBinder._longPressTimer) return;
+    const touch = e.touches && e.touches[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - EventBinder._longPressStartX);
+    const dy = Math.abs(touch.clientY - EventBinder._longPressStartY);
+    if (dx > EventBinder.LONG_PRESS_MOVE_TOLERANCE || dy > EventBinder.LONG_PRESS_MOVE_TOLERANCE) {
+      EventBinder._clearLongPress();
+    }
+  },
+
+  /**
+   * 触摸结束/取消：清理长按定时器
+   */
+  handleTouchEnd: function() {
+    EventBinder._clearLongPress();
+  },
+
+  /**
+   * 清理长按定时器与状态
+   */
+  _clearLongPress: function() {
+    if (EventBinder._longPressTimer) {
+      clearTimeout(EventBinder._longPressTimer);
+      EventBinder._longPressTimer = null;
+    }
+  }
 };
