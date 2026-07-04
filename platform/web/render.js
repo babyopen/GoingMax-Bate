@@ -73,6 +73,13 @@ const Render = {
         const markedMap = state.marked[g] || {};
         const lockedList = state.locked[g] || [];
         // 2026-06-21 性能优化：用 tagByGroup 缓存替代每次 querySelectorAll
+        // 2026-07-05 修复：renderZodiacTags/renderNumTags 仅回填 zodiac/num 两组（见 b14220b P3），
+        //   HTML 中已存在的静态分组（head/tail/element/type/color/colorsx/bs/sum/sumOdd/sumSize/tailSize）
+        //   启动期不会被加入缓存。若缓存缺失该 group，则按 group 单次查询补齐
+        //   （保持原缓存主路径不变，仅做兜底）
+        if (!Render._tagByGroupCache[g]) {
+          Render._tagByGroupCache[g] = Array.from(document.querySelectorAll('.tag[data-group="' + g + '"]'));
+        }
         const tagsForGroup = Render._tagByGroupCache[g] || [];
         tagsForGroup.forEach(tag => {
           const tagValue = Utils.formatTagValue(tag.dataset.value, g);
