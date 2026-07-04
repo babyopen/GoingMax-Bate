@@ -15,6 +15,166 @@ const ViewBookmark = {
 
   _inputModal: null, // 双输入弹窗引用
 
+  // ============================================================
+  // 2026-07-04 新增：HTML 构造函数（纯字符串拼接，从原函数拆出）
+  // 目的：降低原函数复杂度，提升可读性；原函数改为调用此处
+  // ============================================================
+
+  /**
+   * 构造书签管理卡片主体 HTML（含 list 容器 + iframe 容器）
+   * @param {string} listHtml - 书签列表 HTML（已由 renderListHtml 生成）
+   * @returns {string}
+   */
+  _buildCardBodyHtml: function(listHtml) {
+    return '<div class="card-body" id="bookmarkCardBody" ' +
+      'style="display:flex;flex-direction:column;min-height:calc(100vh - 80px);">' +
+      '<div id="bookmarkList">' + listHtml + '</div>' +
+      // 2026-07-04 优化：标签容器 id，供 refreshListPatch 精确选中（替代脆性 querySelector）
+      '<div id="bookmarkIframeWrap" style="display:none;flex:1;min-height:0;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+          '<div id="bookmarkIframeTitle" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>' +
+          '<button data-action="closeBookmarkIframe" ' +
+            'style="padding:4px 10px;background:var(--bg-secondary);border:none;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-secondary);">关闭</button>' +
+        '</div>' +
+        '<iframe id="bookmarkIframe" ' +
+          'sandbox="allow-scripts allow-forms allow-popups allow-same-origin" ' +
+          'style="width:100%;height:100%;min-height:calc(100vh - 160px);border:1px solid var(--border);border-radius:8px;background:#fff;">' +
+        '</iframe>' +
+      '</div>' +
+    '</div>';
+  },
+
+  /**
+   * 构造单个书签标签 HTML
+   * @param {Object} b - 书签对象 { id, title, url }
+   * @returns {string}
+   */
+  _buildBookmarkTagHtml: function(b) {
+    return '<div class="bookmark-tag" data-action="openBookmark" data-bookmark-id="' + b.id + '" ' +
+      'title="' + ViewBookmark._escape(b.url) + '" ' +
+      'style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-secondary);color:var(--text);border-radius:16px;font-size:13px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;border:1px solid transparent;">' +
+      '<span>🔖</span>' +
+      '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ViewBookmark._escape(b.title) + '</span>' +
+    '</div>';
+  },
+
+  /**
+   * 构造空书签提示 HTML
+   * @returns {string}
+   */
+  _buildEmptyListHtml: function() {
+    return '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">' +
+      '暂无书签，长按面板可添加' +
+    '</div>';
+  },
+
+  /**
+   * 构造输入弹窗主体 HTML（标题 + URL + 按钮组）
+   * @returns {string}
+   */
+  _buildInputModalBodyHtml: function() {
+    let html = '<div style="background:var(--card,#fff);border-radius:14px;padding:20px;width:90%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">';
+    html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;text-align:center;">添加网址书签</div>';
+
+    html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">书签名</div>';
+    html += '<input id="bookmarkInputTitle" type="text" placeholder="如：官方预测" ' +
+      'style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:12px;background:var(--card);color:var(--text);">';
+
+    html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">网址（可省略 https://）</div>';
+    html += '<input id="bookmarkInputUrl" type="url" placeholder="如：example.com" ' +
+      'style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:16px;background:var(--card);color:var(--text);">';
+
+    html += '<div style="display:flex;gap:10px;">';
+    html += '<button data-action="bookmarkInputCancel" ' +
+      'style="flex:1;padding:11px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>';
+    html += '<button data-action="bookmarkInputConfirm" ' +
+      'style="flex:1;padding:11px;border:none;border-radius:8px;background:#007AFF;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">保存并打开</button>';
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+  },
+
+  /**
+   * 构造长按菜单主体 HTML（标题 + items + 取消）
+   * @param {string} safeTitle - 已转义的标题
+   * @param {Array} items - 菜单项数组
+   * @returns {string}
+   */
+  _buildLongPressMenuBodyHtml: function(safeTitle, items) {
+    let html = '<div style="background:var(--card,#fff);width:100%;max-width:420px;border-radius:14px 14px 0 0;padding:6px 0 18px;">';
+    html += '<div style="padding:14px 16px;font-size:13px;color:var(--text-secondary);border-bottom:1px solid var(--border);">';
+    html += '已选择：<span style="color:var(--text);font-weight:600;">' + safeTitle + '</span>';
+    html += '</div>';
+    items.forEach(function(item) {
+      const color = item.danger ? '#FF3B30' : 'var(--text)';
+      html += '<div data-action="' + ViewBookmark._escape(item.action) + '" ' +
+        (item.payload ? 'data-payload=\'' + ViewBookmark._escape(String(item.payload)) + '\'' : '') +
+        ' style="padding:14px 16px;font-size:15px;color:' + color + ';cursor:pointer;border-bottom:1px solid var(--border);">' +
+        ViewBookmark._escape(item.label) +
+      '</div>';
+    });
+    html += '<div data-action="closeLongPressMenu" style="padding:14px 16px;font-size:15px;color:#FF3B30;text-align:center;cursor:pointer;margin-top:6px;">取消</div>';
+    html += '</div>';
+    return html;
+  },
+
+  // ============================================================
+  // 2026-07-04 新增：patch 式更新（性能优化，仅 patch 单节点）
+  // 入口：refreshListPatch() —— 新增/删除流程可选用
+  // 原 refreshList() 保持不变，向后兼容
+  // ============================================================
+
+  /**
+   * patch 式刷新书签列表（增量更新单个 tag，避免整段 innerHTML 重建）
+   * @param {Object} [opts]
+   * @param {number} [opts.addedId] - 新增的书签 id（仅新增该节点）
+   * @param {number} [opts.removedId] - 删除的书签 id（仅移除该节点）
+   * @param {boolean} [opts.full] - 强制全量重建（默认 false）
+   */
+  refreshListPatch: function(opts) {
+    opts = opts || {};
+    const listEl = document.getElementById('bookmarkList');
+    if (!listEl) return;
+
+    // 全量重建路径
+    if (opts.full || (!opts.addedId && !opts.removedId)) {
+      ViewBookmark.refreshList();
+      return;
+    }
+
+    const list = BusinessBookmark.getBookmarks();
+
+    if (opts.removedId) {
+      const tagEl = listEl.querySelector('.bookmark-tag[data-bookmark-id="' + opts.removedId + '"]');
+      if (tagEl && tagEl.parentNode) {
+        tagEl.parentNode.removeChild(tagEl);
+      }
+      // 删空后回退到空提示
+      if (!list.length) {
+        listEl.innerHTML = ViewBookmark._buildEmptyListHtml();
+      }
+      return;
+    }
+
+    if (opts.addedId) {
+      const target = list.find(function(b) { return b.id === opts.addedId; });
+      if (!target) return;
+      // 2026-07-04 优化：用 id 精确选中（替代原脆性的 div[style*=...] 模糊匹配）
+      const wrap = document.getElementById('bookmarkTagList');
+      // 当前是空提示 → 整体替换为标签容器
+      if (!wrap) {
+        listEl.innerHTML = ViewBookmark.renderListHtml();
+        return;
+      }
+      // 已有标签容器 → 仅追加一个新 tag 节点
+      const tmp = document.createElement('div');
+      tmp.innerHTML = ViewBookmark._buildBookmarkTagHtml(target);
+      const newTag = tmp.firstElementChild;
+      if (newTag) wrap.appendChild(newTag);
+    }
+  },
+
   /**
    * 渲染书签管理卡片到 #profileMinePanel（动态注入，幂等）
    */
@@ -26,27 +186,8 @@ const ViewBookmark = {
     const card = document.createElement('div');
     card.className = 'card';
     card.id = 'bookmarkManagerCard';
-    card.innerHTML =
-      // 2026-07-04 移除 "🔖 我的书签" card-header（不需要展示）
-      // 2026-07-04 移除 "＋ 添加网址" 按钮：长按面板即可弹出「输入网址跳转」菜单
-      // 2026-07-04 iframe 占满到底部导航栏：卡片用 flex 撑满面板高度，iframe 容器 flex:1
-      // 2026-07-04 再次优化：card-body 高度直接 calc(100vh - 80px)，iframe 容器 flex:1 撑到底
-      '<div class="card-body" id="bookmarkCardBody" ' +
-        'style="display:flex;flex-direction:column;min-height:calc(100vh - 80px);">' +
-        '<div id="bookmarkList">' + ViewBookmark.renderListHtml() + '</div>' +
-        // iframe 容器：flex:1 占满剩余高度（默认隐藏），无 margin-top 紧凑显示
-        '<div id="bookmarkIframeWrap" style="display:none;flex:1;min-height:0;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-            '<div id="bookmarkIframeTitle" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>' +
-            '<button data-action="closeBookmarkIframe" ' +
-              'style="padding:4px 10px;background:var(--bg-secondary);border:none;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-secondary);">关闭</button>' +
-          '</div>' +
-          '<iframe id="bookmarkIframe" ' +
-            'sandbox="allow-scripts allow-forms allow-popups allow-same-origin" ' +
-            'style="width:100%;height:100%;min-height:calc(100vh - 160px);border:1px solid var(--border);border-radius:8px;background:#fff;">' +
-          '</iframe>' +
-        '</div>' +
-      '</div>';
+    // 2026-07-04 重构：HTML 字符串挪到 _buildCardBodyHtml，提升可读性
+    card.innerHTML = ViewBookmark._buildCardBodyHtml(ViewBookmark.renderListHtml());
 
     panel.appendChild(card);
   },
@@ -58,19 +199,13 @@ const ViewBookmark = {
   renderListHtml: function() {
     const list = BusinessBookmark.getBookmarks();
     if (!list.length) {
-      return '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">' +
-        '暂无书签，点击上方「＋ 添加网址」开始收藏' +
-      '</div>';
+      // 2026-07-04 重构：空提示挪到 _buildEmptyListHtml
+      return ViewBookmark._buildEmptyListHtml();
     }
-    // 2026-07-04 优化：标签按钮形式（紧凑横排，每个 tag 含 data-bookmark-id）
-    let html = '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">';
+    // 2026-07-04 优化：容器加 id="bookmarkTagList"，供 refreshListPatch 精确选中
+    let html = '<div id="bookmarkTagList" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">';
     list.forEach(function(b) {
-      html += '<div class="bookmark-tag" data-action="openBookmark" data-bookmark-id="' + b.id + '" ' +
-        'title="' + ViewBookmark._escape(b.url) + '" ' +
-        'style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-secondary);color:var(--text);border-radius:16px;font-size:13px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;border:1px solid transparent;">' +
-        '<span>🔖</span>' +
-        '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ViewBookmark._escape(b.title) + '</span>' +
-      '</div>';
+      html += ViewBookmark._buildBookmarkTagHtml(b);
     });
     html += '</div>';
     return html;
@@ -116,26 +251,8 @@ const ViewBookmark = {
     overlay.id = 'bookmarkInputModal';
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:10001;';
 
-    let html = '<div style="background:var(--card,#fff);border-radius:14px;padding:20px;width:90%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">';
-    html += '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;text-align:center;">添加网址书签</div>';
-
-    html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">书签名</div>';
-    html += '<input id="bookmarkInputTitle" type="text" placeholder="如：官方预测" ' +
-      'style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:12px;background:var(--card);color:var(--text);">';
-
-    html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">网址（可省略 https://）</div>';
-    html += '<input id="bookmarkInputUrl" type="url" placeholder="如：example.com" ' +
-      'style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;margin-bottom:16px;background:var(--card);color:var(--text);">';
-
-    html += '<div style="display:flex;gap:10px;">';
-    html += '<button data-action="bookmarkInputCancel" ' +
-      'style="flex:1;padding:11px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>';
-    html += '<button data-action="bookmarkInputConfirm" ' +
-      'style="flex:1;padding:11px;border:none;border-radius:8px;background:#007AFF;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">保存并打开</button>';
-    html += '</div>';
-
-    html += '</div>';
-    overlay.innerHTML = html;
+    // 2026-07-04 重构：弹窗主体 HTML 挪到 _buildInputModalBodyHtml
+    overlay.innerHTML = ViewBookmark._buildInputModalBodyHtml();
     document.body.appendChild(overlay);
 
     // 点击遮罩关闭
@@ -174,7 +291,8 @@ const ViewBookmark = {
       return;
     }
     ViewBookmark.hideInputModal();
-    ViewBookmark.refreshList();
+    // 2026-07-04 性能优化：新增用 patch 入口，仅插入单个 tag
+    ViewBookmark.refreshListPatch({ addedId: result.bookmark.id });
     // 自动打开刚添加的书签
     ViewBookmark.openInIframe(result.bookmark.url, result.bookmark.title);
   },
@@ -224,7 +342,8 @@ const ViewBookmark = {
     const ok = BusinessBookmark.removeBookmark(id);
     if (ok) {
       Toast.show('已删除');
-      ViewBookmark.refreshList();
+      // 2026-07-04 性能优化：删除用 patch 入口，仅移除单个 tag
+      ViewBookmark.refreshListPatch({ removedId: id });
     } else {
       Toast.show('删除失败');
     }
@@ -261,22 +380,8 @@ const ViewBookmark = {
 
     const safeTitle = ViewBookmark._escape(titleText);
 
-    let html = '<div style="background:var(--card,#fff);width:100%;max-width:420px;border-radius:14px 14px 0 0;padding:6px 0 18px;">';
-    html += '<div style="padding:14px 16px;font-size:13px;color:var(--text-secondary);border-bottom:1px solid var(--border);">';
-    html += '已选择：<span style="color:var(--text);font-weight:600;">' + safeTitle + '</span>';
-    html += '</div>';
-    items.forEach(function(item) {
-      const color = item.danger ? '#FF3B30' : 'var(--text)';
-      html += '<div data-action="' + ViewBookmark._escape(item.action) + '" ' +
-        (item.payload ? 'data-payload=\'' + ViewBookmark._escape(String(item.payload)) + '\'' : '') +
-        ' style="padding:14px 16px;font-size:15px;color:' + color + ';cursor:pointer;border-bottom:1px solid var(--border);">' +
-        ViewBookmark._escape(item.label) +
-      '</div>';
-    });
-    html += '<div data-action="closeLongPressMenu" style="padding:14px 16px;font-size:15px;color:#FF3B30;text-align:center;cursor:pointer;margin-top:6px;">取消</div>';
-    html += '</div>';
-
-    overlay.innerHTML = html;
+    // 2026-07-04 重构：菜单主体 HTML 挪到 _buildLongPressMenuBodyHtml
+    overlay.innerHTML = ViewBookmark._buildLongPressMenuBodyHtml(safeTitle, items);
 
     // 点击遮罩关闭
     overlay.addEventListener('click', function(e) {
@@ -351,7 +456,9 @@ const ViewBookmark = {
       // 不响应标签内部嵌套的 button/iframe 上的长按
       if (target.closest('button, iframe, input, textarea, [data-no-longpress]')) return null;
       const id = Number(tag.dataset.bookmarkId);
-      const title = (tag.textContent || '').trim().slice(0, 20);
+      // 2026-07-04 修复：取最后一个 span（书签名）而非整个 div 文本，避免带 🔖 emoji
+      const titleNode = tag.lastElementChild;
+      const title = titleNode ? (titleNode.textContent || '').trim().slice(0, 20) : '';
       return { kind: 'bookmark', el: tag, id: id, title: title };
     }
 
