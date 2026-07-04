@@ -53,7 +53,6 @@ const ViewBookmark = {
     return '<div class="bookmark-tag" data-action="openBookmark" data-bookmark-id="' + b.id + '" ' +
       'title="' + ViewBookmark._escape(b.url) + '" ' +
       'style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-secondary);color:var(--text);border-radius:16px;font-size:13px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;border:1px solid transparent;">' +
-      '<span>🔖</span>' +
       '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ViewBookmark._escape(b.title) + '</span>' +
     '</div>';
   },
@@ -456,7 +455,8 @@ const ViewBookmark = {
       // 不响应标签内部嵌套的 button/iframe 上的长按
       if (target.closest('button, iframe, input, textarea, [data-no-longpress]')) return null;
       const id = Number(tag.dataset.bookmarkId);
-      // 2026-07-04 修复：取最后一个 span（书签名）而非整个 div 文本，避免带 🔖 emoji
+      // 2026-07-04 修复：取最后一个 span（书签名）而非整个 div 文本
+      // 2026-07-05 更新：书签标签已移除 🔖 emoji 标识，但 lastElementChild 仍指向书签名 span，逻辑不变
       const titleNode = tag.lastElementChild;
       const title = titleNode ? (titleNode.textContent || '').trim().slice(0, 20) : '';
       return { kind: 'bookmark', el: tag, id: id, title: title };
