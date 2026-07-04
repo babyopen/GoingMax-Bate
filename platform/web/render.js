@@ -180,6 +180,7 @@ const Render = {
   renderZodiacTags: () => {
     try {
       const state = StateManager._state;
+      const createdTags = [];
       const fragment = Utils.createFragment(state.zodiacCycle, (zodiac) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'tag';
@@ -188,13 +189,18 @@ const Render = {
         wrapper.setAttribute('role', 'checkbox');
         wrapper.setAttribute('tabindex', '0');
         wrapper.innerText = zodiac;
+        createdTags.push(wrapper);
         return wrapper;
       });
 
       DOM.zodiacTags.innerHTML = '';
       DOM.zodiacTags.appendChild(fragment);
-      // 2026-06-21 性能优化：清空容器后使 tag 节点缓存失效，下次 renderTagStatus 时重建
-      Render._tagByGroupCacheInvalid = true;
+      // 2026-07-04 性能优化：直接回填 _tagByGroupCache（O(12)）
+      //   取代旧版"setInvalid 然后 renderTagStatus 时再 querySelectorAll('.tag[data-group]') O(N_total)"
+      //   启动期 renderZodiacTags + renderNumTags 紧跟 renderAll()，省掉一次额外全文档枚举
+      Render._tagByGroupCache = Render._tagByGroupCache || {};
+      Render._tagByGroupCache.zodiac = createdTags;
+      Render._tagByGroupCacheInvalid = false;
     } catch(e) {
       console.error('[Render.renderZodiacTags] 渲染生肖标签失败:', e);
     }
@@ -209,6 +215,7 @@ const Render = {
       for(let i = 1; i <= 49; i++) {
         nums.push(i);
       }
+      const createdTags = [];
       const fragment = Utils.createFragment(nums, (num) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'tag';
@@ -217,13 +224,16 @@ const Render = {
         wrapper.setAttribute('role', 'checkbox');
         wrapper.setAttribute('tabindex', '0');
         wrapper.innerText = Utils.formatNum(num);
+        createdTags.push(wrapper);
         return wrapper;
       });
 
       DOM.numTags.innerHTML = '';
       DOM.numTags.appendChild(fragment);
-      // 2026-06-21 性能优化：清空容器后使 tag 节点缓存失效
-      Render._tagByGroupCacheInvalid = true;
+      // 2026-07-04 性能优化：直接回填 _tagByGroupCache（O(49)）
+      Render._tagByGroupCache = Render._tagByGroupCache || {};
+      Render._tagByGroupCache.num = createdTags;
+      Render._tagByGroupCacheInvalid = false;
     } catch(e) {
       console.error('[Render.renderNumTags] 渲染号码标签失败:', e);
     }
@@ -369,9 +379,11 @@ const Render = {
         list.push({
           num: attrs.num,
           s: attrs.s,
-          color: attrs.color,
+          // 2026-07-04 性能优化：启动期高频反查路径，Utils 已预热 Map → O(1)
+          //   未预热时自动回退到 Object.keys().find() 慢路径，保持兼容
+          color: Utils.getColorNameFast(i),
           zodiac: attrs.zodiac,
-          element: attrs.element,
+          element: Utils.getWuxingFast(i),
           type: attrs.type,
           bs: attrs.bs,
           colorsx: attrs.colorsx,

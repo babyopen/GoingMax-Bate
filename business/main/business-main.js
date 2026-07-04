@@ -726,8 +726,21 @@ const Business = {
   // ====================== 分析页面相关 ======================
   /**
    * 加载历史记录缓存
+   * 2026-07-04 性能优化：拆分为"数据写入"和"视图渲染"两段，启动期只执行数据写入，
+   *   视图渲染（renderHistory / renderFullAnalysis / renderZodiacAnalysis 等 8 个调用）
+   *   延迟到首次进入分析页/资料页时按需执行，详见 Business.renderHistoryViews()
    */
   loadHistoryCache: () => {
+    Business._applyHistoryCacheToState();
+    // 2026-07-04：不主动触发 8 个 render，改为首次进入分析页按需渲染
+  },
+
+  /**
+   * 仅把 historyCache 写入 state（数据层，无 DOM），不渲染任何视图
+   * 2026-07-04 新增：把 loadHistoryCache 的"渲染"职责剥离，缩短启动同步链路
+   * @private
+   */
+  _applyHistoryCacheToState: () => {
     const cache = Storage.getHistoryCache();
     const currentHistoryData = BusinessCommonData.getHistoryData(StateManager._state);
     const currentLatestExpect = currentHistoryData.length ? Number(currentHistoryData[0].expect || 0) : 0;
@@ -740,22 +753,45 @@ const Business = {
         historyTimestamp: cache.timestamp || 0
       };
       StateManager.setState({ analysis: newAnalysis }, false);
-      Business.renderLatest(cache.data[0]);
+    }
+  },
+
+  /**
+   * 完整渲染分析/资料页视图（视图层，仅在用户首次进入分析或资料页时调用）
+   * 2026-07-04 新增：把原本写在 loadHistoryCache 中的 8 个 render 调用抽出来
+   *   当 historyData 已在 state 时调用一次即可。空数据时初始化空状态视图。
+   * 设计：
+   *   - 调用前会先确保 state.analysis.historyData 已就位（由 _applyHistoryCacheToState 或 refreshHistory 完成）
+   *   - 用户首次进入分析页（handleBottomNavClick index=1）会触发完整渲染
+   *   - 用户首次进入资料页（index=2）则只渲染资料相关视图，避免重复渲染分析页
+   */
+  renderHistoryViews: (scope) => {
+    var data = BusinessCommonData.getHistoryData(StateManager._state);
+    var latest = data && data.length ? data[0] : null;
+
+    // 主页/分析页需要：最新开奖 + 历史记录 + 全维度 + 生肖关联 + 生肖预测 + 回测 + Giong + TongJi
+    // 资料页需要：生肖预测 + 回测 + Giong + TongJi
+    var wantAnalysis = scope === 'all' || scope === 'analysis' || scope === undefined;
+    var wantRandom   = scope === 'all' || scope === 'random';
+
+    if (wantAnalysis) {
+      if (latest) Business.renderLatest(latest);
       Business.renderHistory();
       Business.renderFullAnalysis();
       Business.renderZodiacAnalysis();
+    }
+    if (wantRandom || wantAnalysis) {
+      // 生肖预测 / 回测 / Giong / TongJi 在资料页与广播页共用同一份缓存
       Business.renderZodiacPrediction();
       Business.initZodiacBacktest();
       Business.initGiongTab();
-      // 2026-06-20 修复：缓存加载后同步刷新 TongJi 标签页
-      //   解决：首次切到 TongJi 时数据为空 → render(null) → 之后加载数据但 TongJi 不刷新
       if (typeof Business.initTongJiTab === 'function') {
         Business.initTongJiTab();
       }
-      ViewAnalysis.updateLoadMoreBtn(
-        BusinessCommonData.getHistoryData(StateManager._state).length > StateManager._state.analysis.showCount
-      );
     }
+    ViewAnalysis.updateLoadMoreBtn(
+      data.length > StateManager._state.analysis.showCount
+    );
   },
 
   /**
@@ -763,6 +799,8 @@ const Business = {
    */
   initAnalysisPage: () => {
     Business.loadHistoryCache();
+    // 2026-07-04 性能优化：首次进入分析页补齐一次视图渲染（启动期不再同步渲染）
+    Business.renderHistoryViews('analysis');
     const state = StateManager._state;
     if(BusinessCommonData.getHistoryData(state).length === 0) {
       Business.refreshHistory();

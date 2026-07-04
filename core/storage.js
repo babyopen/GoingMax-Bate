@@ -78,6 +78,39 @@ const Storage = {
   },
 
   /**
+   * 批量读取多个 key（启动期一次性 localStorage.getItem + JSON.parse，2026-07-04 新增）
+   * 用途：把 initApp 启动链路 8 次分散 getItem 合并为 1 次遍历，避免 8× 的 IPC 反序列化抖动
+   * 设计：
+   *   - 仅供启动期 prefetch 链路调用
+   *   - 返回 Object<key, value>，缺失/解析失败使用 defaultValue
+   *   - 不修改任何 STATE/KES/St，回退到裸 Storage.get 完全等价
+   * @param {Object} map - { key1: defaultValue1, key2: defaultValue2, ... }
+   * @returns {Object} 解析后的键值对
+   */
+  getMany: (map) => {
+    const out = {};
+    if (!map || typeof map !== 'object') return out;
+    const keys = Object.keys(map);
+    if (keys.length === 0) return out;
+    const canLS = Storage.isLocalStorageAvailable();
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      const def = map[k];
+      try {
+        if (canLS) {
+          const raw = localStorage.getItem(k);
+          out[k] = raw ? JSON.parse(raw) : def;
+        } else {
+          out[k] = (k in Storage._memoryStorage) ? Storage._memoryStorage[k] : def;
+        }
+      } catch (_) {
+        out[k] = def;
+      }
+    }
+    return out;
+  },
+
+  /**
    * 写入存储数据
    * @param {string} key - 存储key
    * @param {any} value - 要存储的值

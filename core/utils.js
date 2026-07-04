@@ -715,6 +715,92 @@ const Utils = {
     return element || '金';
   },
 
+  // ============================================================
+  // 启动期反查加速（2026-07-04 性能优化）
+  //   - 将 CONFIG.COLOR_MAP / CONFIG.ELEMENT_MAP 的 Object.keys().find()
+  //     O(K*N) 反查（K=3~5 键，N=号码 49 次）转换为 O(1) Map 反查
+  //   - 仅用于启动期 `buildNumList` 等高频 1..49 循环调用
+  //   - 慢路径 `getColorName / getWuxing` 保留，外部零侵入
+  // ============================================================
+
+  /** 号码 → 颜色名 Map（启动期懒构建，2026-07-04 新增） */
+  _numToColorMap: null,
+  /** 号码 → 五行 Map（启动期懒构建，2026-07-04 新增） */
+  _numToElementMap: null,
+
+  /**
+   * 构建号码→颜色名反查 Map
+   * @returns {Map<number,string>}
+   * @private
+   */
+  _buildNumToColorMap: function() {
+    var map = new Map();
+    if (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) {
+      Object.keys(CONFIG.COLOR_MAP).forEach(function(name) {
+        var arr = CONFIG.COLOR_MAP[name] || [];
+        for (var i = 0; i < arr.length; i++) {
+          map.set(arr[i], name);
+        }
+      });
+    }
+    return map;
+  },
+
+  /**
+   * 构建号码→五行反查 Map
+   * @returns {Map<number,string>}
+   * @private
+   */
+  _buildNumToElementMap: function() {
+    var map = new Map();
+    if (typeof CONFIG !== 'undefined' && CONFIG.ELEMENT_MAP) {
+      Object.keys(CONFIG.ELEMENT_MAP).forEach(function(name) {
+        var arr = CONFIG.ELEMENT_MAP[name] || [];
+        for (var i = 0; i < arr.length; i++) {
+          map.set(arr[i], name);
+        }
+      });
+    }
+    return map;
+  },
+
+  /**
+   * 启动期批量预热颜色/五行反查 Map（在 initApp 启动链路调用一次，避免惰性首次抖动）
+   * 2026-07-04 新增：buildNumList 期间省掉 49×2 次 Object.keys().find() 重复扫描
+   */
+  prewarmNumMaps: function() {
+    Utils._numToColorMap = Utils._buildNumToColorMap();
+    Utils._numToElementMap = Utils._buildNumToElementMap();
+  },
+
+  /**
+   * 号码 → 颜色名（O(1) 快路径，需先 prewarmNumMaps；未预热自动回退慢路径）
+   * 2026-07-04 新增：服务于 Render.buildNumList
+   * @param {number} num - 号码 (1-49)
+   * @returns {string} '红' / '蓝' / '绿'（默认 '红'）
+   */
+  getColorNameFast: (num) => {
+    if (Utils._numToColorMap) {
+      var v = Utils._numToColorMap.get(num);
+      return v || '红';
+    }
+    return Utils.getColorName(num);
+  },
+
+  /**
+   * 号码 → 五行（O(1) 快路径，需先 prewarmNumMaps；未预热自动回退慢路径）
+   * 2026-07-04 新增：服务于 Render.buildNumList
+   * @param {number} num - 号码 (1-49)
+   * @returns {string} '金' / '木' / '水' / '火' / '土'（默认 '金'）
+   */
+  getWuxingFast: (num) => {
+    if (Utils._numToElementMap) {
+      var v = Utils._numToElementMap.get(num);
+      return v || '金';
+    }
+    return Utils.getWuxing(num);
+  },
+
   /**
    * 号码格式化：1 → '01'（全局统一，2026-06-09 新增）
    * @param {number|string} num - 号码
