@@ -28,15 +28,11 @@ const ViewBookmark = {
     card.id = 'bookmarkManagerCard';
     card.innerHTML =
       // 2026-07-04 移除 "🔖 我的书签" card-header（不需要展示）
+      // 2026-07-04 移除 "＋ 添加网址" 按钮：长按面板即可弹出「输入网址跳转」菜单
       // 2026-07-04 iframe 占满到底部导航栏：卡片用 flex 撑满面板高度，iframe 容器 flex:1
+      // 2026-07-04 再次优化：card-body 高度直接 calc(100vh - 80px)，iframe 容器 flex:1 撑到底
       '<div class="card-body" id="bookmarkCardBody" ' +
-        'style="display:flex;flex-direction:column;min-height:calc(100vh - 160px);">' +
-        '<div style="margin-bottom:12px;">' +
-          '<button data-action="showBookmarkInput" ' +
-            'style="padding:8px 16px;background:#007AFF;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">' +
-            '＋ 添加网址' +
-          '</button>' +
-        '</div>' +
+        'style="display:flex;flex-direction:column;min-height:calc(100vh - 80px);">' +
         '<div id="bookmarkList">' + ViewBookmark.renderListHtml() + '</div>' +
         // iframe 容器：flex:1 占满剩余高度（默认隐藏），无 margin-top 紧凑显示
         '<div id="bookmarkIframeWrap" style="display:none;flex:1;min-height:0;">' +
@@ -47,7 +43,7 @@ const ViewBookmark = {
           '</div>' +
           '<iframe id="bookmarkIframe" ' +
             'sandbox="allow-scripts allow-forms allow-popups allow-same-origin" ' +
-            'style="width:100%;height:100%;min-height:calc(100vh - 220px);border:1px solid var(--border);border-radius:8px;background:#fff;">' +
+            'style="width:100%;height:100%;min-height:calc(100vh - 160px);border:1px solid var(--border);border-radius:8px;background:#fff;">' +
           '</iframe>' +
         '</div>' +
       '</div>';
