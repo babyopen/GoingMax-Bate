@@ -421,6 +421,23 @@ const EventBinder = {
           ViewBookmark.closeLongPressMenu();
         }
       }
+      // 特码明细：展开/收起折叠区（默认仅展示前 20 条）
+      else if(action === 'togglePredrawRecent') {
+        const list = actionBtn.previousElementSibling;
+        if (!list || !list.classList.contains('tj-predraw-recent-collapsed')) return;
+        const collapsed = list.dataset.collapsed === '1';
+        if (collapsed) {
+          list.style.display = '';
+          list.dataset.collapsed = '0';
+          const hiddenCount = list.querySelectorAll('.tj-predraw-item').length;
+          actionBtn.textContent = '收起剩余 ' + hiddenCount + ' 期';
+        } else {
+          list.style.display = 'none';
+          list.dataset.collapsed = '1';
+          const hiddenCount = list.querySelectorAll('.tj-predraw-item').length;
+          actionBtn.textContent = '展开剩余 ' + hiddenCount + ' 期';
+        }
+      }
       // 导航操作
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作

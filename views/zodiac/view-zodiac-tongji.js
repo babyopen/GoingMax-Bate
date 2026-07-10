@@ -298,12 +298,15 @@ const ViewZodiacTongJi = {
     html += '</tbody></table>';
     html += '</div>';
 
-    // 下半：完整明细（展示所有期数据）
+    // 下半：完整明细（默认仅展示前 20 条，其余通过按钮展开/收起）
     var recent = preStats.records || [];
+    var PREVIEW_COUNT = 20;
+    var visibleList = recent.slice(0, PREVIEW_COUNT);
+    var hiddenList = recent.slice(PREVIEW_COUNT);
 
     html += '<div class="tj-predraw-recent-title">完整明细（共 ' + recent.length + ' 期）</div>';
     html += '<div class="tj-predraw-recent-list">';
-    recent.forEach(function(r) {
+    visibleList.forEach(function(r) {
       var levelCls = 'tj-level-' + r.level;
       var numStr = r.num < 10 ? '0' + r.num : '' + r.num;
       html += '<div class="tj-predraw-item">';
@@ -314,6 +317,23 @@ const ViewZodiacTongJi = {
       html += '<span class="tj-predraw-miss">漏 ' + r.miss + ' 期</span>';
       html += '</div>';
     });
+    // 折叠区域：剩余记录默认隐藏
+    if (hiddenList.length > 0) {
+      html += '<div class="tj-predraw-recent-collapsed" data-collapsed="1" style="display:none">';
+      hiddenList.forEach(function(r) {
+        var levelCls = 'tj-level-' + r.level;
+        var numStr = r.num < 10 ? '0' + r.num : '' + r.num;
+        html += '<div class="tj-predraw-item">';
+        html += '<span class="tj-predraw-expect">' + r.expect + '</span>';
+        html += '<span class="tj-predraw-num">' + numStr + '</span>';
+        html += '<span class="tj-predraw-arrow">←</span>';
+        html += '<span class="tj-level-tag ' + levelCls + '">' + r.levelEmoji + ' ' + r.levelName + '</span>';
+        html += '<span class="tj-predraw-miss">漏 ' + r.miss + ' 期</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '<button type="button" class="tj-predraw-toggle-btn" data-action="togglePredrawRecent">展开剩余 ' + hiddenList.length + ' 期</button>';
+    }
     html += '</div>';
 
     html += '<div class="tj-level-footer">';
