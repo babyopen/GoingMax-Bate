@@ -298,11 +298,10 @@ const ViewZodiacTongJi = {
     html += '</tbody></table>';
     html += '</div>';
 
-    // 下半：最近 N 期明细（默认 20 期）
-    var recentN = 20;
-    var recent = (preStats.records || []).slice(0, recentN);
+    // 下半：完整明细（展示所有期数据）
+    var recent = preStats.records || [];
 
-    html += '<div class="tj-predraw-recent-title">最近 ' + recent.length + ' 期明细</div>';
+    html += '<div class="tj-predraw-recent-title">完整明细（共 ' + recent.length + ' 期）</div>';
     html += '<div class="tj-predraw-recent-list">';
     recent.forEach(function(r) {
       var levelCls = 'tj-level-' + r.level;
