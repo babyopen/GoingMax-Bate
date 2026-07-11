@@ -1858,11 +1858,17 @@ const Business = {
     var numLevelStats = ZodiacPrediction.calcNumLevelStats(historyData);
     // 2026-06-24 用户需求：每期"特码开出前"的等级分布
     var preDrawStats = ZodiacPrediction.calcPreDrawLevelHistory(historyData);
+    // 2026-07-12 用户需求：下一期可能开出的等级 Top3
+    var preDrawPredictStats = ZodiacPrediction.predictNextLevel(historyData);
+    // 2026-07-12 回测验证：滚动窗口预测，与预测卡结果对标
+    var preDrawPredictBacktest = ZodiacPrediction.predictLevelBacktest(historyData);
     // 缓存 stats，供排序切换时重渲染（2026-06-20 用户需求：表头点击升序降序）
     var stats = {
       zodiac: zodiacStats,
       numLevel: numLevelStats,
-      preDraw: preDrawStats
+      preDraw: preDrawStats,
+      preDrawPredict: preDrawPredictStats,
+      preDrawPredictBacktest: preDrawPredictBacktest
     };
     if (typeof ZodiacPrediction.setStats === 'function') {
       ZodiacPrediction.setStats(stats);

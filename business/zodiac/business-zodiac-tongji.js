@@ -383,6 +383,289 @@ const ZodiacTongJi = {
       levels: levelStats,
       records: records
     };
+  },
+
+  /**
+   * 预测下一期可能开出的"等级"（2026-07-12 用户需求，2026-07-12 优化）
+   *   - 基于 calcPreDrawLevelHistory 的统计结果，对 6 个等级做综合评分
+   *   - 取评分最高的 3 个等级作为推荐
+   *
+   * 综合评分（5 因子加权）：
+   *   - 频率基准(15%)：历史占比，常态基准
+   *   - 遗漏回归(30%)：距上次出现越久，回归压力越大（方向反转）
+   *   - 近期趋势(22%)：近期占比 vs 历史占比的升降趋势
+   *   - 短期密度(20%)：最近 N 期出现次数归一化
+   *   - 交替关联( 8%)：最近一期等级 → 下一期历史常见等级
+ *   - 号码跟随( 5%)：最近一期特码 → 历史中该号码后下一期特码的等级分布
+   *
+   * 复用 calcPreDrawLevelHistory 的 records / levels，不重复扫描历史。
+   *
+   * @param {Array} historyData - 历史数据数组（按 expect 倒序）
+   * @returns {Object|null}
+   */
+  predictNextLevel: function(historyData) {
+    if (!historyData || historyData.length < 2) return null;
+
+    // 复用 calcPreDrawLevelHistory 的统计结果（已经按 expect 倒序）
+    var preStats = this.calcPreDrawLevelHistory(historyData);
+    if (!preStats || !preStats.records || !preStats.records.length) return null;
+
+    var records = preStats.records;
+    var total = records.length;
+    var totalHistory = preStats.historyLength || total;
+
+    // 6 等级基础配置（与 calcNumLevelStats / calcPreDrawLevelHistory 一致）
+    var levelConfigs = [
+      { key: 'superhot', name: '极热', emoji: '🔴' },
+      { key: 'hot',      name: '热号', emoji: '🟠' },
+      { key: 'warm',     name: '温号', emoji: '🟡' },
+      { key: 'cool',     name: '温冷', emoji: '🟢' },
+      { key: 'cold',     name: '冷号', emoji: '🔵' },
+      { key: 'deep',     name: '极冷', emoji: '🟣' }
+    ];
+
+    // ========== 因子 1：频率基准（历史占比，0~100）==========
+    var freqMap = {};
+    preStats.levels.forEach(function(lv) { freqMap[lv.key] = lv.percent || 0; });
+
+    // ========== 因子 2：最近一次出现 idx（越小越新）==========
+    var lastSeenMap = {};
+    levelConfigs.forEach(function(cfg) { lastSeenMap[cfg.key] = total; });
+    for (var li = 0; li < total; li++) {
+      var k = records[li].level;
+      if (lastSeenMap[k] === total) lastSeenMap[k] = li;
+    }
+
+    // ========== 因子 3：最近 N 期窗口（默认 30 期）==========
+    var N = Math.min(30, total);
+    var recentCountMap = {};
+    levelConfigs.forEach(function(cfg) { recentCountMap[cfg.key] = 0; });
+    for (var ri = 0; ri < N; ri++) {
+      if (records[ri] && records[ri].level) {
+        recentCountMap[records[ri].level]++;
+      }
+    }
+
+    // ========== 因子 4：交替关联（等级转移矩阵）==========
+    // transitionMap[fromKey][toKey] = count
+    var transitionMap = {};
+    levelConfigs.forEach(function(cfg) {
+      transitionMap[cfg.key] = {};
+      levelConfigs.forEach(function(cfg2) { transitionMap[cfg.key][cfg2.key] = 0; });
+    });
+    for (var ti = 1; ti < total; ti++) {
+      var fromKey = records[ti].level;
+      var toKey = records[ti - 1].level;
+      if (fromKey && toKey && transitionMap[fromKey]) {
+        transitionMap[fromKey][toKey]++;
+      }
+    }
+
+    // 最近一期等级 → 转移概率
+    var latestLevel = records[0] && records[0].level;
+    var transProbMap = {};
+    if (latestLevel && transitionMap[latestLevel]) {
+      var transTotal = 0;
+      levelConfigs.forEach(function(cfg) { transTotal += transitionMap[latestLevel][cfg.key]; });
+      levelConfigs.forEach(function(cfg) {
+        transProbMap[cfg.key] = transTotal > 0
+          ? Math.round((transitionMap[latestLevel][cfg.key] / transTotal) * 1000) / 10
+          : 0;
+      });
+    } else {
+      levelConfigs.forEach(function(cfg) { transProbMap[cfg.key] = 0; });
+    }
+
+    // ========== 因子 5：号码→等级跟随（5%）==========
+    // 最近一期特码 → 历史中该号码出现后下一期特码的等级分布
+    var latestNum = records[0] && records[0].num;
+    var numFollowMap = {};
+    levelConfigs.forEach(function(cfg) { numFollowMap[cfg.key] = 0; });
+
+    var numFollowTotal = 0;
+    if (latestNum) {
+      for (var fi = 1; fi < total; fi++) {
+        if (records[fi].num === latestNum) {
+          var nextLevel = records[fi - 1].level;
+          if (nextLevel && numFollowMap[nextLevel] !== undefined) {
+            numFollowMap[nextLevel]++;
+            numFollowTotal++;
+          }
+        }
+      }
+    }
+
+    var numFollowProbMap = {};
+    levelConfigs.forEach(function(cfg) {
+      numFollowProbMap[cfg.key] = numFollowTotal > 0
+        ? Math.round((numFollowMap[cfg.key] / numFollowTotal) * 1000) / 10
+        : 0;
+    });
+
+    // ========== 综合评分 ==========
+    var clamp = function(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); };
+
+    var scored = levelConfigs.map(function(cfg) {
+      var key = cfg.key;
+
+      // F1: 频率基准（0~100）
+      var fFreq = freqMap[key] || 0;
+
+      // F2: 遗漏回归（方向反转：越久越可能回归，0~100）
+      //     乘以频率系数 sqrt(freq/16.7)，防止低频等级因长期未出现而虚高
+      var lastSeenIdx = lastSeenMap[key];
+      var freqCoeff = fFreq > 0 ? Math.sqrt(fFreq / 16.7) : 0.2;
+      var fRegression = total > 0
+        ? Math.min(100, (lastSeenIdx / total) * 100 * 1.3) * freqCoeff
+        : 0;
+
+      // F3: 近期趋势（近期占比 vs 历史占比，0~100）
+      var recentCount = recentCountMap[key] || 0;
+      var recentRatio = N > 0 ? (recentCount / N) * 100 : 0;
+      var fTrend = clamp(50 + (recentRatio - fFreq) * 2.5, 0, 100);
+
+      // F4: 短期密度（0~100）
+      var fDensity = N > 0 ? (recentCount / N) * 100 : 0;
+
+      // F5: 交替关联（0~100, 8%）
+      var fTrans = transProbMap[key] || 0;
+
+      // F6: 号码跟随（0~100, 5%）
+      var fFollow = numFollowProbMap[key] || 0;
+
+      var score = fFreq * 0.15 + fRegression * 0.30 + fTrend * 0.22 + fDensity * 0.20 + fTrans * 0.08 + fFollow * 0.05;
+
+      return {
+        key: key,
+        name: cfg.name,
+        emoji: cfg.emoji,
+        score: Math.round(score * 10) / 10,
+        // 因子分解（调试用）
+        fFreq: Math.round(fFreq * 10) / 10,
+        fRegression: Math.round(fRegression * 10) / 10,
+        fTrend: Math.round(fTrend * 10) / 10,
+        fDensity: Math.round(fDensity * 10) / 10,
+        fTrans: Math.round(fTrans * 10) / 10,
+        fFollow: Math.round(fFollow * 10) / 10,
+        // 展示用
+        freq: Math.round(fFreq * 10) / 10,
+        avgMiss: Math.round((preStats.levels.find(function(lv) { return lv.key === key; }) || {}).avgMiss || 0),
+        recentCount: recentCount,
+        lastSeenIdx: lastSeenIdx
+      };
+    });
+
+    // 排序：分数降序
+    scored.sort(function(a, b) { return b.score - a.score; });
+
+    return {
+      historyLength: totalHistory,
+      total: total,
+      levels: scored,
+      top3: scored.slice(0, 3)
+    };
+  },
+
+  /**
+   * 回测追踪：逐期滚动预测，对比 Top3 命中率（2026-07-12 用户需求）
+   *   - 滚动窗口：从最旧期开始，每期用"该期之前"的历史数据做预测
+   *   - 对比该期实际开出的等级是否在 Top3 推荐中
+   *   - 返回汇总命中率 + 逐期明细
+   *
+   * @param {Array} historyData - 历史数据数组（按 expect 倒序，index 0 最新）
+   * @returns {Object|null}
+   *   {
+   *     total: Number,      // 回测总期数
+   *     hits: Number,       // 命中次数
+   *     hitRate: Number,    // 命中率（%）
+   *     results: [...]      // 逐期明细
+   *   }
+   */
+  predictLevelBacktest: function(historyData) {
+    var N = historyData.length;
+    var MIN_WINDOW = 20;
+    if (N < MIN_WINDOW + 1) return null;
+
+    // 6 等级阈值（与 calcPreDrawLevelHistory 一致）
+    var levelConfigs = [
+      { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
+      { key: 'hot',      name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm',     name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool',     name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold',     name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep',     name: '极冷', emoji: '🟣', range: [100, Infinity] }
+    ];
+
+    function findLevelByMiss(miss) {
+      for (var li = 0; li < levelConfigs.length; li++) {
+        var cfg = levelConfigs[li];
+        if (miss >= cfg.range[0] && miss <= cfg.range[1]) return cfg;
+      }
+      return null;
+    }
+
+    var results = [];
+    var hits = 0;
+    var total = 0;
+
+    // 滚动窗口：从最旧到最新逐期推进
+    //   j = 当前预测目标期在 historyData 中的索引
+    //   j 从 N-MIN_WINDOW-1 递减到 0（即从较旧到最新）
+    //   subHistory = historyData.slice(j+1) 为"j 期之前"的所有历史
+    for (var j = N - MIN_WINDOW - 1; j >= 0; j--) {
+      var subHistory = historyData.slice(j + 1);
+      if (subHistory.length < MIN_WINDOW) continue;
+
+      var predict = this.predictNextLevel(subHistory);
+      if (!predict || !predict.top3 || !predict.top3.length) continue;
+
+      var top3Keys = [];
+      var top3Names = [];
+      predict.top3.forEach(function(lv) { top3Keys.push(lv.key); top3Names.push(lv.name); });
+
+      // 计算目标期 j 的实际等级
+      var targetItem = historyData[j];
+      var targetTe = Utils.SpecialCalculator.getSpecial(targetItem);
+      targetTe = targetTe && targetTe.te;
+      if (!targetTe || targetTe < 1 || targetTe > 49) continue;
+
+      // 在 subHistory 中找 targetTe 最近一次出现位置
+      var lastPos = -1;
+      for (var k = 0; k < subHistory.length; k++) {
+        var sk = Utils.SpecialCalculator.getSpecial(subHistory[k]);
+        if (sk && sk.te === targetTe) {
+          lastPos = k;
+          break;
+        }
+      }
+      var miss = lastPos === -1 ? subHistory.length : lastPos;
+
+      var actualLevel = findLevelByMiss(miss);
+      if (!actualLevel) continue;
+
+      var hit = top3Keys.indexOf(actualLevel.key) >= 0;
+      if (hit) hits++;
+      total++;
+
+      results.push({
+        expect: targetItem.expect,
+        num: targetTe,
+        miss: miss,
+        actualLevel: actualLevel.key,
+        actualName: actualLevel.name,
+        actualEmoji: actualLevel.emoji,
+        top3: top3Keys,
+        top3Names: top3Names,
+        hit: hit
+      });
+    }
+
+    return {
+      total: total,
+      hits: hits,
+      hitRate: total > 0 ? Math.round((hits / total) * 1000) / 10 : 0,
+      results: results
+    };
   }
 };
 

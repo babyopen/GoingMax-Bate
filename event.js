@@ -438,6 +438,15 @@ const EventBinder = {
           actionBtn.textContent = '展开剩余 ' + hiddenCount + ' 期';
         }
       }
+      // 等级预测回测弹窗（2026-07-12 用户需求）
+      else if(action === 'openLevelBacktest') {
+        var state = StateManager._state;
+        var historyData = BusinessCommonData.ensureHistoryData(state);
+        if (historyData && historyData.length) {
+          var backtestData = ZodiacPrediction.predictLevelBacktest(historyData);
+          LevelPredictModal.show(backtestData);
+        }
+      }
       // 导航操作
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作

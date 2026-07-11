@@ -3186,3 +3186,152 @@
 .filter-group-menu-item.danger{color:var(--danger)}
 .filter-group-menu-item:active{background:var(--bg-secondary)}
 
+/* 2026-07-12 用户需求：下一期等级预测卡（Top3）—— 优化 UI */
+.tj-pre-predict {
+  border: 1px solid var(--line);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 6px 0 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.tj-pre-predict-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tj-pre-predict-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.tj-pre-predict-sub {
+  font-size: 10px;
+  color: var(--sub-text);
+  opacity: 0.7;
+}
+.tj-pre-predict-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  cursor: pointer;
+}
+.tj-pre-predict-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 排名顶部条：金银铜色 */
+.tj-pre-predict-card-top {
+  padding: 5px 0 4px;
+  text-align: center;
+}
+.tj-rank-gold .tj-pre-predict-card-top {
+  background: linear-gradient(135deg, #f9d976 0%, #e2b53e 100%);
+}
+.tj-rank-silver .tj-pre-predict-card-top {
+  background: linear-gradient(135deg, #d5d9e0 0%, #a8b0bd 100%);
+}
+.tj-rank-bronze .tj-pre-predict-card-top {
+  background: linear-gradient(135deg, #e0b894 0%, #c08a5c 100%);
+}
+.tj-pre-predict-rank {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* 卡片主体 */
+.tj-pre-predict-card-body {
+  padding: 8px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  flex: 1;
+}
+.tj-pre-predict-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 评分数字 */
+.tj-pre-predict-score-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.tj-pre-predict-score {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.tj-pre-predict-score-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sub-text);
+}
+
+/* 评分进度条 */
+.tj-pre-predict-bar-track {
+  width: 100%;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tj-pre-predict-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4a90d9, #6db3f2);
+  transition: width 0.3s ease;
+}
+.tj-rank-gold .tj-pre-predict-bar-fill {
+  background: linear-gradient(90deg, #e2b53e, #f9d976);
+}
+.tj-rank-silver .tj-pre-predict-bar-fill {
+  background: linear-gradient(90deg, #a8b0bd, #d5d9e0);
+}
+.tj-rank-bronze .tj-pre-predict-bar-fill {
+  background: linear-gradient(90deg, #c08a5c, #e0b894);
+}
+
+/* 底部元数据 */
+.tj-pre-predict-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--sub-text);
+  font-variant-numeric: tabular-nums;
+}
+.tj-pre-predict-meta-item {
+  display: inline-block;
+}
+.tj-pre-predict-meta-div {
+  opacity: 0.35;
+}
+
+/* 脚注 */
+.tj-pre-predict-footer {
+  font-size: 10px;
+  color: var(--sub-text);
+  margin-top: 10px;
+  text-align: right;
+  opacity: 0.65;
+}
+

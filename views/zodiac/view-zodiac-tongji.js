@@ -69,7 +69,7 @@ const ViewZodiacTongJi = {
       '<div class="card-body">' +
         ViewZodiacTongJi._renderZodiacTable(stats.zodiac, sort) +
         ViewZodiacTongJi._renderNumLevelTable(stats.numLevel) +
-        ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw) +
+        ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw, stats.preDrawPredict, stats.preDrawPredictBacktest) +
       '</div>';
 
     panel.appendChild(card);
@@ -84,7 +84,7 @@ const ViewZodiacTongJi = {
     body.innerHTML =
       ViewZodiacTongJi._renderZodiacTable(stats.zodiac, sort) +
       ViewZodiacTongJi._renderNumLevelTable(stats.numLevel) +
-      ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw);
+      ViewZodiacTongJi._renderPreDrawLevelTable(stats.preDraw, stats.preDrawPredict, stats.preDrawPredictBacktest);
   },
 
   /**
@@ -258,10 +258,12 @@ const ViewZodiacTongJi = {
    *   - 下半：最近 20 期明细（期号 / 特码 / 箭头 / 等级 tag / 漏 N 期）
    *
    * 依赖业务层：stats.preDraw 由 ZodiacTongJi.calcPreDrawLevelHistory 计算
+   *           stats.preDrawPredict 由 ZodiacTongJi.predictNextLevel 计算（2026-07-12）
    */
-  _renderPreDrawLevelTable: function(preStats) {
+  _renderPreDrawLevelTable: function(preStats, predictStats, backtestStats) {
     var html = '';
     html += '<div class="tj-section">';
+
     html += '<div class="tj-section-title">特码开出前等级分布</div>';
 
     if (!preStats || !preStats.levels || !preStats.levels.length) {
@@ -297,6 +299,9 @@ const ViewZodiacTongJi = {
 
     html += '</tbody></table>';
     html += '</div>';
+
+    // 2026-07-12 用户需求：等级分布表后插入预测卡（推荐下一期 Top3 等级）
+    html += ViewZodiacTongJi._renderPreDrawPredict(predictStats, backtestStats);
 
     // 下半：完整明细（默认仅展示前 20 条，其余通过按钮展开/收起）
     var recent = preStats.records || [];
@@ -341,6 +346,79 @@ const ViewZodiacTongJi = {
     html += '</div>';
 
     html += '</div>';
+    return html;
+  },
+
+  /**
+   * 渲染"下一期推荐等级 Top3"预测卡（2026-07-12 用户需求）
+   *   - 由 4 因子加权评分（频率 30% + 活跃度 20% + 近期窗口 30% + 回归 20%）
+   *   - 取分数 Top3，按分数从高到低展示
+   *
+   * 依赖业务层：predictStats 由 ZodiacTongJi.predictNextLevel 计算
+   *
+   * @param {Object} predictStats - 业务层返回的预测结果
+   * @returns {string} 渲染好的 HTML 片段（空字符串表示数据不足）
+   */
+  _renderPreDrawPredict: function(predictStats, backtestStats) {
+    if (!predictStats || !predictStats.top3 || !predictStats.top3.length) {
+      return '';
+    }
+
+    var rankNames = ['gold', 'silver', 'bronze'];
+
+    var html = '';
+    html += '<div class="tj-pre-predict">';
+    html += '<div class="tj-pre-predict-head">';
+    html += '<span class="tj-pre-predict-title">下一期等级预测 · 推荐 3 个</span>';
+    html += '<span class="tj-pre-predict-sub">多因子综合评分模型</span>';
+    html += '</div>';
+    html += '<div class="tj-pre-predict-list" data-action="openLevelBacktest">';
+
+    var top3 = predictStats.top3;
+    for (var i = 0; i < top3.length; i++) {
+      var lv = top3[i];
+      var rank = i + 1;
+      var rankCls = rankNames[i] || '';
+      var levelCls = 'tj-level-' + lv.key;
+      var barPct = Math.min(100, Math.max(0, lv.score));
+
+      html += '<div class="tj-pre-predict-card tj-rank-' + rankCls + '">';
+      html += '<div class="tj-pre-predict-card-top">';
+      html += '<span class="tj-pre-predict-rank">TOP ' + rank + '</span>';
+      html += '</div>';
+      html += '<div class="tj-pre-predict-card-body">';
+      html += '<div class="tj-pre-predict-level">';
+      html += '<span class="tj-level-tag ' + levelCls + '">' + lv.emoji + ' ' + lv.name + '</span>';
+      html += '</div>';
+      html += '<div class="tj-pre-predict-score-wrap">';
+      html += '<span class="tj-pre-predict-score">' + lv.score + '</span>';
+      html += '<span class="tj-pre-predict-score-unit">分</span>';
+      html += '</div>';
+      html += '<div class="tj-pre-predict-bar-track">';
+      html += '<div class="tj-pre-predict-bar-fill" style="width:' + barPct + '%"></div>';
+      html += '</div>';
+      html += '<div class="tj-pre-predict-meta">';
+      html += '<span class="tj-pre-predict-meta-item">占比 ' + lv.freq + '%</span>';
+      html += '<span class="tj-pre-predict-meta-div">|</span>';
+      html += '<span class="tj-pre-predict-meta-item">均漏 ' + lv.avgMiss.toFixed(1) + '</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    html += '</div>';
+    html += '<div class="tj-pre-predict-footer">';
+    html += '基于最近 ' + (predictStats.historyLength || 0) + ' 期 · 共 ' +
+      (predictStats.total || 0) + ' 条记录';
+    // 回测命中率（2026-07-12 与回测追踪结果一致）
+    if (backtestStats && backtestStats.total > 0) {
+      var rateColor = backtestStats.hitRate >= 50 ? '#34c759' : backtestStats.hitRate >= 33 ? '#ff9500' : '#ff3b30';
+      html += ' · <span style="font-weight:700;color:' + rateColor + ';">回测命中 ' +
+        backtestStats.hits + '/' + backtestStats.total + '（' + backtestStats.hitRate + '%）</span>';
+    }
+    html += '</div>';
+    html += '</div>';
+
     return html;
   }
 };
