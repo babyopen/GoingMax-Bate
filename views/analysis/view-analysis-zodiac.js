@@ -48,7 +48,7 @@ const ViewAnalysisZodiac = {
   /**
    * 显示精选推荐号码 5 维算法回测弹窗（图片式排版）
    */
-  showFinalBacktestModal: function(backtestData) {
+  showFinalBacktestModal: function(backtestData, nextPredictText, nextExpect) {
     if (!backtestData || !backtestData.details) return;
 
     // 移除已存在的弹窗，避免重复
@@ -106,6 +106,35 @@ const ViewAnalysisZodiac = {
     html += '</div>';
     html += '<div style="max-height:46vh;overflow-y:auto;padding:2px 0;">';
 
+    // 下期预测行（置于回测明细最前，2026-07-14 调整位置；样式与回测明细行保持一致）
+    if (nextPredictText) {
+      var pureNums = nextPredictText.replace('✅ 精选特码：', '').trim();
+      var predictNumsArr = pureNums.split(' ').filter(Boolean);
+      // 下期号优先用 event.js 传入的 nextExpect（基于 historyData[0] 最新一期），
+      //   兜底用 details[0].expect + 1
+      var _nextExpLabel = '';
+      if (nextExpect) {
+        _nextExpLabel = String(nextExpect);
+      } else if (backtestData.details && backtestData.details[0] && backtestData.details[0].expect) {
+        _nextExpLabel = String(Number(backtestData.details[0].expect) + 1);
+      }
+      // 号码蓝色显示（区别于回测行的红字推荐 + 蓝字命中）
+      var predictNumsHtml = predictNumsArr.map(function(n) {
+        return '<span style="color:#0A84FF;">' + Utils.formatNum(Number(n)) + '</span>';
+      }).join(' ');
+
+      html += '<div style="display:flex;align-items:center;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:13px;line-height:1.6;background:rgba(10,132,255,0.06);">';
+      html += '<span style="font-weight:700;color:#0A84FF;min-width:60px;">🔮' + _nextExpLabel + '期</span>';
+      html += '<span style="color:#1a1a1a;margin:0 2px;">【</span>';
+      html += '<span style="letter-spacing:1px;">' + predictNumsHtml + '</span>';
+      html += '<span style="color:#1a1a1a;margin:0 2px;">】</span>';
+      html += '<span style="color:#1a1a1a;">开:</span>';
+      html += '<span style="color:#1a1a1a;">—</span>';
+      html += '<span style="color:#fff;background:#0A84FF;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">待开奖</span>';
+      html += '<button data-action="copyPredictNums" data-predict-nums="' + pureNums.replace(/"/g, '&quot;') + '" style="background:rgba(10,132,255,0.15);border:none;color:#0A84FF;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:auto;white-space:nowrap;">📋 复制</button>';
+      html += '</div>';
+    }
+
     backtestData.details.forEach(function(item) {
       var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
                                 : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">错</span>';
@@ -135,6 +164,8 @@ const ViewAnalysisZodiac = {
       html += hitTag;
       html += '</div>';
     });
+
+// 下期预测行已移至回测明细最前（2026-07-14 调整位置）
 
     html += '</div>';
     html += '</div>';

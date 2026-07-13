@@ -447,6 +447,13 @@ const EventBinder = {
           LevelPredictModal.show(backtestData);
         }
       }
+      // 精选特码回测弹窗-复制预测号码（2026-07-14 新增）
+      else if(action === 'copyPredictNums') {
+        var nums = target.getAttribute('data-predict-nums') || '';
+        if (nums) {
+          Utils.copyToClipboard(nums, { successMsg: '预测号码已复制' });
+        }
+      }
       // 导航操作
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
@@ -846,18 +853,31 @@ const EventBinder = {
         return;
       }
 
-      if (historyData.length < 14) {
-        Toast.show('数据不足（需至少14期，当前仅' + historyData.length + '期）');
+      if (historyData.length < 25) {
+        Toast.show('数据不足（需至少25期，当前仅' + historyData.length + '期）');
         return;
       }
 
-      const backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 20);
+      const backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 36);
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
         return;
       }
 
-      ViewAnalysis.showFinalBacktestModal(backtestData);
+      // 新增：获取下期预测号码（与精选特码显示一致）+ 下期号（基于最新一期 + 1）
+      var nextPredictText = '';
+      var nextExpect = 0;
+      try {
+        if (historyData[0] && historyData[0].expect) {
+          nextExpect = Number(historyData[0].expect) + 1;
+        }
+        var zodiacData = Business.calcZodiacAnalysis();
+        if (zodiacData) {
+          nextPredictText = Business.renderZodiacFinalNums(zodiacData);
+        }
+      } catch(_e) { /* 预测获取失败不影响回测弹窗展示 */ }
+
+      ViewAnalysis.showFinalBacktestModal(backtestData, nextPredictText, nextExpect);
     } catch (e) {
       console.error('精选六肖回测出错:', e);
       Toast.show('回测计算出错，请重试');

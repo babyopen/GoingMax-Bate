@@ -336,10 +336,10 @@ const ZodiacPredictionBacktest = {
    * @returns {Object|null} 回测汇总
    */
   runFinalZodiacBacktest: function(historyData, testCount) {
-    if (!historyData || historyData.length < 14) return null;
-    // 修复 #6：testCount 上限改为 historyData.length - 14（保证有足够窗口），
-    //    同时上限不超过 30；UI 展示时直接读取 results.length，避免"显示 20 实际跑 11"
-    testCount = Math.min(testCount || 20, 30, historyData.length - 14);
+    if (!historyData || historyData.length < 25) return null;
+    // 修复 #6：testCount 上限改为 historyData.length - 25（保证窗口 24 期 + 1 期跟随统计），
+    //    同时上限不超过 50；UI 展示时直接读取 results.length，避免"显示 36 实际跑 11"
+    testCount = Math.min(testCount || 36, 50, historyData.length - 25);
     if (testCount <= 0) return null;
     var results = [];
 
@@ -347,7 +347,7 @@ const ZodiacPredictionBacktest = {
       var targetItem = historyData[offset];
       if (!targetItem) break;
       // 至少需要：1 期最新 + 12 期窗口 + 1 期跟随统计 = 14 期
-      if (historyData.length < offset + 14) break;
+      if (historyData.length < offset + 25) break;
 
       // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+12] 共 12 期
       var list = historyData.slice(offset + 1, offset + 13);
@@ -377,14 +377,32 @@ const ZodiacPredictionBacktest = {
           .slice(0, 3)
           .map(function(e) { return e[0]; });
       }
-      // 修复 #4：followZodiacs 为空时（如数据稀疏或首期回测），使用全部 12 生肖兜底，
-      //    避免"W_FOLLOW 维度永远 0 分"造成命中率骤降
+      // 2026-07-14 修复 #10：offset=0 时（最新一期回测，即"现在"对下期的预测），
+      //    用全量 followMap 取 top 3，与精选特码 renderZodiacFinalNums 完全一致，
+      //    确保弹窗顶部 🔮 下期预测 与未来该期进入回测后的号码一致
+      else if (latestZodiac && offset === 0) {
+        try {
+          var _fullData = Business && Business.calcZodiacAnalysis
+            ? Business.calcZodiacAnalysis()
+            : null;
+          var _fullFollowMap = _fullData && _fullData.followMap;
+          var _fullFollow = _fullFollowMap && _fullFollowMap[latestZodiac];
+          if (_fullFollow && typeof _fullFollow === 'object') {
+            followZodiacs = Object.entries(_fullFollow)
+              .sort(function(a, b) { return b[1] - a[1]; })
+              .slice(0, 3)
+              .map(function(e) { return e[0]; });
+          }
+        } catch (_e) { /* 计算失败走下面兜底 */ }
+      }
+      // 修复 #4：followZodiacs 为空时（如数据稀疏或首期回测 followMap 也为空），
+      //    使用全部 12 生肖兜底，避免"W_FOLLOW 维度永远 0 分"造成命中率骤降
       if (!followZodiacs.length) {
         followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
       }
 
-      // 3. 调用 5 维核心算法得到 top 36 推荐号码
-      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs);
+      // 3. 调用 5 维核心算法得到 top 36 推荐号码（窗口 24 期，2026-07-14 调整）
+      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
       var recommendedNums = recommend.numbers || [];
       // 获取候选号码的分数用于排序展示
       var candidateNums = recommend.candidateNums || [];
@@ -421,10 +439,10 @@ const ZodiacPredictionBacktest = {
 
     var hitCount = results.filter(function(r) { return r.isHit; }).length;
     var hitRate = Math.round((hitCount / results.length) * 100);
-    var recentResults = results.slice(0, 12);
+    var recentResults = results.slice(0, 36);
     var recentHits = recentResults.filter(function(r) { return r.isHit; }).length;
     var recentHitRate = recentResults.length > 0 ? Math.round((recentHits / recentResults.length) * 100) : 0;
-    // 修复 #7：currentStreak 实际为"最近 12 期（含全部回测期）的连续命中次数"，
+    // 修复 #7：currentStreak 实际为"最近 N 期（含全部回测期）的连续命中次数"，
     //    而不是"某个特定号码的连续出现次数"。results[0] 为最新一期，从最新一期开始累计命中
     var currentStreak = 0;
     for (var i = 0; i < recentResults.length; i++) {
@@ -499,6 +517,250 @@ const ZodiacPredictionBacktest = {
       allRecommended: allRecommended,
       unrecommended: unrecommended
     };
+  },
+
+  /**
+   * 维度命中率诊断工具（2026-07-14 用户需求：为动态权重提供数据基础）
+   * 对每个维度独立判定"若该维度的预测命中，则命中"，统计：
+   *   1) 各维度单独命中率
+   *   2) 多维度交集命中率（AND）
+   *   3) 联合推荐集合的命中率（任一维度命中就算）
+   * 输出结果到 console，方便人工调整权重。
+   *
+   * 用法（浏览器 console）：
+   *   ZodiacPrediction.analyzeDimensionHitRates(StateManager._state.analysis.historyData, 36)
+   *
+   * @param {Array} historyData - 历史数据
+   * @param {number} testCount - 回测期数（默认 36）
+   * @returns {Object} 各维度命中率统计
+   */
+  analyzeDimensionHitRates: function(historyData, testCount) {
+    if (!historyData || historyData.length < 14) return null;
+    testCount = Math.min(testCount || 36, historyData.length - 14);
+    if (testCount <= 0) return null;
+
+    // 7 个维度的命中计数
+    var dimStats = {
+      follow:   { hit: 0, total: 0, note: '跟随生肖（W=3）' },
+      head:     { hit: 0, total: 0, note: '头数（W=2）' },
+      tail:     { hit: 0, total: 0, note: '尾数（W=2）' },
+      color:    { hit: 0, total: 0, note: '波色（W=1.5）' },
+      wuxing:   { hit: 0, total: 0, note: '五行（W=1.5）' },
+      neighbor: { hit: 0, total: 0, note: '邻号关联（候选新维度）' },
+      inertia:  { hit: 0, total: 0, note: '特码惯性（候选新维度）' },
+      miss:     { hit: 0, total: 0, note: '冷热加权（候选新维度）' }
+    };
+
+    // 各维度在本期的"预测号码集合"
+    var dimSets = { follow: [], head: [], tail: [], color: [], wuxing: [], neighbor: [], inertia: [], miss: [] };
+
+    var detailLog = [];  // 逐期明细（用于 console 输出）
+
+    for (var offset = 0; offset < testCount; offset++) {
+      var targetItem = historyData[offset];
+      if (!targetItem) break;
+      if (historyData.length < offset + 14) break;
+
+      var list = historyData.slice(offset + 1, offset + 13);
+
+      // 跟随生肖（复用回测逻辑：offset>0 用累计，offset=0 用全量）
+      var latestItem = list[0];
+      var latestZodiac = '';
+      if (latestItem) {
+        var zodArr = Utils.parseZodiacArr(latestItem);
+        latestZodiac = zodArr[6] || '';
+      }
+      var followZodiacs = [];
+      if (latestZodiac && offset > 0) {
+        var fc = {};
+        for (var fi = 0; fi < offset; fi++) {
+          var ps = Utils.SpecialCalculator.getSpecial(historyData[fi]);
+          var cs = Utils.SpecialCalculator.getSpecial(historyData[fi + 1]);
+          if (ps.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(cs.zod)) {
+            fc[cs.zod] = (fc[cs.zod] || 0) + 1;
+          }
+        }
+        followZodiacs = Object.entries(fc).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
+      } else if (latestZodiac && offset === 0) {
+        try {
+          var _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
+          var _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
+          if (_ff) followZodiacs = Object.entries(_ff).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
+        } catch(_e){}
+      }
+      if (!followZodiacs.length) followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
+
+      // 头/尾/波色/五行 top（复用 _calcFinalZodiacRecommend 的统计逻辑）
+      var DIAG_WINDOW = 24;  // 2026-07-14 同步窗口为 24 期，与推荐算法保持一致
+      var headCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+      var tailCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+      var colorCount = { '红': 0, '蓝': 0, '绿': 0 };
+      var wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+      var missMap = {};  // 号码→遗漏期数
+      var lastTe = null;  // 上期特码
+      list.slice(0, Math.min(DIAG_WINDOW, list.length)).forEach(function(item){
+        var s = BusinessCommonSpecials.getOne(item);
+        if (!s || !s.te || s.te < 1) return;
+        headCount[s.head] = (headCount[s.head] || 0) + 1;
+        tailCount[s.tail] = (tailCount[s.tail] || 0) + 1;
+        if (['红','蓝','绿'].includes(s.colorName)) colorCount[s.colorName] = (colorCount[s.colorName] || 0) + 1;
+        if (['金','木','水','火','土'].includes(s.wuxing)) wuxingCount[s.wuxing] = (wuxingCount[s.wuxing] || 0) + 1;
+        // 冷热统计：最近 N 期该号码出现 → miss=0；否则 miss++（简化：先累计出现，结尾统计）
+        missMap[s.te] = 0;
+      });
+      if (latestItem) {
+        var _lastSpec = Utils.SpecialCalculator.getSpecial(latestItem);
+        if (_lastSpec && _lastSpec.te) lastTe = _lastSpec.te;
+      }
+
+      var topHeads = Object.entries(headCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return Number(e[0]);});
+      var topTails = Object.entries(tailCount).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return Number(e[0]);});
+      var topColors = Object.entries(colorCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
+      var topWuxing = Object.entries(wuxingCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
+
+      // 12 期窗口中每个号码的遗漏（未出现期数）
+      for (var n = 1; n <= 49; n++) {
+        missMap[n] = missMap[n] || 0;
+        for (var k = 0; k < list.length; k++) {
+          if (list[k].openCode && list[k].openCode.indexOf(',' + n + ',') >= 0) {
+            missMap[n] = 0;
+          } else if (list[k].openCode && (list[k].openCode.split(',')[0] === String(n))) {
+            missMap[n] = 0;
+          }
+        }
+      }
+
+      // 实际特码
+      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      var actualNum = actualSpecial.te;
+      var actualHead = actualSpecial.head;
+      var actualTail = actualSpecial.tail;
+      var actualColor = actualSpecial.colorName;
+      var actualWx = actualSpecial.wuxing;
+      var actualZod = actualSpecial.zod;
+
+      // ---- 计算各维度的"预测号码集合" ----
+      // 1) FOLLOW：生肖 = followZodiacs 的号码（用 12 期窗口投票的 numZodiacMap）
+      var numZodiacMap = {};
+      list.forEach(function(item){
+        var ca = (item.openCode || '').split(',');
+        var za = Utils.parseZodiacArr(item);
+        ca.forEach(function(numStr, idx){
+          var nv = Number(numStr);
+          if (nv && za[idx]) {
+            numZodiacMap[nv] = numZodiacMap[nv] || {};
+            numZodiacMap[nv][za[idx]] = (numZodiacMap[nv][za[idx]] || 0) + 1;
+          }
+        });
+      });
+      var numZodiacFinal = {};
+      Object.keys(numZodiacMap).forEach(function(numStr){
+        var votes = numZodiacMap[numStr];
+        numZodiacFinal[Number(numStr)] = Object.entries(votes).sort(function(a,b){return b[1]-a[1]})[0][0];
+      });
+      dimSets.follow = Object.keys(numZodiacFinal).filter(function(n){
+        return followZodiacs.indexOf(numZodiacFinal[n]) >= 0;
+      }).map(Number);
+
+      // 2) HEAD
+      dimSets.head = [];
+      for (var h = 1; h <= 49; h++) if (topHeads.indexOf(Math.floor(h/10)) >= 0) dimSets.head.push(h);
+
+      // 3) TAIL
+      dimSets.tail = [];
+      for (var t = 1; t <= 49; t++) if (topTails.indexOf(t % 10) >= 0) dimSets.tail.push(t);
+
+      // 4) COLOR
+      dimSets.color = [];
+      for (var c1 = 1; c1 <= 49; c1++) if (topColors.indexOf(Utils.getColorName(c1)) >= 0) dimSets.color.push(c1);
+
+      // 5) WUXING
+      dimSets.wuxing = [];
+      for (var w1 = 1; w1 <= 49; w1++) if (topWuxing.indexOf(Utils.getWuxing(w1)) >= 0) dimSets.wuxing.push(w1);
+
+      // 6) NEIGHBOR：上期 7 个号码的邻号（±1），限制 1-49
+      dimSets.neighbor = [];
+      if (latestItem) {
+        var prevArr = (latestItem.openCode || '').split(',');
+        prevArr.forEach(function(numStr){
+          var nv = Number(numStr);
+          if (nv >= 1 && nv <= 49) {
+            if (nv - 1 >= 1) dimSets.neighbor.push(nv - 1);
+            if (nv + 1 <= 49) dimSets.neighbor.push(nv + 1);
+          }
+        });
+        dimSets.neighbor = Array.from(new Set(dimSets.neighbor));
+      }
+
+      // 7) INERTIA：上期特码本身
+      dimSets.inertia = lastTe ? [lastTe] : [];
+
+      // 8) MISS：遗漏 ≥ 8 期的号码（12 期窗口中从没见过）
+      dimSets.miss = [];
+      for (var m = 1; m <= 49; m++) {
+        var missVal = 0;
+        for (var mk = 0; mk < list.length; mk++) {
+          var codes = (list[mk].openCode || '').split(',').map(Number);
+          if (codes.indexOf(m) >= 0) { missVal = 0; break; }
+          missVal++;
+        }
+        if (missVal >= 8) dimSets.miss.push(m);
+      }
+
+      // ---- 统计各维度命中 ----
+      var keys = Object.keys(dimStats);
+      for (var dk = 0; dk < keys.length; dk++) {
+        var k = keys[dk];
+        dimStats[k].total++;
+        if (dimSets[k].indexOf(actualNum) >= 0) dimStats[k].hit++;
+      }
+
+      detailLog.push({
+        expect: targetItem.expect,
+        actualNum: actualNum,
+        sizes: {
+          follow: dimSets.follow.length,
+          head: dimSets.head.length,
+          tail: dimSets.tail.length,
+          color: dimSets.color.length,
+          wuxing: dimSets.wuxing.length,
+          neighbor: dimSets.neighbor.length,
+          inertia: dimSets.inertia.length,
+          miss: dimSets.miss.length
+        }
+      });
+    }
+
+    // 输出 console 报告
+    var report = [];
+    report.push('\n=== 📊 维度命中率诊断报告（基于最近 ' + testCount + ' 期回测）===');
+    var totalK = Object.keys(dimStats);
+    for (var i2 = 0; i2 < totalK.length; i2++) {
+      var k = totalK[i2];
+      var s = dimStats[k];
+      var rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : 0;
+      var avgSize = 0;
+      for (var d = 0; d < detailLog.length; d++) avgSize += detailLog[d].sizes[k] || 0;
+      avgSize = detailLog.length > 0 ? (avgSize / detailLog.length).toFixed(1) : 0;
+      report.push('  ' + s.note.padEnd(28) + ' 命中=' + String(s.hit).padStart(3) + '/' + String(s.total).padStart(3) + ' = ' + rate + '%   平均集合大小=' + avgSize);
+    }
+    // 理论随机基线
+    report.push('\n  --- 理论基线（纯随机命中 1 个号码）= ' + (100/49).toFixed(1) + '% ---');
+    // 各维度相对增益
+    report.push('\n  --- 相对增益（命中率 / 随机基线）---');
+    var randomBase = 100/49;
+    for (var i3 = 0; i3 < totalK.length; i3++) {
+      var k3 = totalK[i3];
+      var s3 = dimStats[k3];
+      var rate3 = s3.total > 0 ? (s3.hit / s3.total * 100) : 0;
+      var gain = (rate3 / randomBase).toFixed(2);
+      report.push('  ' + s3.note.padEnd(28) + ' 增益=' + gain + 'x');
+    }
+    console.log(report.join('\n'));
+    // 2026-07-14：同时把结果放到页面标题里，方便复制
+    try { document.title = '[诊断] ' + report.join(' | ').slice(0, 200); } catch(_e){}
+
+    return { stats: dimStats, details: detailLog };
   }
 };
 

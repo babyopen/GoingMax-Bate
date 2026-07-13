@@ -1367,14 +1367,16 @@ const Business = {
    * @param {Array} followZodiacs - 跟随生肖（外部传入，回测可动态计算）
    * @returns {Object} { numbers: number[], candidateNums: [{num, score}] }
    */
-  _calcFinalZodiacRecommend: (list, targetCount, followZodiacs) => {
+  _calcFinalZodiacRecommend: (list, targetCount, followZodiacs, windowSize) => {
     if(!list || list.length === 0) return { numbers: [], candidateNums: [] };
 
     // ========== 1. 号码→生肖 映射（修复 #2：原版只用 list[0] 一期，缺失号码全靠固定公式
     //    (num-1)%12 兜底，导致 42/49 个号码生肖值相同→评分聚集→退化为按号码大小排序。
-    //    现改为：在 12 期窗口内对每个号码投票，取出现最频繁的生肖作为该号码生肖映射）==========
+    //    现改为：在 RECENT_N 期窗口内对每个号码投票，取出现最频繁的生肖作为该号码生肖映射）==========
+    const RECENT_N = windowSize || 12;
+    const recentListForMap = list.slice(0, Math.min(RECENT_N, list.length));
     const numZodiacVotes = {};   // { num: { zodiac: count } }
-    list.forEach(item => {
+    recentListForMap.forEach(item => {
       const codeArr = (item.openCode || '').split(',');
       const zodArr = Utils.parseZodiacArr(item);
       codeArr.forEach((num, idx) => {
@@ -1404,8 +1406,8 @@ const Business = {
       numWuxingMap[n] = Utils.getWuxing(n);
     }
 
-    // ========== 3. 近期12期 头/尾/波色/五行 频次统计 ==========
-    const RECENT_N = 12;
+    // ========== 3. 近期N期 头/尾/波色/五行 频次统计 ==========
+    // 2026-07-14 优化：窗口期数可调，默认 12 期。改为 24 期可观察更长趋势。
     const recentList = list.slice(0, Math.min(RECENT_N, list.length));
     const headCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
     const tailCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
@@ -1516,7 +1518,7 @@ const Business = {
     }
 
     // 2. 调用核心算法（固定36个，与回测一致）
-    const result = Business._calcFinalZodiacRecommend(data.list, 36, topFollowZodiacs);
+    const result = Business._calcFinalZodiacRecommend(data.list, 36, topFollowZodiacs, 24);
 
     // 3. 按得分排序展示（得分高的在前）
     const scoredNums = (result.numbers || []).map(num => {
