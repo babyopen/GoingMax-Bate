@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>标签长按诊断</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 16px; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .tag { padding: 8px 14px; border: 2px solid transparent; border-radius: 10px; background: #eee; cursor: pointer; user-select: none; min-height: 36px; }
+  .tag.active { background: #007AFF; color: #fff; }
+  .tag.locked { background: rgba(255,59,48,0.12); color: #ff3b30; }
+  #log { margin-top: 20px; padding: 12px; background: #f5f5f5; border-radius: 8px; font-size: 12px; line-height: 1.6; max-height: 320px; overflow: auto; white-space: pre-wrap; }
+  .ok { color: green; } .warn { color: orange; } .err { color: red; }
+</style>
+</head>
+<body>
+<h3>标签长按诊断（模拟 event.js 核心逻辑）</h3>
+<div class="tags" id="zodiacTags">
+  <div class="tag" data-value="马" data-group="zodiac" role="checkbox" tabindex="0">马</div>
+  <div class="tag active" data-value="虎" data-group="zodiac" role="checkbox" tabindex="0">虎</div>
+  <div class="tag" data-value="龙" data-group="zodiac" role="checkbox" tabindex="0">龙</div>
+</div>
+<div id="log"></div>
+
+<script>
+// 模拟 state
+const StateManager = {
+  _state: { selected: { zodiac: ['虎'] }, locked: { zodiac: [] } },
+  locked: function() { return JSON.parse(JSON.stringify(this._state.locked)); },
+  selected: function() { return JSON.parse(JSON.stringify(this._state.selected)); },
+  toggleTagLock: function(group, value) {
+    const newLocked = { ...this._state.locked };
+    const currentLocked = newLocked[group] || [];
+    const idx = currentLocked.indexOf(value);
+    if (idx > -1) {
+      currentLocked.splice(idx, 1);
+      if (currentLocked.length === 0) delete newLocked[group];
+      else newLocked[group] = currentLocked;
+    } else {
+      newLocked[group] = [...currentLocked, value];
+    }
+    this._state.locked = newLocked;
+    log('  → toggleTagLock(' + group + ', ' + value + ') new locked: ' + JSON.stringify(newLocked), 'ok');
+  },
+  renderAll: function() {
+    // 模拟 renderTagStatus：增量更新 class
+    const locked = this._state.locked.zodiac || [];
+    document.querySelectorAll('.tag[data-group="zodiac"]').forEach(t => {
+      const v = t.dataset.value;
+      t.classList.toggle('locked', locked.includes(v));
+    });
+  }
+};
+
+// 简化版长按实现（拷贝 event.js 核心）
+const EB = {
+  LONG_PRESS_DURATION: 600,
+  LONG_PRESS_MOVE_TOLERANCE: 12,
+  _timer: null,
+  _resolved: null,
+  _sx: 0, _sy: 0,
+  _triggered: false,
+  _clickGuardUntil: 0,
+
+  handleTouchStart: function(e) {
+    const touch = e.touches && e.touches[0];
+    if (!touch) { log('touchstart 无 touch', 'warn'); return; }
+    log('touchstart target=' + e.target.tagName + '.' + e.target.className + ' value=' + e.target.dataset.value);
+
+    const tag = e.target.closest('.tag[data-group]');
+    if (!tag) { log('  非 .tag，跳过', 'warn'); return; }
+
+    this._resolved = { kind: 'tag', el: tag, group: tag.dataset.group, value: tag.dataset.value };
+    this._sx = touch.clientX;
+    this._sy = touch.clientY;
+    this._triggered = false;
+    this._clear();
+
+    this._timer = setTimeout(() => {
+      log('  ⏰ 600ms 到期：触发 toggleTagLock', 'ok');
+      StateManager.toggleTagLock(this._resolved.group, this._resolved.value);
+      this._triggered = true;
+      this._clickGuardUntil = Date.now() + 500;
+      StateManager.renderAll();
+      log('  ✓ 渲染完成；当前 locked=' + JSON.stringify(StateManager._state.locked), 'ok');
+    }, this.LONG_PRESS_DURATION);
+  },
+
+  handleTouchMove: function(e) {
+    if (!this._timer) return;
+    const touch = e.touches && e.touches[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - this._sx);
+    const dy = Math.abs(touch.clientY - this._sy);
+    if (dx > this.LONG_PRESS_MOVE_TOLERANCE || dy > this.LONG_PRESS_MOVE_TOLERANCE) {
+      log('  touchmove 超过容差(' + dx + ',' + dy + ') 取消', 'warn');
+      this._clear();
+    }
+  },
+
+  handleTouchEnd: function() { log('touchend 清理'); this._clear(); },
+  _clear: function() { if (this._timer) { clearTimeout(this._timer); this._timer = null; } }
+};
+
+document.addEventListener('touchstart', e => EB.handleTouchStart(e), { passive: true });
+document.addEventListener('touchmove', e => EB.handleTouchMove(e), { passive: true });
+document.addEventListener('touchend', e => EB.handleTouchEnd(e), { passive: true });
+
+function log(msg, cls) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  if (cls) el.className = cls;
+  document.getElementById('log').appendChild(el);
+}
+
+// 环境检测
+log('=== 环境检测 ===');
+log('ontouchstart in document: ' + ('ontouchstart' in document));
+log('maxTouchPoints: ' + navigator.maxTouchPoints);
+log('TouchEvent: ' + (typeof TouchEvent));
+log('platform: ' + navigator.platform);
+log('userAgent: ' + navigator.userAgent.substring(0, 120));
+log('========================');
+log('如 ontouchstart=false 或 maxTouchPoints=0，则浏览器不会触发 touchstart！', 'warn');
+</script>
+</body>
+</html>

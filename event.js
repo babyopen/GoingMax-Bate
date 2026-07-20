@@ -1,21 +1,24 @@
 const EventBinder = {
-  /**
-   * 自定义双击检测状态（解决 .tag 双击易误触问题）
-   * 浏览器原生 dblclick 默认 500ms 内两次 click 即触发，过于宽松
-   * 改为：同元素 + 200ms 内 + 8px 内 才算双击
-   */
-  _lastTagClick: { target: null, time: 0, x: 0, y: 0 },
-  // 自定义双击触发后 500ms 保护窗，期间内原生 dblclick 不处理 .tag（防重复触发）
-  _tagDblClickGuardUntil: 0,
+  // ============================================================
+  // 2026-07-21 变更：标签由"双击锁定"改为"长按锁定"
+  // 删除自定义双击检测状态（_lastTagClick / _tagDblClickGuardUntil）
+  // 改用统一的长按定时器实现
+  // ============================================================
 
   // ============================================================
   // 2026-07-04 新增：长按检测状态（个人中心页长按 div 弹出书签菜单）
+  // 2026-07-21 扩展：长按 .tag 触发锁定/解锁
   // ============================================================
   _longPressTimer: null,
   _longPressResolved: null, // { kind, el, id?, title? }
   _longPressStartX: 0,
   _longPressStartY: 0,
   _longPressTriggered: false,
+  // 2026-07-21 优化：触屏笔记本同时发 touchstart + mousedown 时避免双重启动 timer
+  // 计数 > 0 表示已有 touch 在握持中，mousedown 应忽略
+  _touchActiveCount: 0,
+  // 长按命中后 500ms 内不再触发 click（避免长按抬起触发单击选中）
+  _longPressClickGuardUntil: 0,
   // 长按阈值（毫秒）
   LONG_PRESS_DURATION: 600,
   // 滑动容差（超过则取消长按，避免误触发）
@@ -27,7 +30,8 @@ const EventBinder = {
   init: () => {
     // 全局点击事件委托
     document.addEventListener('click', EventBinder.handleGlobalClick);
-    // 全局双击事件委托（标签锁定/解锁）
+    // 2026-07-21 变更：标签由"双击锁定"改为"长按锁定"，不再监听 dblclick
+    // 保留 dblclick 委托用于标记按钮清除标记（handleDoubleClick 中处理）
     document.addEventListener('dblclick', EventBinder.handleDoubleClick);
     // 键盘回车/空格事件（无障碍支持）
     document.addEventListener('keydown', EventBinder.handleKeyDown);
@@ -45,6 +49,13 @@ const EventBinder = {
     document.addEventListener('touchmove', EventBinder.handleTouchMove, { passive: true });
     document.addEventListener('touchend', EventBinder.handleTouchEnd, { passive: true });
     document.addEventListener('touchcancel', EventBinder.handleTouchEnd, { passive: true });
+    // 2026-07-21 新增：桌面浏览器 mousedown/mouseup 长按路径
+    // 原因：macOS 桌面浏览器不触发 touchstart，调试/桌面用户也必须能用"按住"锁定
+    // 注：未使用 mouseover/mouseenter/mouseleave/hover（项目规范禁用）
+    document.addEventListener('mousedown', EventBinder.handleMouseDown);
+    document.addEventListener('mouseup', EventBinder.handleMouseUp);
+    // 兜底：mousemove 超容差即视为离开（与 touchmove 一致）
+    document.addEventListener('mousemove', EventBinder.handleMouseMove);
     // 页面卸载清理
     window.addEventListener('beforeunload', Business.handlePageUnload);
     // 全局错误捕获
@@ -152,7 +163,8 @@ const EventBinder = {
   },
 
   /**
-   * 全局双击处理（标签锁定/解锁、标记按钮清除标记）
+   * 全局双击处理（标记按钮清除标记）
+   * 2026-07-21 变更：标签双击锁定/解锁改为长按（见 handleTouchStart），此处不再处理 .tag
    * @param {MouseEvent} e - 双击事件
    */
   handleDoubleClick: (e) => {
@@ -168,15 +180,7 @@ const EventBinder = {
       }
       return;
     }
-    // 标签双击：锁定/解锁
-    const tag = target.closest('.tag[data-group]');
-    if (tag) {
-      // 自定义双击保护窗：click 序列检测已命中后，期间内原生 dblclick 直接跳过（防重复触发）
-      if (Date.now() < EventBinder._tagDblClickGuardUntil) return;
-      const group = tag.dataset.group;
-      const value = Utils.formatTagValue(tag.dataset.value, group);
-      StateManager.toggleTagLock(group, value);
-    }
+    // 标签双击锁定/解锁已迁移到长按（见 handleTouchStart），此处不处理
   },
 
   /**
@@ -187,28 +191,19 @@ const EventBinder = {
     const target = e.target;
 
     // 1. 筛选标签点击
+    // 2026-07-21 变更：标签锁定/解锁由双击改为长按，此处只处理单击选中
     const tag = target.closest('.tag[data-group]');
     if(tag){
-      const group = tag.dataset.group;
-      const value = Utils.formatTagValue(tag.dataset.value, group);
-      // 自定义双击检测：同元素 + 200ms 内 + 8px 内（解决原生 dblclick 易误触问题）
-      const now = Date.now();
-      const lc = EventBinder._lastTagClick;
-      if (
-        lc.target === tag &&
-        now - lc.time < 200 &&
-        Math.abs(e.clientX - lc.x) < 8 &&
-        Math.abs(e.clientY - lc.y) < 8
-      ) {
-        // 自定义双击命中：执行锁定/解锁，并设置 500ms 保护窗
-        // 期间内原生 dblclick 会被 handleDoubleClick 跳过，避免重复触发
-        StateManager.toggleTagLock(group, value);
-        EventBinder._lastTagClick = { target: null, time: 0, x: 0, y: 0 };
-        EventBinder._tagDblClickGuardUntil = now + 500;
+      // 长按保护窗：长按命中后 500ms 内不再响应 click，避免长按抬起触发选中
+      if (Date.now() < EventBinder._longPressClickGuardUntil) {
         return;
       }
-      // 首次点击 / 不构成双击：记录状态并执行选中
-      EventBinder._lastTagClick = { target: tag, time: now, x: e.clientX, y: e.clientY };
+      const group = tag.dataset.group;
+      const value = Utils.formatTagValue(tag.dataset.value, group);
+      // 触觉反馈（如果可用）
+      if (navigator.vibrate) {
+        try { navigator.vibrate(10); } catch (_) {}
+      }
       StateManager.updateSelected(group, value);
       return;
     }
@@ -966,67 +961,146 @@ const EventBinder = {
    * 触摸开始：判定是否触发长按检测
    * 架构修复：所有 DOM 查询委托给 ViewBookmark（event.js 禁止获取 DOM 元素）
    * 2026-07-04 更新：resolveLongPressTarget 返回 { kind, el, id?, title? }
+   * 2026-07-21 扩展：长按 .tag 触发锁定/解锁（替代原双击）
+   * 2026-07-21 重构：抽出 _startLongPress 统一入口，桌面 mousedown 复用同一逻辑
    */
   handleTouchStart: function(e) {
-    if (typeof ViewBookmark === 'undefined') return;
-
-    // 委托视图层判定目标元素（书签标签或 .card-body）
-    const resolved = ViewBookmark.resolveLongPressTarget(e.target);
-    if (!resolved || !resolved.el) return;
-
     const touch = e.touches && e.touches[0];
     if (!touch) return;
-
-    EventBinder._clearLongPress();
-    EventBinder._longPressResolved = resolved;
-    EventBinder._longPressStartX = touch.clientX;
-    EventBinder._longPressStartY = touch.clientY;
-    EventBinder._longPressTriggered = false;
-
-    EventBinder._longPressTimer = setTimeout(function() {
-      // 二次校验：目标元素必须仍在 DOM 中（委托视图层判断）
-      if (!EventBinder._longPressResolved) return;
-      if (!ViewBookmark.isElementAttached(EventBinder._longPressResolved.el)) return;
-
-      EventBinder._longPressTriggered = true;
-      // 委托视图层触发菜单（按 kind 分发：'add' 显示输入网址；'bookmark' 显示删除）
-      ViewBookmark.triggerLongPressMenu(EventBinder._longPressResolved);
-
-      // 触觉反馈（如果可用）
-      if (navigator.vibrate) {
-        try { navigator.vibrate(15); } catch (_) {}
-      }
-    }, EventBinder.LONG_PRESS_DURATION);
+    EventBinder._touchActiveCount++;
+    EventBinder._startLongPress(e.target, touch.clientX, touch.clientY);
   },
 
   /**
    * 触摸移动：超过容差取消长按（避免误触）
    */
   handleTouchMove: function(e) {
+    EventBinder._maybeCancelLongPress(e.touches && e.touches[0]);
+  },
+
+  /**
+   * 触摸结束/取消：清理长按定时器
+   * 2026-07-21 优化：减计数（用于触屏笔记本双发场景）
+   */
+  handleTouchEnd: function() {
+    if (EventBinder._touchActiveCount > 0) EventBinder._touchActiveCount--;
+    EventBinder._clearLongPress();
+  },
+
+  /**
+   * 鼠标按下：桌面浏览器长按路径（2026-07-21 新增）
+   * 2026-07-21 优化：触屏笔记本同时发 touchstart + mousedown 时跳过 mousedown，避免双 timer 冲突
+   */
+  handleMouseDown: function(e) {
+    if (e.button !== undefined && e.button !== 0) return; // 仅左键
+    if (EventBinder._touchActiveCount > 0) return; // 触屏已在握持中，忽略鼠标事件
+    EventBinder._startLongPress(e.target, e.clientX, e.clientY);
+  },
+
+  /**
+   * 鼠标松开：清理长按定时器（长按命中由 _startLongPress 内的 timer 自行处理）
+   */
+  handleMouseUp: function() {
+    EventBinder._clearLongPress();
+  },
+
+  /**
+   * 鼠标移动（仅用于检测拖出原位置）
+   * 2026-07-21 新增：避免按在 .tag 上拖到 .tag 外松开后还被判定为长按
+   * 注：项目禁用 mouseover/mouseenter/mouseleave/hover，但 mousemove 不在禁用名单
+   */
+  handleMouseMove: function(e) {
+    EventBinder._maybeCancelLongPress({ clientX: e.clientX, clientY: e.clientY });
+  },
+
+  /**
+   * 统一长按启动入口（触屏/桌面共用）
+   * 2026-07-21 新增
+   * @param {Element} target - 触发元素
+   * @param {number} clientX - 起始 clientX
+   * @param {number} clientY - 起始 clientY
+   */
+  _startLongPress: function(target, clientX, clientY) {
+    // 1) 优先判定书签/个人中心长按菜单（保持原有行为）
+    let resolved = null;
+    if (typeof ViewBookmark !== 'undefined') {
+      resolved = ViewBookmark.resolveLongPressTarget(target);
+    }
+
+    // 2) 其次判定筛选标签长按锁定（2026-07-21 新增）
+    //    与 handleGlobalClick 中 .tag 单击选中互不冲突：
+    //    - 长按命中后通过 _longPressClickGuardUntil 保护窗跳过后续 click
+    //    - 短按（未到 600ms 抬起）走原单击选中逻辑
+    const tag = target && typeof target.closest === 'function'
+      ? target.closest('.tag[data-group]')
+      : null;
+    if (tag && (!resolved || !resolved.el)) {
+      // 不在按钮/输入框内才响应
+      if (!target.closest('button, input, textarea, iframe, [data-no-longpress]')) {
+        const group = tag.dataset.group;
+        const value = Utils.formatTagValue(tag.dataset.value, group);
+        resolved = { kind: 'tag', el: tag, group: group, value: value };
+      }
+    }
+
+    if (!resolved || !resolved.el) return;
+
+    EventBinder._clearLongPress();
+    EventBinder._longPressResolved = resolved;
+    EventBinder._longPressStartX = clientX;
+    EventBinder._longPressStartY = clientY;
+    EventBinder._longPressTriggered = false;
+
+    EventBinder._longPressTimer = setTimeout(function() {
+      // 二次校验：目标元素必须仍在 DOM 中
+      if (!EventBinder._longPressResolved) return;
+      if (!EventBinder._longPressResolved.el || !document.body.contains(EventBinder._longPressResolved.el)) return;
+
+      EventBinder._longPressTriggered = true;
+
+      // 按 kind 分发：书签/面板 → ViewBookmark；标签 → toggleTagLock
+      const r = EventBinder._longPressResolved;
+      // 触觉反馈（统一处理）
+      if (navigator.vibrate) {
+        try {
+          navigator.vibrate(r.kind === 'tag' ? [10, 30, 10] : 15);
+        } catch (_) {}
+      }
+      if (r.kind === 'tag') {
+        StateManager.toggleTagLock(r.group, r.value);
+      } else if (typeof ViewBookmark !== 'undefined') {
+        ViewBookmark.triggerLongPressMenu(r);
+      }
+      // 设置 500ms 保护窗：期间内 click 处理跳过选中，避免长按抬起后触发选中
+      EventBinder._longPressClickGuardUntil = Date.now() + 500;
+    }, EventBinder.LONG_PRESS_DURATION);
+  },
+
+  /**
+   * 移动检测（touch/mouse 共用）：超过容差取消长按
+   */
+  _maybeCancelLongPress: function(point) {
     if (!EventBinder._longPressTimer) return;
-    const touch = e.touches && e.touches[0];
-    if (!touch) return;
-    const dx = Math.abs(touch.clientX - EventBinder._longPressStartX);
-    const dy = Math.abs(touch.clientY - EventBinder._longPressStartY);
+    if (!point) return;
+    const dx = Math.abs(point.clientX - EventBinder._longPressStartX);
+    const dy = Math.abs(point.clientY - EventBinder._longPressStartY);
     if (dx > EventBinder.LONG_PRESS_MOVE_TOLERANCE || dy > EventBinder.LONG_PRESS_MOVE_TOLERANCE) {
       EventBinder._clearLongPress();
     }
   },
 
   /**
-   * 触摸结束/取消：清理长按定时器
-   */
-  handleTouchEnd: function() {
-    EventBinder._clearLongPress();
-  },
-
-  /**
    * 清理长按定时器与状态
+   * 2026-07-21 优化：清理 _longPressResolved 等引用，避免悬空旧节点引用
    */
   _clearLongPress: function() {
     if (EventBinder._longPressTimer) {
       clearTimeout(EventBinder._longPressTimer);
       EventBinder._longPressTimer = null;
     }
+    EventBinder._longPressResolved = null;
+    EventBinder._longPressStartX = 0;
+    EventBinder._longPressStartY = 0;
+    EventBinder._longPressTriggered = false;
   }
 };
