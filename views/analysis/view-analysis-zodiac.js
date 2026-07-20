@@ -99,14 +99,7 @@ const ViewAnalysisZodiac = {
       html += '</div>';
     }
 
-    // 图片式回测记录
-    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:12px;">';
-    html += '<div style="background:linear-gradient(180deg, #f7f7f7, #ececec);padding:8px 10px;font-size:12px;font-weight:700;color:#333;border-bottom:1px solid #e0e0e0;">';
-    html += '📋 近期 ' + backtestData.recentTests + ' 期回测明细（红字=算法25推荐，灰字=随机补足5个，蓝字=命中）';
-    html += '</div>';
-    html += '<div style="max-height:46vh;overflow-y:auto;padding:2px 0;">';
-
-    // 下期预测行（置于回测明细最前，2026-07-14 调整位置；样式与回测明细行保持一致）
+    // 下期预测独立卡片（2026-07-21 从回测明细抽出，置于统计概览之后、明细列表之前）
     if (nextPredictText) {
       var pureNums = nextPredictText.replace('✅ 精选特码：', '').trim();
       var predictNumsArr = pureNums.split(' ').filter(Boolean);
@@ -123,17 +116,28 @@ const ViewAnalysisZodiac = {
         return '<span style="color:#0A84FF;">' + Utils.formatNum(Number(n)) + '</span>';
       }).join(' ');
 
-      html += '<div style="display:flex;align-items:center;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:13px;line-height:1.6;background:rgba(10,132,255,0.06);">';
-      html += '<span style="font-weight:700;color:#0A84FF;min-width:60px;">🔮' + _nextExpLabel + '期</span>';
-      html += '<span style="color:#1a1a1a;margin:0 2px;">【</span>';
+      html += '<div style="background:linear-gradient(135deg, rgba(10,132,255,0.10), rgba(10,132,255,0.04));border:1px solid rgba(10,132,255,0.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+      html += '<div style="font-size:13px;font-weight:700;color:#0A84FF;">🔮 下期预测 · ' + _nextExpLabel + '期</div>';
+      html += '<button data-action="copyPredictNums" data-predict-nums="' + pureNums.replace(/"/g, '&quot;') + '" style="background:rgba(10,132,255,0.15);border:none;color:#0A84FF;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;">📋 复制</button>';
+      html += '</div>';
+      html += '<div style="font-size:13px;line-height:1.7;">';
+      html += '<span style="color:#1a1a1a;">【</span>';
       html += '<span style="letter-spacing:1px;">' + predictNumsHtml + '</span>';
-      html += '<span style="color:#1a1a1a;margin:0 2px;">】</span>';
-      html += '<span style="color:#1a1a1a;">开:</span>';
-      html += '<span style="color:#1a1a1a;">—</span>';
-      html += '<span style="color:#fff;background:#0A84FF;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">待开奖</span>';
-      html += '<button data-action="copyPredictNums" data-predict-nums="' + pureNums.replace(/"/g, '&quot;') + '" style="background:rgba(10,132,255,0.15);border:none;color:#0A84FF;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:auto;white-space:nowrap;">📋 复制</button>';
+      html += '<span style="color:#1a1a1a;">】</span>';
+      html += '<span style="color:#1a1a1a;margin-left:6px;">开:</span>';
+      html += '<span style="color:#1a1a1a;font-weight:700;">—</span>';
+      html += '<span style="color:#fff;background:#0A84FF;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:6px;">待开奖</span>';
+      html += '</div>';
       html += '</div>';
     }
+
+    // 图片式回测记录
+    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:12px;">';
+    html += '<div style="background:linear-gradient(180deg, #f7f7f7, #ececec);padding:8px 10px;font-size:12px;font-weight:700;color:#333;border-bottom:1px solid #e0e0e0;">';
+    html += '📋 近期 ' + backtestData.recentTests + ' 期回测明细（红字=算法25推荐，灰字=随机补足5个，蓝字=命中）';
+    html += '</div>';
+    html += '<div style="max-height:46vh;overflow-y:auto;padding:2px 0;">';
 
     backtestData.details.forEach(function(item) {
       var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'

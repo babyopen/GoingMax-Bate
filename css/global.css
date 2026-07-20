@@ -176,7 +176,7 @@ body{
 
 /* 轻提示Toast组件 */
 .toast{
-  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;
   padding:12px 24px;background:var(--overlay);-webkit-backdrop-filter:blur(10px);
   backdrop-filter:blur(10px);color:#FFFFFF;border-radius:12px;font-size:15px;
   opacity:0;visibility:hidden;transition:all var(--anim-normal);pointer-events:none;
