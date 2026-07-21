@@ -21,13 +21,11 @@ const ZodiacPredictionZones = {
     if (!historyData || historyData.length < 12) return null;
 
     // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组（避免内层循环重复 getSpecial）
-    //   - 不传时：保持原行为，逐项 getSpecial（向后兼容）
+    //   - 不传时：使用通用滑动窗口缓存（v2.5.0 升级）
     //   - 传入时：与 historyData 等长的 specials 数组，specials[i] 对应 historyData[i]
     var specials = precomputedSpecials;
     if (!specials) {
-      specials = historyData.map(function(item) {
-        return Utils.SpecialCalculator.getSpecial(item);
-      });
+      specials = BusinessCommonSpecials.buildWindowed(historyData);
     }
 
     // 性能优化：一次性扁平化预处理（避免多次调用 _getSpecial）
@@ -114,11 +112,10 @@ const ZodiacPredictionZones = {
     if (!historyData || historyData.length < 37) return null;
 
     // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组
+    //   - 不传时：使用通用滑动窗口缓存（v2.5.0 升级）
     var specials = precomputedSpecials;
     if (!specials) {
-      specials = historyData.map(function(item) {
-        return Utils.SpecialCalculator.getSpecial(item);
-      });
+      specials = BusinessCommonSpecials.buildWindowed(historyData);
     }
 
     var windows = [12, 24, 36];
@@ -331,13 +328,8 @@ const ZodiacPredictionZones = {
   runZoneBacktest: function(historyData) {
     if (!historyData || historyData.length < 16) return null;
 
-    // 2026-06-21 性能优化：预计算 specials（一次性，复用 LRU 缓存）
-    //  - 后续 calcFrequencyRating / analyzeZonePatterns 内部循环每次只切片 specials 数组引用
-    //  - 避免 40 次外循环 × 多次内循环 × getSpecial 调用
-    var specials = new Array(historyData.length);
-    for (var si = 0; si < historyData.length; si++) {
-      specials[si] = Utils.SpecialCalculator.getSpecial(historyData[si]);
-    }
+    // v2.5.0 性能优化：使用通用滑动窗口缓存，替换手动 getSpecial 循环
+    var specials = BusinessCommonSpecials.buildWindowed(historyData);
 
     var results = [];
     var maxOffset = historyData.length - 14;
@@ -417,10 +409,10 @@ const ZodiacPredictionZones = {
     var ZONE_ORDER = ZodiacPrediction.ZONE_ORDER;
     var ZODIAC_ORDER = ZodiacPrediction.ZODIAC_ORDER;
 
-    // 性能优化：扁平化预处理
-    var flatData = historyData.map(function(item) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
-      return { expect: Number(item.expect || 0), zod: s.zod };
+    // v2.5.0 性能优化：使用通用缓存，替换逐项 getSpecial
+    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    var flatData = historyData.map(function(item, i) {
+      return { expect: Number(item.expect || 0), zod: allSpecials[i].zod };
     });
 
     // 统计最近12期各原区域"输出"次数

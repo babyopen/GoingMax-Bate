@@ -3335,3 +3335,754 @@
   opacity: 0.65;
 }
 
+/* =====================================================
+   最不可能出现 卡片（v2.1.0 重构为表格版）
+   容器 #impossibleCard 挂在 views/exclude/view-impossible.js
+   布局：1 行"下一期预测" + N 行回测表（期数/杀码/开奖/状态）
+   ===================================================== */
+.impossible-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 14px 12px 12px;
+}
+.impossible-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+.impossible-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.impossible-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.impossible-subtitle {
+  font-size: 11px;
+  color: var(--sub-text);
+  opacity: 0.85;
+}
+
+/* ====== 下一期预测块（高亮） ====== */
+.impossible-next-block {
+  background: linear-gradient(135deg, rgba(0,122,255,0.08), rgba(0,122,255,0.02));
+  border: 1px dashed rgba(0,122,255,0.35);
+  border-radius: 10px;
+  padding: 10px 8px 8px;
+  margin-bottom: 12px;
+}
+.impossible-next-title {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.impossible-next-table {
+  display: grid;
+  grid-template-columns: 36px repeat(6, 1fr);
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+/* ====== 已废弃的旧回测表格样式（v2.3.0 后改用弹窗 .impossible-bm-*） ====== */
+/* .impossible-table* / .impossible-tr-* / .impossible-td-actual 已删除 */
+/* .impossible-td-pending 仍用于预测行"？"占位，保留 */
+.impossible-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  margin-top: 12px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.impossible-entry:active {
+  opacity: 0.6;
+}
+.impossible-entry-left {
+  flex: 1;
+  min-width: 0;
+}
+.impossible-entry-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.impossible-entry-tip {
+  font-size: 11px;
+  color: var(--sub-text);
+}
+.impossible-entry-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.impossible-entry-stats {
+  display: flex;
+  gap: 12px;
+}
+.impossible-entry-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.impossible-entry-stat-label {
+  font-size: 10px;
+  color: var(--sub-text);
+}
+.impossible-entry-stat-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+.impossible-entry-arrow {
+  font-size: 24px;
+  color: var(--sub-text);
+  font-weight: 300;
+  line-height: 1;
+}
+.impossible-summary-acc-high { color: #16a34a; }
+.impossible-summary-acc-mid  { color: #f59e0b; }
+.impossible-summary-acc-low  { color: #DC2626; }
+
+@media (prefers-color-scheme: dark) {
+  .impossible-entry {
+    background: rgba(255,255,255,0.04);
+  }
+  .impossible-summary-acc-high { color: #4ADE80; }
+  .impossible-summary-acc-mid  { color: #FBBF24; }
+  .impossible-summary-acc-low  { color: #F87171; }
+}
+
+/* ====== 回测记录弹窗（v2.3.1 修复） ====== */
+.impossible-bm-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  padding: 16px;
+}
+.impossible-bm-card {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  transform: scale(0.95);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+.impossible-bm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+.impossible-bm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.impossible-bm-close {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.impossible-bm-close:active {
+  background: rgba(0,0,0,0.06);
+}
+.impossible-bm-stats {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: #666;
+  background: rgba(0,0,0,0.02);
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.impossible-bm-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+.impossible-bm-content {
+  padding: 0;
+}
+.impossible-bm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.impossible-bm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 4px;
+  background: #f4f4f5;
+  color: #555;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #e5e5e7;
+  white-space: nowrap;
+}
+.impossible-bm-table tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.impossible-bm-table tbody th,
+.impossible-bm-table tbody td {
+  padding: 7px 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+.impossible-bm-table tbody th {
+  font-weight: 600;
+  background: inherit;
+}
+.impossible-bm-table tbody tr:nth-child(even) {
+  background: rgba(0,0,0,0.015);
+}
+.impossible-bm-tr-err {
+  background: rgba(239,68,68,0.05) !important;
+}
+.impossible-bm-err-cell {
+  color: #DC2626;
+  font-weight: 700;
+}
+.impossible-bm-status {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+}
+.impossible-bm-status-ok {
+  background: rgba(34,197,94,0.18);
+  color: #15803D;
+}
+.impossible-bm-status-err {
+  background: rgba(239,68,68,0.14);
+  color: #B91C1C;
+}
+
+/* 弹窗 - 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .impossible-bm-card {
+    background: #1C1C1E !important;
+  }
+  .impossible-bm-title { color: #FFFFFF !important; }
+  .impossible-bm-close { color: #FFFFFF; }
+  .impossible-bm-close:active { background: rgba(255,255,255,0.10); }
+  .impossible-bm-header {
+    border-bottom-color: rgba(255,255,255,0.10);
+  }
+  .impossible-bm-stats {
+    color: #98989F;
+    background: rgba(255,255,255,0.03);
+    border-bottom-color: rgba(255,255,255,0.06);
+  }
+  .impossible-bm-table thead th {
+    background: #2C2C2E;
+    color: #98989F;
+    border-bottom-color: #38383A;
+  }
+  .impossible-bm-table tbody tr {
+    border-bottom-color: rgba(255,255,255,0.05);
+  }
+  .impossible-bm-table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.03);
+  }
+  .impossible-bm-tr-err {
+    background: rgba(239,68,68,0.12) !important;
+  }
+  .impossible-bm-err-cell {
+    color: #F87171;
+  }
+  .impossible-bm-status-ok {
+    background: rgba(52,199,89,0.20);
+    color: #4ADE80;
+  }
+  .impossible-bm-status-err {
+    background: rgba(239,68,68,0.20);
+    color: #F87171;
+  }
+}
+
+/* 弹窗 - 移动端适配 */
+@media (max-width: 480px) {
+  .impossible-bm-mask {
+    padding: 8px;
+    align-items: flex-end;
+  }
+  .impossible-bm-card {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 14px 14px 0 0;
+  }
+  .impossible-bm-table {
+    font-size: 11px;
+  }
+  .impossible-bm-table thead th,
+  .impossible-bm-table tbody th,
+  .impossible-bm-table tbody td {
+    padding: 6px 3px;
+  }
+}
+
+/* ====== 旧回测表格样式保留（兼容） ====== */
+/* v2.4.0 清理：以下样式已废弃（弹窗改用 .impossible-bm-table） */
+.impossible-td-pending {
+  color: var(--sub-text);
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ====== 杀号胶囊 ====== */
+.impossible-pill {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  min-width: 38px;
+	  height: 24px;
+	  padding: 0 8px;
+	  border-radius: 6px;
+	  font-size: 12px;
+	  font-weight: 700;
+	  vertical-align: middle;
+	}
+	.impossible-pill-num {
+	  min-width: 30px;
+	  font-variant-numeric: tabular-nums;
+	}
+	/* OK 胶囊：无特殊样式，纯文本 */
+	/* 错误胶囊：红色文字标记 */
+	.impossible-pill-err {
+	  color: #DC2626;
+	}
+
+/* ====== 命中/错标记（已移除，改用胶囊 outline 表示） ====== */
+
+/* ====== 状态徽章（整行的「准/错」） ====== */
+.impossible-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.impossible-status-ok {
+  background: rgba(34, 197, 94, 0.18);
+  color: #15803D;
+}
+.impossible-status-err {
+  background: rgba(239, 68, 68, 0.14);
+  color: #B91C1C;
+}
+
+/* ====== 底部统计条 ====== */
+.impossible-summary {
+  display: flex;
+  justify-content: space-around;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 0 2px;
+  border-top: 1px dashed rgba(0,0,0,0.08);
+  font-size: 11px;
+  color: var(--sub-text);
+}
+.impossible-summary-item b {
+  color: var(--text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  margin: 0 2px;
+}
+
+/* ====== 评分规则说明（保留） ====== */
+.impossible-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+.impossible-footer-title {
+  font-size: 11px;
+  color: var(--sub-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.impossible-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.footer-cell {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.footer-cell-label {
+  font-size: 10px;
+  color: var(--sub-text);
+}
+.footer-cell-weight {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.impossible-footer-tip {
+  font-size: 10px;
+  color: var(--sub-text);
+  text-align: center;
+  margin-top: 6px;
+  opacity: 0.65;
+}
+
+/* ====== 响应式 ====== */
+@media (max-width: 380px) {
+  .impossible-pill {
+    min-width: 28px;
+    padding: 0 6px;
+    height: 22px;
+    font-size: 11px;
+  }
+}
+
+/* =====================================================
+   最不可能出现 卡片 UI 优化（v2.1.1）
+   优化项：
+   1. 暗色模式全局适配
+   2. 表格视觉增强（斑马纹、圆角、列宽对齐）
+   3. 胶囊样式升级（命中/错误标记更醒目）
+   4. 预测行与表格统一列宽结构
+   5. 响应式多断点精细适配
+   ===================================================== */
+
+/* ----- 暗色模式适配 ----- */
+@media (prefers-color-scheme: dark) {
+  .impossible-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .impossible-next-block {
+    background: linear-gradient(135deg, rgba(10,132,255,0.12), rgba(10,132,255,0.04));
+    border-color: rgba(10,132,255,0.30);
+  }
+  .impossible-summary {
+    border-top-color: rgba(255,255,255,0.08);
+  }
+  .impossible-footer {
+    border-top-color: rgba(255,255,255,0.08);
+  }
+  .footer-cell {
+    background: rgba(255,255,255,0.05);
+  }
+  .impossible-status-ok {
+    background: rgba(52, 199, 89, 0.20);
+    color: #4ADE80;
+  }
+  .impossible-status-err {
+    background: rgba(239, 68, 68, 0.18);
+    color: #F87171;
+  }
+  .impossible-pill-err {
+    color: #F87171;
+    background: rgba(239, 68, 68, 0.18);
+  }
+}
+
+/* ----- 表格视觉增强 ----- */
+/* v2.4.0 清理：.impossible-table 相关样式已废弃（弹窗使用 .impossible-bm-table） */
+
+/* ----- 胶囊样式：纯文本，错误红色 ----- */
+	/* 基础胶囊：更大、更圆润 */
+	.impossible-pill {
+	  min-width: 40px;
+	  height: 26px;
+	  padding: 0 10px;
+	  border-radius: 8px;
+	  font-size: 13px;
+	  font-weight: 700;
+	  letter-spacing: 0.3px;
+	}
+
+	/* 错误胶囊：红色文字 + 浅红底 */
+	.impossible-pill-err {
+	  color: #DC2626;
+	  background: rgba(239, 68, 68, 0.12);
+	}
+
+/* 命中/错误标记：已移除，改用胶囊 outline 表示 */
+
+/* ----- 状态徽章增强 ----- */
+.impossible-status {
+  min-width: 32px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* ----- 预测行增强 ----- */
+/* 预测行也使用 table 结构，与回测表格列宽对齐 */
+.impossible-next-block {
+  border-radius: 12px;
+  padding: 12px 10px 10px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 预测行顶部 NEW 角标 */
+.impossible-next-block::after {
+  content: "NEW";
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 0 12px 0 8px;
+  letter-spacing: 1px;
+}
+
+.impossible-next-title {
+  font-size: 13px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.impossible-next-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: impossiblePulse 2s ease-in-out infinite;
+}
+@keyframes impossiblePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.6); }
+}
+
+/* 预测行表格：与下方回测表格列宽对齐 */
+.impossible-next-table-grid {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 1fr 1fr 72px 56px;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  font-size: 12px;
+}
+.impossible-next-table-grid .impossible-next-th {
+  font-size: 10px;
+  color: var(--sub-text);
+  font-weight: 600;
+  padding: 4px 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.impossible-next-table-grid .impossible-next-td {
+  padding: 6px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ----- 底部统计条增强 ----- */
+.impossible-summary {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--border);
+}
+.impossible-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sub-text);
+}
+.impossible-summary-item b {
+  color: var(--text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+/* 命中率颜色：>=70% 绿，>=50% 橙，<50% 红 */
+.impossible-summary-acc-high { color: #16a34a !important; }
+.impossible-summary-acc-mid  { color: #F59E0B !important; }
+.impossible-summary-acc-low  { color: #DC2626 !important; }
+
+/* ----- 评分规则说明紧凑化 ----- */
+.impossible-footer {
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.impossible-footer-title {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.impossible-footer-grid {
+  gap: 4px;
+}
+.footer-cell {
+  padding: 3px 4px;
+  border-radius: 5px;
+}
+.footer-cell-label {
+  font-size: 9px;
+}
+.footer-cell-weight {
+  font-size: 10px;
+}
+.impossible-footer-tip {
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+/* ----- 响应式多断点 ----- */
+/* 平板/中等屏幕 */
+@media (max-width: 640px) {
+  .impossible-next-table-grid {
+    grid-template-columns: 42px 1fr 1fr 1fr 1fr 60px 48px;
+    font-size: 11px;
+  }
+  .impossible-pill {
+    min-width: 34px;
+    height: 24px;
+    padding: 0 7px;
+    font-size: 12px;
+  }
+}
+
+/* 手机横屏 */
+@media (max-width: 480px) {
+  .impossible-card {
+    padding: 10px 8px 8px;
+  }
+  .impossible-header {
+    padding: 0 2px;
+    margin-bottom: 8px;
+  }
+  .impossible-title {
+    font-size: 14px;
+  }
+  .impossible-subtitle {
+    font-size: 10px;
+  }
+  .impossible-next-block {
+    padding: 10px 8px 8px;
+  }
+  .impossible-next-table-grid {
+    grid-template-columns: 38px 1fr 1fr 1fr 1fr 52px 42px;
+    font-size: 10px;
+    gap: 1px;
+  }
+  .impossible-pill {
+    min-width: 30px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .impossible-status {
+    min-width: 26px;
+    height: 20px;
+    font-size: 10px;
+    padding: 0 7px;
+  }
+  .impossible-summary {
+    gap: 8px;
+  }
+  .impossible-summary-item {
+    font-size: 10px;
+  }
+  .impossible-summary-item b {
+    font-size: 12px;
+  }
+}
+
+/* 小屏手机 */
+@media (max-width: 380px) {
+  .impossible-next-table-grid {
+    grid-template-columns: 34px 1fr 1fr 1fr 1fr 44px 38px;
+    font-size: 9px;
+  }
+  .impossible-pill {
+    min-width: 26px;
+    height: 20px;
+    padding: 0 4px;
+    font-size: 10px;
+    border-radius: 5px;
+  }
+  .impossible-status {
+    min-width: 22px;
+    height: 18px;
+    font-size: 9px;
+    padding: 0 5px;
+  }
+  .impossible-summary {
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+}
+
+

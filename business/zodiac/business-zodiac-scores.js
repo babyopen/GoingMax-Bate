@@ -19,6 +19,9 @@ const ZodiacPredictionScores = {
     var total = list.length;
     var latestExpect = Number(list[0]?.expect || 0);
 
+    // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
+    var allSpecials = BusinessCommonSpecials.buildWindowed(list);
+
     var lastAppearIdx = {};
     var zodiacRecords = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
@@ -27,7 +30,7 @@ const ZodiacPredictionScores = {
     });
 
     list.forEach(function(item, idx) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
+      var s = allSpecials[idx];
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
         if (lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
         zodiacRecords[s.zod].push({
@@ -51,7 +54,7 @@ const ZodiacPredictionScores = {
     });
 
     var latestItem = list[0];
-    var latestSpecial = latestItem ? Utils.SpecialCalculator.getSpecial(latestItem) : null;
+    var latestSpecial = latestItem ? allSpecials[0] : null;
 
     var baseScores = ZodiacPrediction._calcBaseScores(missMap);
     var shapeScores = ZodiacPrediction._calcShapeScores(missMap, zodiacRecords, list, latestSpecial);
@@ -402,6 +405,9 @@ const ZodiacPredictionScores = {
   runBacktest: function(historyData) {
     if (!historyData || historyData.length < 4) return null;
 
+    // v2.5.0 性能优化：预计算全量 specials，循环内 O(1) 取值
+    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+
     var results = [];
     for (var i = 1; i < Math.min(historyData.length - 2, 50); i++) {
       var testData = historyData.slice(i);
@@ -413,7 +419,7 @@ const ZodiacPredictionScores = {
 
       var top6 = prediction.sorted.slice(0, 6);
 
-      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      var actualSpecial = allSpecials[i - 1];
       var actualZod = actualSpecial.zod;
       var actualTe = actualSpecial.te;
 

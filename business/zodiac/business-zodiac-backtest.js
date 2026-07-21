@@ -343,6 +343,9 @@ const ZodiacPredictionBacktest = {
     if (testCount <= 0) return null;
     var results = [];
 
+    // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
+    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+
     for (var offset = 0; offset < testCount; offset++) {
       var targetItem = historyData[offset];
       if (!targetItem) break;
@@ -366,8 +369,8 @@ const ZodiacPredictionBacktest = {
         // 修复 #1：用 offset 之前的历史数据累计"上期 = latestZodiac → 下期 = ?"
         var followCount = {};
         for (var fi = 0; fi < offset; fi++) {
-          var preS = Utils.SpecialCalculator.getSpecial(historyData[fi]);
-          var curS = Utils.SpecialCalculator.getSpecial(historyData[fi + 1]);
+          var preS = allSpecials[fi];
+          var curS = allSpecials[fi + 1];
           if (preS.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curS.zod)) {
             followCount[curS.zod] = (followCount[curS.zod] || 0) + 1;
           }
@@ -408,7 +411,7 @@ const ZodiacPredictionBacktest = {
       var candidateNums = recommend.candidateNums || [];
 
       // 4. 实际特码对比（按展示集合判定，下面展示什么这里就判什么）
-      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      var actualSpecial = allSpecials[offset];
       var actualNum = actualSpecial.te || 0;
 
       // 5. 按得分排序推荐号码（得分高的在前）
@@ -539,6 +542,9 @@ const ZodiacPredictionBacktest = {
     testCount = Math.min(testCount || 36, historyData.length - 14);
     if (testCount <= 0) return null;
 
+    // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
+    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+
     // 7 个维度的命中计数
     var dimStats = {
       follow:   { hit: 0, total: 0, note: '跟随生肖（W=3）' },
@@ -574,8 +580,8 @@ const ZodiacPredictionBacktest = {
       if (latestZodiac && offset > 0) {
         var fc = {};
         for (var fi = 0; fi < offset; fi++) {
-          var ps = Utils.SpecialCalculator.getSpecial(historyData[fi]);
-          var cs = Utils.SpecialCalculator.getSpecial(historyData[fi + 1]);
+          var ps = allSpecials[fi];
+          var cs = allSpecials[fi + 1];
           if (ps.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(cs.zod)) {
             fc[cs.zod] = (fc[cs.zod] || 0) + 1;
           }
@@ -598,18 +604,19 @@ const ZodiacPredictionBacktest = {
       var wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
       var missMap = {};  // 号码→遗漏期数
       var lastTe = null;  // 上期特码
-      list.slice(0, Math.min(DIAG_WINDOW, list.length)).forEach(function(item){
-        var s = BusinessCommonSpecials.getOne(item);
-        if (!s || !s.te || s.te < 1) return;
+      var diagLimit = Math.min(DIAG_WINDOW, list.length);
+      for (var di = 0; di < diagLimit; di++) {
+        var s = allSpecials[offset + 1 + di];
+        if (!s || !s.te || s.te < 1) continue;
         headCount[s.head] = (headCount[s.head] || 0) + 1;
         tailCount[s.tail] = (tailCount[s.tail] || 0) + 1;
         if (['红','蓝','绿'].includes(s.colorName)) colorCount[s.colorName] = (colorCount[s.colorName] || 0) + 1;
         if (['金','木','水','火','土'].includes(s.wuxing)) wuxingCount[s.wuxing] = (wuxingCount[s.wuxing] || 0) + 1;
         // 冷热统计：最近 N 期该号码出现 → miss=0；否则 miss++（简化：先累计出现，结尾统计）
         missMap[s.te] = 0;
-      });
+      }
       if (latestItem) {
-        var _lastSpec = Utils.SpecialCalculator.getSpecial(latestItem);
+        var _lastSpec = allSpecials[offset + 1];
         if (_lastSpec && _lastSpec.te) lastTe = _lastSpec.te;
       }
 
@@ -631,7 +638,7 @@ const ZodiacPredictionBacktest = {
       }
 
       // 实际特码
-      var actualSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      var actualSpecial = allSpecials[offset];
       var actualNum = actualSpecial.te;
       var actualHead = actualSpecial.head;
       var actualTail = actualSpecial.tail;

@@ -2008,6 +2008,24 @@ const Business = {
     var zoneChangeP36 = ZodiacPrediction.calcZoneChangeTracking(historyData, 36);
     ViewZodiacGiong.renderZoneChangeTrackingMulti(zoneChangeP12, zoneChangeP24, zoneChangeP36);
 
+    // v2.1.0 新增：最不可能出现 卡片（基于最近 24 期 4 维加权评分）
+    // 走 JS 动态加载链：ViewExclude.ensureImpossibleLoaded 引导 view-impossible.js，
+    // view-impossible.js 内部再加载 business-impossible.js。完成后按需渲染，异步失败兜底。
+    // v2.1.0 同时支持回测：传入第三参数=回测最近 N 期（默认 10）。
+    if (typeof ViewExclude !== 'undefined' && typeof ViewExclude.ensureImpossibleLoaded === 'function') {
+      var window24Specials = BusinessCommonSpecials.precompute(historyData.slice(0, 24));
+      ViewExclude.ensureImpossibleLoaded()
+        .then(function() {
+          if (typeof ViewImpossible !== 'undefined' && typeof ViewImpossible.render === 'function') {
+            ViewImpossible.render(historyData, window24Specials, 36);
+          }
+        })
+        .catch(function(err) {
+          // 静默失败：仅在控制台记录，不阻塞其他渲染
+          if (typeof console !== 'undefined') console.warn('[Business] 最不可能出现 卡片加载失败:', err);
+        });
+    }
+
     // 2026-06-21 架构修复：用业务层标志代替 DOM 查询，避免业务层违规使用 document
     Business._giongCardsRendered = true;
   },
