@@ -1,11 +1,5 @@
 async function initApp() {
   try {
-    // 0. 初始化性能监控（v2.0.9 新增）
-    if (typeof PerformanceMonitor !== 'undefined') {
-      PerformanceMonitor.init();
-      console.log('[App] 性能监控已初始化');
-    }
-
     // 0.4. 启动期预热号码→颜色/五行反查 Map（2026-07-04 性能优化 P2）
     //   必须在 Render.buildNumList() 之前调用；不影响任何外部行为
     if (typeof Utils !== 'undefined' && typeof Utils.prewarmNumMaps === 'function') {

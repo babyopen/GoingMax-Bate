@@ -858,8 +858,6 @@
 <script src="core/utils.js"></script>
 <!-- 核心层通用工具 - 缓存 / 高频优化 / 定时器管理（2026-06-24 新增） -->
 <script src="core/common/common-cache.js"></script>
-<!-- 核心层通用工具 - 数据验证（2026-06-24 新增） -->
-<script src="core/common/common-validator.js"></script>
 <!-- 核心层通用工具 - 字符串与格式化（2026-06-24 新增） -->
 <script src="core/common/common-string.js"></script>
 <!-- 核心层通用工具 - 平台能力（设备 / 安全区 / 剪贴板 / 网络）（2026-06-24 新增） -->
@@ -868,9 +866,6 @@
 <!-- 平台层：Toast → DOM → 渲染 -->
 <script src="platform/web/toast.js"></script>
 <script src="platform/web/dom.js"></script>
-<!-- 性能监控（v2.0.9 新增） -->
-<script src="platform/web/performance-monitor.js"></script>
-
 <!-- 数据层：数据查询 → 筛选逻辑 -->
 <script src="data/data-query.js"></script>
 
@@ -885,18 +880,15 @@
 <script src="data/filter.js"></script>
 
 <!-- 业务层：禁止DOM操作 -->
-<!-- 业务层通用工具（v2.0.8 新增 LRU 工具，原有 sort/time 工具挂载） -->
-<script src="business/common/business-common-sort.js"></script>
-<script src="business/common/business-common-time.js"></script>
-<script src="business/common/business-common-lru.js"></script>
-<!-- 业务层通用工具 - 统计预测（2026-06-24 新增） -->
-<script src="business/common/business-common-stats.js"></script>
-<!-- 业务层通用工具 - 回测（2026-06-24 新增） -->
-<script src="business/common/business-common-backtest.js"></script>
-<!-- 业务层通用工具 - 特码信息批处理（2026-06-24 新增） -->
+<!-- 业务层通用工具（v2.0.8 新增 LRU 工具，原有 sort 工具挂载） -->
+	<script src="business/common/business-common-sort.js"></script>
+	<script src="business/common/business-common-lru.js"></script>
+	<!-- 业务层通用工具 - 特码信息批处理（2026-06-24 新增） -->
 <script src="business/common/business-common-specials.js"></script>
 <!-- 业务层通用工具 - 历史数据加载（2026-06-24 新增） -->
 <script src="business/common/business-common-data.js"></script>
+<!-- 业务层通用工具 - 热门号码回测（v2.6.0 新增） -->
+<script src="business/common/business-hot-backtest.js"></script>
 <!-- 事件总线（2026-06-30 新增：解耦核心层与平台层） -->
 <script src="business/main/business-event-bus.js"></script>
 <!-- 业务层模块化拆分（v2.0.9 新增） -->

@@ -199,11 +199,10 @@ const BusinessAnalysis = {
    * @param {Object} domValues - { customPeriod, selectPeriodVal, countVal, customCount }
    */
   syncZodiacAnalyze: (domValues) => {
-    const { customPeriod, selectPeriodVal, countVal, customCount } = domValues || {};
+    const { customPeriod, selectPeriodVal } = domValues || {};
     const state = StateManager._state;
     
     let analyzeLimit = state.analysis.analyzeLimit || 36;
-    let selectedNumCount = state.analysis.selectedNumCount || 5;
     
     // 处理期数
     if (selectPeriodVal === 'custom' && customPeriod) {
@@ -218,24 +217,10 @@ const BusinessAnalysis = {
       }
     }
     
-    // 处理号码数量
-    if (countVal === 'custom' && customCount) {
-      const num = parseInt(customCount, 10);
-      if (!isNaN(num) && num >= 1 && num <= 49) {
-        selectedNumCount = num;
-      }
-    } else if (countVal && countVal !== 'custom') {
-      const num = parseInt(countVal, 10);
-      if (!isNaN(num)) {
-        selectedNumCount = num;
-      }
-    }
-    
     StateManager.setState({
       analysis: {
         ...state.analysis,
-        analyzeLimit,
-        selectedNumCount
+        analyzeLimit
       }
     });
   }

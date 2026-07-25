@@ -116,50 +116,19 @@ const EventBinder = {
     if(zodiacAnalyzeSelect) {
       zodiacAnalyzeSelect.addEventListener('change', function() {
         const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
-        const numCountSelectEl = document.getElementById('numCountSelect');
-        const customNumCountEl = document.getElementById('customNumCount');
         const domValues = {
           customPeriod: zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '',
-          selectPeriodVal: zodiacAnalyzeSelect.value,
-          countVal: numCountSelectEl ? numCountSelectEl.value : '5',
-          customCount: customNumCountEl ? customNumCountEl.value.trim() : ''
+          selectPeriodVal: zodiacAnalyzeSelect.value
         };
         Business.syncZodiacAnalyze(domValues);
       });
     }
     
-    // 分析页面：号码数量选择器change事件（符合分层规范）
-    const numCountSelect = document.getElementById('numCountSelect');
-    const customNumCount = document.getElementById('customNumCount');
-    
-    if(numCountSelect) {
-      numCountSelect.addEventListener('change', function() {
-        const zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
-        const zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
-        const domValues = {
-          customPeriod: zodiacCustomNumEl ? zodiacCustomNumEl.value.trim() : '',
-          selectPeriodVal: zodiacAnalyzeSelectEl ? zodiacAnalyzeSelectEl.value : '36',
-          countVal: numCountSelect.value,
-          customCount: customNumCount ? customNumCount.value.trim() : ''
-        };
-        Business.syncZodiacAnalyze(domValues);
-      });
-    }
-    
-    if(customNumCount) {
-      customNumCount.addEventListener('input', function() {
-        const val = this.value.trim();
-        if(val && !isNaN(val) && Number(val) >= 1 && Number(val) <= 49) {
-          const curState = StateManager.getState();
-          const newAnalysis = { 
-            ...curState.analysis, 
-            selectedNumCount: Number(val)
-          };
-          StateManager.setState({ analysis: newAnalysis }, false);
-          Business.renderZodiacAnalysis();
-        }
-      });
-    }
+    // 隐藏已废弃的号码数量选择器 + 自定义数量输入框
+    var numCountSelect = document.getElementById('numCountSelect');
+    if (numCountSelect) numCountSelect.style.display = 'none';
+    var customNumCount = document.getElementById('customNumCount');
+    if (customNumCount) customNumCount.style.display = 'none';
   },
 
   /**
@@ -466,13 +435,9 @@ const EventBinder = {
         // 2026-06-21 架构修复：业务层禁止 DOM 操作，由 event.js 读取 DOM value 后传入 domValues
         const _zodiacCustomNumEl = document.getElementById('zodiacCustomNum');
         const _zodiacAnalyzeSelectEl = document.getElementById('zodiacAnalyzeSelect');
-        const _numCountSelectEl = document.getElementById('numCountSelect');
-        const _customNumCountEl = document.getElementById('customNumCount');
         Business.syncZodiacAnalyze({
           customPeriod: _zodiacCustomNumEl ? _zodiacCustomNumEl.value.trim() : '',
-          selectPeriodVal: _zodiacAnalyzeSelectEl ? _zodiacAnalyzeSelectEl.value : '36',
-          countVal: _numCountSelectEl ? _numCountSelectEl.value : '5',
-          customCount: _customNumCountEl ? _customNumCountEl.value.trim() : ''
+          selectPeriodVal: _zodiacAnalyzeSelectEl ? _zodiacAnalyzeSelectEl.value : '36'
         });
       }
       else if(action === 'toggleDetail') Business.toggleDetail(actionBtn.dataset.target);
@@ -490,6 +455,8 @@ const EventBinder = {
       else if(action === 'showWuxingBacktest') EventBinder._showWuxingBacktest();
       // 波色回测操作
       else if(action === 'showColorBacktest') EventBinder._showColorBacktest();
+      // 热门号码回测操作（v2.6.0 新增）
+      else if(action === 'showHotBacktest') EventBinder._showHotBacktest();
       // 未推荐生肖 - 查看来源弹窗
       else if(action === 'showUnrecSources') ViewZodiacUltimate.showUnrecSourcesModal();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
@@ -711,172 +678,108 @@ const EventBinder = {
     Toast.show('页面出现异常，请刷新重试');
   },
 
+  // ============================================================
+  // 2026-07-26 重构：6 个回测方法提取为通用 _runBacktest + _runGiongBacktest
+  // 原 6 个方法（~200 行）→ 1 个通用方法 + 1 个 Giong 快捷方法 + 6 个一行调用（~70 行）
+  // ============================================================
+
   /**
-   * 显示大小回测追踪弹窗
+   * 通用回测执行器（6 个回测方法的公共逻辑）
+   * @param {Object} config - 配置对象
+   *   - run: function(historyData, analyzeLimit, state) → backtestData
+   *   - show: function(backtestData, state, historyData) → void
+   *   - errorLabel: string 错误日志标签
+   *   - minData: number|function(state) 最小数据期数（默认 10）
+   *   - onBeforeShow: function(backtestData, state, historyData) → void（可选）
    */
-  _showSizeBacktest: function() {
+  _runBacktest: function(config) {
     try {
-      const state = StateManager._state;
-      const historyData = state.analysis.historyData;
+      var state = StateManager._state;
+      var historyData = state.analysis.historyData;
+      var analyzeLimit = state.analysis.analyzeLimit || 12;
+      var minData = typeof config.minData === 'function'
+        ? config.minData(state)
+        : (config.minData != null ? config.minData : 10);
 
       if (!historyData || !historyData.length) {
         Toast.show('暂无历史数据');
         return;
       }
 
-      if (historyData.length < 10) {
-        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
+      if (historyData.length < minData) {
+        Toast.show('数据不足（需至少' + minData + '期，当前仅' + historyData.length + '期）');
         return;
       }
 
-      const backtestData = ZodiacPrediction.runSizeBacktest(historyData, 15);
-
+      var backtestData = config.run(historyData, analyzeLimit, state);
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
         return;
       }
 
-      ViewZodiacGiong.showSizeBacktestModal(backtestData);
+      if (config.onBeforeShow) {
+        config.onBeforeShow(backtestData, state, historyData);
+      }
+
+      config.show(backtestData, state, historyData);
     } catch (e) {
-      console.error('大小回测出错:', e);
+      console.error(config.errorLabel + '出错:', e);
       Toast.show('回测计算出错，请重试');
     }
   },
 
   /**
-   * 显示单双回测追踪弹窗
+   * Giong 回测快捷方法（Size / OddEven / Wuxing / Color 四个共用）
+   * 约定：ZodiacPrediction.run{Name}Backtest(historyData, 24) + ViewZodiacGiong.show{Name}BacktestModal(data)
+   * @param {string} name - 回测名称（Size / OddEven / Wuxing / Color）
+   * @param {string} errorLabel - 错误日志标签
    */
-  _showOddEvenBacktest: function() {
-    try {
-      const state = StateManager._state;
-      const historyData = state.analysis.historyData;
-
-      if (!historyData || !historyData.length) {
-        Toast.show('暂无历史数据');
-        return;
-      }
-
-      if (historyData.length < 10) {
-        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
-        return;
-      }
-
-      const backtestData = ZodiacPrediction.runOddEvenBacktest(historyData, 15);
-
-      if (!backtestData) {
-        Toast.show('回测执行失败，请重试');
-        return;
-      }
-
-      ViewZodiacGiong.showOddEvenBacktestModal(backtestData);
-    } catch (e) {
-      console.error('单双回测出错:', e);
-      Toast.show('回测计算出错，请重试');
-    }
+  _runGiongBacktest: function(name, errorLabel) {
+    EventBinder._runBacktest({
+      run: function(hd) { return ZodiacPrediction['run' + name + 'Backtest'](hd, 24); },
+      show: function(data) { ViewZodiacGiong['show' + name + 'BacktestModal'](data); },
+      errorLabel: errorLabel
+    });
   },
+
+  _showSizeBacktest: function() { EventBinder._runGiongBacktest('Size', '大小回测'); },
+  _showOddEvenBacktest: function() { EventBinder._runGiongBacktest('OddEven', '单双回测'); },
+  _showWuxingBacktest: function() { EventBinder._runGiongBacktest('Wuxing', '五行回测'); },
+  _showColorBacktest: function() { EventBinder._runGiongBacktest('Color', '波色回测'); },
 
   /**
-   * 显示五行回测追踪弹窗
+   * 显示热门号码回测弹窗（v2.6.0 新增）
+   * 算法与 calcFullAnalysis 中 numCount TOP5 逻辑完全一致
    */
-  _showWuxingBacktest: function() {
-    try {
-      const state = StateManager._state;
-      const historyData = state.analysis.historyData;
-
-      if (!historyData || !historyData.length) {
-        Toast.show('暂无历史数据');
-        return;
-      }
-
-      if (historyData.length < 10) {
-        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
-        return;
-      }
-
-      const backtestData = ZodiacPrediction.runWuxingBacktest(historyData, 15);
-
-      if (!backtestData) {
-        Toast.show('回测执行失败，请重试');
-        return;
-      }
-
-      ViewZodiacGiong.showWuxingBacktestModal(backtestData);
-    } catch (e) {
-      console.error('五行回测出错:', e);
-      Toast.show('回测计算出错，请重试');
-    }
-  },
-
-  _showColorBacktest: function() {
-    try {
-      const state = StateManager._state;
-      const historyData = state.analysis.historyData;
-
-      if (!historyData || !historyData.length) {
-        Toast.show('暂无历史数据');
-        return;
-      }
-
-      if (historyData.length < 10) {
-        Toast.show('数据不足（需至少10期，当前仅' + historyData.length + '期）');
-        return;
-      }
-
-      const backtestData = ZodiacPrediction.runColorBacktest(historyData, 12);
-      if (!backtestData) {
-        Toast.show('回测执行失败，请重试');
-        return;
-      }
-
-      ViewZodiacGiong.showColorBacktestModal(backtestData);
-    } catch (e) {
-      console.error('波色回测出错:', e);
-      Toast.show('回测计算出错，请重试');
-    }
+  _showHotBacktest: function() {
+    EventBinder._runBacktest({
+      run: function(hd, analyzeLimit) { return BusinessHotBacktest.runBacktest(hd, 24, analyzeLimit); },
+      show: function(data) { ViewAnalysis.showHotBacktestModal(data); },
+      onBeforeShow: function(data, state) { data.windowSize = state.analysis.analyzeLimit || 12; },
+      minData: function(state) { return (state.analysis.analyzeLimit || 12) + 1; },
+      errorLabel: '热门号码回测'
+    });
   },
 
   /**
    * 显示精选推荐 6 肖回测弹窗（点击 #zodiacFinalNum 触发）
    */
   _showFinalBacktest: function() {
-    try {
-      const state = StateManager._state;
-      const historyData = state.analysis.historyData;
-
-      if (!historyData || !historyData.length) {
-        Toast.show('暂无历史数据');
-        return;
-      }
-
-      if (historyData.length < 25) {
-        Toast.show('数据不足（需至少25期，当前仅' + historyData.length + '期）');
-        return;
-      }
-
-      const backtestData = ZodiacPrediction.runFinalZodiacBacktest(historyData, 36);
-      if (!backtestData) {
-        Toast.show('回测执行失败，请重试');
-        return;
-      }
-
-      // 新增：获取下期预测号码（与精选特码显示一致）+ 下期号（基于最新一期 + 1）
-      var nextPredictText = '';
-      var nextExpect = 0;
-      try {
-        if (historyData[0] && historyData[0].expect) {
-          nextExpect = Number(historyData[0].expect) + 1;
-        }
-        var zodiacData = Business.calcZodiacAnalysis();
-        if (zodiacData) {
-          nextPredictText = Business.renderZodiacFinalNums(zodiacData);
-        }
-      } catch(_e) { /* 预测获取失败不影响回测弹窗展示 */ }
-
-      ViewAnalysis.showFinalBacktestModal(backtestData, nextPredictText, nextExpect);
-    } catch (e) {
-      console.error('精选六肖回测出错:', e);
-      Toast.show('回测计算出错，请重试');
-    }
+    EventBinder._runBacktest({
+      run: function(hd, analyzeLimit) { return ZodiacPrediction.runFinalZodiacBacktest(hd, 36, analyzeLimit); },
+      show: function(data, _state, hd) {
+        var nextPredictText = '';
+        var nextExpect = 0;
+        try {
+          if (hd[0] && hd[0].expect) { nextExpect = Number(hd[0].expect) + 1; }
+          var zodiacData = Business.calcZodiacAnalysis();
+          if (zodiacData) { nextPredictText = Business.renderZodiacFinalNums(zodiacData); }
+        } catch(_e) { /* 预测获取失败不影响回测弹窗展示 */ }
+        ViewAnalysis.showFinalBacktestModal(data, nextPredictText, nextExpect);
+      },
+      minData: function(state) { return (state.analysis.analyzeLimit || 12) + 1; },
+      errorLabel: '精选六肖回测'
+    });
   },
 
   /**

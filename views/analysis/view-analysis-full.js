@@ -51,6 +51,14 @@ const ViewAnalysisFull = {
     setText('hotAnimal', data._hotAnimal || '');
     setText('hotZodiac2', data._hotZodiac2 || '');
     setText('hotNumber', data.hotNum || '');
+
+    // v2.6.0 新增：给热门 TOP5 父 div 添加点击回测入口
+    var hotNumberEl = document.getElementById('hotNumber');
+    if (hotNumberEl && hotNumberEl.parentElement) {
+      hotNumberEl.parentElement.setAttribute('data-action', 'showHotBacktest');
+      hotNumberEl.parentElement.style.cursor = 'pointer';
+      hotNumberEl.parentElement.style.transition = 'opacity 0.2s';
+    }
     setText('missCur', data.missCur || '');
     setText('missAvg', data.missAvg || '');
     setText('missMax', data.missMax || '');
@@ -140,6 +148,97 @@ const ViewAnalysisFull = {
   renderRankToDOM: function(containerId, html) {
     var container = document.getElementById(containerId);
     if(container) container.innerHTML = html;
+  },
+
+  /**
+   * 显示热门号码回测弹窗（v2.6.0 新增）
+   * 视图层：仅渲染 DOM，不做业务计算
+   * @param {Object} backtestData - 回测汇总数据 { totalTests, totalHits, totalHitRate, details }
+   */
+  showHotBacktestModal: function(backtestData) {
+    if (!backtestData || !backtestData.details || !backtestData.details.length) return;
+
+    var modalId = 'hotBacktestModal';
+    var existingModal = document.getElementById(modalId);
+    if (existingModal) existingModal.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = modalId;
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
+
+    var bd = backtestData;
+    var hl = '#FF6B35';
+
+    var html = '';
+    html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
+
+    // 标题
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<h3 style="font-size:17px;font-weight:700;color:var(--text);margin:0;">🔥 热门特码回测追踪</h3>';
+    html += '<button id="closeHotBacktestBtn" style="background:none;border:none;font-size:24px;color:var(--sub-text);cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>';
+    html += '</div>';
+
+    // 统计概览
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">';
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">回测期数</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:var(--text);">' + bd.totalTests + '</div>';
+    html += '</div>';
+    html += '<div style="background:' + hl + '1f;padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:' + hl + ';">' + bd.totalHits + '</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(10,132,255,0.12);padding:12px;border-radius:12px;text-align:center;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);margin-bottom:4px;">命中率</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:' + hl + ';">' + bd.totalHitRate + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    // 详情列表
+    html += '<div style="margin-bottom:12px;">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">最近 ' + bd.totalTests + ' 期详情</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+
+    (bd.details || []).forEach(function(item) {
+      var hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
+      var hitColor = item.isHit ? '#3B82F6' : '#FF453A';
+      var hitIcon = item.isHit ? '✓' : '✗';
+
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
+      html += '<span style="font-size:12px;font-weight:600;min-width:80px;">' + item.expect + '期</span>';
+      html += '<span style="font-size:14px;font-weight:700;">' + item.actualNumber + '</span>';
+      html += '<span style="font-size:11px;font-weight:600;color:var(--sub-text);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">TOP5:' + item.top5 + '</span>';
+      html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+
+    // 底部说明
+    html += '<div style="background:var(--bg-secondary);padding:12px;border-radius:8px;margin-top:12px;">';
+    html += '<div style="font-size:11px;color:var(--sub-text);line-height:1.5;">• 算法：统计最近 ' + (bd.windowSize || 12) + ' 期号码出现频率，取 TOP5 最热号码<br>• 与"特码热门TOP5"展示算法完全一致<br>• 数据仅供参考，不构成投资建议</div>';
+    html += '</div>';
+
+    html += '</div>';
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+
+    // 关闭逻辑
+    var closeHandler = function() {
+      overlay.style.animation = 'fadeOut 0.2s ease forwards';
+      setTimeout(function() { overlay.remove(); }, 200);
+    };
+    var closeBtn = document.getElementById('closeHotBacktestBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeHandler);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) closeHandler(); });
+
+    // 注入动画样式（复用已有动画 keyframes）
+    if (!document.getElementById('backtestModalAnimations')) {
+      var styleSheet = document.createElement('style');
+      styleSheet.id = 'backtestModalAnimations';
+      styleSheet.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.95)}to{transform:scale(1)}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
+      document.head.appendChild(styleSheet);
+    }
   }
 
 };
@@ -149,4 +248,5 @@ if (typeof ViewAnalysis !== 'undefined') {
   ViewAnalysis.renderFullAnalysis = ViewAnalysisFull.renderFullAnalysis;
   ViewAnalysis.buildRankHtml = ViewAnalysisFull.buildRankHtml;
   ViewAnalysis.renderRankToDOM = ViewAnalysisFull.renderRankToDOM;
+  ViewAnalysis.showHotBacktestModal = ViewAnalysisFull.showHotBacktestModal;
 }

@@ -43,6 +43,13 @@ const ViewAnalysisZodiac = {
 
     var zodiacFinalNum = document.getElementById('zodiacFinalNum');
     if(zodiacFinalNum) zodiacFinalNum.innerText = renderData.finalNums || '';
+
+    // 将精选特码移动到共振组合上方（动态调整 DOM，不修改 index.html）
+    var coreConclusion = document.querySelector('.core-conclusion');
+    if (zodiacFinalNum && coreConclusion && coreConclusion.parentNode &&
+        coreConclusion.compareDocumentPosition(zodiacFinalNum) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      coreConclusion.parentNode.insertBefore(zodiacFinalNum, coreConclusion);
+    }
   },
 
   /**

@@ -14,7 +14,7 @@ const ZodiacPredictionBacktest = {
   _runGenericBacktest: function(historyData, testCount, config) {
     if (!historyData || historyData.length < 10) return null;
 
-    testCount = Math.min(testCount || 12, 12);
+    testCount = Math.min(testCount || 24, 24);
     var results = [];
     var maxOffset = Math.min(testCount, historyData.length - 6);
 
@@ -141,7 +141,7 @@ const ZodiacPredictionBacktest = {
     var hitCount = results.filter(function(r) { return r.isHit; }).length;
     var hitRate = Math.round((hitCount / results.length) * 100);
 
-    var recentResults = results.slice(0, 10);
+    var recentResults = results.slice(0, 24);
     var recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
     var recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
 
@@ -332,14 +332,16 @@ const ZodiacPredictionBacktest = {
    * 算法：对每一期回测目标，模拟"在那一期时"用前 12 期窗口跑 5 维算法
    *       得出 top N 推荐号码，与实际特码对比判定命中。
    * @param {Array} historyData - 历史数据（[0] 最新，[1] 次新，…）
-   * @param {number} testCount - 回测期数（默认 20，上限 30）
+   * @param {number} testCount - 回测期数（默认 36，上限 50）
+   * @param {number} [analyzeLimit] - 分析窗口期数（默认 12，与实时推荐一致）
    * @returns {Object|null} 回测汇总
    */
-  runFinalZodiacBacktest: function(historyData, testCount) {
-    if (!historyData || historyData.length < 25) return null;
-    // 修复 #6：testCount 上限改为 historyData.length - 25（保证窗口 24 期 + 1 期跟随统计），
+  runFinalZodiacBacktest: function(historyData, testCount, analyzeLimit) {
+    var windowSize = analyzeLimit || 12;
+    if (!historyData || historyData.length < windowSize + 1) return null;
+    // 修复 #6：testCount 上限改为 historyData.length - windowSize（保证至少 analyzeLimit 期窗口），
     //    同时上限不超过 50；UI 展示时直接读取 results.length，避免"显示 36 实际跑 11"
-    testCount = Math.min(testCount || 36, 50, historyData.length - 25);
+    testCount = Math.min(testCount || 36, 50, historyData.length - windowSize);
     if (testCount <= 0) return null;
     var results = [];
 
@@ -349,11 +351,11 @@ const ZodiacPredictionBacktest = {
     for (var offset = 0; offset < testCount; offset++) {
       var targetItem = historyData[offset];
       if (!targetItem) break;
-      // 至少需要：1 期最新 + 12 期窗口 + 1 期跟随统计 = 14 期
-      if (historyData.length < offset + 25) break;
+      // 至少需要：analyzeLimit 期窗口 + 1 期目标
+      if (historyData.length < offset + windowSize + 1) break;
 
-      // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+12] 共 12 期
-      var list = historyData.slice(offset + 1, offset + 13);
+      // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+windowSize] 共 windowSize 期
+      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
 
       // 2. 计算"上期生肖的常跟随生肖"（修复 #1：只能用 targetItem 之前的历史数据，
       //    避免前视偏差/数据穿越。原版 historyData.slice(offset + 2, offset + 14) 包含了
@@ -537,9 +539,10 @@ const ZodiacPredictionBacktest = {
    * @param {number} testCount - 回测期数（默认 36）
    * @returns {Object} 各维度命中率统计
    */
-  analyzeDimensionHitRates: function(historyData, testCount) {
-    if (!historyData || historyData.length < 14) return null;
-    testCount = Math.min(testCount || 36, historyData.length - 14);
+  analyzeDimensionHitRates: function(historyData, testCount, analyzeLimit) {
+    var windowSize = analyzeLimit || 12;
+    if (!historyData || historyData.length < windowSize + 1) return null;
+    testCount = Math.min(testCount || 36, historyData.length - windowSize);
     if (testCount <= 0) return null;
 
     // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
@@ -565,9 +568,9 @@ const ZodiacPredictionBacktest = {
     for (var offset = 0; offset < testCount; offset++) {
       var targetItem = historyData[offset];
       if (!targetItem) break;
-      if (historyData.length < offset + 14) break;
+      if (historyData.length < offset + windowSize + 1) break;
 
-      var list = historyData.slice(offset + 1, offset + 13);
+      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
 
       // 跟随生肖（复用回测逻辑：offset>0 用累计，offset=0 用全量）
       var latestItem = list[0];
@@ -768,6 +771,287 @@ const ZodiacPredictionBacktest = {
     try { document.title = '[诊断] ' + report.join(' | ').slice(0, 200); } catch(_e){}
 
     return { stats: dimStats, details: detailLog };
+  },
+
+  /**
+   * 未命中原因分析（v3.0 新增）
+   *
+   * 用法（浏览器 console）：
+   *   ZodiacPrediction.analyzeMissReasons(StateManager._state.analysis.historyData, 36, 12)
+   *
+   * 对每期回测的未命中案例，分析实际号码在 8 个维度中的得分情况，
+   * 找出"漏掉"的模式，帮助定位权重问题和维度盲区。
+   *
+   * @param {Array} historyData - 历史数据
+   * @param {number} testCount - 回测期数（默认 36）
+   * @param {number} [analyzeLimit] - 分析窗口期数（默认 12）
+   * @returns {Object} 分析报告 { misses, dimStats, topMissReasons, summary }
+   */
+  analyzeMissReasons: function(historyData, testCount, analyzeLimit) {
+    var windowSize = analyzeLimit || 12;
+    if (!historyData || historyData.length < windowSize + 1) return null;
+
+    testCount = Math.min(testCount || 36, 50, historyData.length - windowSize);
+    if (testCount <= 0) return null;
+
+    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+
+    // 各维度在未命中时的"漏掉"计数
+    var dimMissed = {
+      follow:    { total: 0, missed: 0, note: '跟随生肖' },
+      head:      { total: 0, missed: 0, note: '头数比例' },
+      tail:      { total: 0, missed: 0, note: '尾数比例' },
+      color:     { total: 0, missed: 0, note: '波色比例' },
+      wuxing:    { total: 0, missed: 0, note: '五行比例' },
+      neighbor:  { total: 0, missed: 0, note: '邻号关联' },
+      inertia:   { total: 0, missed: 0, note: '特码惯性' },
+      miss:      { total: 0, missed: 0, note: '冷热反弹' }
+    };
+
+    // 未命中详情
+    var missDetails = [];
+    var hitCount = 0;
+    var totalCount = 0;
+
+    // 维度得分累计（用于对比命中 vs 未命中）
+    var hitDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
+    var missDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
+    var hitRankSum = 0;
+    var missRankSum = 0;
+
+    for (var offset = 0; offset < testCount; offset++) {
+      var targetItem = historyData[offset];
+      if (!targetItem) break;
+      if (historyData.length < offset + windowSize + 1) break;
+
+      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
+
+      // 跟随生肖（复用回测逻辑）
+      var latestItem = list[0];
+      var latestZodiac = '';
+      if (latestItem) {
+        var zodArr = Utils.parseZodiacArr(latestItem);
+        latestZodiac = zodArr[6] || '';
+      }
+      var followZodiacs = [];
+      if (latestZodiac && offset > 0) {
+        var fc = {};
+        for (var fi = 0; fi < offset; fi++) {
+          var ps = allSpecials[fi];
+          var cs = allSpecials[fi + 1];
+          if (ps.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(cs.zod)) {
+            fc[cs.zod] = (fc[cs.zod] || 0) + 1;
+          }
+        }
+        followZodiacs = Object.entries(fc).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
+      } else if (latestZodiac && offset === 0) {
+        try {
+          var _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
+          var _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
+          if (_ff) followZodiacs = Object.entries(_ff).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
+        } catch(_e){}
+      }
+      if (!followZodiacs.length) followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
+
+      // 调用核心算法
+      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
+      var candidateNums = recommend.candidateNums || [];
+
+      // 实际特码
+      var actualSpecial = allSpecials[offset];
+      var actualNum = actualSpecial.te || 0;
+
+      // 排序推荐号码
+      var sortedNums = candidateNums.slice().sort(function(a, b) {
+        return b.score - a.score || a.num - b.num;
+      });
+
+      // 找实际号码在候选列表中的排名和维度分解
+      var actualCandidate = null;
+      var actualRank = 0;
+      for (var ci = 0; ci < sortedNums.length; ci++) {
+        if (sortedNums[ci].num === actualNum) {
+          actualCandidate = sortedNums[ci];
+          actualRank = ci + 1;
+          break;
+        }
+      }
+
+      // 判断是否命中（展示集合中是否包含实际号码）
+      var displayNums = sortedNums.slice(5);
+      var displayNumValues = displayNums.map(function(item) { return item.num; });
+      var isHit = displayNumValues.indexOf(actualNum) !== -1;
+
+      totalCount++;
+
+      if (isHit) {
+        hitCount++;
+        if (actualCandidate && actualCandidate.dims) {
+          var hd = actualCandidate.dims;
+          hitDimSum.follow   += hd.follow   || 0;
+          hitDimSum.head     += hd.head     || 0;
+          hitDimSum.tail     += hd.tail     || 0;
+          hitDimSum.color    += hd.color    || 0;
+          hitDimSum.wuxing   += hd.wuxing   || 0;
+          hitDimSum.neighbor += hd.neighbor || 0;
+          hitDimSum.inertia  += hd.inertia  || 0;
+          hitDimSum.miss     += hd.miss     || 0;
+        }
+        hitRankSum += actualRank;
+      } else {
+        // 未命中：分析各维度
+        if (actualCandidate && actualCandidate.dims) {
+          var md = actualCandidate.dims;
+          missDimSum.follow   += md.follow   || 0;
+          missDimSum.head     += md.head     || 0;
+          missDimSum.tail     += md.tail     || 0;
+          missDimSum.color    += md.color    || 0;
+          missDimSum.wuxing   += md.wuxing   || 0;
+          missDimSum.neighbor += md.neighbor || 0;
+          missDimSum.inertia  += md.inertia  || 0;
+          missDimSum.miss     += md.miss     || 0;
+
+          // 统计各维度是否"漏掉"（实际号码在该维度得分为 0）
+          if ((md.follow || 0) === 0) dimMissed.follow.missed++;
+          if ((md.head || 0) === 0)   dimMissed.head.missed++;
+          if ((md.tail || 0) === 0)   dimMissed.tail.missed++;
+          if ((md.color || 0) === 0)  dimMissed.color.missed++;
+          if ((md.wuxing || 0) === 0) dimMissed.wuxing.missed++;
+          if ((md.neighbor || 0) === 0) dimMissed.neighbor.missed++;
+          if ((md.inertia || 0) === 0) dimMissed.inertia.missed++;
+          if ((md.miss || 0) === 0)    dimMissed.miss.missed++;
+        }
+        missRankSum += actualRank;
+
+        missDetails.push({
+          expect: targetItem.expect,
+          actualNum: actualNum,
+          actualZod: actualSpecial.zod || '-',
+          actualHead: actualSpecial.head,
+          actualTail: actualSpecial.tail,
+          actualColor: actualSpecial.colorName,
+          actualWuxing: actualSpecial.wuxing,
+          score: actualCandidate ? actualCandidate.score : 0,
+          rank: actualRank,
+          dims: actualCandidate ? actualCandidate.dims : null
+        });
+      }
+    }
+
+    // 计算各维度总计数
+    var missCount = missDetails.length;
+    var dimKeys = ['follow', 'head', 'tail', 'color', 'wuxing', 'neighbor', 'inertia', 'miss'];
+    dimKeys.forEach(function(k) { dimMissed[k].total = missCount; });
+
+    // 命中率
+    var hitRate = totalCount > 0 ? Math.round(hitCount / totalCount * 100) : 0;
+
+    // ========== 输出 console 报告 ==========
+    var report = [];
+    report.push('');
+    report.push('┌─────────────────────────────────────────────────────┐');
+    report.push('│        📊 未命中原因分析报告 v3.0                   │');
+    report.push('├─────────────────────────────────────────────────────┤');
+    report.push('│ 总回测 ' + String(totalCount).padStart(3) + ' 期 | 命中 ' + String(hitCount).padStart(3) + ' 期 | 未命中 ' + String(missCount).padStart(3) + ' 期 | 命中率 ' + hitRate + '%');
+    report.push('├─────────────────────────────────────────────────────┤');
+    report.push('│                                                     │');
+    report.push('│  📌 各维度平均得分对比（命中 vs 未命中）            │');
+    report.push('│                                                     │');
+
+    var dimLabels = {
+      follow: '跟随生肖', head: '头数比例', tail: '尾数比例',
+      color: '波色比例', wuxing: '五行比例', neighbor: '邻号关联',
+      inertia: '特码惯性', miss: '冷热反弹'
+    };
+
+    dimKeys.forEach(function(k) {
+      var hitAvg = hitCount > 0 ? (hitDimSum[k] / hitCount).toFixed(2) : '0.00';
+      var missAvg = missCount > 0 ? (missDimSum[k] / missCount).toFixed(2) : '0.00';
+      var diff = (parseFloat(hitAvg) - parseFloat(missAvg)).toFixed(2);
+      var arrow = parseFloat(diff) > 0.1 ? '⬇差' : (parseFloat(diff) < -0.1 ? '⬆逆' : ' 平');
+      report.push('│  ' + dimLabels[k].padEnd(12) + ' 命中均分=' + hitAvg + '  未中均分=' + missAvg + '  差异=' + diff + ' ' + arrow);
+    });
+
+    report.push('│                                                     │');
+    report.push('│  📌 各维度"漏掉"率（实际号码在该维度得分为 0 的比例）│');
+    report.push('│                                                     │');
+
+    // 按漏掉率排序
+    var missedSorted = dimKeys.slice().sort(function(a, b) {
+      return (dimMissed[b].missed / Math.max(dimMissed[b].total, 1)) -
+             (dimMissed[a].missed / Math.max(dimMissed[a].total, 1));
+    });
+
+    missedSorted.forEach(function(k) {
+      var rate = missCount > 0 ? (dimMissed[k].missed / missCount * 100).toFixed(1) : '0.0';
+      var bar = '';
+      var barLen = Math.round(parseFloat(rate) / 5);
+      for (var b = 0; b < barLen; b++) bar += '█';
+      report.push('│  ' + dimLabels[k].padEnd(12) + ' 漏掉率=' + rate + '% ' + bar);
+    });
+
+    report.push('│                                                     │');
+    report.push('│  📌 最近 5 期未命中案例（得分/排名）                │');
+    report.push('│                                                     │');
+
+    var recentMisses = missDetails.slice(0, 5);
+    recentMisses.forEach(function(m) {
+      var dimStr = '';
+      if (m.dims) {
+        var parts = [];
+        dimKeys.forEach(function(k) {
+          if ((m.dims[k] || 0) === 0) parts.push(k);
+        });
+        dimStr = parts.length > 0 ? ' 缺:' + parts.join(',') : ' 全中';
+      }
+      report.push('│  ' + (m.expect || '?') + '期  #' + String(m.actualNum).padStart(2) +
+        '  得分=' + m.score.toFixed(2) + '  排名=' + m.rank + '/49' + dimStr);
+    });
+
+    report.push('│                                                     │');
+    report.push('│  📌 改进建议                                        │');
+    report.push('│                                                     │');
+
+    // 基于漏掉率生成建议
+    missedSorted.forEach(function(k, idx) {
+      var rate = missCount > 0 ? parseFloat((dimMissed[k].missed / missCount * 100).toFixed(1)) : 0;
+      if (rate > 60 && idx < 3) {
+        var suggest = '';
+        if (k === 'follow') suggest = '→ 跟随生肖覆盖不足，检查 followMap 数据质量';
+        else if (k === 'head') suggest = '→ 头数比例范围过窄，考虑扩大 TOP 或增加权重';
+        else if (k === 'tail') suggest = '→ 尾数比例范围过窄，考虑扩大 TOP 或增加权重';
+        else if (k === 'color') suggest = '→ 波色维度覆盖不足，考虑增加权重';
+        else if (k === 'wuxing') suggest = '→ 五行维度覆盖不足，考虑增加权重';
+        else if (k === 'neighbor') suggest = '→ 邻号维度可扩大范围（±2），或增加权重';
+        else if (k === 'inertia') suggest = '→ 惯性维度覆盖不足，考虑增加权重';
+        else if (k === 'miss') suggest = '→ 冷热维度阈值偏高，降低 avgMiss 门槛';
+        report.push('│  ⚠ ' + dimLabels[k] + ' 漏掉率=' + rate + '% ' + suggest);
+      }
+    });
+
+    report.push('│                                                     │');
+    report.push('└─────────────────────────────────────────────────────┘');
+    report.push('');
+
+    console.log(report.join('\n'));
+
+    return {
+      totalTests: totalCount,
+      hits: hitCount,
+      misses: missCount,
+      hitRate: hitRate,
+      dimMissed: dimMissed,
+      missDetails: missDetails,
+      hitDimAvg: dimKeys.reduce(function(acc, k) {
+        acc[k] = hitCount > 0 ? parseFloat((hitDimSum[k] / hitCount).toFixed(2)) : 0;
+        return acc;
+      }, {}),
+      missDimAvg: dimKeys.reduce(function(acc, k) {
+        acc[k] = missCount > 0 ? parseFloat((missDimSum[k] / missCount).toFixed(2)) : 0;
+        return acc;
+      }, {}),
+      summary: '命中率=' + hitRate + '% | 未命中=' + missCount + '期 | 详细分析见 console'
+    };
   }
 };
 

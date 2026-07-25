@@ -1358,10 +1358,18 @@ const Business = {
   },
 
   /**
-   * 精选特码 5 维加权打分核心（v2 5 维算法核心，供实时推荐 + 回测共用）
-   * 算法说明：基于近期 12 期特码的头/尾/波色/五行统计热度，再结合
-   *          "上期开出生肖→下期常跟生肖"的跟随规律，对 1-49
+   * 精选特码 8 维加权打分核心（v3.0 优化，供实时推荐 + 回测共用）
+   * 算法说明：基于近期窗口特码的头/尾/波色/五行统计热度，再结合
+   *          "上期开出生肖→下期常跟生肖"的跟随规律，以及
+   *          邻号关联、特码惯性、冷热反弹三个新维度，对 1-49
    *          每个号码进行加权打分，按分数降序推荐。
+   *
+   * v3.0 优化（2026-07-26）：
+   *   - 频次比例加权：热头/热尾/波色/五行从二元评分改为比例加权，热门项获得更高分
+   *   - 新增邻号维度(W=1.0)：上期特码 ±1 邻号关联
+   *   - 新增惯性维度(W=0.5)：上期特码本身连续出现概率
+   *   - 新增冷热维度(W=1.0)：遗漏超过平均值的号码反弹潜力
+   *   - 权重重新分配：FOLLOW 3→2.5, HEAD 2→1.5, TAIL 2→1.5, COLOR 1.5→1.0, WUXING 1.5→1.0
    * @param {Array} list - 历史数据（[0] 最新，[1] 次新，…）
    * @param {number} targetCount - 推荐数量
    * @param {Array} followZodiacs - 跟随生肖（外部传入，回测可动态计算）
@@ -1440,31 +1448,123 @@ const Business = {
       ? Array.from(new Set(followZodiacs.filter(z => zodiacAll.includes(z)))).slice(0, 3)
       : [];
 
-    // ========== 5. 1-49 号码 5 维加权打分 ==========
-    // 权重设计（满分 10）：
-    //   跟随生肖 3   —— 最强信号（"上期开X→下期常跟Y"）
-    //   头数/尾数 2   —— 位置信号
-    //   波色/五行 1.5 —— 属性信号
-    const W_FOLLOW = 3, W_HEAD = 2, W_TAIL = 2, W_COLOR = 1.5, W_WUXING = 1.5;
+    // ========== 4.5 频次总和（用于比例加权）==========
+    const headTotal  = Object.values(headCount).reduce((a, b) => a + b, 0) || 1;
+    const tailTotal  = Object.values(tailCount).reduce((a, b) => a + b, 0) || 1;
+    const colorTotal = Object.values(colorCount).reduce((a, b) => a + b, 0) || 1;
+    const wuxingTotal = Object.values(wuxingCount).reduce((a, b) => a + b, 0) || 1;
+
+    // ========== 4.6 号码遗漏统计（用于冷热加权）==========
+    const numMissCount = {};   // { num: 遗漏期数 }
+    for (let n = 1; n <= 49; n++) {
+      numMissCount[n] = recentList.length; // 默认全遗漏
+    }
+    for (let ri = 0; ri < recentList.length; ri++) {
+      const s = BusinessCommonSpecials.getOne(recentList[ri]);
+      if (s && s.te >= 1 && s.te <= 49) {
+        if (numMissCount[s.te] === recentList.length) {
+          numMissCount[s.te] = ri; // 距离最近一期的期数（0=最新一期，越大越久远）
+        }
+      }
+    }
+    // 计算平均遗漏
+    var missTotal = 0;
+    for (var mn = 1; mn <= 49; mn++) { missTotal += numMissCount[mn]; }
+    const avgMiss = missTotal / 49;
+
+    // ========== 4.7 邻号 & 惯性计算 ==========
+    // 上期特码（list[0] 的特码）
+    const lastSpecial = BusinessCommonSpecials.getOne(list[0]);
+    const lastTe = lastSpecial && lastSpecial.te ? lastSpecial.te : 0;
+    // 邻号集合：±1（边界裁剪）
+    const neighborSet = new Set();
+    if (lastTe >= 1 && lastTe <= 49) {
+      if (lastTe > 1) neighborSet.add(lastTe - 1);
+      if (lastTe < 49) neighborSet.add(lastTe + 1);
+    }
+
+    // ========== 5. 1-49 号码 8 维加权打分 ==========
+    // v3.0 权重设计（满分 10）：
+    //   跟随生肖 2.5 —— 最强信号（"上期开X→下期常跟Y"）
+    //   头数 1.5     —— 位置信号（比例加权）
+    //   尾数 1.5     —— 位置信号（比例加权）
+    //   波色 1.0     —— 属性信号（比例加权）
+    //   五行 1.0     —— 属性信号（比例加权）
+    //   邻号 1.0     —— 上期特码 ±1 邻号关联
+    //   惯性 0.5     —— 上期特码本身连续出现
+    //   冷热 1.0     —— 遗漏超过平均值的号码反弹潜力
+    const W_FOLLOW = 2.5, W_HEAD = 1.5, W_TAIL = 1.5, W_COLOR = 1.0, W_WUXING = 1.0;
+    const W_NEIGHBOR = 1.0, W_INERTIA = 0.5, W_MISS = 1.0;
+    // 比例放大因子：让热门项获得 0.5~3.0 倍的得分区间
+    const RATIO_BOOST = 3;
 
     const candidateNums = [];
     for(let num = 1; num <= 49; num++) {
-      // 优先使用 12 期窗口投票结果，兜底用公式计算（确保所有49个号码都能参与评分）
+      // 优先使用窗口投票结果，兜底用公式计算（确保所有49个号码都能参与评分）
       const zod   = numZodiacMap.get(num) || (ZodiacPrediction && ZodiacPrediction.ZODIAC_ORDER ? ZodiacPrediction.ZODIAC_ORDER[(num - 1) % 12] : '');
-      // 修复 #9：边界保护——头/尾计算只对合法号码生效，非数字 NaN 不参与评分
       const head  = (typeof num === 'number' && num >= 1 && num <= 49) ? Math.floor(num / 10) : -1;
       const tail  = (typeof num === 'number' && num >= 1 && num <= 49) ? num % 10 : -1;
       const color = numColorMap[num];
       const wx    = numWuxingMap[num];
 
       let score = 0;
-      if(zod && topFollowZodiacs.includes(zod)) score += W_FOLLOW;
-      if(head >= 0 && topHeads.includes(head))  score += W_HEAD;
-      if(tail >= 0 && topTails.includes(tail))  score += W_TAIL;
-      if(color && topColors.includes(color))    score += W_COLOR;
-      if(wx && topWuxing.includes(wx))          score += W_WUXING;
+      let dimFollow = 0, dimHead = 0, dimTail = 0, dimColor = 0, dimWuxing = 0;
+      let dimNeighbor = 0, dimInertia = 0, dimMiss = 0;
 
-      candidateNums.push({ num, score });
+      // 跟随生肖（TOP3 内按比例加权）
+      if(zod && topFollowZodiacs.includes(zod)) {
+        const idx = topFollowZodiacs.indexOf(zod);
+        dimFollow = W_FOLLOW * (1.0 - idx * 0.15); // No.1=2.5, No.2=2.13, No.3=1.75
+        score += dimFollow;
+      }
+
+      // 头数（比例加权，所有头数都有分）
+      if(head >= 0 && headTotal > 0) {
+        dimHead = W_HEAD * (headCount[head] / headTotal) * RATIO_BOOST;
+        score += dimHead;
+      }
+
+      // 尾数（比例加权，所有尾数都有分）
+      if(tail >= 0 && tailTotal > 0) {
+        dimTail = W_TAIL * (tailCount[tail] / tailTotal) * RATIO_BOOST;
+        score += dimTail;
+      }
+
+      // 波色（比例加权）
+      if(color && colorTotal > 0 && colorCount[color] !== undefined) {
+        dimColor = W_COLOR * (colorCount[color] / colorTotal) * RATIO_BOOST;
+        score += dimColor;
+      }
+
+      // 五行（比例加权）
+      if(wx && wuxingTotal > 0 && wuxingCount[wx] !== undefined) {
+        dimWuxing = W_WUXING * (wuxingCount[wx] / wuxingTotal) * RATIO_BOOST;
+        score += dimWuxing;
+      }
+
+      // 邻号维度（v3.0 新增）
+      if(neighborSet.has(num)) {
+        dimNeighbor = W_NEIGHBOR;
+        score += dimNeighbor;
+      }
+
+      // 惯性维度（v3.0 新增）：上期特码本身
+      if(num === lastTe) {
+        dimInertia = W_INERTIA;
+        score += dimInertia;
+      }
+
+      // 冷热维度（v3.0 新增）：遗漏超过平均值的号码反弹潜力
+      if(numMissCount[num] > avgMiss) {
+        var missRatio = numMissCount[num] / Math.max(avgMiss, 1);
+        dimMiss = W_MISS * Math.min(missRatio, 2.0); // 上限 2 倍
+        score += dimMiss;
+      }
+
+      candidateNums.push({
+        num, score,
+        dims: { follow: dimFollow, head: dimHead, tail: dimTail, color: dimColor, wuxing: dimWuxing, neighbor: dimNeighbor, inertia: dimInertia, miss: dimMiss }
+      });
     }
 
     // ========== 6. 排序 + 选取 + 补位 ==========
@@ -1499,9 +1599,6 @@ const Business = {
    * @returns {string} 推荐号码字符串
    */
   renderZodiacFinalNums: (data) => {
-    const state = StateManager._state;
-    const targetCount = state.analysis.selectedNumCount;
-
     // 1. 计算"上期开出生肖的常跟随生肖"（来自全量 followMap）
     const latestItem = data.list && data.list[0];
     let topFollowZodiacs = [];
@@ -1575,8 +1672,6 @@ const Business = {
     // v2.0.8 修复：业务层禁止 DOM 操作，强制要求事件层传入 domValues
     const customPeriod = (domValues && domValues.customPeriod) || '';
     const selectPeriodVal = (domValues && domValues.selectPeriodVal) || '36';
-    const countVal = (domValues && domValues.countVal) || '5';
-    const customCount = (domValues && domValues.customCount) || '';
     const historyData = BusinessCommonData.getHistoryData(StateManager._state);
 
     let newLimit;
@@ -1593,22 +1688,12 @@ const Business = {
       newLimit = Number(selectPeriodVal);
     }
 
-    let finalCount = 5;
-
-    if(countVal === 'custom') {
-      finalCount = customCount && !isNaN(customCount) && Number(customCount) >= 1 && Number(customCount) <= 49
-        ? Number(customCount) : 5;
-    } else {
-      finalCount = Number(countVal);
-    }
-
-    const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit, selectedNumCount: finalCount };
+    const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit };
     StateManager.setState({ analysis: newAnalysis }, false);
 
     ViewAnalysis.syncSelectors({
       analyzeSelect: selectPeriodVal,
-      customNum: customPeriod,
-      customNumCountVisible: countVal === 'custom'
+      customNum: customPeriod
     });
 
     Business.renderFullAnalysis();
