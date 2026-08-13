@@ -57,7 +57,7 @@ const ViewCommonGiong = {
    * @param {string} config.percentKeyB      - 百分比键 B
    */
   renderLatestBinaryStats: function(data, config) {
-    var container = document.getElementById(config.containerId);
+    const container = document.getElementById(config.containerId);
     if (!container) return;
 
     if (!data) {
@@ -65,8 +65,8 @@ const ViewCommonGiong = {
       return;
     }
 
-    var p = config.classPrefix;
-    var html = '';
+    const p = config.classPrefix;
+    let html = '';
     html += '<div class="' + p + '-analysis-card">';
     html += '<div class="' + p + '-analysis-header">';
     html += '<div class="' + p + '-analysis-title">最近' + data.period + '期' + config.title + '</div>';
@@ -76,9 +76,9 @@ const ViewCommonGiong = {
 
     // 序列行
     html += '<div class="' + p + '-sequence-row">';
-    var reversedSequence = data.sequence.slice().reverse();
+    const reversedSequence = data.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var itemClass = item[config.dataKey] === config.labelA ? config.cssClassA : config.cssClassB;
+      const itemClass = item[config.dataKey] === config.labelA ? config.cssClassA : config.cssClassB;
       html += '<span class="' + p + '-seq-item ' + itemClass + '">' + item[config.dataKey] + '</span>';
     });
     html += '</div>';
@@ -103,7 +103,7 @@ const ViewCommonGiong = {
       html += '<div class="' + p + '-patterns-title">规律特征</div>';
       html += '<div class="' + p + '-patterns-list">';
       data.patterns.forEach(function(pattern) {
-        var patternClass = pattern.type.indexOf('连') !== -1 ? config.patternStreakClass : config.patternAltClass;
+        const patternClass = pattern.type.indexOf('连') !== -1 ? config.patternStreakClass : config.patternAltClass;
         html += '<div class="' + p + '-pattern-tag ' + patternClass + '">';
         html += pattern.type;
         if (pattern.count > 1) {
@@ -117,7 +117,7 @@ const ViewCommonGiong = {
 
     // 趋势预测
     if (data.trend && data.trend.prediction !== '-') {
-      var trendClass = data.trend.prediction === config.labelA ? config.trendClassA : config.trendClassB;
+      const trendClass = data.trend.prediction === config.labelA ? config.trendClassA : config.trendClassB;
       html += '<div class="' + p + '-trend-section" data-action="' + config.trendAction + '" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="' + p + '-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="' + p + '-trend-prediction">';
@@ -130,8 +130,8 @@ const ViewCommonGiong = {
       html += '</div>';
     }
 
-    html += '</div>';   // analysis-content
-    html += '</div>';   // analysis-card
+    html += '</div>'; // analysis-content
+    html += '</div>'; // analysis-card
 
     container.innerHTML = html;
   },
@@ -157,7 +157,7 @@ const ViewCommonGiong = {
    * @param {string} [config.fallbackColor] - 颜色缺失时的兜底色
    */
   renderLatestMultiStats: function(data, config) {
-    var container = document.getElementById(config.containerId);
+    const container = document.getElementById(config.containerId);
     if (!container) return;
 
     if (!data) {
@@ -165,10 +165,10 @@ const ViewCommonGiong = {
       return;
     }
 
-    var p = config.classPrefix;
-    var fallback = config.fallbackColor || config.colors[config.categories[0]];
+    const p = config.classPrefix;
+    const fallback = config.fallbackColor || config.colors[config.categories[0]];
 
-    var html = '';
+    let html = '';
     html += '<div class="' + p + '-analysis-card">';
     html += '<div class="' + p + '-analysis-header">';
     html += '<div class="' + p + '-analysis-title">最近' + data.period + '期' + config.title + '</div>';
@@ -178,9 +178,9 @@ const ViewCommonGiong = {
 
     // 序列行
     html += '<div class="' + p + '-sequence-row">';
-    var reversedSequence = data.sequence.slice().reverse();
+    const reversedSequence = data.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var itemColor = config.colors[item[config.dataKey]] || fallback;
+      const itemColor = config.colors[item[config.dataKey]] || fallback;
       html += '<span class="' + p + '-seq-item" style="background:' + itemColor.bg + ';color:#fff;">' + item[config.dataKey] + '</span>';
     });
     html += '</div>';
@@ -188,9 +188,9 @@ const ViewCommonGiong = {
     // 统计 grid
     html += '<div class="' + p + '-stats-grid">';
     config.categories.forEach(function(cat) {
-      var count = data.count[cat] || 0;
-      var percent = data.period > 0 ? Math.round((count / data.period) * 100) : 0;
-      var catColor = config.colors[cat];
+      const count = data.count[cat] || 0;
+      const percent = data.period > 0 ? Math.round((count / data.period) * 100) : 0;
+      const catColor = config.colors[cat];
       html += '<div class="' + p + '-stat-item">';
       html += '<div class="' + p + '-stat-header" style="color:' + catColor.text + ';border-left:3px solid ' + catColor.text + ';">';
       html += '<span class="' + p + '-stat-name">' + cat + '</span>';
@@ -210,8 +210,8 @@ const ViewCommonGiong = {
       html += '<div class="' + p + '-patterns-title">规律特征</div>';
       html += '<div class="' + p + '-patterns-list">';
       data.patterns.forEach(function(pattern) {
-        var patternCat = pattern.type.charAt(0);
-        var patternColor = config.colors[patternCat] || { bg: '#666' };
+        const patternCat = pattern.type.charAt(0);
+        const patternColor = config.colors[patternCat] || { bg: '#666' };
         html += '<div class="' + p + '-pattern-tag" style="background:' + patternColor.bg + ';">';
         html += pattern.type;
         if (pattern.count > 1) {
@@ -225,8 +225,8 @@ const ViewCommonGiong = {
 
     // 趋势预测
     if (data.trend && data.trend.prediction !== '-') {
-      var predCat = data.trend.prediction;
-      var predColor = config.colors[predCat] || fallback;
+      const predCat = data.trend.prediction;
+      const predColor = config.colors[predCat] || fallback;
       html += '<div class="' + p + '-trend-section" data-action="' + config.trendAction + '" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="' + p + '-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="' + p + '-trend-prediction">';
@@ -239,8 +239,8 @@ const ViewCommonGiong = {
       html += '</div>';
     }
 
-    html += '</div>';   // analysis-content
-    html += '</div>';   // analysis-card
+    html += '</div>'; // analysis-content
+    html += '</div>'; // analysis-card
 
     container.innerHTML = html;
   },

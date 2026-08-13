@@ -102,7 +102,7 @@ const BusinessEventBus = (function() {
       return;
     }
     
-    var off = on(event, function(...args) {
+    const off = on(event, function(...args) {
       off(); // 自动取消订阅
       callback.apply(null, args);
     });

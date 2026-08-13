@@ -52,9 +52,9 @@ const BusinessCrossExclusion = {
       sources = ['predict', 'giong', 'ultimate'];
     }
 
-    var recommendedSet = {};
-    var giongUltimateSet = {}; // Giong + 终极算法 二源并集（用于 Rule 2 降权判断）
-    var sourceDetails = { predict: [], giong: [], ultimate: [] };
+    const recommendedSet = {};
+    const giongUltimateSet = {}; // Giong + 终极算法 二源并集（用于 Rule 2 降权判断）
+    const sourceDetails = { predict: [], giong: [], ultimate: [] };
 
     // 入口级校验：历史数据为空或格式异常时，返回空推荐（全部生肖排除）
     if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
@@ -73,12 +73,12 @@ const BusinessCrossExclusion = {
     }
 
     // [Bug#1 修复] 提取统一生肖校验函数：三源共用，确保数据清洁
-    var isValidZodiac = function(z) {
+    const isValidZodiac = function(z) {
       return z && typeof z === 'string' && z.length === 1 && this.ALL_ZODIAC.indexOf(z) !== -1;
     }.bind(this);
 
     // [Bug#4 修复] 提取统一添加函数：Set + 去重 push（同时维护 Set 与 Array）
-    var addZodiac = function(zodiacSet, detailsArr, zx) {
+    const addZodiac = function(zodiacSet, detailsArr, zx) {
       if (!isValidZodiac(zx)) return;
       zodiacSet[zx] = true;
       if (detailsArr.indexOf(zx) === -1) { // 数组去重
@@ -89,9 +89,9 @@ const BusinessCrossExclusion = {
     // 1. 生肖预测（v1推荐，前6名）
     if (sources.indexOf('predict') !== -1) {
       try {
-        var predictResult = ZodiacPrediction.calcContinuousScores(historyData);
+        const predictResult = ZodiacPrediction.calcContinuousScores(historyData);
         if (predictResult && predictResult.cards) {
-          for (var i = 0; i < Math.min(6, predictResult.cards.length); i++) {
+          for (let i = 0; i < Math.min(6, predictResult.cards.length); i++) {
             // [Bug#1 修复] predict 源现在也做生肖合法性校验
             addZodiac(recommendedSet, sourceDetails.predict, predictResult.cards[i].zodiac);
           }
@@ -107,14 +107,14 @@ const BusinessCrossExclusion = {
     // 2. Giong 标签页推荐（getZoneRecommend，取前6名）
     if (sources.indexOf('giong') !== -1) {
       try {
-        var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
-        var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
+        const freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
+        const patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
         if (freqResult && patternResult) {
-          var giongRecommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
+          const giongRecommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
           if (giongRecommend && giongRecommend.length) {
-            for (var j = 0; j < Math.min(6, giongRecommend.length); j++) {
-              var item = giongRecommend[j];
-              var zx = Array.isArray(item) ? item[0] : (item.zodiac || '');
+            for (let j = 0; j < Math.min(6, giongRecommend.length); j++) {
+              const item = giongRecommend[j];
+              const zx = Array.isArray(item) ? item[0] : (item.zodiac || '');
               if (isValidZodiac(zx)) {
                 recommendedSet[zx] = true;
                 giongUltimateSet[zx] = true; // 同步入二源并集
@@ -133,16 +133,16 @@ const BusinessCrossExclusion = {
     // 3. 终极算法推荐（主推 + 备用，全部纳入交叉排除并集）
     if (sources.indexOf('ultimate') !== -1) {
       try {
-        var ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
+        const ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
         if (ultimateHistory && ultimateHistory.length) {
-          var ultimateReport = BusinessUltimate.generateFullReport(ultimateHistory);
+          const ultimateReport = BusinessUltimate.generateFullReport(ultimateHistory);
           if (ultimateReport && ultimateReport.numbers) {
             // V1.4.1：主推 + 备用 一并纳入（之前遗漏了 alternativeNumbers）
-            var ultimateMain = ultimateReport.numbers.mainNumbers || ultimateReport.numbers.transitionNumbers || [];
-            var ultimateAlt = ultimateReport.numbers.alternativeNumbers || [];
-            var ultimateNums = ultimateMain.concat(ultimateAlt);
-            for (var k = 0; k < ultimateNums.length; k++) {
-              var zx = BusinessUltimate._getZodiacByNum(ultimateNums[k]);
+            const ultimateMain = ultimateReport.numbers.mainNumbers || ultimateReport.numbers.transitionNumbers || [];
+            const ultimateAlt = ultimateReport.numbers.alternativeNumbers || [];
+            const ultimateNums = ultimateMain.concat(ultimateAlt);
+            for (let k = 0; k < ultimateNums.length; k++) {
+              const zx = BusinessUltimate._getZodiacByNum(ultimateNums[k]);
               if (isValidZodiac(zx)) {
                 recommendedSet[zx] = true;
                 giongUltimateSet[zx] = true; // 同步入二源并集
@@ -159,10 +159,10 @@ const BusinessCrossExclusion = {
     }
 
     // 生成排除列表
-    var excluded = [];
-    var recommended = [];
-    for (var m = 0; m < this.ALL_ZODIAC.length; m++) {
-      var z = this.ALL_ZODIAC[m];
+    const excluded = [];
+    const recommended = [];
+    for (let m = 0; m < this.ALL_ZODIAC.length; m++) {
+      const z = this.ALL_ZODIAC[m];
       if (recommendedSet[z]) {
         recommended.push(z);
       } else {
@@ -173,21 +173,21 @@ const BusinessCrossExclusion = {
     // === Rule 2 触发逻辑 ===
     // 触发条件：3 源并集已覆盖全部 12 生肖（即 Rule 1 排除列表为空）
     // 降权对象：被 3 源推荐、但未被"Giong + 终极算法"二源推荐的生肖
-    var twoSourceUnion = [];
-    for (var t = 0; t < this.ALL_ZODIAC.length; t++) {
-      var tz = this.ALL_ZODIAC[t];
+    const twoSourceUnion = [];
+    for (let t = 0; t < this.ALL_ZODIAC.length; t++) {
+      const tz = this.ALL_ZODIAC[t];
       if (giongUltimateSet[tz]) twoSourceUnion.push(tz);
     }
 
     // [Bug#8 修复] 提取 rule2Triggered 为单一判定源，避免逻辑散落
-    var rule2Triggered = excluded.length === 0;
+    const rule2Triggered = excluded.length === 0;
 
-    var downweighted = [];
-    var downweightFactor = 0;
+    const downweighted = [];
+    let downweightFactor = 0;
     if (rule2Triggered) {
       // 3 源全覆盖 → 启动 Rule 2 软降权
-      for (var n = 0; n < this.ALL_ZODIAC.length; n++) {
-        var zn = this.ALL_ZODIAC[n];
+      for (let n = 0; n < this.ALL_ZODIAC.length; n++) {
+        const zn = this.ALL_ZODIAC[n];
         if (!giongUltimateSet[zn]) {
           downweighted.push(zn);
         }

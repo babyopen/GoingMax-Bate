@@ -10,8 +10,8 @@ const ViewAnalysisZodiac = {
    * 渲染生肖关联分析（接收预处理的渲染数据）
    */
   renderZodiacAnalysis: function(renderData) {
-    var zodiacEmptyTip = document.getElementById('zodiacEmptyTip');
-    var zodiacContent = document.getElementById('zodiacContent');
+    const zodiacEmptyTip = document.getElementById('zodiacEmptyTip');
+    const zodiacContent = document.getElementById('zodiacContent');
     
     if(!renderData) {
       if(zodiacEmptyTip) zodiacEmptyTip.style.display = 'block';
@@ -22,30 +22,30 @@ const ViewAnalysisZodiac = {
     if(zodiacEmptyTip) zodiacEmptyTip.style.display = 'none';
     if(zodiacContent) zodiacContent.style.display = 'block';
 
-    var combo1 = document.getElementById('combo1');
-    var combo2 = document.getElementById('combo2');
-    var combo3 = document.getElementById('combo3');
+    const combo1 = document.getElementById('combo1');
+    const combo2 = document.getElementById('combo2');
+    const combo3 = document.getElementById('combo3');
     if(combo1) combo1.innerText = renderData.combo1 || '';
     if(combo2) combo2.innerText = renderData.combo2 || '';
     if(combo3) combo3.innerText = renderData.combo3 || '';
 
-    var tailZodiacGrid = document.getElementById('tailZodiacGrid');
+    const tailZodiacGrid = document.getElementById('tailZodiacGrid');
     if(tailZodiacGrid) tailZodiacGrid.innerHTML = renderData.tailZodiacHtml || '';
 
-    var zodiacFollowTable = document.getElementById('zodiacFollowTable');
+    const zodiacFollowTable = document.getElementById('zodiacFollowTable');
     if(zodiacFollowTable) zodiacFollowTable.innerHTML = renderData.followTableHtml || '';
 
-    var zodiacTotalGrid = document.getElementById('zodiacTotalGrid');
+    const zodiacTotalGrid = document.getElementById('zodiacTotalGrid');
     if(zodiacTotalGrid) zodiacTotalGrid.innerHTML = renderData.zodiacTotalHtml || '';
 
-    var zodiacMissGrid = document.getElementById('zodiacMissGrid');
+    const zodiacMissGrid = document.getElementById('zodiacMissGrid');
     if(zodiacMissGrid) zodiacMissGrid.innerHTML = renderData.zodiacMissHtml || '';
 
-    var zodiacFinalNum = document.getElementById('zodiacFinalNum');
+    const zodiacFinalNum = document.getElementById('zodiacFinalNum');
     if(zodiacFinalNum) zodiacFinalNum.innerText = renderData.finalNums || '';
 
     // 将精选特码移动到共振组合上方（动态调整 DOM，不修改 index.html）
-    var coreConclusion = document.querySelector('.core-conclusion');
+    const coreConclusion = document.querySelector('.core-conclusion');
     if (zodiacFinalNum && coreConclusion && coreConclusion.parentNode &&
         coreConclusion.compareDocumentPosition(zodiacFinalNum) & Node.DOCUMENT_POSITION_FOLLOWING) {
       coreConclusion.parentNode.insertBefore(zodiacFinalNum, coreConclusion);
@@ -59,22 +59,22 @@ const ViewAnalysisZodiac = {
     if (!backtestData || !backtestData.details) return;
 
     // 移除已存在的弹窗，避免重复
-    var existing = document.getElementById('finalBacktestModal');
+    const existing = document.getElementById('finalBacktestModal');
     if (existing) existing.remove();
 
     // 注入一次性动画样式
     if (!document.getElementById('finalBacktestAnimations')) {
-      var styleEl = document.createElement('style');
+      const styleEl = document.createElement('style');
       styleEl.id = 'finalBacktestAnimations';
       styleEl.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.95)}to{transform:scale(1)}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
       document.head.appendChild(styleEl);
     }
 
-    var overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     overlay.id = 'finalBacktestModal';
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;opacity:0;animation:fadeIn 0.25s ease forwards;';
 
-    var html = '';
+    let html = '';
     html += '<div style="background:var(--card);border-radius:14px;width:100%;max-width:420px;max-height:86vh;overflow-y:auto;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
 
     // 标题
@@ -108,18 +108,18 @@ const ViewAnalysisZodiac = {
 
     // 下期预测独立卡片（2026-07-21 从回测明细抽出，置于统计概览之后、明细列表之前）
     if (nextPredictText) {
-      var pureNums = nextPredictText.replace('✅ 精选特码：', '').trim();
-      var predictNumsArr = pureNums.split(' ').filter(Boolean);
+      const pureNums = nextPredictText.replace('✅ 精选特码：', '').trim();
+      const predictNumsArr = pureNums.split(' ').filter(Boolean);
       // 下期号优先用 event.js 传入的 nextExpect（基于 historyData[0] 最新一期），
       //   兜底用 details[0].expect + 1
-      var _nextExpLabel = '';
+      let _nextExpLabel = '';
       if (nextExpect) {
         _nextExpLabel = String(nextExpect);
       } else if (backtestData.details && backtestData.details[0] && backtestData.details[0].expect) {
         _nextExpLabel = String(Number(backtestData.details[0].expect) + 1);
       }
       // 号码蓝色显示（区别于回测行的红字推荐 + 蓝字命中）
-      var predictNumsHtml = predictNumsArr.map(function(n) {
+      const predictNumsHtml = predictNumsArr.map(function(n) {
         return '<span style="color:#0A84FF;">' + Utils.formatNum(Number(n)) + '</span>';
       }).join(' ');
 
@@ -147,14 +147,14 @@ const ViewAnalysisZodiac = {
     html += '<div style="max-height:46vh;overflow-y:auto;padding:2px 0;">';
 
     backtestData.details.forEach(function(item) {
-      var hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
+      const hitTag = item.isHit ? '<span style="color:#fff;background:#30D158;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">准</span>'
                                 : '<span style="color:#fff;background:#FF3B30;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px;">错</span>';
-      var actualNumStr = Utils.formatNum(item.actualNumber || 0);
+      const actualNumStr = Utils.formatNum(item.actualNumber || 0);
       // 推荐号码：算法推荐红字 + 随机补足灰字；若实际号码在其中则蓝色高亮
-      var numsHtml = (item.recommendedNums || []).map(function(item2) {
-        var n = typeof item2 === 'object' ? item2.num : item2;
-        var isRandom = typeof item2 === 'object' && item2.isRandom === true;
-        var ns = Utils.formatNum(n);
+      const numsHtml = (item.recommendedNums || []).map(function(item2) {
+        const n = typeof item2 === 'object' ? item2.num : item2;
+        const isRandom = typeof item2 === 'object' && item2.isRandom === true;
+        const ns = Utils.formatNum(n);
         if (n === item.actualNumber) {
           return '<span style="color:#1e6dff;font-weight:700;">' + ns + '</span>';
         }
@@ -194,7 +194,7 @@ const ViewAnalysisZodiac = {
     document.body.appendChild(overlay);
 
     // 关闭按钮
-    var closeBtn = document.getElementById('closeFinalBacktestBtn');
+    const closeBtn = document.getElementById('closeFinalBacktestBtn');
     if (closeBtn) {
       closeBtn.addEventListener('click', function() {
         overlay.style.animation = 'fadeOut 0.2s ease forwards';

@@ -10,7 +10,7 @@ const ViewZodiacGiongSize = {
    * 最近 N 期大小分析（序列 + 大小比例 + 规律 + 趋势预测）
    */
   renderLatestSizeStats: function(sizeData) {
-    var container = document.getElementById('latestSizeStatsPanel');
+    const container = document.getElementById('latestSizeStatsPanel');
     if (!container) return;
 
     if (!sizeData) {
@@ -18,7 +18,7 @@ const ViewZodiacGiongSize = {
       return;
     }
 
-    var html = '';
+    let html = '';
     html += '<div class="size-analysis-card">';
     html += '<div class="size-analysis-header">';
     html += '<div class="size-analysis-title">最近' + sizeData.period + '期大小分析</div>';
@@ -27,9 +27,9 @@ const ViewZodiacGiongSize = {
     html += '<div class="size-analysis-content">';
 
     html += '<div class="size-sequence-row">';
-    var reversedSequence = sizeData.sequence.slice().reverse();
+    const reversedSequence = sizeData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var sizeClass = item.size === '大' ? 'size-big' : 'size-small';
+      const sizeClass = item.size === '大' ? 'size-big' : 'size-small';
       html += '<span class="size-seq-item ' + sizeClass + '">' + item.size + '</span>';
     });
     html += '</div>';
@@ -67,7 +67,7 @@ const ViewZodiacGiongSize = {
       html += '<div class="size-trend-section" data-action="showSizeBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="size-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="size-trend-prediction">';
-      var trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
+      const trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
       html += '<span class="trend-result ' + trendClass + '">' + sizeData.trend.prediction + '</span>';
       html += '<span class="trend-confidence">' + sizeData.trend.confidence + '%可信度</span>';
       html += '</div>';
@@ -109,11 +109,11 @@ const ViewZodiacGiongSize = {
   _renderSizeContent: function(sizeData) {
     if (!sizeData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
 
-    var html = '';
+    let html = '';
     html += '<div class="combined-sequence-row">';
-    var reversedSequence = sizeData.sequence.slice().reverse();
+    const reversedSequence = sizeData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var sizeClass = item.size === '大' ? 'size-big' : 'size-small';
+      const sizeClass = item.size === '大' ? 'size-big' : 'size-small';
       html += '<span class="combined-seq-item ' + sizeClass + '">' + item.size + '</span>';
     });
     html += '</div>';
@@ -130,7 +130,7 @@ const ViewZodiacGiongSize = {
     }
 
     if (sizeData.trend && sizeData.trend.prediction !== '-') {
-      var trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
+      const trendClass = sizeData.trend.prediction === '大' ? 'trend-big' : 'trend-small';
       html += '<div class="combined-trend" data-action="showSizeBacktest" style="cursor:pointer;">';
       html += '<span class="trend-predict ' + trendClass + '">' + sizeData.trend.prediction + '</span>';
       html += '<span class="trend-conf">' + sizeData.trend.confidence + '%</span>';

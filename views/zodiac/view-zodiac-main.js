@@ -13,10 +13,10 @@ const ViewZodiacMain = {
    * @param {number|null} [ageHours] - 缓存年龄（小时）
    */
   renderSlidingWindowPrediction: function(data, timestamp, ageHours) {
-    var headerCard = document.getElementById('mainPredictHeaderCard');
-    var candidatesCard = document.getElementById('mainCandidatesCard');
-    var scoreTableCard = document.getElementById('mainScoreTableCard');
-    var emptyCard = document.getElementById('mainEmptyCard');
+    const headerCard = document.getElementById('mainPredictHeaderCard');
+    const candidatesCard = document.getElementById('mainCandidatesCard');
+    const scoreTableCard = document.getElementById('mainScoreTableCard');
+    const emptyCard = document.getElementById('mainEmptyCard');
 
     if (!data || !data.candidates || !data.candidates.length) {
       if (headerCard) headerCard.style.display = 'none';
@@ -24,7 +24,7 @@ const ViewZodiacMain = {
       if (scoreTableCard) scoreTableCard.style.display = 'none';
       if (emptyCard) {
         emptyCard.style.display = '';
-        var emptyTip = document.getElementById('mainEmptyTip');
+        const emptyTip = document.getElementById('mainEmptyTip');
         if (emptyTip) emptyTip.textContent = '数据不足（需至少12期历史数据），请先刷新数据';
       }
       return;
@@ -36,20 +36,20 @@ const ViewZodiacMain = {
     if (scoreTableCard) scoreTableCard.style.display = '';
 
     // 1. 渲染标题（移至 zp-header-row 内，仅保留期号）
-    var titleEl = document.getElementById('mainPredictTitle');
+    const titleEl = document.getElementById('mainPredictTitle');
     if (titleEl) {
       titleEl.textContent = '';
     }
 
     // 2. 渲染候选卡片（前6名）
-    var candidatesGrid = document.getElementById('mainCandidatesGrid');
+    const candidatesGrid = document.getElementById('mainCandidatesGrid');
     if (candidatesGrid) {
       // 计算时间显示文本
-      var timeStr = '';
-      var ageText = '';
+      let timeStr = '';
+      let ageText = '';
       if (timestamp && timestamp > 0) {
-        var updateTime = new Date(timestamp);
-        var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+        const updateTime = new Date(timestamp);
+        const pad = function(n) { return n < 10 ? '0' + n : '' + n; };
         timeStr = pad(updateTime.getMonth() + 1) + '-' + pad(updateTime.getDate()) + ' ' +
                   pad(updateTime.getHours()) + ':' + pad(updateTime.getMinutes());
         if (ageHours === null || ageHours === undefined) {
@@ -63,21 +63,21 @@ const ViewZodiacMain = {
         }
       }
 
-      var cardHtml = '<div class="zp-header-row">';
+      let cardHtml = '<div class="zp-header-row">';
       cardHtml += '<span class="zp-header-period">第' + data.nextExpect + '期</span>';
       cardHtml += '<span class="sw-freshness-inline">最后更新：' + (timestamp ? timeStr : '—') + '（' + ageText + '）</span>';
       cardHtml += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制主推候选生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
       cardHtml += '</div>';
       cardHtml += '<div class="zodiac-pred-grid">';
       data.candidates.forEach(function(item, idx) {
-        var rankNum = idx + 1;
-        var cardClass = '';
+        const rankNum = idx + 1;
+        let cardClass = '';
         if (rankNum === 1) cardClass = 'card-rank-1';
         else if (rankNum === 2) cardClass = 'card-rank-2';
         else if (rankNum === 3) cardClass = 'card-rank-3';
         else cardClass = 'card-rank-other';
 
-        var scoreColor = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
+        const scoreColor = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
 
         cardHtml += ViewCommon.renderZodiacCardHtml(
           item.shengxiao, rankNum, cardClass, item.emoji,
@@ -89,26 +89,26 @@ const ViewZodiacMain = {
     }
 
     // 3. 渲染评分详细卡片（所有12生肖，卡片式布局适配手机端）
-    var scoreTable = document.getElementById('mainScoreTable');
+    const scoreTable = document.getElementById('mainScoreTable');
     if (scoreTable) {
-      var cardHtml = '<div class="sw-score-cards" id="swScoreCards">';
+      let cardHtml = '<div class="sw-score-cards" id="swScoreCards">';
 
-      var allScores = data.allScores || [];
+      const allScores = data.allScores || [];
       allScores.forEach(function(item, idx) {
-        var isTop6 = data.candidates.some(function(c) { return c.shengxiao === item.shengxiao; });
-        var scoreStyle = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
-        var top6Class = isTop6 ? ' sw-score-card-top6' : '';
+        const isTop6 = data.candidates.some(function(c) { return c.shengxiao === item.shengxiao; });
+        const scoreStyle = item.score >= 60 ? 'color:#30D158;' : (item.score >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
+        const top6Class = isTop6 ? ' sw-score-card-top6' : '';
         // 默认只展示第1张，其余折叠
-        var collapsed = idx > 0 ? ' sw-score-card-collapsed' : '';
+        const collapsed = idx > 0 ? ' sw-score-card-collapsed' : '';
 
-        var zoneClass6 = ViewCommon.getZoneClass(item.zone6);
-        var zoneClass12 = ViewCommon.getZoneClass(item.zone12);
-        var zoneClass24 = ViewCommon.getZoneClass(item.zone24);
-        var zoneClass36 = ViewCommon.getZoneClass(item.zone36);
+        const zoneClass6 = ViewCommon.getZoneClass(item.zone6);
+        const zoneClass12 = ViewCommon.getZoneClass(item.zone12);
+        const zoneClass24 = ViewCommon.getZoneClass(item.zone24);
+        const zoneClass36 = ViewCommon.getZoneClass(item.zone36);
 
         // 判断生肖冷热（以 36 期区域为准）
-        var isHot = ['zone-peak', 'zone-high', 'zone-ovht', 'zone-mid', 'zone-active'].indexOf(zoneClass36) >= 0;
-        var nameClass = isHot ? ' sw-zone-hot' : ' sw-zone-cold';
+        const isHot = ['zone-peak', 'zone-high', 'zone-ovht', 'zone-mid', 'zone-active'].indexOf(zoneClass36) >= 0;
+        const nameClass = isHot ? ' sw-zone-hot' : ' sw-zone-cold';
 
         cardHtml += '<div class="sw-score-card' + top6Class + collapsed + '">';
         // 头部：生肖名 + 信号 + 评分 + 遗漏
@@ -135,7 +135,7 @@ const ViewZodiacMain = {
       });
 
       // 折叠/展开按钮
-      var totalCount = allScores.length;
+      const totalCount = allScores.length;
       cardHtml += '<div class="sw-score-toggle-wrap">';
       cardHtml += '<button class="sw-score-toggle-btn" data-action="toggleScoreCards" data-expanded="false">';
       cardHtml += '展开全部（共' + totalCount + '个生肖）';

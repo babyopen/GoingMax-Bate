@@ -3,7 +3,7 @@ const BusinessGiong = {
   // NUM_TO_ZODIAC / ZODIAC_TO_NUM 已迁移到 CONFIG（2026-06-09 重构）
   NUM_TO_ZODIAC: CONFIG.NUM_TO_ZODIAC,
   ZODIAC_TO_NUM: (function() {
-    var map = {};
+    const map = {};
     Object.keys(CONFIG.NUM_TO_ZODIAC).forEach(function(num) {
       map[CONFIG.NUM_TO_ZODIAC[num]] = Number(num);
     });
@@ -57,12 +57,12 @@ const BusinessGiong = {
   },
 
   historyDataToNumArray: function(historyData) {
-    var result = [];
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var zodArr = Utils.parseZodiacArr(item);
-      var zod = zodArr[6] || '';
-      var num = this._toNum(zod);
+    const result = [];
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const zodArr = Utils.parseZodiacArr(item);
+      const zod = zodArr[6] || '';
+      const num = this._toNum(zod);
       if (num) {
         result.push(num);
       }
@@ -71,9 +71,9 @@ const BusinessGiong = {
   },
 
   countFreqInWindow: function(numArray, windowSize) {
-    var freq = {};
-    for (var n = 1; n <= 12; n++) freq[n] = 0;
-    var window = numArray.slice(0, Math.min(windowSize, numArray.length));
+    const freq = {};
+    for (let n = 1; n <= 12; n++) freq[n] = 0;
+    const window = numArray.slice(0, Math.min(windowSize, numArray.length));
     window.forEach(function(num) {
       if (num >= 1 && num <= 12) freq[num]++;
     });
@@ -81,7 +81,7 @@ const BusinessGiong = {
   },
 
   getNextInChain: function(current, chain) {
-    var idx = chain.indexOf(current);
+    const idx = chain.indexOf(current);
     if (idx === -1) return chain[0];
     return chain[(idx + 1) % chain.length];
   },
@@ -91,19 +91,19 @@ const BusinessGiong = {
   },
 
   getPeriods: function(numArray) {
-    var c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
-    var c11 = this.countFreqInWindow(numArray, this.WINDOW_11);
-    var c24 = this.countFreqInWindow(numArray, this.WINDOW_24);
+    const c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
+    const c11 = this.countFreqInWindow(numArray, this.WINDOW_11);
+    const c24 = this.countFreqInWindow(numArray, this.WINDOW_24);
     return { c12: c12, c11: c11, c24: c24 };
   },
 
   calcDownWeightBlackList: function(numArray) {
-    var periods = this.getPeriods(numArray);
-    var blackList = [];
+    const periods = this.getPeriods(numArray);
+    const blackList = [];
 
-    for (var num = 1; num <= 12; num++) {
-      var f12 = periods.c12[num] || 0;
-      var f11 = periods.c11[num] || 0;
+    for (let num = 1; num <= 12; num++) {
+      const f12 = periods.c12[num] || 0;
+      const f11 = periods.c11[num] || 0;
 
       if (f12 >= this.DOWN_WEIGHT_THRESHOLD && f11 > this.RELEASE_THRESHOLD) {
         blackList.push(num);
@@ -114,9 +114,9 @@ const BusinessGiong = {
   },
 
   checkHighCongestion: function(periods) {
-    var c12 = periods.c12;
-    var congestionNums = [];
-    for (var num = 1; num <= 12; num++) {
+    const c12 = periods.c12;
+    const congestionNums = [];
+    for (let num = 1; num <= 12; num++) {
       if ((c12[num] || 0) >= this.HIGH_CONGESTION_LIMIT) {
         congestionNums.push(num);
       }
@@ -125,21 +125,21 @@ const BusinessGiong = {
   },
 
   checkPivotActive: function(numArray) {
-    var pivot = this.PIVOT_NUM;
-    var c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
-    var c24 = this.countFreqInWindow(numArray, this.WINDOW_24);
+    const pivot = this.PIVOT_NUM;
+    const c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
+    const c24 = this.countFreqInWindow(numArray, this.WINDOW_24);
 
-    var f12 = c12[pivot] || 0;
-    var f24 = c24[pivot] || 0;
+    const f12 = c12[pivot] || 0;
+    const f24 = c24[pivot] || 0;
 
     return f12 >= 2 || f24 >= 3;
   },
 
   checkColdInChain: function(numArray, chain) {
-    var self = this;
-    var c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
+    const self = this;
+    const c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
 
-    var coldNums = [];
+    const coldNums = [];
     chain.forEach(function(num) {
       if ((c12[num] || 0) <= 1) {
         coldNums.push(num);
@@ -150,8 +150,8 @@ const BusinessGiong = {
   },
 
   calcNodeHeat: function(num, periods) {
-    var f12 = periods.c12[num] || 0;
-    var f24 = periods.c24[num] || 0;
+    const f12 = periods.c12[num] || 0;
+    const f24 = periods.c24[num] || 0;
 
     if (f12 >= 3) return { level: 'hot', label: '热号' };
     if (f12 === 2) return { level: 'warm', label: '温号' };
@@ -161,26 +161,26 @@ const BusinessGiong = {
   },
 
   calcOldChainRecommend: function(numArray, latestNum, blResult) {
-    var blackList = blResult.blackList;
-    var periods = blResult.periods;
-    var chain = this.OLD_CHAIN;
+    const blackList = blResult.blackList;
+    const periods = blResult.periods;
+    const chain = this.OLD_CHAIN;
 
-    var priorityList = [];
-    var succeedList = this.SUCCEED_MAP[latestNum] || [];
+    const priorityList = [];
+    const succeedList = this.SUCCEED_MAP[latestNum] || [];
 
     succeedList.forEach(function(num) {
       if (this.COLD_NUMS.indexOf(num) === -1 && blackList.indexOf(num) === -1) {
-        var isHot = (periods.c12[num] || 0) > 1;
-        var priority = isHot ? 1 : 2;
+        const isHot = (periods.c12[num] || 0) > 1;
+        const priority = isHot ? 1 : 2;
         priorityList.push({ num: num, priority: priority });
       }
     }.bind(this));
 
     if (priorityList.length === 0 || latestNum === 1) {
-      var chainNext = [];
-      var idx = this.getChainPosition(latestNum, chain);
+      let chainNext = [];
+      const idx = this.getChainPosition(latestNum, chain);
       if (idx !== -1) {
-        for (var i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 3; i++) {
           chainNext.push(chain[(idx + i) % chain.length]);
         }
       } else {
@@ -190,7 +190,7 @@ const BusinessGiong = {
       chainNext.forEach(function(num) {
         if (!priorityList.some(function(p) { return p.num === num; })) {
           if (this.COLD_NUMS.indexOf(num) === -1 && blackList.indexOf(num) === -1) {
-            var isHot = (periods.c12[num] || 0) > 1;
+            const isHot = (periods.c12[num] || 0) > 1;
             priorityList.push({ num: num, priority: isHot ? 1 : 2 });
           }
         }
@@ -214,8 +214,8 @@ const BusinessGiong = {
 
     priorityList.sort(function(a, b) { return a.priority - b.priority; });
 
-    var main = [];
-    var backup = [];
+    let main = [];
+    const backup = [];
 
     priorityList.forEach(function(p) {
       if (main.length < 4) {
@@ -230,7 +230,7 @@ const BusinessGiong = {
     });
 
     while (main.length < 4) {
-      for (var n = 1; n <= 12; n++) {
+      for (let n = 1; n <= 12; n++) {
         if (main.indexOf(n) === -1 && backup.indexOf(n) === -1 &&
             blackList.indexOf(n) === -1 && this.COLD_NUMS.indexOf(n) === -1) {
           main.push(n);
@@ -238,14 +238,14 @@ const BusinessGiong = {
         }
       }
       if (main.length >= 4) break;
-      var bNum = backup.shift();
+      const bNum = backup.shift();
       if (bNum !== undefined) main.push(bNum);
       else break;
     }
 
     main = main.slice(0, 4);
 
-    var oldBackup = [9, 4].filter(function(n) {
+    let oldBackup = [9, 4].filter(function(n) {
       return main.indexOf(n) === -1 && blackList.indexOf(n) === -1;
     });
     if (oldBackup.length === 0) {
@@ -264,15 +264,15 @@ const BusinessGiong = {
   },
 
   calcNewChainRecommend: function(numArray, latestNum, blResult) {
-    var blackList = blResult.blackList;
-    var periods = blResult.periods;
-    var self = this;
-    var chain = this.NEW_CHAIN;
+    const blackList = blResult.blackList;
+    const periods = blResult.periods;
+    const self = this;
+    const chain = this.NEW_CHAIN;
 
-    var isCongestion = this.checkHighCongestion(periods);
-    var pivotActive = this.checkPivotActive(numArray);
+    const isCongestion = this.checkHighCongestion(periods);
+    const pivotActive = this.checkPivotActive(numArray);
 
-    var priorityList = [];
+    let priorityList = [];
 
     if (latestNum === 1 && (periods.c12[4] || 0) >= 2) {
       priorityList.push({ num: 4, reason: '正统修复位·蓄力核心', priority: 1 });
@@ -281,11 +281,11 @@ const BusinessGiong = {
       priorityList.push({ num: 5, reason: '当下热流位', priority: 2 });
     }
 
-    var idx = this.getChainPosition(latestNum, chain);
+    const idx = this.getChainPosition(latestNum, chain);
     if (idx !== -1) {
-      for (var i = 1; i <= 4; i++) {
-        var nextIdx = (idx + i) % chain.length;
-        var num = chain[nextIdx];
+      for (let i = 1; i <= 4; i++) {
+        const nextIdx = (idx + i) % chain.length;
+        const num = chain[nextIdx];
         if (!priorityList.some(function(p) { return p.num === num; })) {
           priorityList.push({ num: num, reason: '链内顺位', priority: priorityList.length + 1 });
         }
@@ -317,15 +317,15 @@ const BusinessGiong = {
     if (isCongestion) {
       priorityList = priorityList.filter(function(p) {
         if ((periods.c12[p.num] || 0) === 2) {
-          var f11 = periods.c11[p.num] || 0;
+          const f11 = periods.c11[p.num] || 0;
           return f11 <= self.RELEASE_THRESHOLD;
         }
         return true;
       });
     }
 
-    var main = [];
-    var backup = [];
+    const main = [];
+    const backup = [];
 
     priorityList.sort(function(a, b) { return a.priority - b.priority; });
 
@@ -338,18 +338,18 @@ const BusinessGiong = {
     });
 
     if (main.length < 4) {
-      for (var n = 1; n <= 12 && main.length < 4; n++) {
+      for (let n = 1; n <= 12 && main.length < 4; n++) {
         if (main.indexOf(n) === -1 && blackList.indexOf(n) === -1 && self.COLD_FOUR_ZONES.indexOf(n) === -1) {
           main.push(n);
         }
       }
     }
 
-    var newBackup = [10, 9].filter(function(n) {
+    const newBackup = [10, 9].filter(function(n) {
       return main.indexOf(n) === -1 && blackList.indexOf(n) === -1;
     });
     if (newBackup.length === 0) {
-      var piv = self.PIVOT_NUM;
+      const piv = self.PIVOT_NUM;
       if (main.indexOf(piv) === -1 && blackList.indexOf(piv) === -1) {
         newBackup.push(piv);
       }
@@ -365,20 +365,20 @@ const BusinessGiong = {
   },
 
   calcMergedRecommend: function(oldResult, newResult, periods, blackList) {
-    var oldMain = oldResult.main || [];
-    var newMain = newResult.main || [];
-    var oldBackup = oldResult.backup || [];
-    var newBackup = newResult.backup || [];
+    const oldMain = oldResult.main || [];
+    const newMain = newResult.main || [];
+    const oldBackup = oldResult.backup || [];
+    const newBackup = newResult.backup || [];
 
-    var intersection = [];
+    const intersection = [];
     oldMain.forEach(function(n) {
       if (newMain.indexOf(n) !== -1) {
         intersection.push(n);
       }
     });
 
-    var priorityList = [];
-    var added = {};
+    const priorityList = [];
+    const added = {};
     intersection.forEach(function(n) {
       if (blackList.indexOf(n) === -1) {
         priorityList.push({ num: n, priority: 0, reason: '双链交集' });
@@ -410,11 +410,11 @@ const BusinessGiong = {
 
     priorityList.sort(function(a, b) { return a.priority - b.priority; });
 
-    var main = [];
-    var backup = [];
+    let main = [];
+    const backup = [];
 
     priorityList.forEach(function(p) {
-      var isCold = (periods.c12[p.num] || 0) <= 1;
+      const isCold = (periods.c12[p.num] || 0) <= 1;
       if (main.length < 4 && !isCold) {
         main.push(p.num);
       } else {
@@ -431,7 +431,7 @@ const BusinessGiong = {
     }
 
     while (main.length < 4) {
-      for (var n = 1; n <= 12 && main.length < 4; n++) {
+      for (let n = 1; n <= 12 && main.length < 4; n++) {
         if (main.indexOf(n) === -1 && blackList.indexOf(n) === -1) {
           main.push(n);
         }
@@ -442,7 +442,7 @@ const BusinessGiong = {
     main = main.slice(0, 4);
 
     if (backup.length === 0) {
-      var backupCandidates = [];
+      const backupCandidates = [];
       oldBackup.forEach(function(n) { if (backupCandidates.indexOf(n) === -1) backupCandidates.push(n); });
       newBackup.forEach(function(n) { if (backupCandidates.indexOf(n) === -1) backupCandidates.push(n); });
       backupCandidates.push(10);
@@ -471,22 +471,22 @@ const BusinessGiong = {
       return { insufficient: true, message: '数据不足，需至少12期历史数据' };
     }
 
-    var validation = Utils.Validator.validateNumber(numArray[0]);
+    const validation = Utils.Validator.validateNumber(numArray[0]);
     if (!validation.valid || numArray[0] < 1 || numArray[0] > 12) {
       return { insufficient: true, message: '无效的起始号码（必须在1-12之间）' };
     }
 
-    var latestNum = numArray[0];
-    var blResult = this.calcDownWeightBlackList(numArray);
-    var periods = blResult.periods;
+    const latestNum = numArray[0];
+    const blResult = this.calcDownWeightBlackList(numArray);
+    const periods = blResult.periods;
 
-    var oldResult = this.calcOldChainRecommend(numArray, latestNum, blResult);
-    var newResult = this.calcNewChainRecommend(numArray, latestNum, blResult);
-    var mergedResult = this.calcMergedRecommend(oldResult, newResult, periods, blResult.blackList);
+    const oldResult = this.calcOldChainRecommend(numArray, latestNum, blResult);
+    const newResult = this.calcNewChainRecommend(numArray, latestNum, blResult);
+    const mergedResult = this.calcMergedRecommend(oldResult, newResult, periods, blResult.blackList);
 
-    var heatMap = {};
-    for (var num = 1; num <= 12; num++) {
-      var h = this.calcNodeHeat(num, periods);
+    const heatMap = {};
+    for (let num = 1; num <= 12; num++) {
+      const h = this.calcNodeHeat(num, periods);
       heatMap[num] = {
         count: periods.c12[num] || 0,
         count24: periods.c24[num] || 0,
@@ -512,7 +512,7 @@ const BusinessGiong = {
   },
 
   formatResultForDisplay: function(result) {
-    var self = this;
+    const self = this;
     if (result.insufficient) return result;
 
     return {

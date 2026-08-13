@@ -158,7 +158,7 @@ const ViewBatchModal = {
       return;
     }
     // 普通标签组处理
-    let names = raw.split(Utils.SPLIT_TOKEN_REGEX).filter(Boolean);
+    const names = raw.split(Utils.SPLIT_TOKEN_REGEX).filter(Boolean);
     if (names.length === 0) {
       Toast.show('未识别到有效名称');
       return;
@@ -168,7 +168,7 @@ const ViewBatchModal = {
     const _isFirstGroupNum = CONFIG.NUMBER_GROUPS.includes(ViewFilter._batchTargetGroups[0]);
     if (_isFirstGroupNum) {
       const _extraNumStrs = (raw.match(/\d+/g) || [])
-        .map(n => String(Number(n)))  // 归一化：02 -> 2
+        .map(n => String(Number(n))) // 归一化：02 -> 2
         .filter(n => { const _num = Number(n); return _num >= 1 && _num <= 49; });
       // 兼容路径：使用 Utils.mergeUnique 消除去重合并模板
       Utils.mergeUnique(names, _extraNumStrs).forEach(n => {

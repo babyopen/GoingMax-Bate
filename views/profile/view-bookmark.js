@@ -31,7 +31,7 @@ const ViewBookmark = {
    */
   _buildCardBodyHtml: function() {
     // 悬浮按钮通用样式：右上角圆形半透明背景，绝对定位
-    var floatBtnBase = 'position:absolute;top:8px;width:36px;height:36px;border:none;border-radius:50%;' +
+    const floatBtnBase = 'position:absolute;top:8px;width:36px;height:36px;border:none;border-radius:50%;' +
       'background:rgba(0,0,0,0.55);color:#fff;cursor:pointer;z-index:10;' +
       'display:flex;align-items:center;justify-content:center;font-size:16px;' +
       'box-shadow:0 2px 6px rgba(0,0,0,0.3);';
@@ -63,9 +63,35 @@ const ViewBookmark = {
   _buildBookmarkTagHtml: function(b) {
     return '<div class="bookmark-tag" data-action="openBookmark" data-bookmark-id="' + b.id + '" ' +
       'title="' + ViewBookmark._escape(b.url) + '" ' +
-      'style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-secondary);color:var(--text);border-radius:16px;font-size:13px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;border:1px solid transparent;">' +
+      'style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-secondary);color:var(--text);border-radius:16px;font-size:13px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;border:1px solid transparent;transition:all var(--anim-fast);">' +
       '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ViewBookmark._escape(b.title) + '</span>' +
     '</div>';
+  },
+
+  /**
+   * 切换快捷导航栏内书签标签的高亮态（2026-08-14 新增）
+   * @param {number|string|null} activeId - 当前打开的书签 ID；传 null 时清除所有高亮
+   */
+  _highlightActiveTag: function(activeId) {
+    const wrapInNav = document.getElementById('bookmarkTagListInNav');
+    if (!wrapInNav) return;
+    const tags = wrapInNav.querySelectorAll('.bookmark-tag');
+    tags.forEach(function(tag) {
+      const tagId = String(tag.dataset.bookmarkId || '');
+      const isActive = activeId !== null && activeId !== undefined && tagId === String(activeId);
+      // 激活态：主色背景 + 白字 + 边框；普通态：默认浅灰背景
+      if (isActive) {
+        tag.style.background = 'var(--primary)';
+        tag.style.color = '#fff';
+        tag.style.borderColor = 'var(--primary)';
+        tag.style.fontWeight = '700';
+      } else {
+        tag.style.background = 'var(--bg-secondary)';
+        tag.style.color = 'var(--text)';
+        tag.style.borderColor = 'transparent';
+        tag.style.fontWeight = '500';
+      }
+    });
   },
 
   /**
@@ -372,6 +398,8 @@ const ViewBookmark = {
     }
     ViewBookmark._currentBookmarkId = bookmarkId;
     ViewBookmark._currentUrl = url;
+    // 2026-08-14：同步高亮当前书签标签（快捷导航栏内）
+    ViewBookmark._highlightActiveTag(bookmarkId);
     // 2026-08-14：标题已不再单独显示，记录到内部供刷新等场景使用
     wrap.style.display = 'block';
     // 滚动到 iframe 区域
@@ -391,6 +419,8 @@ const ViewBookmark = {
     // 关闭后清空当前书签记录，避免下次打开其它书签被误判为"重复点击"
     ViewBookmark._currentBookmarkId = null;
     ViewBookmark._currentUrl = null;
+    // 2026-08-14：关闭时清除所有书签标签的高亮态
+    ViewBookmark._highlightActiveTag(null);
   },
 
   /**

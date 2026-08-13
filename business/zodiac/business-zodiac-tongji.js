@@ -30,36 +30,36 @@ const ZodiacTongJi = {
   calcZodiacTongJiStats: function(historyData) {
     if (!historyData || !historyData.length) return null;
 
-    var zodiacList = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) ||
+    const zodiacList = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) ||
       ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
 
-    var total = historyData.length;
-    var latestExpect = Number(historyData[0] && historyData[0].expect || 0);
+    const total = historyData.length;
+    const latestExpect = Number(historyData[0] && historyData[0].expect || 0);
 
     // 1) 收集每个生肖的所有出现位置（index 0 为最新，index 越大越旧）
-    var appearancesMap = {};
+    const appearancesMap = {};
     zodiacList.forEach(function(z) { appearancesMap[z] = []; });
 
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var s = Utils.SpecialCalculator.getSpecial(item);
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if (s && s.zod && appearancesMap[s.zod]) {
         appearancesMap[s.zod].push(i);
       }
     }
 
     // 2) 逐个生肖计算指标
-    var rows = zodiacList.map(function(z) {
-      var positions = appearancesMap[z]; // 数组：[最新 idx, ..., 最旧 idx]
-      var count = positions.length;
+    const rows = zodiacList.map(function(z) {
+      const positions = appearancesMap[z]; // 数组：[最新 idx, ..., 最旧 idx]
+      const count = positions.length;
 
       // 出现概率 = 出现次数 / 总期数
-      var percent = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+      const percent = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
 
       // 间隔数组：相邻两次出现的 idx 差（差越大代表间隔越大）
       // 由于 historyData 是倒序的，idx 差 = "距下次出现的期数 = 间隔"
-      var intervals = [];
-      for (var j = 1; j < positions.length; j++) {
+      const intervals = [];
+      for (let j = 1; j < positions.length; j++) {
         intervals.push(positions[j] - positions[j - 1]);
       }
 
@@ -68,7 +68,7 @@ const ZodiacTongJi = {
       // 由于历史是倒序的，positions[0] === 0 表示最新一期就开了（遗漏 0）
       // positions[k] 之后到 positions[k-1] 之间相隔 positions[k-1] - positions[k] - 1 期没开
       // 当前遗漏：以最新一期为基准，0
-      var currentMiss = 0;
+      let currentMiss = 0;
       if (count > 0) {
         currentMiss = positions[0]; // 即距离"最新一次出现"到当前已开过多少期
       } else {
@@ -76,11 +76,11 @@ const ZodiacTongJi = {
         currentMiss = total;
       }
 
-      var avgInterval = 0, maxInterval = 0, minInterval = 0;
+      let avgInterval = 0, maxInterval = 0, minInterval = 0;
       if (intervals.length > 0) {
-        var sum = 0;
-        var mx = -Infinity, mn = Infinity;
-        for (var k = 0; k < intervals.length; k++) {
+        let sum = 0;
+        let mx = -Infinity, mn = Infinity;
+        for (let k = 0; k < intervals.length; k++) {
           sum += intervals[k];
           if (intervals[k] > mx) mx = intervals[k];
           if (intervals[k] < mn) mn = intervals[k];
@@ -111,7 +111,7 @@ const ZodiacTongJi = {
       };
     });
 
-    var totalAppearances = 0;
+    let totalAppearances = 0;
     rows.forEach(function(r) { totalAppearances += r.count; });
 
     return {
@@ -150,17 +150,17 @@ const ZodiacTongJi = {
   calcNumLevelStats: function(historyData) {
     if (!historyData || !historyData.length) return null;
 
-    var total = historyData.length;
+    const total = historyData.length;
 
     // 1) 收集每个号码的最近一次出现位置（idx 越小越新）
     //    latestIdxMap[num] = 第一次出现的 idx（即最新一次出现）
-    var latestIdxMap = {};
-    for (var n = 1; n <= 49; n++) latestIdxMap[n] = -1;
+    const latestIdxMap = {};
+    for (let n = 1; n <= 49; n++) latestIdxMap[n] = -1;
 
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var s = Utils.SpecialCalculator.getSpecial(item);
-      var te = s && s.te;
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const s = Utils.SpecialCalculator.getSpecial(item);
+      const te = s && s.te;
       if (te && te >= 1 && te <= 49 && latestIdxMap[te] === -1) {
         latestIdxMap[te] = i; // 第一次遍历到即最新一次
       }
@@ -171,29 +171,29 @@ const ZodiacTongJi = {
     //    - 若 latestIdxMap[num] === 0 → 当前遗漏 0
     //    - 若 latestIdxMap[num] === k → 当前遗漏 k
     //    - 若 latestIdxMap[num] === -1 → 当前遗漏 total（从未出现，按总期数计）
-    var missMap = {};
-    for (var n2 = 1; n2 <= 49; n2++) {
-      var idx = latestIdxMap[n2];
+    const missMap = {};
+    for (let n2 = 1; n2 <= 49; n2++) {
+      const idx = latestIdxMap[n2];
       missMap[n2] = idx === -1 ? total : idx;
     }
 
     // 3) 等级配置（仅新增；不修改 CONFIG）
     //    2026-06-24 用户需求更新：6 等级（极热 / 热号 / 温号 / 温冷 / 冷号 / 极冷）
     //    颜色按"温度"递进：红 → 橙 → 黄 → 青 → 蓝 → 紫
-    var levelConfigs = [
-      { key: 'superhot', name: '极热',   emoji: '🔴', range: [0, 15] },
-      { key: 'hot',      name: '热号',   emoji: '🟠', range: [16, 25] },
-      { key: 'warm',     name: '温号',   emoji: '🟡', range: [26, 35] },
-      { key: 'cool',     name: '温冷',   emoji: '🟢', range: [36, 49] },
-      { key: 'cold',     name: '冷号',   emoji: '🔵', range: [50, 99] },
-      { key: 'deep',     name: '极冷',   emoji: '🟣', range: [100, Infinity] }
+    const levelConfigs = [
+      { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
+      { key: 'hot', name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm', name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool', name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold', name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep', name: '极冷', emoji: '🟣', range: [100, Infinity] }
     ];
 
     // 4) 分组
-    var levels = levelConfigs.map(function(cfg) {
-      var nums = [];
-      for (var num = 1; num <= 49; num++) {
-        var miss = missMap[num];
+    const levels = levelConfigs.map(function(cfg) {
+      const nums = [];
+      for (let num = 1; num <= 49; num++) {
+        const miss = missMap[num];
         if (miss >= cfg.range[0] && miss <= cfg.range[1]) {
           nums.push(num);
         }
@@ -202,8 +202,8 @@ const ZodiacTongJi = {
       //   - latestIdxMap[num] 越小表示越新（idx=0 = 最新一期）
       //   - 从未开出的号码 latestIdxMap[num] === -1，排在最后
       nums.sort(function(a, b) {
-        var ia = latestIdxMap[a];
-        var ib = latestIdxMap[b];
+        const ia = latestIdxMap[a];
+        const ib = latestIdxMap[b];
         // 未开出的（-1）排到末尾
         if (ia === -1 && ib === -1) return a - b;
         if (ia === -1) return 1;
@@ -211,10 +211,10 @@ const ZodiacTongJi = {
         return ia - ib;
       });
 
-      var count = nums.length;
-      var percent = count > 0 ? Math.round((count / 49) * 1000) / 10 : 0;
+      const count = nums.length;
+      const percent = count > 0 ? Math.round((count / 49) * 1000) / 10 : 0;
 
-      var rangeText;
+      let rangeText;
       if (cfg.range[1] === Infinity) {
         rangeText = cfg.range[0] + '+';
       } else {
@@ -232,8 +232,8 @@ const ZodiacTongJi = {
       };
     });
 
-    var totalMiss = 0;
-    for (var n3 = 1; n3 <= 49; n3++) totalMiss += missMap[n3];
+    let totalMiss = 0;
+    for (let n3 = 1; n3 <= 49; n3++) totalMiss += missMap[n3];
 
     return {
       total: 49,
@@ -284,37 +284,37 @@ const ZodiacTongJi = {
 
     // 1) 复用 calcNumLevelStats 的同一套 6 等级阈值
     //    单独定义，避免修改 CONFIG；与 calcNumLevelStats 保持完全一致
-    var levelConfigs = [
+    const levelConfigs = [
       { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
-      { key: 'hot',      name: '热号', emoji: '🟠', range: [16, 25] },
-      { key: 'warm',     name: '温号', emoji: '🟡', range: [26, 35] },
-      { key: 'cool',     name: '温冷', emoji: '🟢', range: [36, 49] },
-      { key: 'cold',     name: '冷号', emoji: '🔵', range: [50, 99] },
-      { key: 'deep',     name: '极冷', emoji: '🟣', range: [100, Infinity] }
+      { key: 'hot', name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm', name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool', name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold', name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep', name: '极冷', emoji: '🟣', range: [100, Infinity] }
     ];
 
     // 工具：按 miss 找等级
     function findLevelByMiss(miss) {
-      for (var li = 0; li < levelConfigs.length; li++) {
-        var cfg = levelConfigs[li];
+      for (let li = 0; li < levelConfigs.length; li++) {
+        const cfg = levelConfigs[li];
         if (miss >= cfg.range[0] && miss <= cfg.range[1]) return cfg;
       }
       return null;
     }
 
-    var total = historyData.length;
+    const total = historyData.length;
 
     // 2) 收集每个号码的所有出现位置（升序）
     //    positionMap[num] = [idx0, idx1, ...]（idx 越小越旧）
-    var positionMap = {};
-    for (var n = 1; n <= 49; n++) positionMap[n] = [];
-    for (var i = 0; i < total; i++) {
-      var item = historyData[i];
-      var s = Utils.SpecialCalculator.getSpecial(item);
-      var te = s && s.te;
+    const positionMap = {};
+    for (let n = 1; n <= 49; n++) positionMap[n] = [];
+    for (let i = 0; i < total; i++) {
+      const item = historyData[i];
+      const s = Utils.SpecialCalculator.getSpecial(item);
+      const te = s && s.te;
       if (te && te >= 1 && te <= 49) positionMap[te].push(i);
     }
-    for (var n2 = 1; n2 <= 49; n2++) {
+    for (let n2 = 1; n2 <= 49; n2++) {
       positionMap[n2].sort(function(a, b) { return a - b; });
     }
 
@@ -323,24 +323,24 @@ const ZodiacTongJi = {
     //    - miss = p - i - 1
     //    - 若 p 不存在（i 是该号码出现过的最早位置，或之后没出现过）：
     //        miss = total - i - 1
-    var records = [];
-    for (var i3 = 0; i3 < total; i3++) {
-      var item3 = historyData[i3];
-      var s3 = Utils.SpecialCalculator.getSpecial(item3);
-      var te3 = s3 && s3.te;
+    const records = [];
+    for (let i3 = 0; i3 < total; i3++) {
+      const item3 = historyData[i3];
+      const s3 = Utils.SpecialCalculator.getSpecial(item3);
+      const te3 = s3 && s3.te;
       if (!te3 || te3 < 1 || te3 > 49) continue;
 
-      var positions = positionMap[te3];
-      var p = -1;
-      for (var k = 0; k < positions.length; k++) {
+      const positions = positionMap[te3];
+      let p = -1;
+      for (let k = 0; k < positions.length; k++) {
         if (positions[k] > i3) {
           p = positions[k];
           break;
         }
       }
-      var miss = p === -1 ? (total - i3 - 1) : (p - i3 - 1);
+      const miss = p === -1 ? (total - i3 - 1) : (p - i3 - 1);
 
-      var lv = findLevelByMiss(miss);
+      const lv = findLevelByMiss(miss);
       records.push({
         expect: item3.expect,
         num: te3,
@@ -352,16 +352,16 @@ const ZodiacTongJi = {
     }
 
     // 4) 按等级分组统计
-    var levelStats = levelConfigs.map(function(cfg) {
-      var matched = [];
-      var sumMiss = 0;
-      for (var ri = 0; ri < records.length; ri++) {
+    const levelStats = levelConfigs.map(function(cfg) {
+      const matched = [];
+      let sumMiss = 0;
+      for (let ri = 0; ri < records.length; ri++) {
         if (records[ri].level === cfg.key) {
           matched.push(records[ri]);
           sumMiss += records[ri].miss;
         }
       }
-      var avgMiss = matched.length > 0
+      const avgMiss = matched.length > 0
         ? Math.round((sumMiss / matched.length) * 10) / 10
         : 0;
       return {
@@ -407,40 +407,40 @@ const ZodiacTongJi = {
     if (!historyData || historyData.length < 2) return null;
 
     // 复用 calcPreDrawLevelHistory 的统计结果（已经按 expect 倒序）
-    var preStats = this.calcPreDrawLevelHistory(historyData);
+    const preStats = this.calcPreDrawLevelHistory(historyData);
     if (!preStats || !preStats.records || !preStats.records.length) return null;
 
-    var records = preStats.records;
-    var total = records.length;
-    var totalHistory = preStats.historyLength || total;
+    const records = preStats.records;
+    const total = records.length;
+    const totalHistory = preStats.historyLength || total;
 
     // 6 等级基础配置（与 calcNumLevelStats / calcPreDrawLevelHistory 一致）
-    var levelConfigs = [
+    const levelConfigs = [
       { key: 'superhot', name: '极热', emoji: '🔴' },
-      { key: 'hot',      name: '热号', emoji: '🟠' },
-      { key: 'warm',     name: '温号', emoji: '🟡' },
-      { key: 'cool',     name: '温冷', emoji: '🟢' },
-      { key: 'cold',     name: '冷号', emoji: '🔵' },
-      { key: 'deep',     name: '极冷', emoji: '🟣' }
+      { key: 'hot', name: '热号', emoji: '🟠' },
+      { key: 'warm', name: '温号', emoji: '🟡' },
+      { key: 'cool', name: '温冷', emoji: '🟢' },
+      { key: 'cold', name: '冷号', emoji: '🔵' },
+      { key: 'deep', name: '极冷', emoji: '🟣' }
     ];
 
     // ========== 因子 1：频率基准（历史占比，0~100）==========
-    var freqMap = {};
+    const freqMap = {};
     preStats.levels.forEach(function(lv) { freqMap[lv.key] = lv.percent || 0; });
 
     // ========== 因子 2：最近一次出现 idx（越小越新）==========
-    var lastSeenMap = {};
+    const lastSeenMap = {};
     levelConfigs.forEach(function(cfg) { lastSeenMap[cfg.key] = total; });
-    for (var li = 0; li < total; li++) {
-      var k = records[li].level;
+    for (let li = 0; li < total; li++) {
+      const k = records[li].level;
       if (lastSeenMap[k] === total) lastSeenMap[k] = li;
     }
 
     // ========== 因子 3：最近 N 期窗口（默认 30 期）==========
-    var N = Math.min(30, total);
-    var recentCountMap = {};
+    const N = Math.min(30, total);
+    const recentCountMap = {};
     levelConfigs.forEach(function(cfg) { recentCountMap[cfg.key] = 0; });
-    for (var ri = 0; ri < N; ri++) {
+    for (let ri = 0; ri < N; ri++) {
       if (records[ri] && records[ri].level) {
         recentCountMap[records[ri].level]++;
       }
@@ -448,24 +448,24 @@ const ZodiacTongJi = {
 
     // ========== 因子 4：交替关联（等级转移矩阵）==========
     // transitionMap[fromKey][toKey] = count
-    var transitionMap = {};
+    const transitionMap = {};
     levelConfigs.forEach(function(cfg) {
       transitionMap[cfg.key] = {};
       levelConfigs.forEach(function(cfg2) { transitionMap[cfg.key][cfg2.key] = 0; });
     });
-    for (var ti = 1; ti < total; ti++) {
-      var fromKey = records[ti].level;
-      var toKey = records[ti - 1].level;
+    for (let ti = 1; ti < total; ti++) {
+      const fromKey = records[ti].level;
+      const toKey = records[ti - 1].level;
       if (fromKey && toKey && transitionMap[fromKey]) {
         transitionMap[fromKey][toKey]++;
       }
     }
 
     // 最近一期等级 → 转移概率
-    var latestLevel = records[0] && records[0].level;
-    var transProbMap = {};
+    const latestLevel = records[0] && records[0].level;
+    const transProbMap = {};
     if (latestLevel && transitionMap[latestLevel]) {
-      var transTotal = 0;
+      let transTotal = 0;
       levelConfigs.forEach(function(cfg) { transTotal += transitionMap[latestLevel][cfg.key]; });
       levelConfigs.forEach(function(cfg) {
         transProbMap[cfg.key] = transTotal > 0
@@ -478,15 +478,15 @@ const ZodiacTongJi = {
 
     // ========== 因子 5：号码→等级跟随（5%）==========
     // 最近一期特码 → 历史中该号码出现后下一期特码的等级分布
-    var latestNum = records[0] && records[0].num;
-    var numFollowMap = {};
+    const latestNum = records[0] && records[0].num;
+    const numFollowMap = {};
     levelConfigs.forEach(function(cfg) { numFollowMap[cfg.key] = 0; });
 
-    var numFollowTotal = 0;
+    let numFollowTotal = 0;
     if (latestNum) {
-      for (var fi = 1; fi < total; fi++) {
+      for (let fi = 1; fi < total; fi++) {
         if (records[fi].num === latestNum) {
-          var nextLevel = records[fi - 1].level;
+          const nextLevel = records[fi - 1].level;
           if (nextLevel && numFollowMap[nextLevel] !== undefined) {
             numFollowMap[nextLevel]++;
             numFollowTotal++;
@@ -495,7 +495,7 @@ const ZodiacTongJi = {
       }
     }
 
-    var numFollowProbMap = {};
+    const numFollowProbMap = {};
     levelConfigs.forEach(function(cfg) {
       numFollowProbMap[cfg.key] = numFollowTotal > 0
         ? Math.round((numFollowMap[cfg.key] / numFollowTotal) * 1000) / 10
@@ -503,37 +503,37 @@ const ZodiacTongJi = {
     });
 
     // ========== 综合评分 ==========
-    var clamp = function(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); };
+    const clamp = function(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); };
 
-    var scored = levelConfigs.map(function(cfg) {
-      var key = cfg.key;
+    const scored = levelConfigs.map(function(cfg) {
+      const key = cfg.key;
 
       // F1: 频率基准（0~100）
-      var fFreq = freqMap[key] || 0;
+      const fFreq = freqMap[key] || 0;
 
       // F2: 遗漏回归（方向反转：越久越可能回归，0~100）
       //     乘以频率系数 sqrt(freq/16.7)，防止低频等级因长期未出现而虚高
-      var lastSeenIdx = lastSeenMap[key];
-      var freqCoeff = fFreq > 0 ? Math.sqrt(fFreq / 16.7) : 0.2;
-      var fRegression = total > 0
+      const lastSeenIdx = lastSeenMap[key];
+      const freqCoeff = fFreq > 0 ? Math.sqrt(fFreq / 16.7) : 0.2;
+      const fRegression = total > 0
         ? Math.min(100, (lastSeenIdx / total) * 100 * 1.3) * freqCoeff
         : 0;
 
       // F3: 近期趋势（近期占比 vs 历史占比，0~100）
-      var recentCount = recentCountMap[key] || 0;
-      var recentRatio = N > 0 ? (recentCount / N) * 100 : 0;
-      var fTrend = clamp(50 + (recentRatio - fFreq) * 2.5, 0, 100);
+      const recentCount = recentCountMap[key] || 0;
+      const recentRatio = N > 0 ? (recentCount / N) * 100 : 0;
+      const fTrend = clamp(50 + (recentRatio - fFreq) * 2.5, 0, 100);
 
       // F4: 短期密度（0~100）
-      var fDensity = N > 0 ? (recentCount / N) * 100 : 0;
+      const fDensity = N > 0 ? (recentCount / N) * 100 : 0;
 
       // F5: 交替关联（0~100, 8%）
-      var fTrans = transProbMap[key] || 0;
+      const fTrans = transProbMap[key] || 0;
 
       // F6: 号码跟随（0~100, 5%）
-      var fFollow = numFollowProbMap[key] || 0;
+      const fFollow = numFollowProbMap[key] || 0;
 
-      var score = fFreq * 0.15 + fRegression * 0.30 + fTrend * 0.22 + fDensity * 0.20 + fTrans * 0.08 + fFollow * 0.05;
+      const score = fFreq * 0.15 + fRegression * 0.30 + fTrend * 0.22 + fDensity * 0.20 + fTrans * 0.08 + fFollow * 0.05;
 
       return {
         key: key,
@@ -582,68 +582,68 @@ const ZodiacTongJi = {
    *   }
    */
   predictLevelBacktest: function(historyData) {
-    var N = historyData.length;
-    var MIN_WINDOW = 20;
+    const N = historyData.length;
+    const MIN_WINDOW = 20;
     if (N < MIN_WINDOW + 1) return null;
 
     // 6 等级阈值（与 calcPreDrawLevelHistory 一致）
-    var levelConfigs = [
+    const levelConfigs = [
       { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
-      { key: 'hot',      name: '热号', emoji: '🟠', range: [16, 25] },
-      { key: 'warm',     name: '温号', emoji: '🟡', range: [26, 35] },
-      { key: 'cool',     name: '温冷', emoji: '🟢', range: [36, 49] },
-      { key: 'cold',     name: '冷号', emoji: '🔵', range: [50, 99] },
-      { key: 'deep',     name: '极冷', emoji: '🟣', range: [100, Infinity] }
+      { key: 'hot', name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm', name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool', name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold', name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep', name: '极冷', emoji: '🟣', range: [100, Infinity] }
     ];
 
     function findLevelByMiss(miss) {
-      for (var li = 0; li < levelConfigs.length; li++) {
-        var cfg = levelConfigs[li];
+      for (let li = 0; li < levelConfigs.length; li++) {
+        const cfg = levelConfigs[li];
         if (miss >= cfg.range[0] && miss <= cfg.range[1]) return cfg;
       }
       return null;
     }
 
-    var results = [];
-    var hits = 0;
-    var total = 0;
+    const results = [];
+    let hits = 0;
+    let total = 0;
 
     // 滚动窗口：从最旧到最新逐期推进
     //   j = 当前预测目标期在 historyData 中的索引
     //   j 从 N-MIN_WINDOW-1 递减到 0（即从较旧到最新）
     //   subHistory = historyData.slice(j+1) 为"j 期之前"的所有历史
-    for (var j = N - MIN_WINDOW - 1; j >= 0; j--) {
-      var subHistory = historyData.slice(j + 1);
+    for (let j = N - MIN_WINDOW - 1; j >= 0; j--) {
+      const subHistory = historyData.slice(j + 1);
       if (subHistory.length < MIN_WINDOW) continue;
 
-      var predict = this.predictNextLevel(subHistory);
+      const predict = this.predictNextLevel(subHistory);
       if (!predict || !predict.top3 || !predict.top3.length) continue;
 
-      var top3Keys = [];
-      var top3Names = [];
+      let top3Keys = [];
+      let top3Names = [];
       predict.top3.forEach(function(lv) { top3Keys.push(lv.key); top3Names.push(lv.name); });
 
       // 计算目标期 j 的实际等级
-      var targetItem = historyData[j];
-      var targetTe = Utils.SpecialCalculator.getSpecial(targetItem);
+      const targetItem = historyData[j];
+      let targetTe = Utils.SpecialCalculator.getSpecial(targetItem);
       targetTe = targetTe && targetTe.te;
       if (!targetTe || targetTe < 1 || targetTe > 49) continue;
 
       // 在 subHistory 中找 targetTe 最近一次出现位置
-      var lastPos = -1;
-      for (var k = 0; k < subHistory.length; k++) {
-        var sk = Utils.SpecialCalculator.getSpecial(subHistory[k]);
+      let lastPos = -1;
+      for (let k = 0; k < subHistory.length; k++) {
+        const sk = Utils.SpecialCalculator.getSpecial(subHistory[k]);
         if (sk && sk.te === targetTe) {
           lastPos = k;
           break;
         }
       }
-      var miss = lastPos === -1 ? subHistory.length : lastPos;
+      const miss = lastPos === -1 ? subHistory.length : lastPos;
 
-      var actualLevel = findLevelByMiss(miss);
+      const actualLevel = findLevelByMiss(miss);
       if (!actualLevel) continue;
 
-      var hit = top3Keys.indexOf(actualLevel.key) >= 0;
+      const hit = top3Keys.indexOf(actualLevel.key) >= 0;
       if (hit) hits++;
       total++;
 
@@ -697,11 +697,11 @@ ZodiacTongJi.getSort = function() {
 // 纯函数：按 key/dir 排序，不修改原数组
 ZodiacTongJi.sortZodiacRows = function(rows, key, dir) {
   if (!rows || !rows.length || !key) return rows;
-  var copy = rows.slice();
-  var sign = dir === 'desc' ? -1 : 1;
+  const copy = rows.slice();
+  const sign = dir === 'desc' ? -1 : 1;
   copy.sort(function(a, b) {
-    var av = a[key];
-    var bv = b[key];
+    const av = a[key];
+    const bv = b[key];
     if (av === bv) return 0;
     if (typeof av === 'string') {
       return sign * (av < bv ? -1 : 1);
@@ -717,7 +717,7 @@ ZodiacTongJi.sortZodiacRows = function(rows, key, dir) {
 //   - 第三次点击：取消排序（恢复默认 / null）
 //   - 2026-06-20 修复：用 this 读 _sort
 ZodiacTongJi.computeNextSort = function(key) {
-  var cur = this._sort;
+  const cur = this._sort;
   if (cur.key !== key) {
     return { key: key, dir: 'asc' };
   }

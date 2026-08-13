@@ -16,18 +16,18 @@ const ZodiacPredictionMiss = {
   calcZodiacMissHistory: function(historyData, zodiac) {
     if (!historyData || !historyData.length || !zodiac) return null;
 
-    var total = historyData.length;
-    var latestExpect = Number(historyData[0]?.expect || 0);
-    var lastAppearIdx = -1;
-    var appearances = [];
-    var intervals = [];
+    const total = historyData.length;
+    const latestExpect = Number(historyData[0]?.expect || 0);
+    let lastAppearIdx = -1;
+    const appearances = [];
+    const intervals = [];
 
     // 查找所有出现位置
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var s = Utils.SpecialCalculator.getSpecial(item);
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if (s.zod === zodiac) {
-        var expect = Number(item.expect || 0);
+        const expect = Number(item.expect || 0);
         appearances.push({
           expect: expect,
           index: i,
@@ -42,24 +42,24 @@ const ZodiacPredictionMiss = {
     if (appearances.length === 0) return null;
 
     // 使用统一的 Utils.calcMiss 计算当前遗漏值
-    var currentMiss = Utils.calcMiss(lastAppearIdx, total, latestExpect, historyData);
+    const currentMiss = Utils.calcMiss(lastAppearIdx, total, latestExpect, historyData);
 
-    for (var j = 1; j < appearances.length; j++) {
+    for (let j = 1; j < appearances.length; j++) {
       intervals.push(appearances[j].index - appearances[j - 1].index);
     }
 
-    var totalInterval = 0;
-    for (var k = 0; k < intervals.length; k++) {
+    let totalInterval = 0;
+    for (let k = 0; k < intervals.length; k++) {
       totalInterval += intervals[k];
     }
-    var avgInterval = intervals.length > 0 ? Math.round(totalInterval / intervals.length * 10) / 10 : 0;
+    const avgInterval = intervals.length > 0 ? Math.round(totalInterval / intervals.length * 10) / 10 : 0;
 
-    var maxInterval = intervals.length > 0 ? Math.max.apply(null, intervals) : 0;
-    var minInterval = intervals.length > 0 ? Math.min.apply(null, intervals) : 0;
+    const maxInterval = intervals.length > 0 ? Math.max.apply(null, intervals) : 0;
+    const minInterval = intervals.length > 0 ? Math.min.apply(null, intervals) : 0;
 
-    var recentAppearances = appearances.slice(0, Math.min(10, appearances.length));
+    const recentAppearances = appearances.slice(0, Math.min(10, appearances.length));
 
-    var intervalDistribution = {
+    const intervalDistribution = {
       '0-5期': 0,
       '6-10期': 0,
       '11-20期': 0,
@@ -93,10 +93,10 @@ const ZodiacPredictionMiss = {
   calcZodiacFollowers: function(historyData, zodiac, followCount, maxAppearances) {
     if (!historyData || !historyData.length || !zodiac) return null;
 
-    var targetAppearances = [];
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var s = Utils.SpecialCalculator.getSpecial(item);
+    const targetAppearances = [];
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if (s.zod === zodiac) {
         targetAppearances.push({
           expect: Number(item.expect || 0),
@@ -107,28 +107,28 @@ const ZodiacPredictionMiss = {
 
     if (targetAppearances.length === 0) return null;
 
-    var followStats = {};
-    var followRecords = [];
+    const followStats = {};
+    const followRecords = [];
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       followStats[z] = 0;
     });
 
-    var maxRecords = maxAppearances || 20;
-    var followLen = followCount || 4;
+    const maxRecords = maxAppearances || 20;
+    const followLen = followCount || 4;
 
-    var limitedAppearances = targetAppearances.slice(0, maxRecords);
+    const limitedAppearances = targetAppearances.slice(0, maxRecords);
 
     limitedAppearances.forEach(function(target) {
-      var chain = [];
+      const chain = [];
 
-      for (var i = 1; i <= followLen; i++) {
-        var nextIdx = target.index - i;
+      for (let i = 1; i <= followLen; i++) {
+        const nextIdx = target.index - i;
         if (nextIdx < 0 || nextIdx >= historyData.length) break;
 
-        var nextItem = historyData[nextIdx];
-        var nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
-        var nextZod = nextSpecial.zod;
+        const nextItem = historyData[nextIdx];
+        const nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
+        const nextZod = nextSpecial.zod;
 
         chain.push({
           zodiac: nextZod,
@@ -145,8 +145,8 @@ const ZodiacPredictionMiss = {
       });
     });
 
-    var sortedStats = [];
-    for (var z in followStats) {
+    const sortedStats = [];
+    for (const z in followStats) {
       sortedStats.push({
         zodiac: z,
         count: followStats[z],
@@ -167,12 +167,12 @@ const ZodiacPredictionMiss = {
   getLatestFollowStats: function(historyData, followCount, maxAppearances) {
     if (!historyData || !historyData.length) return null;
 
-    var latestItem = historyData[0];
-    var latestSpecial = Utils.SpecialCalculator.getSpecial(latestItem);
-    var latestZod = latestSpecial.zod;
-    var latestExpect = Number(latestItem.expect || 0);
+    const latestItem = historyData[0];
+    const latestSpecial = Utils.SpecialCalculator.getSpecial(latestItem);
+    const latestZod = latestSpecial.zod;
+    const latestExpect = Number(latestItem.expect || 0);
 
-    var followStats = ZodiacPrediction.calcZodiacFollowers(historyData, latestZod, followCount, maxAppearances);
+    const followStats = ZodiacPrediction.calcZodiacFollowers(historyData, latestZod, followCount, maxAppearances);
 
     if (!followStats) return null;
 

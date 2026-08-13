@@ -15,22 +15,22 @@ const ZodiacPredictionScores = {
   calcContinuousScores: function(historyData) {
     if (!historyData || !historyData.length) return null;
 
-    var list = historyData;
-    var total = list.length;
-    var latestExpect = Number(list[0]?.expect || 0);
+    const list = historyData;
+    const total = list.length;
+    const latestExpect = Number(list[0]?.expect || 0);
 
     // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
-    var allSpecials = BusinessCommonSpecials.buildWindowed(list);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(list);
 
-    var lastAppearIdx = {};
-    var zodiacRecords = {};
+    const lastAppearIdx = {};
+    const zodiacRecords = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       lastAppearIdx[z] = -1;
       zodiacRecords[z] = [];
     });
 
     list.forEach(function(item, idx) {
-      var s = allSpecials[idx];
+      const s = allSpecials[idx];
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
         if (lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
         zodiacRecords[s.zod].push({
@@ -48,28 +48,28 @@ const ZodiacPredictionScores = {
       }
     });
 
-    var missMap = {};
+    const missMap = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       missMap[z] = Utils.calcMiss(lastAppearIdx[z], total, latestExpect, list);
     });
 
-    var latestItem = list[0];
-    var latestSpecial = latestItem ? allSpecials[0] : null;
+    const latestItem = list[0];
+    const latestSpecial = latestItem ? allSpecials[0] : null;
 
-    var baseScores = ZodiacPrediction._calcBaseScores(missMap);
-    var shapeScores = ZodiacPrediction._calcShapeScores(missMap, zodiacRecords, list, latestSpecial);
-    var intervalScores = ZodiacPrediction._calcIntervalScores(list);
-    var trendScores = ZodiacPrediction._calcTrendScores(zodiacRecords, list);
-    var momentumScores = ZodiacPrediction._calcMomentumScores(zodiacRecords, list);
+    const baseScores = ZodiacPrediction._calcBaseScores(missMap);
+    const shapeScores = ZodiacPrediction._calcShapeScores(missMap, zodiacRecords, list, latestSpecial);
+    const intervalScores = ZodiacPrediction._calcIntervalScores(list);
+    const trendScores = ZodiacPrediction._calcTrendScores(zodiacRecords, list);
+    const momentumScores = ZodiacPrediction._calcMomentumScores(zodiacRecords, list);
 
-    var scores = {};
-    var details = {};
+    const scores = {};
+    const details = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var base = baseScores[z] || 0;
-      var shape = shapeScores[z] || 0;
-      var interval = intervalScores[z] || 0;
-      var trend = trendScores[z] || 0;
-      var momentum = momentumScores[z] || 0;
+      const base = baseScores[z] || 0;
+      const shape = shapeScores[z] || 0;
+      const interval = intervalScores[z] || 0;
+      const trend = trendScores[z] || 0;
+      const momentum = momentumScores[z] || 0;
       scores[z] = base + shape + interval + trend + momentum;
       details[z] = {
         base: base,
@@ -81,25 +81,25 @@ const ZodiacPredictionScores = {
       };
     });
 
-    var sorted = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; });
+    let sorted = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; });
 
     sorted = ZodiacPrediction._applyPenaltyRules(sorted, list);
 
-    var maxScore = sorted.length > 0 ? sorted[0][1] : 0;
-    var minScore = sorted.length > 0 ? sorted[sorted.length - 1][1] : 0;
-    var scoreRange = maxScore - minScore || 1;
+    const maxScore = sorted.length > 0 ? sorted[0][1] : 0;
+    const minScore = sorted.length > 0 ? sorted[sorted.length - 1][1] : 0;
+    const scoreRange = maxScore - minScore || 1;
 
-    var cards = [];
+    const cards = [];
     sorted.forEach(function(entry, idx) {
-      var zod = entry[0];
-      var rawScore = entry[1];
-      var normalizedScore = Math.round(((rawScore - minScore) / scoreRange) * 40 + 45);
+      const zod = entry[0];
+      const rawScore = entry[1];
+      let normalizedScore = Math.round(((rawScore - minScore) / scoreRange) * 40 + 45);
       normalizedScore = Math.max(0, Math.min(100, normalizedScore));
 
-      var det = details[zod];
-      var heatTag = det.base >= 25 ? '热号' : (det.base >= 10 ? '温号' : '冷号');
-      var roleTag = '';
-      var cardClass = '';
+      const det = details[zod];
+      const heatTag = det.base >= 25 ? '热号' : (det.base >= 10 ? '温号' : '冷号');
+      let roleTag = '';
+      let cardClass = '';
 
       if (idx === 0) {
         roleTag = '精选';
@@ -134,9 +134,9 @@ const ZodiacPredictionScores = {
   },
 
   _calcBaseScores: function(missMap) {
-    var scores = {};
+    const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var miss = missMap[z];
+      const miss = missMap[z];
       if (miss <= 2) {
         scores[z] = Math.round(25 + (2 - miss) * 2.5);
       } else if (miss <= 6) {
@@ -154,28 +154,28 @@ const ZodiacPredictionScores = {
   },
 
   _calcShapeScores: function(missMap, zodiacRecords, list, latestSpecial) {
-    var scores = {};
+    const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { scores[z] = 0; });
 
-    var sampleSize = Math.min(15, list.length);
-    var oddCount = 0, bigCount = 0;
-    for (var i = 0; i < sampleSize; i++) {
-      var s = Utils.SpecialCalculator.getSpecial(list[i]);
+    const sampleSize = Math.min(15, list.length);
+    let oddCount = 0, bigCount = 0;
+    for (let i = 0; i < sampleSize; i++) {
+      const s = Utils.SpecialCalculator.getSpecial(list[i]);
       if (s.odd) oddCount++;
       if (s.big) bigCount++;
     }
-    var oddHot = oddCount / sampleSize >= 0.5;
-    var bigHot = bigCount / sampleSize >= 0.5;
+    const oddHot = oddCount / sampleSize >= 0.5;
+    const bigHot = bigCount / sampleSize >= 0.5;
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var nums = DataQuery.getNumsByAttr('zodiac', z);
-      var oddMatch = 0, bigMatch = 0, totalN = nums.length || 1;
+      const nums = DataQuery.getNumsByAttr('zodiac', z);
+      let oddMatch = 0, bigMatch = 0, totalN = nums.length || 1;
       nums.forEach(function(n) {
         if (n % 2 === 1) oddMatch++;
         if (n >= 25) bigMatch++;
       });
-      var oddRatio = oddMatch / totalN;
-      var bigRatio = bigMatch / totalN;
+      const oddRatio = oddMatch / totalN;
+      const bigRatio = bigMatch / totalN;
 
       if (oddHot && oddRatio >= 0.5) scores[z] += 3;
       if (!oddHot && oddRatio < 0.5) scores[z] += 3;
@@ -183,37 +183,37 @@ const ZodiacPredictionScores = {
       if (!bigHot && bigRatio < 0.5) scores[z] += 3;
     });
 
-    var colorSample = Math.min(20, list.length);
-    var colorCount = { '红': 0, '蓝': 0, '绿': 0 };
-    for (var ci = 0; ci < colorSample; ci++) {
-      var cs = Utils.SpecialCalculator.getSpecial(list[ci]);
+    const colorSample = Math.min(20, list.length);
+    const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
+    for (let ci = 0; ci < colorSample; ci++) {
+      const cs = Utils.SpecialCalculator.getSpecial(list[ci]);
       colorCount[cs.colorName] = (colorCount[cs.colorName] || 0) + 1;
     }
-    var hotColor = Object.keys(colorCount).sort(function(a, b) {
+    const hotColor = Object.keys(colorCount).sort(function(a, b) {
       return colorCount[b] - colorCount[a];
     })[0];
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var nums = DataQuery.getNumsByAttr('zodiac', z);
-      var matchCount = 0;
-      var totalN = nums.length || 1;
+      const nums = DataQuery.getNumsByAttr('zodiac', z);
+      let matchCount = 0;
+      const totalN = nums.length || 1;
       nums.forEach(function(n) {
-        var c = Utils.getColorName(n);
+        const c = Utils.getColorName(n);
         if (c === hotColor) matchCount++;
       });
       if (matchCount / totalN >= 0.5) scores[z] += 4;
     });
 
     if (latestSpecial && latestSpecial.tail !== undefined) {
-      var tailZods = ZodiacPrediction.TAIL_ZODIAC_MAP[latestSpecial.tail] || [];
+      const tailZods = ZodiacPrediction.TAIL_ZODIAC_MAP[latestSpecial.tail] || [];
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
         if (tailZods.indexOf(z) !== -1) scores[z] += 3;
       });
     }
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var records = zodiacRecords[z] || [];
-      var recent5 = records.filter(function(r) { return r.idx < 5; });
+      const records = zodiacRecords[z] || [];
+      const recent5 = records.filter(function(r) { return r.idx < 5; });
       if (recent5.length >= 2) {
         scores[z] += 3;
       } else if (recent5.length === 1) {
@@ -225,27 +225,27 @@ const ZodiacPredictionScores = {
       scores[z] += 2;
     });
 
-    var wuxingCount = {};
-    var wuxingSample = Math.min(10, list.length);
-    for (var wi = 0; wi < wuxingSample; wi++) {
-      var ws = Utils.SpecialCalculator.getSpecial(list[wi]);
+    const wuxingCount = {};
+    const wuxingSample = Math.min(10, list.length);
+    for (let wi = 0; wi < wuxingSample; wi++) {
+      const ws = Utils.SpecialCalculator.getSpecial(list[wi]);
       wuxingCount[ws.wuxing] = (wuxingCount[ws.wuxing] || 0) + 1;
     }
-    var hotWuxing = Object.keys(wuxingCount).sort(function(a, b) {
+    const hotWuxing = Object.keys(wuxingCount).sort(function(a, b) {
       return wuxingCount[b] - wuxingCount[a];
     })[0];
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var zWuxing = ZodiacPrediction.WUXING_MAP[z];
+      const zWuxing = ZodiacPrediction.WUXING_MAP[z];
       if (zWuxing === hotWuxing) {
         scores[z] += 4;
       }
     });
 
     if (latestSpecial && latestSpecial.wuxing) {
-      var latestWuxing = latestSpecial.wuxing;
+      const latestWuxing = latestSpecial.wuxing;
       ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-        var zWuxing = ZodiacPrediction.WUXING_MAP[z];
+        const zWuxing = ZodiacPrediction.WUXING_MAP[z];
         if (ZodiacPrediction.WUXING_SHENG[zWuxing] === latestWuxing) {
           scores[z] += 2;
         }
@@ -263,25 +263,25 @@ const ZodiacPredictionScores = {
   },
 
   _calcIntervalScores: function(list) {
-    var scores = {};
+    const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { scores[z] = 0; });
 
     if (list.length < 2) return scores;
 
-    var sampleSize = Math.min(50, list.length - 1);
-    var intervalCount = {};
-    for (var i = 0; i < sampleSize; i++) {
-      var cur = Utils.SpecialCalculator.getSpecial(list[i]);
-      var prev = Utils.SpecialCalculator.getSpecial(list[i + 1]);
-      var curIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(cur.zod);
-      var prevIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(prev.zod);
+    const sampleSize = Math.min(50, list.length - 1);
+    const intervalCount = {};
+    for (let i = 0; i < sampleSize; i++) {
+      const cur = Utils.SpecialCalculator.getSpecial(list[i]);
+      const prev = Utils.SpecialCalculator.getSpecial(list[i + 1]);
+      const curIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(cur.zod);
+      const prevIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(prev.zod);
       if (curIdx !== -1 && prevIdx !== -1) {
-        var interval = (curIdx - prevIdx + 12) % 12;
+        const interval = (curIdx - prevIdx + 12) % 12;
         intervalCount[interval] = (intervalCount[interval] || 0) + 1;
       }
     }
 
-    var topIntervals = Object.keys(intervalCount)
+    const topIntervals = Object.keys(intervalCount)
       .map(function(k) { return { interval: Number(k), count: intervalCount[k] }; })
       .sort(function(a, b) { return b.count - a.count; })
       .slice(0, 5)
@@ -289,19 +289,19 @@ const ZodiacPredictionScores = {
 
     if (topIntervals.length === 0) return scores;
 
-    var latest = Utils.SpecialCalculator.getSpecial(list[0]);
-    var latestIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(latest.zod);
+    const latest = Utils.SpecialCalculator.getSpecial(list[0]);
+    const latestIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(latest.zod);
     if (latestIdx === -1) return scores;
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var zIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(z);
-      var targetInterval = (zIdx - latestIdx + 12) % 12;
+      const zIdx = ZodiacPrediction.ZODIAC_ORDER.indexOf(z);
+      const targetInterval = (zIdx - latestIdx + 12) % 12;
       if (topIntervals.indexOf(targetInterval) !== -1) {
         scores[z] = 20;
       } else {
-        var minDist = Infinity;
+        let minDist = Infinity;
         topIntervals.forEach(function(ti) {
-          var dist = Math.abs(targetInterval - ti);
+          let dist = Math.abs(targetInterval - ti);
           dist = Math.min(dist, 12 - dist);
           if (dist < minDist) minDist = dist;
         });
@@ -313,13 +313,13 @@ const ZodiacPredictionScores = {
   },
 
   _calcTrendScores: function(zodiacRecords, list) {
-    var scores = {};
+    const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var records = zodiacRecords[z] || [];
-      var recentCount = records.filter(function(r) { return r.idx < 10; }).length;
-      var prevCount = records.filter(function(r) { return r.idx >= 10 && r.idx < 20; }).length;
+      const records = zodiacRecords[z] || [];
+      const recentCount = records.filter(function(r) { return r.idx < 10; }).length;
+      const prevCount = records.filter(function(r) { return r.idx >= 10 && r.idx < 20; }).length;
 
-      var trendScore;
+      let trendScore;
       if (recentCount > prevCount) {
         trendScore = Math.min(8, (recentCount - prevCount) * 4);
       } else if (recentCount < prevCount) {
@@ -333,11 +333,11 @@ const ZodiacPredictionScores = {
   },
 
   _calcMomentumScores: function(zodiacRecords, list) {
-    var scores = {};
+    const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
-      var records = zodiacRecords[z] || [];
-      var recent3 = records.filter(function(r) { return r.idx < 3; });
-      var recent7 = records.filter(function(r) { return r.idx < 7; });
+      const records = zodiacRecords[z] || [];
+      const recent3 = records.filter(function(r) { return r.idx < 3; });
+      const recent7 = records.filter(function(r) { return r.idx < 7; });
 
       if (recent3.length > 0) {
         scores[z] = 7;
@@ -355,36 +355,36 @@ const ZodiacPredictionScores = {
       return sortedScores;
     }
 
-    var latestSpecial = Utils.SpecialCalculator.getSpecial(list[0]);
-    var lastZodiac = latestSpecial ? latestSpecial.zod : null;
+    const latestSpecial = Utils.SpecialCalculator.getSpecial(list[0]);
+    const lastZodiac = latestSpecial ? latestSpecial.zod : null;
 
-    var window12 = list.slice(0, 12);
-    var window11 = list.slice(0, 11);
-    var freq12 = {};
-    var freq11 = {};
+    const window12 = list.slice(0, 12);
+    const window11 = list.slice(0, 11);
+    const freq12 = {};
+    const freq11 = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       freq12[z] = 0;
       freq11[z] = 0;
     });
     window12.forEach(function(item) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
         freq12[s.zod]++;
       }
     });
     window11.forEach(function(item) {
-      var s = Utils.SpecialCalculator.getSpecial(item);
+      const s = Utils.SpecialCalculator.getSpecial(item);
       if (ZodiacPrediction.ZODIAC_ORDER.indexOf(s.zod) !== -1) {
         freq11[s.zod]++;
       }
     });
 
-    var PENALTY_LAST = 15;
-    var PENALTY_FREQ = 20;
+    const PENALTY_LAST = 15;
+    const PENALTY_FREQ = 20;
 
-    var result = sortedScores.map(function(entry) {
-      var zodiac = entry[0];
-      var score = entry[1];
+    const result = sortedScores.map(function(entry) {
+      const zodiac = entry[0];
+      let score = entry[1];
 
       if (zodiac === lastZodiac) {
         score -= PENALTY_LAST;
@@ -406,32 +406,32 @@ const ZodiacPredictionScores = {
     if (!historyData || historyData.length < 4) return null;
 
     // v2.5.0 性能优化：预计算全量 specials，循环内 O(1) 取值
-    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
 
-    var results = [];
-    for (var i = 1; i < Math.min(historyData.length - 2, 50); i++) {
-      var testData = historyData.slice(i);
-      var targetItem = historyData[i - 1];
+    const results = [];
+    for (let i = 1; i < Math.min(historyData.length - 2, 50); i++) {
+      const testData = historyData.slice(i);
+      const targetItem = historyData[i - 1];
       if (!targetItem) continue;
 
-      var prediction = ZodiacPrediction.calcContinuousScores(testData);
+      const prediction = ZodiacPrediction.calcContinuousScores(testData);
       if (!prediction) continue;
 
-      var top6 = prediction.sorted.slice(0, 6);
+      const top6 = prediction.sorted.slice(0, 6);
 
-      var actualSpecial = allSpecials[i - 1];
-      var actualZod = actualSpecial.zod;
-      var actualTe = actualSpecial.te;
+      const actualSpecial = allSpecials[i - 1];
+      const actualZod = actualSpecial.zod;
+      const actualTe = actualSpecial.te;
 
-      var hitRank = 0;
-      for (var j = 0; j < top6.length; j++) {
+      let hitRank = 0;
+      for (let j = 0; j < top6.length; j++) {
         if (top6[j][0] === actualZod) {
           hitRank = j + 1;
           break;
         }
       }
 
-      var actualDet = prediction.details[actualZod] || {};
+      const actualDet = prediction.details[actualZod] || {};
 
       results.push({
         expect: Number(targetItem.expect || 0),
@@ -452,10 +452,10 @@ const ZodiacPredictionScores = {
       });
     }
 
-    var total = results.length;
-    var hits = results.filter(function(r) { return r.hit }).length;
+    const total = results.length;
+    const hits = results.filter(function(r) { return r.hit }).length;
 
-    var summary = {
+    const summary = {
       total: total,
       hits: hits,
       hitRate: total > 0 ? Math.round(hits / total * 100) : 0,
@@ -477,17 +477,17 @@ const ZodiacPredictionScores = {
   analyzeBacktest: function(summary) {
     if (!summary || !summary.records || !summary.records.length) return null;
 
-    var hits = summary.records.filter(function(r) { return r.hit; });
-    var misses = summary.records.filter(function(r) { return !r.hit; });
+    const hits = summary.records.filter(function(r) { return r.hit; });
+    const misses = summary.records.filter(function(r) { return !r.hit; });
 
-    var dimMax = { base: 30, shape: 20, interval: 20, trend: 15, momentum: 15 };
-    var dimEff = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
-    var dimTotal = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
+    const dimMax = { base: 30, shape: 20, interval: 20, trend: 15, momentum: 15 };
+    const dimEff = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
+    const dimTotal = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
 
     hits.forEach(function(r) {
-      var d = r.actualDetails;
+      const d = r.actualDetails;
       if (!d) return;
-      var dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
+      const dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
       dims.forEach(function(key) {
         dimEff[key] += d[key] / dimMax[key];
         dimTotal[key] += 1;
@@ -495,56 +495,56 @@ const ZodiacPredictionScores = {
     });
 
     misses.forEach(function(r) {
-      var d = r.actualDetails;
+      const d = r.actualDetails;
       if (!d) return;
-      var dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
+      const dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
       dims.forEach(function(key) {
         dimTotal[key] += 1;
       });
     });
 
-    var dimAvg = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
-    var dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
+    const dimAvg = { base: 0, shape: 0, interval: 0, trend: 0, momentum: 0 };
+    const dims = ['base', 'shape', 'interval', 'trend', 'momentum'];
     dims.forEach(function(key) {
       dimAvg[key] = dimTotal[key] > 0 ? dimEff[key] / dimTotal[key] : 0;
     });
 
-    var maxEff = 0;
+    let maxEff = 0;
     dims.forEach(function(key) {
       if (dimAvg[key] > maxEff) maxEff = dimAvg[key];
     });
 
-    var normEff = {};
+    const normEff = {};
     dims.forEach(function(key) {
       normEff[key] = maxEff > 0 ? Math.round(dimAvg[key] / maxEff * 100) : 0;
     });
 
-    var totalEff = 0;
+    let totalEff = 0;
     dims.forEach(function(key) { totalEff += normEff[key]; });
 
-    var dynWeights = {};
+    const dynWeights = {};
     dims.forEach(function(key) {
       dynWeights[key] = totalEff > 0 ? Math.round(normEff[key] / totalEff * 100) : dimMax[key];
     });
 
-    var baseWeight = dynWeights.base;
-    var shapeWeight = dynWeights.shape;
-    var intervalWeight = dynWeights.interval;
-    var trendWeight = dynWeights.trend;
-    var momentumWeight = dynWeights.momentum;
+    const baseWeight = dynWeights.base;
+    const shapeWeight = dynWeights.shape;
+    const intervalWeight = dynWeights.interval;
+    const trendWeight = dynWeights.trend;
+    const momentumWeight = dynWeights.momentum;
 
-    var hotHits = 0, coldHits = 0, totalHitRecs = 0;
+    let hotHits = 0, coldHits = 0, totalHitRecs = 0;
     hits.forEach(function(r) {
       totalHitRecs++;
-      var d = r.actualDetails;
+      const d = r.actualDetails;
       if (!d) return;
       if (d.miss <= 2) hotHits++;
       else if (d.miss > 12) coldHits++;
     });
 
-    var strategy;
-    var hotRatio = totalHitRecs > 0 ? hotHits / totalHitRecs : 0;
-    var coldRatio = totalHitRecs > 0 ? coldHits / totalHitRecs : 0;
+    let strategy;
+    const hotRatio = totalHitRecs > 0 ? hotHits / totalHitRecs : 0;
+    const coldRatio = totalHitRecs > 0 ? coldHits / totalHitRecs : 0;
 
     if (hotRatio > 0.4) {
       strategy = '强追热';
@@ -554,7 +554,7 @@ const ZodiacPredictionScores = {
       strategy = '动态均衡';
     }
 
-    var tuned = {
+    const tuned = {
       strategy: strategy,
       weights: dynWeights,
       dimensionEff: normEff,
@@ -588,7 +588,7 @@ const ZodiacPredictionScores = {
 if (typeof BusinessCommonLRU !== 'undefined' && BusinessCommonLRU) {
   ZodiacPredictionScores.calcContinuousScores = BusinessCommonLRU.withHistoryLRU(
     ZodiacPredictionScores.calcContinuousScores,
-    20  // 历史数据通常 1-2 份（当前 + 预加载），20 条容量足够
+    20 // 历史数据通常 1-2 份（当前 + 预加载），20 条容量足够
   );
 }
 

@@ -67,7 +67,7 @@ const LevelPredictModal = {
     });
 
     // 暗色模式
-    var darkStyle = document.createElement('style');
+    const darkStyle = document.createElement('style');
     darkStyle.id = 'level-predict-modal-dark';
     darkStyle.textContent = [
       '@media (prefers-color-scheme: dark) {',
@@ -94,8 +94,8 @@ const LevelPredictModal = {
 
     LevelPredictModal._backtestData = backtestData;
 
-    var titleEl = document.getElementById('level-predict-modal-title');
-    var contentEl = document.getElementById('level-predict-modal-content');
+    const titleEl = document.getElementById('level-predict-modal-title');
+    const contentEl = document.getElementById('level-predict-modal-content');
 
     titleEl.innerText = '等级预测回测追踪';
 
@@ -105,7 +105,7 @@ const LevelPredictModal = {
       return;
     }
 
-    var html = '';
+    let html = '';
 
     // 汇总卡片
     html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">';
@@ -119,7 +119,7 @@ const LevelPredictModal = {
     html += '</div>';
     html += '<div style="background:#f5f5f5;padding:12px;border-radius:8px;text-align:center;">';
     html += '<div style="font-size:11px;color:#999;margin-bottom:4px;">命中率</div>';
-    var rateColor = backtestData.hitRate >= 50 ? '#34c759' : backtestData.hitRate >= 33 ? '#ff9500' : '#ff3b30';
+    const rateColor = backtestData.hitRate >= 50 ? '#34c759' : backtestData.hitRate >= 33 ? '#ff9500' : '#ff3b30';
     html += '<div style="font-size:20px;font-weight:800;color:' + rateColor + ';">' + backtestData.hitRate + '%</div>';
     html += '</div>';
     html += '</div>';
@@ -143,17 +143,17 @@ const LevelPredictModal = {
     html += '</tr></thead>';
     html += '<tbody>';
 
-    var results = backtestData.results;
+    const results = backtestData.results;
     // results 已按时间顺序（从旧到新），显示最近 50 条
-    var displayList = results.length > 50 ? results.slice(results.length - 50) : results;
+    const displayList = results.length > 50 ? results.slice(results.length - 50) : results;
 
     displayList.forEach(function(r) {
-      var rowBg = r.hit
+      const rowBg = r.hit
         ? 'background:rgba(52,199,89,0.06);'
         : 'background:rgba(255,59,48,0.03);';
-      var resultText = r.hit ? '命中' : '未中';
-      var resultColor = r.hit ? '#34c759' : '#ff3b30';
-      var levelCls = 'tj-level-' + r.actualLevel;
+      const resultText = r.hit ? '命中' : '未中';
+      const resultColor = r.hit ? '#34c759' : '#ff3b30';
+      const levelCls = 'tj-level-' + r.actualLevel;
 
       html += '<tr class="lp-backtest-' + (r.hit ? 'hit' : 'miss') + '" style="' + rowBg + '">';
       html += '<td style="padding:5px 4px;border-bottom:1px solid #eee;">' + r.expect + '</td>';

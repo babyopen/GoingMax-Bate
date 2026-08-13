@@ -91,7 +91,7 @@ const UnrecSourceModal = {
     });
 
     // 暗色模式适配（参照 zodiac-stat-modal 风格）
-    var darkStyle = document.createElement('style');
+    const darkStyle = document.createElement('style');
     darkStyle.id = 'unrec-source-modal-dark-style';
     darkStyle.textContent = `
       @media (prefers-color-scheme: dark) {

@@ -24,21 +24,21 @@ const ViewFilter = {
       el.classList.toggle('active', i === index);
     });
 
-    var pages = ['filterPage', 'analysisPage', 'randomPage', 'profilePage', 'excludePage'];
+    const pages = ['filterPage', 'analysisPage', 'randomPage', 'profilePage', 'excludePage'];
     pages.forEach(function(pageId, i) {
-      var pageEl = document.getElementById(pageId);
+      const pageEl = document.getElementById(pageId);
       if(pageEl) {
         pageEl.style.display = i === index ? 'block' : 'none';
         pageEl.classList.toggle('active', i === index);
       }
     });
 
-    var topBox = document.getElementById('topBox');
+    const topBox = document.getElementById('topBox');
     if(topBox) {
       topBox.style.display = index === 0 ? 'block' : 'none';
     }
 
-    var bodyBox = document.querySelector('.body-box');
+    const bodyBox = document.querySelector('.body-box');
     if(bodyBox) {
       if(index === 0) {
         bodyBox.style.marginTop = 'calc(var(--top-offset) + var(--safe-top))';
@@ -47,7 +47,7 @@ const ViewFilter = {
       }
     }
 
-    var quickNav = document.getElementById('quickNav');
+    const quickNav = document.getElementById('quickNav');
     if(quickNav) {
       if (index === 0 || index === 1 || index === 2 || index === 3) {
         quickNav.style.display = 'block';
@@ -65,7 +65,7 @@ const ViewFilter = {
     } else if (index === 3) {
       ViewFilter.refreshQuickNav('profile');
     } else {
-      var navTabs = document.getElementById('navTabs');
+      const navTabs = document.getElementById('navTabs');
       if (navTabs) navTabs.innerHTML = '';
     }
   },
@@ -75,13 +75,13 @@ const ViewFilter = {
    * @param {string} targetId - 模块ID
    */
   scrollToModule: (targetId) => {
-    var targetEl = document.getElementById(targetId);
+    const targetEl = document.getElementById(targetId);
     if (!targetEl) return;
-    var scrollContainer = document.querySelector('.page-scroll');
+    const scrollContainer = document.querySelector('.page-scroll');
     if (scrollContainer) {
       targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      var offset = CONFIG.TOP_OFFSET + Utils.getSafeTop();
+      const offset = CONFIG.TOP_OFFSET + Utils.getSafeTop();
       window.scrollTo({ top: targetEl.offsetTop - offset, behavior: 'smooth' });
     }
     Business.toggleQuickNav(false);
@@ -119,7 +119,7 @@ const ViewFilter = {
    * 改用 .page-scroll.scrollTo 而不是 window.scrollTo（window 不能滚动）
    */
   backToTop: () => {
-    var scrollContainer = document.querySelector('.page-scroll');
+    const scrollContainer = document.querySelector('.page-scroll');
     if (scrollContainer) {
       scrollContainer.scrollTo({top: 0, behavior: 'smooth'});
     }
@@ -144,7 +144,7 @@ const ViewFilter = {
    * @returns {number}
    */
   getScrollTop: () => {
-    var scrollContainer = document.querySelector('.page-scroll');
+    const scrollContainer = document.querySelector('.page-scroll');
     return scrollContainer ? scrollContainer.scrollTop : 0;
   },
 
@@ -153,7 +153,7 @@ const ViewFilter = {
    * v2.0.9 修复：scroll 监听已迁移到 .page-scroll，清理时也要从 .page-scroll 上解绑
    */
   cleanupPageEvents: (scrollHandler, unloadHandler) => {
-    var scrollContainer = document.querySelector('.page-scroll');
+    const scrollContainer = document.querySelector('.page-scroll');
     if (scrollContainer) {
       scrollContainer.removeEventListener('scroll', scrollHandler);
     }

@@ -10,8 +10,8 @@ const ViewAnalysisFull = {
    * 渲染全维度分析（接收 Business.calcFullAnalysis() 预计算数据）
    */
   renderFullAnalysis: function(data) {
-    var hotWrap = document.getElementById('hotWrap');
-    var emptyTip = document.getElementById('emptyTip');
+    const hotWrap = document.getElementById('hotWrap');
+    const emptyTip = document.getElementById('emptyTip');
     
     if(!data) {
       if(hotWrap) hotWrap.style.display = 'none';
@@ -22,7 +22,7 @@ const ViewAnalysisFull = {
     if(hotWrap) hotWrap.style.display = 'block';
     if(emptyTip) emptyTip.style.display = 'none';
 
-    var setText = function(id, val) { var el = document.getElementById(id); if(el) el.innerText = val; };
+    const setText = function(id, val) { const el = document.getElementById(id); if(el) el.innerText = val; };
 
     setText('hotShape', data.hotSD || '');
     setText('hotZodiac', data.hotZodiac || '');
@@ -53,7 +53,7 @@ const ViewAnalysisFull = {
     setText('hotNumber', data.hotNum || '');
 
     // v2.6.0 新增：给热门 TOP5 父 div 添加点击回测入口
-    var hotNumberEl = document.getElementById('hotNumber');
+    const hotNumberEl = document.getElementById('hotNumber');
     if (hotNumberEl && hotNumberEl.parentElement) {
       hotNumberEl.parentElement.setAttribute('data-action', 'showHotBacktest');
       hotNumberEl.parentElement.style.cursor = 'pointer';
@@ -70,28 +70,28 @@ const ViewAnalysisFull = {
     setText('streakMax', data.streakMax || '');
     setText('streakTip', data.streakTip || '');
 
-    var tailHtml = '';
+    let tailHtml = '';
     if(data.tailArr) {
-      for(var t = 0; t <= 9; t++) {
+      for(let t = 0; t <= 9; t++) {
         tailHtml += '<div class="analysis-item"><div class="label">尾' + t + '</div><div class="value">' + (data.tailArr[t] || 0) + '</div></div>';
       }
     }
-    var tailRow = document.getElementById('tailRow');
+    const tailRow = document.getElementById('tailRow');
     if(tailRow) tailRow.innerHTML = tailHtml;
 
     if(data.rankHtmls) {
-      var rankKeys = ['singleDoubleRank', 'bigSmallRank', 'rangeRank', 'headRank', 'tailRank', 'colorRank', 'wuxingRank', 'animalRank', 'zodiacRank'];
+      const rankKeys = ['singleDoubleRank', 'bigSmallRank', 'rangeRank', 'headRank', 'tailRank', 'colorRank', 'wuxingRank', 'animalRank', 'zodiacRank'];
       rankKeys.forEach(function(k) {
-        var el = document.getElementById(k);
+        const el = document.getElementById(k);
         if(el && data.rankHtmls[k]) el.innerHTML = data.rankHtmls[k];
       });
     }
 
     // 渲染 01-49 号码统计表
-    var numStatWrap = document.getElementById('numStatisticsTable');
+    const numStatWrap = document.getElementById('numStatisticsTable');
     if(numStatWrap) {
       if(data.numStatistics && data.numStatistics.length > 0) {
-        var html = '<div class="num-stat-row num-stat-head">'
+        let html = '<div class="num-stat-row num-stat-head">'
           + '<div class="num-stat-cell">号码</div>'
           + '<div class="num-stat-cell">出现次数</div>'
           + '<div class="num-stat-cell">出现概率</div>'
@@ -100,9 +100,9 @@ const ViewAnalysisFull = {
           + '<div class="num-stat-cell">最小间隔</div>'
           + '<div class="num-stat-cell">当前遗漏</div>'
           + '</div>';
-        for(var i = 0; i < data.numStatistics.length; i++) {
-          var ns = data.numStatistics[i];
-          var colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
+        for(let i = 0; i < data.numStatistics.length; i++) {
+          const ns = data.numStatistics[i];
+          const colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
           html += '<div class="num-stat-row num-stat-' + colorClass + '">'
             + '<div class="num-stat-cell num-stat-num">' + ns.num + '</div>'
             + '<div class="num-stat-cell">' + ns.count + '</div>'
@@ -126,12 +126,12 @@ const ViewAnalysisFull = {
    */
   buildRankHtml: function(dataObj, total, missMap) {
     if(total === 0 || !dataObj) return '';
-    var entries = BusinessCommonSort.sortEntriesByValueDesc(Object.entries(dataObj));
-    var html = '<div class="rank-header"><div class="rank-no">名次</div><div class="rank-name">分类</div><div class="rank-count">次数</div><div class="rank-rate">占比</div><div class="rank-miss">遗漏</div></div>';
+    const entries = BusinessCommonSort.sortEntriesByValueDesc(Object.entries(dataObj));
+    let html = '<div class="rank-header"><div class="rank-no">名次</div><div class="rank-name">分类</div><div class="rank-count">次数</div><div class="rank-rate">占比</div><div class="rank-miss">遗漏</div></div>';
     entries.forEach(function(entry, idx) {
-      var name = entry[0], count = entry[1];
-      var rate = ((count / total) * 100).toFixed(0) + '%';
-      var miss;
+      const name = entry[0], count = entry[1];
+      const rate = ((count / total) * 100).toFixed(0) + '%';
+      let miss;
       if(missMap && missMap[name] !== undefined) {
         miss = missMap[name];
       } else {
@@ -146,7 +146,7 @@ const ViewAnalysisFull = {
    * 渲染排行表到指定容器
    */
   renderRankToDOM: function(containerId, html) {
-    var container = document.getElementById(containerId);
+    const container = document.getElementById(containerId);
     if(container) container.innerHTML = html;
   },
 
@@ -158,18 +158,18 @@ const ViewAnalysisFull = {
   showHotBacktestModal: function(backtestData) {
     if (!backtestData || !backtestData.details || !backtestData.details.length) return;
 
-    var modalId = 'hotBacktestModal';
-    var existingModal = document.getElementById(modalId);
+    const modalId = 'hotBacktestModal';
+    const existingModal = document.getElementById(modalId);
     if (existingModal) existingModal.remove();
 
-    var overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     overlay.id = modalId;
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
 
-    var bd = backtestData;
-    var hl = '#FF6B35';
+    const bd = backtestData;
+    const hl = '#FF6B35';
 
-    var html = '';
+    let html = '';
     html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
 
     // 标题
@@ -200,9 +200,9 @@ const ViewAnalysisFull = {
     html += '<div style="display:flex;flex-direction:column;gap:6px;">';
 
     (bd.details || []).forEach(function(item) {
-      var hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
-      var hitColor = item.isHit ? '#3B82F6' : '#FF453A';
-      var hitIcon = item.isHit ? '✓' : '✗';
+      const hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
+      const hitColor = item.isHit ? '#3B82F6' : '#FF453A';
+      const hitIcon = item.isHit ? '✓' : '✗';
 
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
       html += '<span style="font-size:12px;font-weight:600;min-width:80px;">' + item.expect + '期</span>';
@@ -224,17 +224,17 @@ const ViewAnalysisFull = {
     document.body.appendChild(overlay);
 
     // 关闭逻辑
-    var closeHandler = function() {
+    const closeHandler = function() {
       overlay.style.animation = 'fadeOut 0.2s ease forwards';
       setTimeout(function() { overlay.remove(); }, 200);
     };
-    var closeBtn = document.getElementById('closeHotBacktestBtn');
+    const closeBtn = document.getElementById('closeHotBacktestBtn');
     if (closeBtn) closeBtn.addEventListener('click', closeHandler);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) closeHandler(); });
 
     // 注入动画样式（复用已有动画 keyframes）
     if (!document.getElementById('backtestModalAnimations')) {
-      var styleSheet = document.createElement('style');
+      const styleSheet = document.createElement('style');
       styleSheet.id = 'backtestModalAnimations';
       styleSheet.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.95)}to{transform:scale(1)}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
       document.head.appendChild(styleSheet);

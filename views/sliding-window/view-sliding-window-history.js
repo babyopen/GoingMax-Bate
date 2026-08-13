@@ -17,7 +17,7 @@ const ViewSlidingWindowHistory = {
    * @param {Object} [pendingPrediction] - 当前预测（未开奖），{ nextExpect, candidates }
    */
   render: function(backtestRecords, pendingPrediction) {
-    var listCard = document.getElementById('mainHistoryListCard');
+    const listCard = document.getElementById('mainHistoryListCard');
     if (!listCard) return;
 
     // 显示卡片容器
@@ -35,12 +35,12 @@ const ViewSlidingWindowHistory = {
    * 渲染空状态（数据不足时调用，保持 API 兼容）
    */
   renderEmpty: function() {
-    var listCard = document.getElementById('mainHistoryListCard');
+    const listCard = document.getElementById('mainHistoryListCard');
     if (!listCard) return;
     listCard.style.display = '';
     this._hideDeprecatedLiveElements();
     this._ensureBacktestContainer();
-    this._renderBacktestSection(null);   // 走空态分支
+    this._renderBacktestSection(null); // 走空态分支
   },
 
   /**
@@ -67,15 +67,15 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _ensureBacktestContainer: function() {
-    var listCard = document.getElementById('mainHistoryListCard');
+    const listCard = document.getElementById('mainHistoryListCard');
     if (!listCard) return;
-    var cardBody = listCard.querySelector('.card-body');
+    const cardBody = listCard.querySelector('.card-body');
     if (!cardBody) return;
 
     // 幂等：若已存在则不重复创建
     if (document.getElementById('mainBacktestSection')) return;
 
-    var section = document.createElement('div');
+    const section = document.createElement('div');
     section.id = 'mainBacktestSection';
     section.className = 'sw-backtest-section';
     section.innerHTML =
@@ -101,7 +101,7 @@ const ViewSlidingWindowHistory = {
       this._renderBacktestEmpty();
       return;
     }
-    var stats = BusinessSlidingWindowHistory.computeBacktestStats(backtestRecords);
+    const stats = BusinessSlidingWindowHistory.computeBacktestStats(backtestRecords);
     this._renderBacktestStats(stats);
     this._renderBacktestList(backtestRecords, pendingPrediction);
   },
@@ -111,13 +111,13 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _renderBacktestStats: function(stats) {
-    var container = document.getElementById('mainBacktestStats');
+    const container = document.getElementById('mainBacktestStats');
     if (!container) return;
 
-    var hitRateStyle = stats.hitRate >= 80 ? 'color:#30D158;' : (stats.hitRate >= 50 ? 'color:#FF9F0A;' : 'color:#FF453A;');
-    var top3Style = stats.top3Rate >= 50 ? 'color:#30D158;' : (stats.top3Rate >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
+    const hitRateStyle = stats.hitRate >= 80 ? 'color:#30D158;' : (stats.hitRate >= 50 ? 'color:#FF9F0A;' : 'color:#FF453A;');
+    const top3Style = stats.top3Rate >= 50 ? 'color:#30D158;' : (stats.top3Rate >= 30 ? 'color:#FF9F0A;' : 'color:var(--sub-text);');
 
-    var html = '<div class="sw-stats-grid">';
+    let html = '<div class="sw-stats-grid">';
 
     // 回测命中率
     html += '<div class="sw-stat-item">';
@@ -154,12 +154,12 @@ const ViewSlidingWindowHistory = {
       html += '<div class="sw-rank-distribution">';
       html += '<div class="sw-rank-dist-title">回测排名分布</div>';
       html += '<div class="sw-rank-bars">';
-      var maxRank = Math.max(1, stats.rankStats[1] || 0, stats.rankStats[2] || 0, stats.rankStats[3] || 0, stats.rankStats[4] || 0, stats.rankStats[5] || 0, stats.rankStats[6] || 0);
-      for (var r = 1; r <= 6; r++) {
-        var count = stats.rankStats[r] || 0;
-        var pct = stats.total > 0 ? (count / stats.total * 100).toFixed(0) : '0';
-        var barHeight = Math.max(18, (count / maxRank * 100));
-        var barColor = r <= 3 ? '#30D158' : (r <= 4 ? '#FF9F0A' : 'var(--sub-text)');
+      const maxRank = Math.max(1, stats.rankStats[1] || 0, stats.rankStats[2] || 0, stats.rankStats[3] || 0, stats.rankStats[4] || 0, stats.rankStats[5] || 0, stats.rankStats[6] || 0);
+      for (let r = 1; r <= 6; r++) {
+        const count = stats.rankStats[r] || 0;
+        const pct = stats.total > 0 ? (count / stats.total * 100).toFixed(0) : '0';
+        const barHeight = Math.max(18, (count / maxRank * 100));
+        const barColor = r <= 3 ? '#30D158' : (r <= 4 ? '#FF9F0A' : 'var(--sub-text)');
         html += '<div class="sw-rank-bar-item">';
         html += '<div class="sw-rank-bar-count">' + count + '</div>';
         html += '<div class="sw-rank-bar-track"><div class="sw-rank-bar-fill" style="height:' + barHeight + '%;background:' + barColor + ';"><span class="sw-rank-bar-pct">' + pct + '%</span></div></div>';
@@ -177,19 +177,19 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _renderBacktestList: function(records, pendingPrediction) {
-    var container = document.getElementById('mainBacktestList');
+    const container = document.getElementById('mainBacktestList');
     if (!container) return;
     // 容器套上统一样式类（与 view-zodiac-giong:230 / view-zodiac-predict:132 一致）
     container.className = 'backtest-records backtest-records-inline';
 
-    var html = '';
+    let html = '';
 
     // 未开奖条目：当前预测，排在列表最顶部
     if (pendingPrediction && pendingPrediction.candidates && pendingPrediction.candidates.length > 0) {
       html += this._renderPendingRow(pendingPrediction);
     }
 
-    for (var i = 0; i < records.length; i++) {
+    for (let i = 0; i < records.length; i++) {
       html += this._renderBacktestRow(records[i]);
     }
     container.innerHTML = html;
@@ -203,20 +203,20 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _renderBacktestRow: function(rec) {
-    var isHit = rec.hitStatus === 'hit';
-    var hitText = isHit ? '准' : '错';
-    var hitRowClass = isHit ? 'backtest-hit' : 'backtest-miss';
+    const isHit = rec.hitStatus === 'hit';
+    const hitText = isHit ? '准' : '错';
+    const hitRowClass = isHit ? 'backtest-hit' : 'backtest-miss';
 
     // [V1.4.2] 降权生肖集合（向后兼容：旧记录无 crossExclusion 字段）
-    var downweightedSet = {};
+    const downweightedSet = {};
     if (rec.crossExclusion && Array.isArray(rec.crossExclusion.downweighted)) {
       rec.crossExclusion.downweighted.forEach(function(z) { downweightedSet[z] = true; });
     }
 
     // 高亮命中的生肖 + 标注降权生肖（视觉：命中优先 > 降权其次）
-    var top6Html;
+    let top6Html;
     if (isHit && rec.hitRank >= 1 && rec.hitRank <= rec.candidates.length) {
-      var hitIdx = rec.hitRank - 1;
+      const hitIdx = rec.hitRank - 1;
       top6Html = rec.candidates.map(function(z, i) {
         if (i === hitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
         if (downweightedSet[z]) return '<span class="backtest-record-zodiac-down" title="Rule2 软降权 ×' + (rec.crossExclusion.downweightFactor || 0) + '">' + z + '</span>';
@@ -230,10 +230,10 @@ const ViewSlidingWindowHistory = {
     }
 
     // 实际特码数字格式化（如 2 → "02"）
-    var actualNumRaw = rec.actualTe !== undefined ? rec.actualTe : (rec.actualNumber !== undefined ? rec.actualNumber : '');
-    var actualNum = Utils.formatNum(actualNumRaw);
+    const actualNumRaw = rec.actualTe !== undefined ? rec.actualTe : (rec.actualNumber !== undefined ? rec.actualNumber : '');
+    const actualNum = Utils.formatNum(actualNumRaw);
 
-    var html = '<div class="backtest-record-row ' + hitRowClass + '">';
+    let html = '<div class="backtest-record-row ' + hitRowClass + '">';
     html += '<span class="backtest-record-period">' + rec.period + '期:</span>';
     html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
     html += '<span class="backtest-record-result">开:<b>' + rec.actualZodiac + '</b>' + actualNum + '<span class="backtest-record-hittext">' + hitText + '</span></span>';
@@ -248,10 +248,10 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _renderPendingRow: function(prediction) {
-    var zodiacNames = prediction.candidates.map(function(c) { return c.shengxiao; });
-    var top6Html = zodiacNames.join('');
+    const zodiacNames = prediction.candidates.map(function(c) { return c.shengxiao; });
+    const top6Html = zodiacNames.join('');
 
-    var html = '<div class="backtest-record-row backtest-pending">';
+    let html = '<div class="backtest-record-row backtest-pending">';
     html += '<span class="backtest-record-period">' + prediction.nextExpect + '期:</span>';
     html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
     html += '<span class="backtest-record-result"><span class="backtest-record-hittext" style="color:var(--primary);">未开奖</span></span>';
@@ -264,9 +264,9 @@ const ViewSlidingWindowHistory = {
    * @private
    */
   _renderBacktestEmpty: function() {
-    var statsEl = document.getElementById('mainBacktestStats');
-    var listEl = document.getElementById('mainBacktestList');
-    var sectionEl = document.getElementById('mainBacktestSection');
+    const statsEl = document.getElementById('mainBacktestStats');
+    const listEl = document.getElementById('mainBacktestList');
+    const sectionEl = document.getElementById('mainBacktestSection');
     if (!sectionEl) return;
     if (statsEl) statsEl.innerHTML = '<div class="empty-tip" style="font-size:12px;color:var(--sub-text);">数据不足12期，无法回测</div>';
     if (listEl) listEl.innerHTML = '';

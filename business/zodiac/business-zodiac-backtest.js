@@ -15,37 +15,37 @@ const ZodiacPredictionBacktest = {
     if (!historyData || historyData.length < 10) return null;
 
     testCount = Math.min(testCount || 24, 24);
-    var results = [];
-    var maxOffset = Math.min(testCount, historyData.length - 6);
+    const results = [];
+    const maxOffset = Math.min(testCount, historyData.length - 6);
 
     // 2026-06-21 新增：与实际推荐算法一致模式
     //   - 当 config 提供 trendPredictor + buildSequence 时，启用"模拟当时推荐"路径：
     //     用 targetItem 之前 10 期构造 sequence，调 config.trendPredictor 计算预测值
     //   - 这样回测追踪每期的"预测" = 当时实际推荐算法的预测，确保回测与实际推荐一致
-    var useTrendPredictor = !!config.trendPredictor && typeof config.buildSequence === 'function';
+    const useTrendPredictor = !!config.trendPredictor && typeof config.buildSequence === 'function';
 
-    for (var offset = 0; offset < maxOffset; offset++) {
-      var targetItem = historyData[offset];
+    for (let offset = 0; offset < maxOffset; offset++) {
+      const targetItem = historyData[offset];
       if (!targetItem) continue;
 
-      var predictedValue = '-';
-      var confidence = 45;
+      let predictedValue = '-';
+      let confidence = 45;
 
       if (useTrendPredictor) {
         // 新增路径：用实际推荐算法（_predictXxxTrend）+ 当时 10 期数据
-        var trendSequence = config.buildSequence(historyData, offset);
+        const trendSequence = config.buildSequence(historyData, offset);
         if (!trendSequence || trendSequence.length < 5) continue;
-        var trendResult = config.trendPredictor(trendSequence);
+        const trendResult = config.trendPredictor(trendSequence);
         predictedValue = trendResult.prediction;
         confidence = trendResult.confidence || 45;
       } else {
         // 原算法路径（完全保留，未做任何修改）
-        var recentData = historyData.slice(offset + 1, offset + 7);
+        const recentData = historyData.slice(offset + 1, offset + 7);
         if (recentData.length < 5) continue;
 
-        var lastValues = [];
-        for (var i = 0; i < Math.min(5, recentData.length); i++) {
-          var val = config.extractValue(recentData[i]);
+        let lastValues = [];
+        for (let i = 0; i < Math.min(5, recentData.length); i++) {
+          const val = config.extractValue(recentData[i]);
           if (config.categories.indexOf(val) !== -1) {
             lastValues.push(val);
           } else {
@@ -54,26 +54,26 @@ const ZodiacPredictionBacktest = {
         }
 
         if (lastValues.length >= 3) {
-          var scores = {};
+          let scores = {};
           config.categories.forEach(function(cat) { scores[cat] = 0; });
 
-          var last3 = lastValues.slice(0, 3);
-          var allSame3 = last3.every(function(v) { return v === last3[0]; });
+          const last3 = lastValues.slice(0, 3);
+          const allSame3 = last3.every(function(v) { return v === last3[0]; });
 
           if (allSame3) {
-            var others = config.categories.filter(function(c) { return c !== last3[0]; });
+            const others = config.categories.filter(function(c) { return c !== last3[0]; });
             others.forEach(function(c) { scores[c] += config.weights.consecutive; });
           } else if (last3[0] !== last3[1] && last3[1] !== last3[2]) {
             scores[last3[0]] += config.weights.alternate;
           }
 
-          var valueCount = {};
+          let valueCount = {};
           lastValues.forEach(function(v) { valueCount[v] = (valueCount[v] || 0) + 1; });
 
           Object.keys(valueCount).forEach(function(val) {
             if (valueCount[val] >= 3) {
-              var bonus = (valueCount[val] - 2) * 8;
-              var otherVals = config.categories.filter(function(c) { return c !== val; });
+              const bonus = (valueCount[val] - 2) * 8;
+              const otherVals = config.categories.filter(function(c) { return c !== val; });
               otherVals.forEach(function(c) { scores[c] += Math.max(5, bonus); });
             }
           });
@@ -87,19 +87,19 @@ const ZodiacPredictionBacktest = {
           }
 
           if (config.weights.statistical && config.categories.length === 2) {
-            var firstRatio = (valueCount[lastValues[0]] || 0) / lastValues.length;
+            const firstRatio = (valueCount[lastValues[0]] || 0) / lastValues.length;
             if (firstRatio > 0.4 && firstRatio < 0.6) {
               if (firstRatio > 0.5) {
                 scores[lastValues[0]] += config.weights.statistical;
               } else {
-                var otherCat = config.categories.find(function(c) { return c !== lastValues[0]; });
+                const otherCat = config.categories.find(function(c) { return c !== lastValues[0]; });
                 if (otherCat) scores[otherCat] += config.weights.statistical;
               }
             }
           }
 
-          var maxScore = -1;
-          var bestValue = '-';
+          let maxScore = -1;
+          let bestValue = '-';
           Object.keys(scores).forEach(function(val) {
             if (scores[val] > maxScore) {
               maxScore = scores[val];
@@ -119,11 +119,11 @@ const ZodiacPredictionBacktest = {
 
       if (predictedValue === '-') continue;
 
-      var actualValue = config.extractValue(targetItem);
+      let actualValue = config.extractValue(targetItem);
       if (!actualValue) actualValue = config.categories[0];
 
-      var isHit = predictedValue === actualValue;
-      var resultItem = {
+      const isHit = predictedValue === actualValue;
+      const resultItem = {
         expect: targetItem.expect,
         actualNumber: config.getNumber(targetItem),
         confidence: confidence,
@@ -138,15 +138,15 @@ const ZodiacPredictionBacktest = {
 
     if (!results.length) return null;
 
-    var hitCount = results.filter(function(r) { return r.isHit; }).length;
-    var hitRate = Math.round((hitCount / results.length) * 100);
+    const hitCount = results.filter(function(r) { return r.isHit; }).length;
+    const hitRate = Math.round((hitCount / results.length) * 100);
 
-    var recentResults = results.slice(0, 24);
-    var recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
-    var recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
+    const recentResults = results.slice(0, 24);
+    const recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
+    const recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
 
-    var currentStreak = 0;
-    for (var j = 0; j < recentResults.length; j++) {
+    let currentStreak = 0;
+    for (let j = 0; j < recentResults.length; j++) {
       if (recentResults[j].isHit) {
         currentStreak++;
       } else {
@@ -170,7 +170,7 @@ const ZodiacPredictionBacktest = {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['大', '小'],
       extractValue: function(item) {
-        var special = Utils.SpecialCalculator.getSpecial(item);
+        const special = Utils.SpecialCalculator.getSpecial(item);
         return special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1] ? '大' : '小';
       },
       getNumber: function(item) {
@@ -194,8 +194,8 @@ const ZodiacPredictionBacktest = {
       },
       buildSequence: function(historyData, offset) {
         return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          var special = Utils.SpecialCalculator.getSpecial(item);
-          var isBig = special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1];
+          const special = Utils.SpecialCalculator.getSpecial(item);
+          const isBig = special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1];
           return {
             expect: item.expect,
             number: special.te,
@@ -210,7 +210,7 @@ const ZodiacPredictionBacktest = {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['单', '双'],
       extractValue: function(item) {
-        var special = Utils.SpecialCalculator.getSpecial(item);
+        const special = Utils.SpecialCalculator.getSpecial(item);
         return special.te % 2 !== 0 ? '单' : '双';
       },
       getNumber: function(item) {
@@ -234,7 +234,7 @@ const ZodiacPredictionBacktest = {
       },
       buildSequence: function(historyData, offset) {
         return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          var special = Utils.SpecialCalculator.getSpecial(item);
+          const special = Utils.SpecialCalculator.getSpecial(item);
           return {
             expect: item.expect,
             number: special.te,
@@ -249,7 +249,7 @@ const ZodiacPredictionBacktest = {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['金', '木', '水', '火', '土'],
       extractValue: function(item) {
-        var special = Utils.SpecialCalculator.getSpecial(item);
+        const special = Utils.SpecialCalculator.getSpecial(item);
         return special.wuxing || '金';
       },
       getNumber: function(item) {
@@ -273,7 +273,7 @@ const ZodiacPredictionBacktest = {
       },
       buildSequence: function(historyData, offset) {
         return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          var special = Utils.SpecialCalculator.getSpecial(item);
+          const special = Utils.SpecialCalculator.getSpecial(item);
           return {
             expect: item.expect,
             number: special.te,
@@ -288,8 +288,8 @@ const ZodiacPredictionBacktest = {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['红', '蓝', '绿'],
       extractValue: function(item) {
-        var special = Utils.SpecialCalculator.getSpecial(item);
-        var colorName = special.colorName || '红';
+        const special = Utils.SpecialCalculator.getSpecial(item);
+        let colorName = special.colorName || '红';
         if (!['红', '蓝', '绿'].includes(colorName)) colorName = '红';
         return colorName;
       },
@@ -314,8 +314,8 @@ const ZodiacPredictionBacktest = {
       },
       buildSequence: function(historyData, offset) {
         return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          var special = Utils.SpecialCalculator.getSpecial(item);
-          var colorName = special.colorName || '红';
+          const special = Utils.SpecialCalculator.getSpecial(item);
+          let colorName = special.colorName || '红';
           if (!['红', '蓝', '绿'].includes(colorName)) colorName = '红';
           return {
             expect: item.expect,
@@ -337,42 +337,42 @@ const ZodiacPredictionBacktest = {
    * @returns {Object|null} 回测汇总
    */
   runFinalZodiacBacktest: function(historyData, testCount, analyzeLimit) {
-    var windowSize = analyzeLimit || 12;
+    const windowSize = analyzeLimit || 12;
     if (!historyData || historyData.length < windowSize + 1) return null;
     // 修复 #6：testCount 上限改为 historyData.length - windowSize（保证至少 analyzeLimit 期窗口），
     //    同时上限不超过 50；UI 展示时直接读取 results.length，避免"显示 36 实际跑 11"
     testCount = Math.min(testCount || 36, 50, historyData.length - windowSize);
     if (testCount <= 0) return null;
-    var results = [];
+    const results = [];
 
     // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
-    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
 
-    for (var offset = 0; offset < testCount; offset++) {
-      var targetItem = historyData[offset];
+    for (let offset = 0; offset < testCount; offset++) {
+      const targetItem = historyData[offset];
       if (!targetItem) break;
       // 至少需要：analyzeLimit 期窗口 + 1 期目标
       if (historyData.length < offset + windowSize + 1) break;
 
       // 1. 模拟"在那一期"可用数据：historyData[offset+1..offset+windowSize] 共 windowSize 期
-      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
+      const list = historyData.slice(offset + 1, offset + 1 + windowSize);
 
       // 2. 计算"上期生肖的常跟随生肖"（修复 #1：只能用 targetItem 之前的历史数据，
       //    避免前视偏差/数据穿越。原版 historyData.slice(offset + 2, offset + 14) 包含了
       //    targetItem 之后的未来期开奖结果，导致回测命中率被人为虚高）
-      var latestItem = list[0];
-      var latestZodiac = '';
+      const latestItem = list[0];
+      let latestZodiac = '';
       if (latestItem) {
-        var zodArr = Utils.parseZodiacArr(latestItem);
+        const zodArr = Utils.parseZodiacArr(latestItem);
         latestZodiac = zodArr[6] || '';
       }
-      var followZodiacs = [];
+      let followZodiacs = [];
       if (latestZodiac && offset > 0) {
         // 修复 #1：用 offset 之前的历史数据累计"上期 = latestZodiac → 下期 = ?"
-        var followCount = {};
-        for (var fi = 0; fi < offset; fi++) {
-          var preS = allSpecials[fi];
-          var curS = allSpecials[fi + 1];
+        const followCount = {};
+        for (let fi = 0; fi < offset; fi++) {
+          const preS = allSpecials[fi];
+          const curS = allSpecials[fi + 1];
           if (preS.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curS.zod)) {
             followCount[curS.zod] = (followCount[curS.zod] || 0) + 1;
           }
@@ -387,11 +387,11 @@ const ZodiacPredictionBacktest = {
       //    确保弹窗顶部 🔮 下期预测 与未来该期进入回测后的号码一致
       else if (latestZodiac && offset === 0) {
         try {
-          var _fullData = Business && Business.calcZodiacAnalysis
+          const _fullData = Business && Business.calcZodiacAnalysis
             ? Business.calcZodiacAnalysis()
             : null;
-          var _fullFollowMap = _fullData && _fullData.followMap;
-          var _fullFollow = _fullFollowMap && _fullFollowMap[latestZodiac];
+          const _fullFollowMap = _fullData && _fullData.followMap;
+          const _fullFollow = _fullFollowMap && _fullFollowMap[latestZodiac];
           if (_fullFollow && typeof _fullFollow === 'object') {
             followZodiacs = Object.entries(_fullFollow)
               .sort(function(a, b) { return b[1] - a[1]; })
@@ -407,29 +407,29 @@ const ZodiacPredictionBacktest = {
       }
 
       // 3. 调用 5 维核心算法得到 top 36 推荐号码（窗口 24 期，2026-07-14 调整）
-      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
-      var recommendedNums = recommend.numbers || [];
+      const recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
+      const recommendedNums = recommend.numbers || [];
       // 获取候选号码的分数用于排序展示
-      var candidateNums = recommend.candidateNums || [];
+      const candidateNums = recommend.candidateNums || [];
 
       // 4. 实际特码对比（按展示集合判定，下面展示什么这里就判什么）
-      var actualSpecial = allSpecials[offset];
-      var actualNum = actualSpecial.te || 0;
+      const actualSpecial = allSpecials[offset];
+      const actualNum = actualSpecial.te || 0;
 
       // 5. 按得分排序推荐号码（得分高的在前）
-      var sortedRecommendedNums = recommendedNums.map(function(num) {
-        var candidate = candidateNums.find(function(c) { return c.num === num; });
+      const sortedRecommendedNums = recommendedNums.map(function(num) {
+        const candidate = candidateNums.find(function(c) { return c.num === num; });
         return { num: num, score: candidate ? candidate.score : 0 };
       }).sort(function(a, b) { return b.score - a.score || a.num - b.num; });
 
       // 方案 D：展示 36 个推荐号 = 算法选中前 5 名排除 + 剩余 31 个按分排序展示
       //    isHit 基于展示集合判定，所见即所判。
-      var displayNums = sortedRecommendedNums.slice(5);     // 后 31 名（未选中推荐）
+      const displayNums = sortedRecommendedNums.slice(5); // 后 31 名（未选中推荐）
 
-      var displayNumValues = displayNums.map(function(item2) {
+      const displayNumValues = displayNums.map(function(item2) {
         return typeof item2 === 'object' ? item2.num : item2;
       });
-      var isHit = displayNumValues.indexOf(actualNum) !== -1;
+      const isHit = displayNumValues.indexOf(actualNum) !== -1;
 
       results.push({
         expect: targetItem.expect,
@@ -442,15 +442,15 @@ const ZodiacPredictionBacktest = {
 
     if (!results.length) return null;
 
-    var hitCount = results.filter(function(r) { return r.isHit; }).length;
-    var hitRate = Math.round((hitCount / results.length) * 100);
-    var recentResults = results.slice(0, 36);
-    var recentHits = recentResults.filter(function(r) { return r.isHit; }).length;
-    var recentHitRate = recentResults.length > 0 ? Math.round((recentHits / recentResults.length) * 100) : 0;
+    const hitCount = results.filter(function(r) { return r.isHit; }).length;
+    const hitRate = Math.round((hitCount / results.length) * 100);
+    const recentResults = results.slice(0, 36);
+    const recentHits = recentResults.filter(function(r) { return r.isHit; }).length;
+    const recentHitRate = recentResults.length > 0 ? Math.round((recentHits / recentResults.length) * 100) : 0;
     // 修复 #7：currentStreak 实际为"最近 N 期（含全部回测期）的连续命中次数"，
     //    而不是"某个特定号码的连续出现次数"。results[0] 为最新一期，从最新一期开始累计命中
-    var currentStreak = 0;
-    for (var i = 0; i < recentResults.length; i++) {
+    let currentStreak = 0;
+    for (let i = 0; i < recentResults.length; i++) {
       if (recentResults[i].isHit) currentStreak++;
       else break;
     }
@@ -477,8 +477,8 @@ const ZodiacPredictionBacktest = {
    * @returns {Object} { v1, v2, ultimate, allRecommended: string[], unrecommended: [{zodiac, emoji}] }
    */
   calcUnrecommendedZodiacs: function(v1List, v2List, ultimateList) {
-    var all = ZodiacPrediction.ZODIAC_ORDER;
-    var sources = {
+    const all = ZodiacPrediction.ZODIAC_ORDER;
+    const sources = {
       v1: {},
       v2: {},
       ultimate: {}
@@ -488,7 +488,7 @@ const ZodiacPredictionBacktest = {
     function markSource(list, srcKey) {
       if (!list || !list.length) return;
       list.forEach(function(item) {
-        var z = typeof item === 'string' ? item : item.zodiac;
+        const z = typeof item === 'string' ? item : item.zodiac;
         if (z && all.indexOf(z) !== -1) sources[srcKey][z] = true;
       });
     }
@@ -497,7 +497,7 @@ const ZodiacPredictionBacktest = {
     markSource(ultimateList, 'ultimate');
 
     // 合并去重的所有已推荐生肖
-    var allRecommended = [];
+    const allRecommended = [];
     all.forEach(function(z) {
       if (sources.v1[z] || sources.v2[z] || sources.ultimate[z]) {
         allRecommended.push(z);
@@ -505,7 +505,7 @@ const ZodiacPredictionBacktest = {
     });
 
     // 找未被任一源推荐的生肖
-    var unrecommended = [];
+    const unrecommended = [];
     all.forEach(function(z) {
       if (!sources.v1[z] && !sources.v2[z] && !sources.ultimate[z]) {
         unrecommended.push({
@@ -540,16 +540,16 @@ const ZodiacPredictionBacktest = {
    * @returns {Object} 各维度命中率统计
    */
   analyzeDimensionHitRates: function(historyData, testCount, analyzeLimit) {
-    var windowSize = analyzeLimit || 12;
+    const windowSize = analyzeLimit || 12;
     if (!historyData || historyData.length < windowSize + 1) return null;
     testCount = Math.min(testCount || 36, historyData.length - windowSize);
     if (testCount <= 0) return null;
 
     // v2.5.0 性能优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
-    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
 
     // 7 个维度的命中计数
-    var dimStats = {
+    const dimStats = {
       follow:   { hit: 0, total: 0, note: '跟随生肖（W=3）' },
       head:     { hit: 0, total: 0, note: '头数（W=2）' },
       tail:     { hit: 0, total: 0, note: '尾数（W=2）' },
@@ -561,30 +561,30 @@ const ZodiacPredictionBacktest = {
     };
 
     // 各维度在本期的"预测号码集合"
-    var dimSets = { follow: [], head: [], tail: [], color: [], wuxing: [], neighbor: [], inertia: [], miss: [] };
+    const dimSets = { follow: [], head: [], tail: [], color: [], wuxing: [], neighbor: [], inertia: [], miss: [] };
 
-    var detailLog = [];  // 逐期明细（用于 console 输出）
+    const detailLog = []; // 逐期明细（用于 console 输出）
 
-    for (var offset = 0; offset < testCount; offset++) {
-      var targetItem = historyData[offset];
+    for (let offset = 0; offset < testCount; offset++) {
+      const targetItem = historyData[offset];
       if (!targetItem) break;
       if (historyData.length < offset + windowSize + 1) break;
 
-      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
+      const list = historyData.slice(offset + 1, offset + 1 + windowSize);
 
       // 跟随生肖（复用回测逻辑：offset>0 用累计，offset=0 用全量）
-      var latestItem = list[0];
-      var latestZodiac = '';
+      const latestItem = list[0];
+      let latestZodiac = '';
       if (latestItem) {
-        var zodArr = Utils.parseZodiacArr(latestItem);
+        const zodArr = Utils.parseZodiacArr(latestItem);
         latestZodiac = zodArr[6] || '';
       }
-      var followZodiacs = [];
+      let followZodiacs = [];
       if (latestZodiac && offset > 0) {
-        var fc = {};
-        for (var fi = 0; fi < offset; fi++) {
-          var ps = allSpecials[fi];
-          var cs = allSpecials[fi + 1];
+        const fc = {};
+        for (let fi = 0; fi < offset; fi++) {
+          const ps = allSpecials[fi];
+          const cs = allSpecials[fi + 1];
           if (ps.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(cs.zod)) {
             fc[cs.zod] = (fc[cs.zod] || 0) + 1;
           }
@@ -592,24 +592,24 @@ const ZodiacPredictionBacktest = {
         followZodiacs = Object.entries(fc).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
       } else if (latestZodiac && offset === 0) {
         try {
-          var _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
-          var _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
+          const _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
+          const _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
           if (_ff) followZodiacs = Object.entries(_ff).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
         } catch(_e){}
       }
       if (!followZodiacs.length) followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
 
       // 头/尾/波色/五行 top（复用 _calcFinalZodiacRecommend 的统计逻辑）
-      var DIAG_WINDOW = 24;  // 2026-07-14 同步窗口为 24 期，与推荐算法保持一致
-      var headCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
-      var tailCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
-      var colorCount = { '红': 0, '蓝': 0, '绿': 0 };
-      var wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
-      var missMap = {};  // 号码→遗漏期数
-      var lastTe = null;  // 上期特码
-      var diagLimit = Math.min(DIAG_WINDOW, list.length);
-      for (var di = 0; di < diagLimit; di++) {
-        var s = allSpecials[offset + 1 + di];
+      const DIAG_WINDOW = 24; // 2026-07-14 同步窗口为 24 期，与推荐算法保持一致
+      const headCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+      const tailCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+      const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
+      const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+      const missMap = {}; // 号码→遗漏期数
+      let lastTe = null; // 上期特码
+      const diagLimit = Math.min(DIAG_WINDOW, list.length);
+      for (let di = 0; di < diagLimit; di++) {
+        const s = allSpecials[offset + 1 + di];
         if (!s || !s.te || s.te < 1) continue;
         headCount[s.head] = (headCount[s.head] || 0) + 1;
         tailCount[s.tail] = (tailCount[s.tail] || 0) + 1;
@@ -619,19 +619,19 @@ const ZodiacPredictionBacktest = {
         missMap[s.te] = 0;
       }
       if (latestItem) {
-        var _lastSpec = allSpecials[offset + 1];
+        const _lastSpec = allSpecials[offset + 1];
         if (_lastSpec && _lastSpec.te) lastTe = _lastSpec.te;
       }
 
-      var topHeads = Object.entries(headCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return Number(e[0]);});
-      var topTails = Object.entries(tailCount).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return Number(e[0]);});
-      var topColors = Object.entries(colorCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
-      var topWuxing = Object.entries(wuxingCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
+      const topHeads = Object.entries(headCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return Number(e[0]);});
+      const topTails = Object.entries(tailCount).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return Number(e[0]);});
+      const topColors = Object.entries(colorCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
+      const topWuxing = Object.entries(wuxingCount).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0];});
 
       // 12 期窗口中每个号码的遗漏（未出现期数）
-      for (var n = 1; n <= 49; n++) {
+      for (let n = 1; n <= 49; n++) {
         missMap[n] = missMap[n] || 0;
-        for (var k = 0; k < list.length; k++) {
+        for (let k = 0; k < list.length; k++) {
           if (list[k].openCode && list[k].openCode.indexOf(',' + n + ',') >= 0) {
             missMap[n] = 0;
           } else if (list[k].openCode && (list[k].openCode.split(',')[0] === String(n))) {
@@ -641,31 +641,31 @@ const ZodiacPredictionBacktest = {
       }
 
       // 实际特码
-      var actualSpecial = allSpecials[offset];
-      var actualNum = actualSpecial.te;
-      var actualHead = actualSpecial.head;
-      var actualTail = actualSpecial.tail;
-      var actualColor = actualSpecial.colorName;
-      var actualWx = actualSpecial.wuxing;
-      var actualZod = actualSpecial.zod;
+      const actualSpecial = allSpecials[offset];
+      const actualNum = actualSpecial.te;
+      const actualHead = actualSpecial.head;
+      const actualTail = actualSpecial.tail;
+      const actualColor = actualSpecial.colorName;
+      const actualWx = actualSpecial.wuxing;
+      const actualZod = actualSpecial.zod;
 
       // ---- 计算各维度的"预测号码集合" ----
       // 1) FOLLOW：生肖 = followZodiacs 的号码（用 12 期窗口投票的 numZodiacMap）
-      var numZodiacMap = {};
+      let numZodiacMap = {};
       list.forEach(function(item){
-        var ca = (item.openCode || '').split(',');
-        var za = Utils.parseZodiacArr(item);
+        const ca = (item.openCode || '').split(',');
+        const za = Utils.parseZodiacArr(item);
         ca.forEach(function(numStr, idx){
-          var nv = Number(numStr);
+          const nv = Number(numStr);
           if (nv && za[idx]) {
             numZodiacMap[nv] = numZodiacMap[nv] || {};
             numZodiacMap[nv][za[idx]] = (numZodiacMap[nv][za[idx]] || 0) + 1;
           }
         });
       });
-      var numZodiacFinal = {};
+      let numZodiacFinal = {};
       Object.keys(numZodiacMap).forEach(function(numStr){
-        var votes = numZodiacMap[numStr];
+        const votes = numZodiacMap[numStr];
         numZodiacFinal[Number(numStr)] = Object.entries(votes).sort(function(a,b){return b[1]-a[1]})[0][0];
       });
       dimSets.follow = Object.keys(numZodiacFinal).filter(function(n){
@@ -674,26 +674,26 @@ const ZodiacPredictionBacktest = {
 
       // 2) HEAD
       dimSets.head = [];
-      for (var h = 1; h <= 49; h++) if (topHeads.indexOf(Math.floor(h/10)) >= 0) dimSets.head.push(h);
+      for (let h = 1; h <= 49; h++) if (topHeads.indexOf(Math.floor(h/10)) >= 0) dimSets.head.push(h);
 
       // 3) TAIL
       dimSets.tail = [];
-      for (var t = 1; t <= 49; t++) if (topTails.indexOf(t % 10) >= 0) dimSets.tail.push(t);
+      for (let t = 1; t <= 49; t++) if (topTails.indexOf(t % 10) >= 0) dimSets.tail.push(t);
 
       // 4) COLOR
       dimSets.color = [];
-      for (var c1 = 1; c1 <= 49; c1++) if (topColors.indexOf(Utils.getColorName(c1)) >= 0) dimSets.color.push(c1);
+      for (let c1 = 1; c1 <= 49; c1++) if (topColors.indexOf(Utils.getColorName(c1)) >= 0) dimSets.color.push(c1);
 
       // 5) WUXING
       dimSets.wuxing = [];
-      for (var w1 = 1; w1 <= 49; w1++) if (topWuxing.indexOf(Utils.getWuxing(w1)) >= 0) dimSets.wuxing.push(w1);
+      for (let w1 = 1; w1 <= 49; w1++) if (topWuxing.indexOf(Utils.getWuxing(w1)) >= 0) dimSets.wuxing.push(w1);
 
       // 6) NEIGHBOR：上期 7 个号码的邻号（±1），限制 1-49
       dimSets.neighbor = [];
       if (latestItem) {
-        var prevArr = (latestItem.openCode || '').split(',');
+        const prevArr = (latestItem.openCode || '').split(',');
         prevArr.forEach(function(numStr){
-          var nv = Number(numStr);
+          const nv = Number(numStr);
           if (nv >= 1 && nv <= 49) {
             if (nv - 1 >= 1) dimSets.neighbor.push(nv - 1);
             if (nv + 1 <= 49) dimSets.neighbor.push(nv + 1);
@@ -707,10 +707,10 @@ const ZodiacPredictionBacktest = {
 
       // 8) MISS：遗漏 ≥ 8 期的号码（12 期窗口中从没见过）
       dimSets.miss = [];
-      for (var m = 1; m <= 49; m++) {
-        var missVal = 0;
-        for (var mk = 0; mk < list.length; mk++) {
-          var codes = (list[mk].openCode || '').split(',').map(Number);
+      for (let m = 1; m <= 49; m++) {
+        let missVal = 0;
+        for (let mk = 0; mk < list.length; mk++) {
+          const codes = (list[mk].openCode || '').split(',').map(Number);
           if (codes.indexOf(m) >= 0) { missVal = 0; break; }
           missVal++;
         }
@@ -718,9 +718,9 @@ const ZodiacPredictionBacktest = {
       }
 
       // ---- 统计各维度命中 ----
-      var keys = Object.keys(dimStats);
-      for (var dk = 0; dk < keys.length; dk++) {
-        var k = keys[dk];
+      const keys = Object.keys(dimStats);
+      for (let dk = 0; dk < keys.length; dk++) {
+        const k = keys[dk];
         dimStats[k].total++;
         if (dimSets[k].indexOf(actualNum) >= 0) dimStats[k].hit++;
       }
@@ -742,15 +742,15 @@ const ZodiacPredictionBacktest = {
     }
 
     // 输出 console 报告
-    var report = [];
+    const report = [];
     report.push('\n=== 📊 维度命中率诊断报告（基于最近 ' + testCount + ' 期回测）===');
-    var totalK = Object.keys(dimStats);
-    for (var i2 = 0; i2 < totalK.length; i2++) {
-      var k = totalK[i2];
-      var s = dimStats[k];
-      var rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : 0;
-      var avgSize = 0;
-      for (var d = 0; d < detailLog.length; d++) avgSize += detailLog[d].sizes[k] || 0;
+    const totalK = Object.keys(dimStats);
+    for (let i2 = 0; i2 < totalK.length; i2++) {
+      const k = totalK[i2];
+      const s = dimStats[k];
+      const rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : 0;
+      let avgSize = 0;
+      for (let d = 0; d < detailLog.length; d++) avgSize += detailLog[d].sizes[k] || 0;
       avgSize = detailLog.length > 0 ? (avgSize / detailLog.length).toFixed(1) : 0;
       report.push('  ' + s.note.padEnd(28) + ' 命中=' + String(s.hit).padStart(3) + '/' + String(s.total).padStart(3) + ' = ' + rate + '%   平均集合大小=' + avgSize);
     }
@@ -758,12 +758,12 @@ const ZodiacPredictionBacktest = {
     report.push('\n  --- 理论基线（纯随机命中 1 个号码）= ' + (100/49).toFixed(1) + '% ---');
     // 各维度相对增益
     report.push('\n  --- 相对增益（命中率 / 随机基线）---');
-    var randomBase = 100/49;
-    for (var i3 = 0; i3 < totalK.length; i3++) {
-      var k3 = totalK[i3];
-      var s3 = dimStats[k3];
-      var rate3 = s3.total > 0 ? (s3.hit / s3.total * 100) : 0;
-      var gain = (rate3 / randomBase).toFixed(2);
+    const randomBase = 100/49;
+    for (let i3 = 0; i3 < totalK.length; i3++) {
+      const k3 = totalK[i3];
+      const s3 = dimStats[k3];
+      const rate3 = s3.total > 0 ? (s3.hit / s3.total * 100) : 0;
+      const gain = (rate3 / randomBase).toFixed(2);
       report.push('  ' + s3.note.padEnd(28) + ' 增益=' + gain + 'x');
     }
     console.log(report.join('\n'));
@@ -788,16 +788,16 @@ const ZodiacPredictionBacktest = {
    * @returns {Object} 分析报告 { misses, dimStats, topMissReasons, summary }
    */
   analyzeMissReasons: function(historyData, testCount, analyzeLimit) {
-    var windowSize = analyzeLimit || 12;
+    const windowSize = analyzeLimit || 12;
     if (!historyData || historyData.length < windowSize + 1) return null;
 
     testCount = Math.min(testCount || 36, 50, historyData.length - windowSize);
     if (testCount <= 0) return null;
 
-    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
 
     // 各维度在未命中时的"漏掉"计数
-    var dimMissed = {
+    const dimMissed = {
       follow:    { total: 0, missed: 0, note: '跟随生肖' },
       head:      { total: 0, missed: 0, note: '头数比例' },
       tail:      { total: 0, missed: 0, note: '尾数比例' },
@@ -809,36 +809,36 @@ const ZodiacPredictionBacktest = {
     };
 
     // 未命中详情
-    var missDetails = [];
-    var hitCount = 0;
-    var totalCount = 0;
+    const missDetails = [];
+    let hitCount = 0;
+    let totalCount = 0;
 
     // 维度得分累计（用于对比命中 vs 未命中）
-    var hitDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
-    var missDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
-    var hitRankSum = 0;
-    var missRankSum = 0;
+    const hitDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
+    const missDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
+    let hitRankSum = 0;
+    let missRankSum = 0;
 
-    for (var offset = 0; offset < testCount; offset++) {
-      var targetItem = historyData[offset];
+    for (let offset = 0; offset < testCount; offset++) {
+      const targetItem = historyData[offset];
       if (!targetItem) break;
       if (historyData.length < offset + windowSize + 1) break;
 
-      var list = historyData.slice(offset + 1, offset + 1 + windowSize);
+      const list = historyData.slice(offset + 1, offset + 1 + windowSize);
 
       // 跟随生肖（复用回测逻辑）
-      var latestItem = list[0];
-      var latestZodiac = '';
+      const latestItem = list[0];
+      let latestZodiac = '';
       if (latestItem) {
-        var zodArr = Utils.parseZodiacArr(latestItem);
+        const zodArr = Utils.parseZodiacArr(latestItem);
         latestZodiac = zodArr[6] || '';
       }
-      var followZodiacs = [];
+      let followZodiacs = [];
       if (latestZodiac && offset > 0) {
-        var fc = {};
-        for (var fi = 0; fi < offset; fi++) {
-          var ps = allSpecials[fi];
-          var cs = allSpecials[fi + 1];
+        const fc = {};
+        for (let fi = 0; fi < offset; fi++) {
+          const ps = allSpecials[fi];
+          const cs = allSpecials[fi + 1];
           if (ps.zod === latestZodiac && CONFIG.ANALYSIS.ZODIAC_ALL.includes(cs.zod)) {
             fc[cs.zod] = (fc[cs.zod] || 0) + 1;
           }
@@ -846,30 +846,30 @@ const ZodiacPredictionBacktest = {
         followZodiacs = Object.entries(fc).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
       } else if (latestZodiac && offset === 0) {
         try {
-          var _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
-          var _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
+          const _fd = Business && Business.calcZodiacAnalysis ? Business.calcZodiacAnalysis() : null;
+          const _ff = _fd && _fd.followMap && _fd.followMap[latestZodiac];
           if (_ff) followZodiacs = Object.entries(_ff).sort(function(a,b){return b[1]-a[1]}).slice(0,3).map(function(e){return e[0];});
         } catch(_e){}
       }
       if (!followZodiacs.length) followZodiacs = (CONFIG.ANALYSIS.ZODIAC_ALL || []).slice(0, 3);
 
       // 调用核心算法
-      var recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
-      var candidateNums = recommend.candidateNums || [];
+      const recommend = Business._calcFinalZodiacRecommend(list, 36, followZodiacs, 24);
+      const candidateNums = recommend.candidateNums || [];
 
       // 实际特码
-      var actualSpecial = allSpecials[offset];
-      var actualNum = actualSpecial.te || 0;
+      const actualSpecial = allSpecials[offset];
+      const actualNum = actualSpecial.te || 0;
 
       // 排序推荐号码
-      var sortedNums = candidateNums.slice().sort(function(a, b) {
+      const sortedNums = candidateNums.slice().sort(function(a, b) {
         return b.score - a.score || a.num - b.num;
       });
 
       // 找实际号码在候选列表中的排名和维度分解
-      var actualCandidate = null;
-      var actualRank = 0;
-      for (var ci = 0; ci < sortedNums.length; ci++) {
+      let actualCandidate = null;
+      let actualRank = 0;
+      for (let ci = 0; ci < sortedNums.length; ci++) {
         if (sortedNums[ci].num === actualNum) {
           actualCandidate = sortedNums[ci];
           actualRank = ci + 1;
@@ -878,48 +878,48 @@ const ZodiacPredictionBacktest = {
       }
 
       // 判断是否命中（展示集合中是否包含实际号码）
-      var displayNums = sortedNums.slice(5);
-      var displayNumValues = displayNums.map(function(item) { return item.num; });
-      var isHit = displayNumValues.indexOf(actualNum) !== -1;
+      const displayNums = sortedNums.slice(5);
+      const displayNumValues = displayNums.map(function(item) { return item.num; });
+      const isHit = displayNumValues.indexOf(actualNum) !== -1;
 
       totalCount++;
 
       if (isHit) {
         hitCount++;
         if (actualCandidate && actualCandidate.dims) {
-          var hd = actualCandidate.dims;
-          hitDimSum.follow   += hd.follow   || 0;
-          hitDimSum.head     += hd.head     || 0;
-          hitDimSum.tail     += hd.tail     || 0;
-          hitDimSum.color    += hd.color    || 0;
-          hitDimSum.wuxing   += hd.wuxing   || 0;
+          const hd = actualCandidate.dims;
+          hitDimSum.follow += hd.follow || 0;
+          hitDimSum.head += hd.head || 0;
+          hitDimSum.tail += hd.tail || 0;
+          hitDimSum.color += hd.color || 0;
+          hitDimSum.wuxing += hd.wuxing || 0;
           hitDimSum.neighbor += hd.neighbor || 0;
-          hitDimSum.inertia  += hd.inertia  || 0;
-          hitDimSum.miss     += hd.miss     || 0;
+          hitDimSum.inertia += hd.inertia || 0;
+          hitDimSum.miss += hd.miss || 0;
         }
         hitRankSum += actualRank;
       } else {
         // 未命中：分析各维度
         if (actualCandidate && actualCandidate.dims) {
-          var md = actualCandidate.dims;
-          missDimSum.follow   += md.follow   || 0;
-          missDimSum.head     += md.head     || 0;
-          missDimSum.tail     += md.tail     || 0;
-          missDimSum.color    += md.color    || 0;
-          missDimSum.wuxing   += md.wuxing   || 0;
+          const md = actualCandidate.dims;
+          missDimSum.follow += md.follow || 0;
+          missDimSum.head += md.head || 0;
+          missDimSum.tail += md.tail || 0;
+          missDimSum.color += md.color || 0;
+          missDimSum.wuxing += md.wuxing || 0;
           missDimSum.neighbor += md.neighbor || 0;
-          missDimSum.inertia  += md.inertia  || 0;
-          missDimSum.miss     += md.miss     || 0;
+          missDimSum.inertia += md.inertia || 0;
+          missDimSum.miss += md.miss || 0;
 
           // 统计各维度是否"漏掉"（实际号码在该维度得分为 0）
           if ((md.follow || 0) === 0) dimMissed.follow.missed++;
-          if ((md.head || 0) === 0)   dimMissed.head.missed++;
-          if ((md.tail || 0) === 0)   dimMissed.tail.missed++;
-          if ((md.color || 0) === 0)  dimMissed.color.missed++;
+          if ((md.head || 0) === 0) dimMissed.head.missed++;
+          if ((md.tail || 0) === 0) dimMissed.tail.missed++;
+          if ((md.color || 0) === 0) dimMissed.color.missed++;
           if ((md.wuxing || 0) === 0) dimMissed.wuxing.missed++;
           if ((md.neighbor || 0) === 0) dimMissed.neighbor.missed++;
           if ((md.inertia || 0) === 0) dimMissed.inertia.missed++;
-          if ((md.miss || 0) === 0)    dimMissed.miss.missed++;
+          if ((md.miss || 0) === 0) dimMissed.miss.missed++;
         }
         missRankSum += actualRank;
 
@@ -939,15 +939,15 @@ const ZodiacPredictionBacktest = {
     }
 
     // 计算各维度总计数
-    var missCount = missDetails.length;
-    var dimKeys = ['follow', 'head', 'tail', 'color', 'wuxing', 'neighbor', 'inertia', 'miss'];
+    const missCount = missDetails.length;
+    const dimKeys = ['follow', 'head', 'tail', 'color', 'wuxing', 'neighbor', 'inertia', 'miss'];
     dimKeys.forEach(function(k) { dimMissed[k].total = missCount; });
 
     // 命中率
-    var hitRate = totalCount > 0 ? Math.round(hitCount / totalCount * 100) : 0;
+    const hitRate = totalCount > 0 ? Math.round(hitCount / totalCount * 100) : 0;
 
     // ========== 输出 console 报告 ==========
-    var report = [];
+    const report = [];
     report.push('');
     report.push('┌─────────────────────────────────────────────────────┐');
     report.push('│        📊 未命中原因分析报告 v3.0                   │');
@@ -958,17 +958,17 @@ const ZodiacPredictionBacktest = {
     report.push('│  📌 各维度平均得分对比（命中 vs 未命中）            │');
     report.push('│                                                     │');
 
-    var dimLabels = {
+    const dimLabels = {
       follow: '跟随生肖', head: '头数比例', tail: '尾数比例',
       color: '波色比例', wuxing: '五行比例', neighbor: '邻号关联',
       inertia: '特码惯性', miss: '冷热反弹'
     };
 
     dimKeys.forEach(function(k) {
-      var hitAvg = hitCount > 0 ? (hitDimSum[k] / hitCount).toFixed(2) : '0.00';
-      var missAvg = missCount > 0 ? (missDimSum[k] / missCount).toFixed(2) : '0.00';
-      var diff = (parseFloat(hitAvg) - parseFloat(missAvg)).toFixed(2);
-      var arrow = parseFloat(diff) > 0.1 ? '⬇差' : (parseFloat(diff) < -0.1 ? '⬆逆' : ' 平');
+      const hitAvg = hitCount > 0 ? (hitDimSum[k] / hitCount).toFixed(2) : '0.00';
+      const missAvg = missCount > 0 ? (missDimSum[k] / missCount).toFixed(2) : '0.00';
+      const diff = (parseFloat(hitAvg) - parseFloat(missAvg)).toFixed(2);
+      const arrow = parseFloat(diff) > 0.1 ? '⬇差' : (parseFloat(diff) < -0.1 ? '⬆逆' : ' 平');
       report.push('│  ' + dimLabels[k].padEnd(12) + ' 命中均分=' + hitAvg + '  未中均分=' + missAvg + '  差异=' + diff + ' ' + arrow);
     });
 
@@ -977,16 +977,16 @@ const ZodiacPredictionBacktest = {
     report.push('│                                                     │');
 
     // 按漏掉率排序
-    var missedSorted = dimKeys.slice().sort(function(a, b) {
+    const missedSorted = dimKeys.slice().sort(function(a, b) {
       return (dimMissed[b].missed / Math.max(dimMissed[b].total, 1)) -
              (dimMissed[a].missed / Math.max(dimMissed[a].total, 1));
     });
 
     missedSorted.forEach(function(k) {
-      var rate = missCount > 0 ? (dimMissed[k].missed / missCount * 100).toFixed(1) : '0.0';
-      var bar = '';
-      var barLen = Math.round(parseFloat(rate) / 5);
-      for (var b = 0; b < barLen; b++) bar += '█';
+      const rate = missCount > 0 ? (dimMissed[k].missed / missCount * 100).toFixed(1) : '0.0';
+      let bar = '';
+      const barLen = Math.round(parseFloat(rate) / 5);
+      for (let b = 0; b < barLen; b++) bar += '█';
       report.push('│  ' + dimLabels[k].padEnd(12) + ' 漏掉率=' + rate + '% ' + bar);
     });
 
@@ -994,11 +994,11 @@ const ZodiacPredictionBacktest = {
     report.push('│  📌 最近 5 期未命中案例（得分/排名）                │');
     report.push('│                                                     │');
 
-    var recentMisses = missDetails.slice(0, 5);
+    const recentMisses = missDetails.slice(0, 5);
     recentMisses.forEach(function(m) {
-      var dimStr = '';
+      let dimStr = '';
       if (m.dims) {
-        var parts = [];
+        const parts = [];
         dimKeys.forEach(function(k) {
           if ((m.dims[k] || 0) === 0) parts.push(k);
         });
@@ -1014,9 +1014,9 @@ const ZodiacPredictionBacktest = {
 
     // 基于漏掉率生成建议
     missedSorted.forEach(function(k, idx) {
-      var rate = missCount > 0 ? parseFloat((dimMissed[k].missed / missCount * 100).toFixed(1)) : 0;
+      const rate = missCount > 0 ? parseFloat((dimMissed[k].missed / missCount * 100).toFixed(1)) : 0;
       if (rate > 60 && idx < 3) {
-        var suggest = '';
+        let suggest = '';
         if (k === 'follow') suggest = '→ 跟随生肖覆盖不足，检查 followMap 数据质量';
         else if (k === 'head') suggest = '→ 头数比例范围过窄，考虑扩大 TOP 或增加权重';
         else if (k === 'tail') suggest = '→ 尾数比例范围过窄，考虑扩大 TOP 或增加权重';

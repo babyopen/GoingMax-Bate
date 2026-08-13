@@ -82,10 +82,10 @@ const CommonString = {
    */
   formatNum: (num, opts) => {
     opts = opts || {};
-    var min = (typeof opts.min === 'number') ? opts.min : 1;
-    var max = (typeof opts.max === 'number') ? opts.max : 49;
-    var width = (typeof opts.width === 'number') ? opts.width : 2;
-    var n = Number(num);
+    const min = (typeof opts.min === 'number') ? opts.min : 1;
+    const max = (typeof opts.max === 'number') ? opts.max : 49;
+    const width = (typeof opts.width === 'number') ? opts.width : 2;
+    const n = Number(num);
     if (!Number.isInteger(n) || n < min || n > max) return '00';
     return String(n).padStart(width, '0');
   },
@@ -97,7 +97,7 @@ const CommonString = {
    * @returns {string} 补零后的字符串
    */
   padZero: (num, width) => {
-    var w = (typeof width === 'number') ? width : 2;
+    const w = (typeof width === 'number') ? width : 2;
     return String(num).padStart(w, '0');
   },
 
@@ -116,26 +116,26 @@ const CommonString = {
    * @returns {string} 中文大写
    */
   toChineseMoney: (num) => {
-    var digits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-    var units = ['', '拾', '佰', '仟'];
-    var bigUnits = ['', '万', '亿', '兆'];
-    var fraction = ['角', '分'];
+    const digits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+    const units = ['', '拾', '佰', '仟'];
+    const bigUnits = ['', '万', '亿', '兆'];
+    const fraction = ['角', '分'];
 
     if (typeof num !== 'number' || isNaN(num)) return '';
 
-    var numStr = num.toFixed(2);
-    var parts = numStr.split('.');
-    var intPart = parts[0];
-    var decPart = parts[1];
+    const numStr = num.toFixed(2);
+    const parts = numStr.split('.');
+    const intPart = parts[0];
+    const decPart = parts[1];
 
-    var result = '';
-    var zeroFlag = false; // 是否需要补零
+    let result = '';
+    let zeroFlag = false; // 是否需要补零
 
     // 整数部分处理
-    for (var i = 0; i < intPart.length; i++) {
-      var digit = parseInt(intPart.charAt(i));
-      var pos = intPart.length - i - 1;
-      var bigUnitIdx = Math.floor(pos / 4);
+    for (let i = 0; i < intPart.length; i++) {
+      const digit = parseInt(intPart.charAt(i));
+      const pos = intPart.length - i - 1;
+      const bigUnitIdx = Math.floor(pos / 4);
 
       if (digit === 0) {
         zeroFlag = true;
@@ -156,8 +156,8 @@ const CommonString = {
     if (result === '') result = '零';
 
     // 小数部分
-    var jiao = parseInt(decPart.charAt(0));
-    var fen = parseInt(decPart.charAt(1));
+    const jiao = parseInt(decPart.charAt(0));
+    const fen = parseInt(decPart.charAt(1));
 
     if (jiao === 0 && fen === 0) {
       result += '元整';
@@ -184,15 +184,15 @@ const CommonString = {
    * @returns {string} 不重名的名称
    */
   ensureUniqueName: (baseName, existingList, excludeIndex) => {
-    var excludeIdx = (typeof excludeIndex === 'number') ? excludeIndex : -1;
-    var names = new Set(
+    const excludeIdx = (typeof excludeIndex === 'number') ? excludeIndex : -1;
+    const names = new Set(
       (existingList || [])
         .filter(function(_, i) { return i !== excludeIdx; })
         .map(function(s) { return s.name; })
     );
     if (!names.has(baseName)) return baseName;
-    var i = 2;
-    var candidate = baseName + ' (' + i + ')';
+    let i = 2;
+    let candidate = baseName + ' (' + i + ')';
     while (names.has(candidate)) {
       i++;
       candidate = baseName + ' (' + i + ')';
@@ -209,13 +209,13 @@ const CommonString = {
    * @returns {string} 不冲突的默认名称
    */
   nextDefaultName: (existingList, prefix) => {
-    var p = (typeof prefix === 'string') ? prefix : '方案';
-    var re = new RegExp('^' + p + '(\\d+)$');
-    var max = 0;
+    const p = (typeof prefix === 'string') ? prefix : '方案';
+    const re = new RegExp('^' + p + '(\\d+)$');
+    let max = 0;
     (existingList || []).forEach(function(s) {
-      var m = re.exec(s.name);
+      const m = re.exec(s.name);
       if (m) {
-        var n = parseInt(m[1], 10);
+        const n = parseInt(m[1], 10);
         if (n > max) max = n;
       }
     });
@@ -234,7 +234,7 @@ const CommonString = {
    * @returns {string} 截断后的字符串
    */
   truncate: (str, maxLen, ellipsis) => {
-    var e = (typeof ellipsis === 'string') ? ellipsis : '...';
+    const e = (typeof ellipsis === 'string') ? ellipsis : '...';
     if (typeof str !== 'string') return '';
     if (str.length <= maxLen) return str;
     return str.substring(0, maxLen) + e;

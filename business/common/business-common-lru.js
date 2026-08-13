@@ -34,17 +34,17 @@ const BusinessCommonLRU = {
    *   // 调用：_calcContinuousScores(historyData)  // 同一引用命中缓存
    */
   withHistoryLRU: (fn, maxSize, extraKeyFn) => {
-    var cache = Utils.createLRU(maxSize || 50);
+    const cache = Utils.createLRU(maxSize || 50);
     return function(historyData) {
       // key = historyData 引用 + 额外参数
-      var key = historyData;
+      let key = historyData;
       if (extraKeyFn) {
-        var extra = extraKeyFn(Array.prototype.slice.call(arguments, 1));
+        const extra = extraKeyFn(Array.prototype.slice.call(arguments, 1));
         key = historyData + '|' + extra;
       }
-      var cached = cache.get(key);
+      const cached = cache.get(key);
       if (cached !== undefined) return cached;
-      var result = fn.apply(this, arguments);
+      const result = fn.apply(this, arguments);
       cache.set(key, result);
       return result;
     };
@@ -59,12 +59,12 @@ const BusinessCommonLRU = {
    * @returns {Function} 包装后的函数
    */
   withHistoryWindowLRU: (fn, maxSize) => {
-    var cache = Utils.createLRU(maxSize || 100);
+    const cache = Utils.createLRU(maxSize || 100);
     return function(historyData, windowSize) {
-      var key = historyData + '|' + (windowSize || 'all');
-      var cached = cache.get(key);
+      const key = historyData + '|' + (windowSize || 'all');
+      const cached = cache.get(key);
       if (cached !== undefined) return cached;
-      var result = fn.apply(this, arguments);
+      const result = fn.apply(this, arguments);
       cache.set(key, result);
       return result;
     };
@@ -101,7 +101,7 @@ const BusinessCommonLRU = {
    * @private
    */
   _createRegisteredLRU: function(maxSize) {
-    var cache = Utils.createLRU(maxSize);
+    const cache = Utils.createLRU(maxSize);
     BusinessCommonLRU._register(cache);
     return cache;
   }

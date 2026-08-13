@@ -216,8 +216,8 @@ const ZodiacStatModal = {
       ];
       
       periods.forEach(function(period) {
-        var periodData = freqResult[period.key];
-        var item = null;
+        const periodData = freqResult[period.key];
+        let item = null;
         
         if (periodData) {
           periodData.forEach(function(d) {
@@ -290,7 +290,7 @@ const ZodiacStatModal = {
       html += '<div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">间隔分布</div>';
       html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 11px;">';
       
-      var distLabels = {
+      const distLabels = {
         '0-5期': '🔵 0-5期',
         '6-10期': '🟡 6-10期',
         '11-20期': '🟠 11-20期',
@@ -298,8 +298,8 @@ const ZodiacStatModal = {
         '31期以上': '🔴 31期以上'
       };
       
-      for (var key in missHistory.intervalDistribution) {
-        var count = missHistory.intervalDistribution[key];
+      for (const key in missHistory.intervalDistribution) {
+        const count = missHistory.intervalDistribution[key];
         html += '<div style="display: flex; justify-content: space-between; padding: 4px 0;">';
         html += '<span>' + distLabels[key] + '</span>';
         html += '<span style="font-weight: 600;">' + count + '次</span>';
@@ -313,19 +313,19 @@ const ZodiacStatModal = {
         html += '<div style="background: #f5f5f5; padding: 12px; border-radius: 8px;">';
         html += '<div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">近期出现间隔</div>';
         
-        var maxDisplay = Math.min(missHistory.recentAppearances.length - 1, 10);
+        const maxDisplay = Math.min(missHistory.recentAppearances.length - 1, 10);
         
         html += '<div style="display: grid; gap: 4px;">';
         
-        for (var row = 0; row < Math.ceil(maxDisplay / 5); row++) {
+        for (let row = 0; row < Math.ceil(maxDisplay / 5); row++) {
           html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;">';
           
-          for (var i = 0; i < 5; i++) {
-            var idx = row * 5 + i;
+          for (let i = 0; i < 5; i++) {
+            const idx = row * 5 + i;
             if (idx >= maxDisplay) break;
             
-            var interval = missHistory.intervals[idx];
-            var appear = missHistory.recentAppearances[idx + 1];
+            const interval = missHistory.intervals[idx];
+            const appear = missHistory.recentAppearances[idx + 1];
             
             if (interval !== undefined && appear) {
               html += '<div style="padding: 6px; background: rgba(0,122,255,0.1); border-radius: 4px; text-align: center; font-size: 10px;">';
@@ -351,7 +351,7 @@ const ZodiacStatModal = {
       html += '<div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">🐾 跟随排行榜（前12名）</div>';
       html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">';
       
-      var rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '①', '⑫'];
+      const rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '①', '⑫'];
       
       followStats.topFollowers.forEach(function(item, idx) {
         if (item.count > 0) {

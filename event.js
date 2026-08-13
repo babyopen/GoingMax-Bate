@@ -125,9 +125,9 @@ const EventBinder = {
     }
     
     // 隐藏已废弃的号码数量选择器 + 自定义数量输入框
-    var numCountSelect = document.getElementById('numCountSelect');
+    const numCountSelect = document.getElementById('numCountSelect');
     if (numCountSelect) numCountSelect.style.display = 'none';
-    var customNumCount = document.getElementById('customNumCount');
+    const customNumCount = document.getElementById('customNumCount');
     if (customNumCount) customNumCount.style.display = 'none';
   },
 
@@ -432,16 +432,16 @@ const EventBinder = {
       }
       // 等级预测回测弹窗（2026-07-12 用户需求）
       else if(action === 'openLevelBacktest') {
-        var state = StateManager._state;
-        var historyData = BusinessCommonData.ensureHistoryData(state);
+        const state = StateManager._state;
+        const historyData = BusinessCommonData.ensureHistoryData(state);
         if (historyData && historyData.length) {
-          var backtestData = ZodiacPrediction.predictLevelBacktest(historyData);
+          const backtestData = ZodiacPrediction.predictLevelBacktest(historyData);
           LevelPredictModal.show(backtestData);
         }
       }
       // 精选特码回测弹窗-复制预测号码（2026-07-14 新增）
       else if(action === 'copyPredictNums') {
-        var nums = target.getAttribute('data-predict-nums') || '';
+        const nums = target.getAttribute('data-predict-nums') || '';
         if (nums) {
           Utils.copyToClipboard(nums, { successMsg: '预测号码已复制' });
         }
@@ -450,6 +450,9 @@ const EventBinder = {
       else if(action === CONFIG.ACTIONS.SWITCH_NAV) Business.switchBottomNav(Number(index));
       // 分析页面操作
       else if(action === 'refreshHistory') Business.refreshHistory();
+      else if(action === 'openLive') {
+        if(typeof LiveModal !== 'undefined') LiveModal.show();
+      }
       else if(action === 'syncAnalyze') {
         // 2026-06-21 架构修复：业务层禁止 DOM 操作，由 event.js 读取 DOM value 后传入 domValues
         const _customNumEl = document.getElementById('customNum');
@@ -504,7 +507,7 @@ const EventBinder = {
       else if(action === 'toggleScoreCards') {
         const cards = document.getElementById('swScoreCards');
         if (!cards) return;
-        var isExpanded = cards.classList.toggle('expanded');
+        const isExpanded = cards.classList.toggle('expanded');
         actionBtn.textContent = isExpanded
           ? '收起'
           : '展开全部（共' + cards.querySelectorAll('.sw-score-card').length + '个生肖）';
@@ -515,7 +518,7 @@ const EventBinder = {
         const section = document.getElementById('mainBacktestSection');
         if (!section) return;
         const contents = section.querySelectorAll('.sw-backtest-content');
-        var isExpanded = section.classList.toggle('expanded');
+        const isExpanded = section.classList.toggle('expanded');
         contents.forEach(function(c) {
           c.style.display = isExpanded ? '' : 'none';
         });
@@ -547,7 +550,7 @@ const EventBinder = {
       else if(action === 'toggleZoneChangeList') {
         const list = actionBtn.closest('.zone-change-list');
         if (!list) return;
-        var isExpanded = list.classList.toggle('expanded');
+        const isExpanded = list.classList.toggle('expanded');
         const toggleText = list.querySelector('.zone-change-toggle-text');
         const toggleIcon = list.querySelector('.zone-change-toggle-icon');
         if (toggleText) toggleText.textContent = isExpanded ? '收起' : '展开更多';
@@ -736,10 +739,10 @@ const EventBinder = {
    */
   _runBacktest: function(config) {
     try {
-      var state = StateManager._state;
-      var historyData = state.analysis.historyData;
-      var analyzeLimit = state.analysis.analyzeLimit || 12;
-      var minData = typeof config.minData === 'function'
+      const state = StateManager._state;
+      const historyData = state.analysis.historyData;
+      const analyzeLimit = state.analysis.analyzeLimit || 12;
+      const minData = typeof config.minData === 'function'
         ? config.minData(state)
         : (config.minData != null ? config.minData : 10);
 
@@ -753,7 +756,7 @@ const EventBinder = {
         return;
       }
 
-      var backtestData = config.run(historyData, analyzeLimit, state);
+      const backtestData = config.run(historyData, analyzeLimit, state);
       if (!backtestData) {
         Toast.show('回测执行失败，请重试');
         return;
@@ -810,11 +813,11 @@ const EventBinder = {
     EventBinder._runBacktest({
       run: function(hd, analyzeLimit) { return ZodiacPrediction.runFinalZodiacBacktest(hd, 36, analyzeLimit); },
       show: function(data, _state, hd) {
-        var nextPredictText = '';
-        var nextExpect = 0;
+        let nextPredictText = '';
+        let nextExpect = 0;
         try {
           if (hd[0] && hd[0].expect) { nextExpect = Number(hd[0].expect) + 1; }
-          var zodiacData = Business.calcZodiacAnalysis();
+          const zodiacData = Business.calcZodiacAnalysis();
           if (zodiacData) { nextPredictText = Business.renderZodiacFinalNums(zodiacData); }
         } catch(_e) { /* 预测获取失败不影响回测弹窗展示 */ }
         ViewAnalysis.showFinalBacktestModal(data, nextPredictText, nextExpect);

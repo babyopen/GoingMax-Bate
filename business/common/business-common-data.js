@@ -14,7 +14,7 @@ const BusinessCommonData = {
    * @returns {Array} 历史数据数组
    */
   getHistoryData: (state) => {
-    var s = state || StateManager._state;
+    const s = state || StateManager._state;
     return (s && s.analysis && s.analysis.historyData) || [];
   },
 
@@ -24,13 +24,13 @@ const BusinessCommonData = {
    * @returns {Array} 历史数据数组
    */
   ensureHistoryData: (state) => {
-    var s = state || StateManager._state;
-    var data = BusinessCommonData.getHistoryData(s);
+    const s = state || StateManager._state;
+    const data = BusinessCommonData.getHistoryData(s);
     if (!data || !data.length) {
       // 尝试从 Storage 加载
       try {
         if (typeof StorageManager !== 'undefined' && StorageManager.loadHistory) {
-          var loaded = StorageManager.loadHistory();
+          const loaded = StorageManager.loadHistory();
           if (loaded && loaded.length) {
             if (s && s.analysis) {
               s.analysis.historyData = loaded;
@@ -53,9 +53,9 @@ const BusinessCommonData = {
    * @returns {{ historyData: Array, timestamp: number }}
    */
   getDataWithTimestamp: (state) => {
-    var s = state || StateManager._state;
-    var historyData = BusinessCommonData.getHistoryData(s);
-    var timestamp = (s && s.analysis && s.analysis.historyTimestamp) || 0;
+    const s = state || StateManager._state;
+    const historyData = BusinessCommonData.getHistoryData(s);
+    const timestamp = (s && s.analysis && s.analysis.historyTimestamp) || 0;
     return {
       historyData: historyData,
       timestamp: timestamp

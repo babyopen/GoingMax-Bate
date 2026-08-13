@@ -17,22 +17,22 @@ const Utils = {
    * @returns {Function} 带缓存的函数
    */
   memoize: (fn, keyFn, ttl) => {
-    var cache = new Map();
+    const cache = new Map();
     if (!keyFn) {
       keyFn = function(args) {
         try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
       };
     }
     return function() {
-      var key = keyFn(arguments);
+      const key = keyFn(arguments);
       if (cache.has(key)) {
-        var entry = cache.get(key);
+        const entry = cache.get(key);
         if (!ttl || Date.now() - entry.time < ttl) {
           return entry.value;
         }
         cache.delete(key);
       }
-      var value = fn.apply(this, arguments);
+      const value = fn.apply(this, arguments);
       cache.set(key, { value: value, time: Date.now() });
       return value;
     };
@@ -44,11 +44,11 @@ const Utils = {
    * @returns {{get: Function, set: Function, clear: Function, has: Function, size: number}}
    */
   createLRU: (maxSize) => {
-    var cache = new Map();
+    const cache = new Map();
     return {
       get: function(key) {
         if (!cache.has(key)) return undefined;
-        var value = cache.get(key);
+        const value = cache.get(key);
         cache.delete(key);
         cache.set(key, value);
         return value;
@@ -56,7 +56,7 @@ const Utils = {
       set: function(key, value) {
         if (cache.has(key)) cache.delete(key);
         else if (cache.size >= maxSize) {
-          var firstKey = cache.keys().next().value;
+          const firstKey = cache.keys().next().value;
           cache.delete(firstKey);
         }
         cache.set(key, value);
@@ -76,17 +76,17 @@ const Utils = {
    * @returns {Function} 带 LRU 缓存的函数
    */
   memoizeLRU: (fn, maxSize, keyFn) => {
-    var cache = Utils.createLRU(maxSize || 500);
+    const cache = Utils.createLRU(maxSize || 500);
     if (!keyFn) {
       keyFn = function(args) {
         try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
       };
     }
     return function() {
-      var key = keyFn(arguments);
-      var cached = cache.get(key);
+      const key = keyFn(arguments);
+      const cached = cache.get(key);
       if (cached !== undefined) return cached;
-      var value = fn.apply(this, arguments);
+      const value = fn.apply(this, arguments);
       cache.set(key, value);
       return value;
     };
@@ -561,9 +561,9 @@ const Utils = {
       }
 
       // 性能优化：使用 LRU 缓存，key 基于 expect + openCode
-      var cacheKey = (item.expect || '') + '_' + (item.openCode || '');
-      var cache = Utils.SpecialCalculator._getCache();
-      var cached = cache.get(cacheKey);
+      const cacheKey = (item.expect || '') + '_' + (item.openCode || '');
+      const cache = Utils.SpecialCalculator._getCache();
+      const cached = cache.get(cacheKey);
       if (cached) return cached;
 
       const codeArr = (item.openCode || '0,0,0,0,0,0,0').split(',');
@@ -734,11 +734,11 @@ const Utils = {
    * @private
    */
   _buildNumToColorMap: function() {
-    var map = new Map();
+    const map = new Map();
     if (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) {
       Object.keys(CONFIG.COLOR_MAP).forEach(function(name) {
-        var arr = CONFIG.COLOR_MAP[name] || [];
-        for (var i = 0; i < arr.length; i++) {
+        const arr = CONFIG.COLOR_MAP[name] || [];
+        for (let i = 0; i < arr.length; i++) {
           map.set(arr[i], name);
         }
       });
@@ -752,11 +752,11 @@ const Utils = {
    * @private
    */
   _buildNumToElementMap: function() {
-    var map = new Map();
+    const map = new Map();
     if (typeof CONFIG !== 'undefined' && CONFIG.ELEMENT_MAP) {
       Object.keys(CONFIG.ELEMENT_MAP).forEach(function(name) {
-        var arr = CONFIG.ELEMENT_MAP[name] || [];
-        for (var i = 0; i < arr.length; i++) {
+        const arr = CONFIG.ELEMENT_MAP[name] || [];
+        for (let i = 0; i < arr.length; i++) {
           map.set(arr[i], name);
         }
       });
@@ -781,7 +781,7 @@ const Utils = {
    */
   getColorNameFast: (num) => {
     if (Utils._numToColorMap) {
-      var v = Utils._numToColorMap.get(num);
+      const v = Utils._numToColorMap.get(num);
       return v || '红';
     }
     return Utils.getColorName(num);
@@ -795,7 +795,7 @@ const Utils = {
    */
   getWuxingFast: (num) => {
     if (Utils._numToElementMap) {
-      var v = Utils._numToElementMap.get(num);
+      const v = Utils._numToElementMap.get(num);
       return v || '金';
     }
     return Utils.getWuxing(num);
@@ -822,8 +822,8 @@ const Utils = {
    */
   formatZodiacList: (selected, separator) => {
     if (!Array.isArray(selected) || selected.length === 0) return '';
-    var sep = (separator === undefined || separator === null) ? ' ' : separator;
-    var zodiacOrder = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
+    const sep = (separator === undefined || separator === null) ? ' ' : separator;
+    const zodiacOrder = (typeof CONFIG !== 'undefined' && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
     return zodiacOrder.filter(function(z) { return selected.indexOf(z) !== -1; }).join(sep);
   },
 
@@ -838,9 +838,9 @@ const Utils = {
    */
   getTopN: (obj, n, formatter, separator) => {
     if (!obj || typeof obj !== 'object') return '';
-    var fmt = (typeof formatter === 'function') ? formatter : function(e) { return e[0]; };
-    var sep = (separator === undefined || separator === null) ? '' : separator;
-    var n2 = Number(n) || 0;
+    const fmt = (typeof formatter === 'function') ? formatter : function(e) { return e[0]; };
+    const sep = (separator === undefined || separator === null) ? '' : separator;
+    const n2 = Number(n) || 0;
     return Object.keys(obj)
       .map(function(k) { return [k, obj[k]]; })
       .sort(function(a, b) { return b[1] - a[1]; })

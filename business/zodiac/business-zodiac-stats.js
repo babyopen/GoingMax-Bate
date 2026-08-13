@@ -16,18 +16,18 @@ const ZodiacPredictionStats = {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
-    var recentData = historyData.slice(0, Math.min(period, historyData.length));
-    var sizeSequence = [];
-    var bigCount = 0;
-    var smallCount = 0;
+    const recentData = historyData.slice(0, Math.min(period, historyData.length));
+    const sizeSequence = [];
+    let bigCount = 0;
+    let smallCount = 0;
 
     // 2026-06-21 性能优化：允许调用方传入预计算的 specials 数组（前 N 项与 recentData 对齐）
-    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+    const usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
 
     recentData.forEach(function(item, idx) {
-      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
-      var te = special.te;
-      var isBig = te >= CONFIG.BIG_RANGE[0] && te <= CONFIG.BIG_RANGE[1];
+      const special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
+      const te = special.te;
+      const isBig = te >= CONFIG.BIG_RANGE[0] && te <= CONFIG.BIG_RANGE[1];
       sizeSequence.push({
         expect: item.expect,
         number: te,
@@ -41,8 +41,8 @@ const ZodiacPredictionStats = {
       }
     });
 
-    var patterns = ZodiacPrediction._analyzeSizePatterns(sizeSequence);
-    var trend = ZodiacPrediction._predictSizeTrend(sizeSequence);
+    const patterns = ZodiacPrediction._analyzeSizePatterns(sizeSequence);
+    const trend = ZodiacPrediction._predictSizeTrend(sizeSequence);
 
     return {
       period: period,
@@ -59,11 +59,11 @@ const ZodiacPredictionStats = {
   _analyzeSizePatterns: function(sequence) {
     if (!sequence || sequence.length < 2) return [];
 
-    var patterns = [];
-    var currentStreak = 1;
-    var streakType = sequence[0].size;
+    const patterns = [];
+    let currentStreak = 1;
+    let streakType = sequence[0].size;
 
-    for (var i = 1; i < sequence.length; i++) {
+    for (let i = 1; i < sequence.length; i++) {
       if (sequence[i].size === streakType) {
         currentStreak++;
       } else {
@@ -89,8 +89,8 @@ const ZodiacPredictionStats = {
       });
     }
 
-    var alternations = 0;
-    for (var j = 1; j < sequence.length - 1; j++) {
+    let alternations = 0;
+    for (let j = 1; j < sequence.length - 1; j++) {
       if (sequence[j].size !== sequence[j - 1].size && sequence[j].size !== sequence[j + 1].size) {
         alternations++;
       }
@@ -109,20 +109,20 @@ const ZodiacPredictionStats = {
   _predictSizeTrend: function(sequence) {
     if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
 
-    var last5 = sequence.slice(0, 5);
-    var last3 = sequence.slice(0, 3);
+    const last5 = sequence.slice(0, 5);
+    const last3 = sequence.slice(0, 3);
 
-    var bigCount = last5.filter(function(s) { return s.size === '大'; }).length;
-    var smallCount = last5.filter(function(s) { return s.size === '小'; }).length;
-    var bigRatio = bigCount / 5;
-    var smallRatio = smallCount / 5;
+    const bigCount = last5.filter(function(s) { return s.size === '大'; }).length;
+    const smallCount = last5.filter(function(s) { return s.size === '小'; }).length;
+    const bigRatio = bigCount / 5;
+    const smallRatio = smallCount / 5;
 
-    var scoreBig = 0;
-    var scoreSmall = 0;
-    var reasons = [];
+    let scoreBig = 0;
+    let scoreSmall = 0;
+    const reasons = [];
 
-    var allBig3 = last3.every(function(s) { return s.size === '大'; });
-    var allSmall3 = last3.every(function(s) { return s.size === '小'; });
+    const allBig3 = last3.every(function(s) { return s.size === '大'; });
+    const allSmall3 = last3.every(function(s) { return s.size === '小'; });
 
     if (allBig3) {
       scoreSmall += 35;
@@ -149,7 +149,7 @@ const ZodiacPredictionStats = {
     }
 
     if (sequence.length >= 7) {
-      var prev2 = sequence[2].size;
+      const prev2 = sequence[2].size;
       if (prev2 === '大' && last3[0].size === '小') {
         scoreBig += 15;
         reasons.push('大→小后常转大');
@@ -159,7 +159,7 @@ const ZodiacPredictionStats = {
       }
     }
 
-    var recent2Same = last3[0].size === last3[1].size;
+    const recent2Same = last3[0].size === last3[1].size;
     if (recent2Same) {
       if (last3[0].size === '大') {
         scoreBig += 10;
@@ -180,8 +180,8 @@ const ZodiacPredictionStats = {
       }
     }
 
-    var totalScore = scoreBig + scoreSmall;
-    var prediction, confidence;
+    const totalScore = scoreBig + scoreSmall;
+    let prediction, confidence;
 
     if (totalScore === 0) {
       return { prediction: '-', confidence: 40, reason: '无明显规律' };
@@ -199,7 +199,7 @@ const ZodiacPredictionStats = {
       reasons.push('势均力敌，跟随最新趋势');
     }
 
-    var topReasons = reasons.slice(0, 2).join('; ');
+    const topReasons = reasons.slice(0, 2).join('; ');
     return { prediction: prediction, confidence: confidence, reason: topReasons };
   },
 
@@ -207,18 +207,18 @@ const ZodiacPredictionStats = {
   if (!historyData || !historyData.length) return null;
 
   period = period || 10;
-  var recentData = historyData.slice(0, Math.min(period, historyData.length));
-  var oddEvenSequence = [];
-  var oddCount = 0;
-  var evenCount = 0;
+  const recentData = historyData.slice(0, Math.min(period, historyData.length));
+  const oddEvenSequence = [];
+  let oddCount = 0;
+  let evenCount = 0;
 
   // 2026-06-21 性能优化：复用调用方传入的预计算 specials（前 N 项与 recentData 对齐）
-  var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+  const usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
 
   recentData.forEach(function(item, idx) {
-    var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
-    var te = special.te;
-    var isOdd = te % 2 !== 0;
+    const special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
+    const te = special.te;
+    const isOdd = te % 2 !== 0;
     oddEvenSequence.push({
       expect: item.expect,
       number: te,
@@ -232,8 +232,8 @@ const ZodiacPredictionStats = {
     }
   });
 
-  var patterns = ZodiacPrediction._analyzeOddEvenPatterns(oddEvenSequence);
-  var trend = ZodiacPrediction._predictOddEvenTrend(oddEvenSequence);
+  const patterns = ZodiacPrediction._analyzeOddEvenPatterns(oddEvenSequence);
+  const trend = ZodiacPrediction._predictOddEvenTrend(oddEvenSequence);
 
   return {
     period: period,
@@ -250,11 +250,11 @@ const ZodiacPredictionStats = {
 _analyzeOddEvenPatterns: function(sequence) {
   if (!sequence || sequence.length < 2) return [];
 
-  var patterns = [];
-  var currentStreak = 1;
-  var streakType = sequence[0].type;
+  const patterns = [];
+  let currentStreak = 1;
+  let streakType = sequence[0].type;
 
-  for (var i = 1; i < sequence.length; i++) {
+  for (let i = 1; i < sequence.length; i++) {
     if (sequence[i].type === streakType) {
       currentStreak++;
     } else {
@@ -280,8 +280,8 @@ _analyzeOddEvenPatterns: function(sequence) {
     });
   }
 
-  var alternations = 0;
-  for (var j = 1; j < sequence.length - 1; j++) {
+  let alternations = 0;
+  for (let j = 1; j < sequence.length - 1; j++) {
     if (sequence[j].type !== sequence[j - 1].type && sequence[j].type !== sequence[j + 1].type) {
       alternations++;
     }
@@ -300,20 +300,20 @@ _analyzeOddEvenPatterns: function(sequence) {
 _predictOddEvenTrend: function(sequence) {
   if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
 
-  var last5 = sequence.slice(0, 5);
-  var last3 = sequence.slice(0, 3);
+  const last5 = sequence.slice(0, 5);
+  const last3 = sequence.slice(0, 3);
 
-  var oddCount = last5.filter(function(s) { return s.type === '单'; }).length;
-  var evenCount = last5.filter(function(s) { return s.type === '双'; }).length;
-  var oddRatio = oddCount / 5;
-  var evenRatio = evenCount / 5;
+  const oddCount = last5.filter(function(s) { return s.type === '单'; }).length;
+  const evenCount = last5.filter(function(s) { return s.type === '双'; }).length;
+  const oddRatio = oddCount / 5;
+  const evenRatio = evenCount / 5;
 
-  var scoreOdd = 0;
-  var scoreEven = 0;
-  var reasons = [];
+  let scoreOdd = 0;
+  let scoreEven = 0;
+  const reasons = [];
 
-  var allOdd3 = last3.every(function(s) { return s.type === '单'; });
-  var allEven3 = last3.every(function(s) { return s.type === '双'; });
+  const allOdd3 = last3.every(function(s) { return s.type === '单'; });
+  const allEven3 = last3.every(function(s) { return s.type === '双'; });
 
   if (allOdd3) {
     scoreEven += 35;
@@ -340,7 +340,7 @@ _predictOddEvenTrend: function(sequence) {
   }
 
   if (sequence.length >= 7) {
-    var prev2 = sequence[2].type;
+    const prev2 = sequence[2].type;
     if (prev2 === '单' && last3[0].type === '双') {
       scoreOdd += 15;
       reasons.push('单→双后常转单');
@@ -350,7 +350,7 @@ _predictOddEvenTrend: function(sequence) {
     }
   }
 
-  var recent2Same = last3[0].type === last3[1].type;
+  const recent2Same = last3[0].type === last3[1].type;
   if (recent2Same) {
     if (last3[0].type === '单') {
       scoreOdd += 10;
@@ -371,8 +371,8 @@ _predictOddEvenTrend: function(sequence) {
     }
   }
 
-  var totalScore = scoreOdd + scoreEven;
-  var prediction, confidence;
+  const totalScore = scoreOdd + scoreEven;
+  let prediction, confidence;
 
   if (totalScore === 0) {
     return { prediction: '-', confidence: 40, reason: '无明显规律' };
@@ -390,7 +390,7 @@ _predictOddEvenTrend: function(sequence) {
     reasons.push('势均力敌，跟随最新趋势');
   }
 
-  var topReasons = reasons.slice(0, 2).join('; ');
+  const topReasons = reasons.slice(0, 2).join('; ');
   return { prediction: prediction, confidence: confidence, reason: topReasons };
 },
 
@@ -398,16 +398,16 @@ _predictOddEvenTrend: function(sequence) {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
-    var recentData = historyData.slice(0, Math.min(period, historyData.length));
-    var wuxingSequence = [];
-    var wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+    const recentData = historyData.slice(0, Math.min(period, historyData.length));
+    const wuxingSequence = [];
+    const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
 
     // 2026-06-21 性能优化：复用调用方传入的预计算 specials
-    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+    const usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
 
     recentData.forEach(function(item, idx) {
-      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
-      var wuxing = special.wuxing;
+      const special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
+      const wuxing = special.wuxing;
       wuxingSequence.push({
         expect: item.expect,
         number: special.te,
@@ -418,8 +418,8 @@ _predictOddEvenTrend: function(sequence) {
       }
     });
 
-    var patterns = ZodiacPrediction._analyzeWuxingPatterns(wuxingSequence);
-    var trend = ZodiacPrediction._predictWuxingTrend(wuxingSequence);
+    const patterns = ZodiacPrediction._analyzeWuxingPatterns(wuxingSequence);
+    const trend = ZodiacPrediction._predictWuxingTrend(wuxingSequence);
 
     return {
       period: period,
@@ -433,11 +433,11 @@ _predictOddEvenTrend: function(sequence) {
   _analyzeWuxingPatterns: function(sequence) {
     if (!sequence || sequence.length < 2) return [];
 
-    var patterns = [];
-    var currentStreak = 1;
-    var streakType = sequence[0].wuxing;
+    const patterns = [];
+    let currentStreak = 1;
+    let streakType = sequence[0].wuxing;
 
-    for (var i = 1; i < sequence.length; i++) {
+    for (let i = 1; i < sequence.length; i++) {
       if (sequence[i].wuxing === streakType) {
         currentStreak++;
       } else {
@@ -463,12 +463,12 @@ _predictOddEvenTrend: function(sequence) {
       });
     }
 
-    var hotWuxing = {};
+    const hotWuxing = {};
     sequence.forEach(function(item) {
       hotWuxing[item.wuxing] = (hotWuxing[item.wuxing] || 0) + 1;
     });
 
-    var sortedWuxing = Object.keys(hotWuxing).sort(function(a, b) {
+    const sortedWuxing = Object.keys(hotWuxing).sort(function(a, b) {
       return hotWuxing[b] - hotWuxing[a];
     });
 
@@ -486,28 +486,28 @@ _predictOddEvenTrend: function(sequence) {
   _predictWuxingTrend: function(sequence) {
     if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
 
-    var last5 = sequence.slice(0, 5);
-    var last3 = sequence.slice(0, 3);
+    const last5 = sequence.slice(0, 5);
+    const last3 = sequence.slice(0, 3);
 
-    var wuxingScores = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
-    var reasons = [];
+    const wuxingScores = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+    const reasons = [];
 
-    var allSame3 = last3.every(function(s) { return s.wuxing === last3[0].wuxing; });
+    const allSame3 = last3.every(function(s) { return s.wuxing === last3[0].wuxing; });
     if (allSame3) {
-      var otherWuxings = ['金', '木', '水', '火', '土'].filter(function(w) { return w !== last3[0].wuxing; });
+      const otherWuxings = ['金', '木', '水', '火', '土'].filter(function(w) { return w !== last3[0].wuxing; });
       otherWuxings.forEach(function(w) { wuxingScores[w] += 20; });
       reasons.push('连续3期' + last3[0].wuxing + '(分散信号)');
     }
 
-    var last5Count = {};
+    const last5Count = {};
     last5.forEach(function(s) {
       last5Count[s.wuxing] = (last5Count[s.wuxing] || 0) + 1;
     });
 
     Object.keys(last5Count).forEach(function(wx) {
       if (last5Count[wx] >= 3) {
-        var bonus = (last5Count[wx] - 2) * 8;
-        var others = ['金', '木', '水', '火', '土'].filter(function(w) { return w !== wx; });
+        const bonus = (last5Count[wx] - 2) * 8;
+        const others = ['金', '木', '水', '火', '土'].filter(function(w) { return w !== wx; });
         others.forEach(function(w) { wuxingScores[w] += Math.max(5, bonus); });
         reasons.push(wx + '占比高(' + last5Count[wx] * 20 + '%)(均衡化)');
       }
@@ -523,16 +523,16 @@ _predictOddEvenTrend: function(sequence) {
       reasons.push('最近2期连' + last3[0].wuxing + '(惯性)');
     }
 
-    var wuxingOrder = ['金', '木', '水', '火', '土'];
-    var lastIndex = wuxingOrder.indexOf(last3[0].wuxing);
+    const wuxingOrder = ['金', '木', '水', '火', '土'];
+    const lastIndex = wuxingOrder.indexOf(last3[0].wuxing);
     if (lastIndex !== -1) {
-      var nextWuxing = wuxingOrder[(lastIndex + 1) % 5];
+      const nextWuxing = wuxingOrder[(lastIndex + 1) % 5];
       wuxingScores[nextWuxing] += 10;
       reasons.push(nextWuxing + '为下一顺位');
     }
 
-    var maxScore = -1;
-    var prediction = '-';
+    let maxScore = -1;
+    let prediction = '-';
     Object.keys(wuxingScores).forEach(function(wx) {
       if (wuxingScores[wx] > maxScore) {
         maxScore = wuxingScores[wx];
@@ -545,8 +545,8 @@ _predictOddEvenTrend: function(sequence) {
       reasons.push('跟随最新趋势');
     }
 
-    var confidence = Math.min(72, 42 + Math.round((maxScore / 50) * 30));
-    var topReasons = reasons.slice(0, 2).join('; ');
+    const confidence = Math.min(72, 42 + Math.round((maxScore / 50) * 30));
+    const topReasons = reasons.slice(0, 2).join('; ');
     return { prediction: prediction, confidence: confidence, reason: topReasons };
   },
 
@@ -554,16 +554,16 @@ _predictOddEvenTrend: function(sequence) {
     if (!historyData || !historyData.length) return null;
 
     period = period || 10;
-    var recentData = historyData.slice(0, Math.min(period, historyData.length));
-    var colorSequence = [];
-    var colorCount = { '红': 0, '蓝': 0, '绿': 0 };
+    const recentData = historyData.slice(0, Math.min(period, historyData.length));
+    const colorSequence = [];
+    const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
 
     // 2026-06-21 性能优化：复用调用方传入的预计算 specials
-    var usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
+    const usePrecomputed = precomputedSpecials && precomputedSpecials.length >= recentData.length;
 
     recentData.forEach(function(item, idx) {
-      var special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
-      var colorName = special.colorName;
+      const special = usePrecomputed ? precomputedSpecials[idx] : Utils.SpecialCalculator.getSpecial(item);
+      const colorName = special.colorName;
       colorSequence.push({
         expect: item.expect,
         number: special.te,
@@ -574,8 +574,8 @@ _predictOddEvenTrend: function(sequence) {
       }
     });
 
-    var patterns = ZodiacPrediction._analyzeColorPatterns(colorSequence);
-    var trend = ZodiacPrediction._predictColorTrend(colorSequence);
+    const patterns = ZodiacPrediction._analyzeColorPatterns(colorSequence);
+    const trend = ZodiacPrediction._predictColorTrend(colorSequence);
 
     return {
       period: period,
@@ -589,11 +589,11 @@ _predictOddEvenTrend: function(sequence) {
   _analyzeColorPatterns: function(sequence) {
     if (!sequence || sequence.length < 2) return [];
 
-    var patterns = [];
-    var currentStreak = 1;
-    var streakType = sequence[0].color;
+    const patterns = [];
+    let currentStreak = 1;
+    let streakType = sequence[0].color;
 
-    for (var i = 1; i < sequence.length; i++) {
+    for (let i = 1; i < sequence.length; i++) {
       if (sequence[i].color === streakType) {
         currentStreak++;
       } else {
@@ -619,12 +619,12 @@ _predictOddEvenTrend: function(sequence) {
       });
     }
 
-    var hotColor = {};
+    const hotColor = {};
     sequence.forEach(function(item) {
       hotColor[item.color] = (hotColor[item.color] || 0) + 1;
     });
 
-    var sortedColor = Object.keys(hotColor).sort(function(a, b) {
+    const sortedColor = Object.keys(hotColor).sort(function(a, b) {
       return hotColor[b] - hotColor[a];
     });
 
@@ -642,28 +642,28 @@ _predictOddEvenTrend: function(sequence) {
   _predictColorTrend: function(sequence) {
     if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
 
-    var last5 = sequence.slice(0, 5);
-    var last3 = sequence.slice(0, 3);
+    const last5 = sequence.slice(0, 5);
+    const last3 = sequence.slice(0, 3);
 
-    var colorScores = { '红': 0, '蓝': 0, '绿': 0 };
-    var reasons = [];
+    const colorScores = { '红': 0, '蓝': 0, '绿': 0 };
+    const reasons = [];
 
-    var allSame3 = last3.every(function(s) { return s.color === last3[0].color; });
+    const allSame3 = last3.every(function(s) { return s.color === last3[0].color; });
     if (allSame3) {
-      var otherColors = ['红', '蓝', '绿'].filter(function(c) { return c !== last3[0].color; });
+      const otherColors = ['红', '蓝', '绿'].filter(function(c) { return c !== last3[0].color; });
       otherColors.forEach(function(c) { colorScores[c] += 20; });
       reasons.push('连续3期' + last3[0].color + '(分散信号)');
     }
 
-    var last5Count = {};
+    const last5Count = {};
     last5.forEach(function(s) {
       last5Count[s.color] = (last5Count[s.color] || 0) + 1;
     });
 
     Object.keys(last5Count).forEach(function(cl) {
       if (last5Count[cl] >= 3) {
-        var bonus = (last5Count[cl] - 2) * 8;
-        var otherCls = ['红', '蓝', '绿'].filter(function(c) { return c !== cl; });
+        const bonus = (last5Count[cl] - 2) * 8;
+        const otherCls = ['红', '蓝', '绿'].filter(function(c) { return c !== cl; });
         otherCls.forEach(function(c) { colorScores[c] += Math.max(5, bonus); });
         reasons.push(cl + '占比高(' + last5Count[cl] * 20 + '%)(均衡化)');
       }
@@ -679,8 +679,8 @@ _predictOddEvenTrend: function(sequence) {
       reasons.push('最近2期连' + last3[0].color + '(惯性)');
     }
 
-    var maxScore = -1;
-    var prediction = '-';
+    let maxScore = -1;
+    let prediction = '-';
     Object.keys(colorScores).forEach(function(cl) {
       if (colorScores[cl] > maxScore) {
         maxScore = colorScores[cl];
@@ -693,8 +693,8 @@ _predictOddEvenTrend: function(sequence) {
       reasons.push('跟随最新趋势');
     }
 
-    var confidence = Math.min(72, 42 + Math.round((maxScore / 50) * 30));
-    var topReasons = reasons.slice(0, 2).join('; ');
+    const confidence = Math.min(72, 42 + Math.round((maxScore / 50) * 30));
+    const topReasons = reasons.slice(0, 2).join('; ');
     return { prediction: prediction, confidence: confidence, reason: topReasons };
   }
 };

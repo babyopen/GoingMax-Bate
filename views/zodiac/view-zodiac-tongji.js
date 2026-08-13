@@ -18,12 +18,12 @@ const ViewZodiacTongJi = {
    * @returns {'red'|'blue'|'green'|''} 波色英文标识，无匹配返回空串
    */
   _getWaveOfNum: function(num) {
-    var cmap = (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) || {};
-    var numStr = String(num);
-    for (var color in cmap) {
+    const cmap = (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) || {};
+    const numStr = String(num);
+    for (const color in cmap) {
       if (Object.prototype.hasOwnProperty.call(cmap, color) && cmap[color].indexOf(num) >= 0) {
         // color 是中文'红/蓝/绿'，映射到英文用于 data-wave
-        var nameMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
+        const nameMap = { '红': 'red', '蓝': 'blue', '绿': 'green' };
         return nameMap[color] || '';
       }
     }
@@ -40,7 +40,7 @@ const ViewZodiacTongJi = {
    * @param {Object} [sort] - 当前排序状态 { key, dir }，可选（2026-06-20 用户需求）
    */
   render: function(stats, sort) {
-    var panel = document.getElementById('zodiacTongJiPanel');
+    const panel = document.getElementById('zodiacTongJiPanel');
     if (!panel) return;
 
     // 已注入则跳过
@@ -52,7 +52,7 @@ const ViewZodiacTongJi = {
       return;
     }
 
-    var card = document.createElement('div');
+    const card = document.createElement('div');
     card.className = 'card';
     card.id = 'zodiacTongJiCard';
 
@@ -79,7 +79,7 @@ const ViewZodiacTongJi = {
    * 已渲染后用新数据刷新内容
    */
   _update: function(stats, sort) {
-    var body = document.querySelector('#zodiacTongJiCard .card-body');
+    const body = document.querySelector('#zodiacTongJiCard .card-body');
     if (!body) return;
     body.innerHTML =
       ViewZodiacTongJi._renderZodiacTable(stats.zodiac, sort) +
@@ -107,7 +107,7 @@ const ViewZodiacTongJi = {
    * 视图层调用业务层纯函数 sortZodiacRows 进行排序，不修改入参
    */
   _renderZodiacTable: function(zodiacStats, sort) {
-    var html = '';
+    let html = '';
     html += '<div class="tj-section">';
     html += '<div class="tj-section-title">生肖统计</div>';
 
@@ -119,9 +119,9 @@ const ViewZodiacTongJi = {
 
     // 排序（2026-06-20 用户需求：表头点击升序降序）
     //   - 调业务层纯函数 sortZodiacRows；不修改 zodiacStats.rows
-    var sortKey = sort && sort.key;
-    var sortDir = sort && sort.dir;
-    var rows = zodiacStats.rows;
+    const sortKey = sort && sort.key;
+    const sortDir = sort && sort.dir;
+    let rows = zodiacStats.rows;
     if (sortKey && typeof ZodiacPrediction !== 'undefined' && ZodiacPrediction.sortZodiacRows) {
       rows = ZodiacPrediction.sortZodiacRows(zodiacStats.rows, sortKey, sortDir);
     }
@@ -135,7 +135,7 @@ const ViewZodiacTongJi = {
     }
     // 排序可点击的列
     function sortTh(key, label, extraCls) {
-      var cls = 'tj-th-num tj-th-sortable' + (extraCls ? ' ' + extraCls : '');
+      const cls = 'tj-th-num tj-th-sortable' + (extraCls ? ' ' + extraCls : '');
       return '<th class="' + cls + '" data-action="zodiac-tongji-sort" data-sort-key="' + key + '">' +
         '<span class="tj-th-label">' + label + '</span>' +
         sortIcon(key) +
@@ -156,7 +156,7 @@ const ViewZodiacTongJi = {
     html += '<tbody>';
 
     rows.forEach(function(r) {
-      var missCls = r.currentMiss >= 30 ? 'tj-cell-warn' : '';
+      const missCls = r.currentMiss >= 30 ? 'tj-cell-warn' : '';
       html += '<tr>';
       html += '<td class="tj-td-zod"><span class="tj-zod-name">' + r.zodiac + '</span></td>';
       html += '<td class="tj-td-num">' + r.count + '</td>';
@@ -183,7 +183,7 @@ const ViewZodiacTongJi = {
    * 渲染号码冷热等级表
    */
   _renderNumLevelTable: function(numStats) {
-    var html = '';
+    let html = '';
     html += '<div class="tj-section">';
     html += '<div class="tj-section-title">号码冷热等级</div>';
 
@@ -207,7 +207,7 @@ const ViewZodiacTongJi = {
     //   第 1 行：等级 / 区间 / 号码数 / 占比
     //   第 2 行：代表号码（跨 4 列，单独占一行；2026-06-20 优化为 chip 化展示）
     numStats.levels.forEach(function(lv) {
-      var levelCls = 'tj-level-' + lv.key;
+      const levelCls = 'tj-level-' + lv.key;
 
       // 主行：等级 / 区间 / 号码数 / 占比
       //   - lv.key 已被 CSS 选择器覆盖（.tj-level-superhot / hot / warm / cool / cold / deep）
@@ -227,10 +227,10 @@ const ViewZodiacTongJi = {
       if (lv.nums.length) {
         html += '<div class="tj-num-chips">';
         lv.nums.forEach(function(n) {
-          var numStr = n < 10 ? '0' + n : '' + n;
+          const numStr = n < 10 ? '0' + n : '' + n;
           // 2026-06-25 用户需求：chip 底色改为对应波色（红/蓝/绿）
-          var wave = ViewZodiacTongJi._getWaveOfNum(n);
-          var waveAttr = wave ? ' data-wave="' + wave + '"' : '';
+          const wave = ViewZodiacTongJi._getWaveOfNum(n);
+          const waveAttr = wave ? ' data-wave="' + wave + '"' : '';
           html += '<span class="tj-num-chip ' + levelCls + '"' + waveAttr + '>' + numStr + '</span>';
         });
         html += '</div>';
@@ -261,7 +261,7 @@ const ViewZodiacTongJi = {
    *           stats.preDrawPredict 由 ZodiacTongJi.predictNextLevel 计算（2026-07-12）
    */
   _renderPreDrawLevelTable: function(preStats, predictStats, backtestStats) {
-    var html = '';
+    let html = '';
     html += '<div class="tj-section">';
 
     html += '<div class="tj-section-title">特码开出前等级分布</div>';
@@ -284,9 +284,9 @@ const ViewZodiacTongJi = {
     html += '<tbody>';
 
     preStats.levels.forEach(function(lv) {
-      var levelCls = 'tj-level-' + lv.key;
+      const levelCls = 'tj-level-' + lv.key;
       // 平均遗漏 0 时展示 0，不展示 -
-      var avgMissText = lv.count > 0 ? lv.avgMiss : '—';
+      const avgMissText = lv.count > 0 ? lv.avgMiss : '—';
       html += '<tr class="tj-row-main ' + levelCls + '">';
       html += '<td class="tj-td-level"><span class="tj-level-tag ' + levelCls + '">' +
         lv.emoji + ' ' + lv.name +
@@ -304,16 +304,16 @@ const ViewZodiacTongJi = {
     html += ViewZodiacTongJi._renderPreDrawPredict(predictStats, backtestStats);
 
     // 下半：完整明细（默认仅展示前 20 条，其余通过按钮展开/收起）
-    var recent = preStats.records || [];
-    var PREVIEW_COUNT = 20;
-    var visibleList = recent.slice(0, PREVIEW_COUNT);
-    var hiddenList = recent.slice(PREVIEW_COUNT);
+    const recent = preStats.records || [];
+    const PREVIEW_COUNT = 20;
+    const visibleList = recent.slice(0, PREVIEW_COUNT);
+    const hiddenList = recent.slice(PREVIEW_COUNT);
 
     html += '<div class="tj-predraw-recent-title">完整明细（共 ' + recent.length + ' 期）</div>';
     html += '<div class="tj-predraw-recent-list">';
     visibleList.forEach(function(r) {
-      var levelCls = 'tj-level-' + r.level;
-      var numStr = r.num < 10 ? '0' + r.num : '' + r.num;
+      const levelCls = 'tj-level-' + r.level;
+      const numStr = r.num < 10 ? '0' + r.num : '' + r.num;
       html += '<div class="tj-predraw-item">';
       html += '<span class="tj-predraw-expect">' + r.expect + '</span>';
       html += '<span class="tj-predraw-num">' + numStr + '</span>';
@@ -326,8 +326,8 @@ const ViewZodiacTongJi = {
     if (hiddenList.length > 0) {
       html += '<div class="tj-predraw-recent-collapsed" data-collapsed="1" style="display:none">';
       hiddenList.forEach(function(r) {
-        var levelCls = 'tj-level-' + r.level;
-        var numStr = r.num < 10 ? '0' + r.num : '' + r.num;
+        const levelCls = 'tj-level-' + r.level;
+        const numStr = r.num < 10 ? '0' + r.num : '' + r.num;
         html += '<div class="tj-predraw-item">';
         html += '<span class="tj-predraw-expect">' + r.expect + '</span>';
         html += '<span class="tj-predraw-num">' + numStr + '</span>';
@@ -364,9 +364,9 @@ const ViewZodiacTongJi = {
       return '';
     }
 
-    var rankNames = ['gold', 'silver', 'bronze'];
+    const rankNames = ['gold', 'silver', 'bronze'];
 
-    var html = '';
+    let html = '';
     html += '<div class="tj-pre-predict">';
     html += '<div class="tj-pre-predict-head">';
     html += '<span class="tj-pre-predict-title">下一期等级预测 · 推荐 3 个</span>';
@@ -374,13 +374,13 @@ const ViewZodiacTongJi = {
     html += '</div>';
     html += '<div class="tj-pre-predict-list" data-action="openLevelBacktest">';
 
-    var top3 = predictStats.top3;
-    for (var i = 0; i < top3.length; i++) {
-      var lv = top3[i];
-      var rank = i + 1;
-      var rankCls = rankNames[i] || '';
-      var levelCls = 'tj-level-' + lv.key;
-      var barPct = Math.min(100, Math.max(0, lv.score));
+    const top3 = predictStats.top3;
+    for (let i = 0; i < top3.length; i++) {
+      const lv = top3[i];
+      const rank = i + 1;
+      const rankCls = rankNames[i] || '';
+      const levelCls = 'tj-level-' + lv.key;
+      const barPct = Math.min(100, Math.max(0, lv.score));
 
       html += '<div class="tj-pre-predict-card tj-rank-' + rankCls + '">';
       html += '<div class="tj-pre-predict-card-top">';
@@ -412,7 +412,7 @@ const ViewZodiacTongJi = {
       (predictStats.total || 0) + ' 条记录';
     // 回测命中率（2026-07-12 与回测追踪结果一致）
     if (backtestStats && backtestStats.total > 0) {
-      var rateColor = backtestStats.hitRate >= 50 ? '#34c759' : backtestStats.hitRate >= 33 ? '#ff9500' : '#ff3b30';
+      const rateColor = backtestStats.hitRate >= 50 ? '#34c759' : backtestStats.hitRate >= 33 ? '#ff9500' : '#ff3b30';
       html += ' · <span style="font-weight:700;color:' + rateColor + ';">回测命中 ' +
         backtestStats.hits + '/' + backtestStats.total + '（' + backtestStats.hitRate + '%）</span>';
     }

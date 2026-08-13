@@ -20,7 +20,7 @@ const ViewZodiacGiong = {
    * 频率评级主面板（12/24/36 期窗口的滑动 swiper）
    */
   renderFrequencyRating: function(freqResult) {
-    var grid = document.getElementById('giongFreqGrid');
+    const grid = document.getElementById('giongFreqGrid');
     if (!grid) return;
 
     ViewZodiacGiong._cachedFreqResult = freqResult;
@@ -30,48 +30,48 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var periods = [
+    const periods = [
       { key: 'p12', label: '12期窗口' },
       { key: 'p24', label: '24期窗口' },
       { key: 'p36', label: '36期窗口' }
     ];
 
-    var zoneOrder = ['封顶区', '降权区', '过热区', '热号区', '活跃区', '穿插区', '冷号区'];
+    const zoneOrder = ['封顶区', '降权区', '过热区', '热号区', '活跃区', '穿插区', '冷号区'];
 
     // 2026-08-14 按窗口过滤分区：12 期窗口业务侧只有 5 个分区（无"过热区/活跃区"），其他窗口保留 7 个分区
     //   数据来源：business-sliding-window.js 中 getZone12/24/36 的返回集合
-    var ZONES_12 = ['封顶区', '降权区', '热号区', '穿插区', '冷号区'];
-    var zoneOrderByWindow = {
+    const ZONES_12 = ['封顶区', '降权区', '热号区', '穿插区', '冷号区'];
+    const zoneOrderByWindow = {
       'p12': ZONES_12,
       'p24': zoneOrder,
       'p36': zoneOrder
     };
 
-    var html = '';
+    let html = '';
     html += '<div class="freq-panels-container" id="freqPanelsContainer">';
 
     periods.forEach(function(period) {
-      var data = freqResult[period.key];
+      const data = freqResult[period.key];
       if (!data) {
         html += '<div class="freq-panel" data-freq-panel="' + period.key + '" style="display:none;">';
         html += '<div class="empty-tip">数据不足</div></div>';
         return;
       }
 
-      var grouped = {};
-      var zonesForWindow = zoneOrderByWindow[period.key] || zoneOrder;
+      const grouped = {};
+      const zonesForWindow = zoneOrderByWindow[period.key] || zoneOrder;
       zonesForWindow.forEach(function(z) { grouped[z] = []; });
       data.forEach(function(item) {
         grouped[item.zone].push(item);
       });
 
-      var display = period.key === 'p12' ? '' : ' style="display:none;"';
+      const display = period.key === 'p12' ? '' : ' style="display:none;"';
       html += '<div class="freq-panel" data-freq-panel="' + period.key + '"' + display + '>';
 
       zonesForWindow.forEach(function(zone) {
-        var items = grouped[zone] || [];
+        const items = grouped[zone] || [];
         // 2026-08-14 改为始终渲染区域标题（含 0 个生肖的"空区域"），便于用户查看次数区间
-        var winSize = parseInt(String(period.key).replace(/\D/g, ''), 10) || 12;
+        const winSize = parseInt(String(period.key).replace(/\D/g, ''), 10) || 12;
 
         html += '<div class="zone-section">';
         html += '<div class="zone-section-header">';
@@ -80,9 +80,9 @@ const ViewZodiacGiong = {
         html += '</div>';
         html += '<div class="zone-card-list">';
         items.forEach(function(item) {
-          var badgeClass = ViewCommon.getZoneClass(item.zone, '');
+          const badgeClass = ViewCommon.getZoneClass(item.zone, '');
 
-          var droppedArrow = '';
+          let droppedArrow = '';
           if (item.willDrop) {
             droppedArrow = '<span class="drop-arrow">▼</span>';
           } else if (item.willDowngrade) {
@@ -107,7 +107,7 @@ const ViewZodiacGiong = {
 
     html += '<div class="freq-tabs-bar" id="freqTabsBar">';
     periods.forEach(function(period, idx) {
-      var activeClass = idx === 0 ? ' active' : '';
+      const activeClass = idx === 0 ? ' active' : '';
       html += '<button class="freq-tab-btn' + activeClass + '" data-freq-key="' + period.key + '" data-action="switchFreqTab">' + period.label + '</button>';
     });
     html += '</div>';
@@ -119,7 +119,7 @@ const ViewZodiacGiong = {
    * 最近一期某生肖出现后，最可能的跟随生肖
    */
   renderLatestFollowStats: function(latestData) {
-    var container = document.getElementById('latestFollowStatsPanel');
+    const container = document.getElementById('latestFollowStatsPanel');
     if (!container) return;
 
     if (!latestData) {
@@ -127,7 +127,7 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var html = '';
+    let html = '';
     html += '<div class="latest-follow-card">';
     html += '<div class="latest-follow-header">';
     html += '<div class="latest-follow-subtitle">第' + latestData.expect + '期 <strong>' + latestData.zodiac + '</strong> 出现后的跟随情况</div>';
@@ -168,7 +168,7 @@ const ViewZodiacGiong = {
    * 区域综合推荐（在 Giong 面板的"区域推荐"区域）
    */
   renderZoneRecommend: function(zodiacList, nextExpect) {
-    var container = document.getElementById('giongRecommendPanel');
+    const container = document.getElementById('giongRecommendPanel');
     if (!container) return;
 
     if (!zodiacList || !zodiacList.length) {
@@ -176,24 +176,24 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var title = '区域综合推荐';
+    let title = '区域综合推荐';
     if (nextExpect) title = '第' + nextExpect + '期推荐';
 
-    var html = '<div class="giong-header-row">';
+    let html = '<div class="giong-header-row">';
     html += '<div class="analysis-section-title">' + title + '</div>';
     html += '<button class="db-copy-btn" data-action="copyZodiacTop6" type="button" aria-label="复制 Giong 推荐生肖"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
     html += '</div>';
     html += '<div class="zodiac-static-grid">';
     zodiacList.forEach(function(item, idx) {
-      var zodiac = Array.isArray(item) ? item[0] : item;
-      var rankNum = idx + 1;
-      var cardClass = '';
+      const zodiac = Array.isArray(item) ? item[0] : item;
+      const rankNum = idx + 1;
+      let cardClass = '';
       if (rankNum === 1) cardClass = 'card-rank-1';
       else if (rankNum === 2) cardClass = 'card-rank-2';
       else if (rankNum === 3) cardClass = 'card-rank-3';
       else cardClass = 'card-rank-other';
 
-      var emoji = ZodiacPrediction.getZodiacEmoji(zodiac);
+      const emoji = ZodiacPrediction.getZodiacEmoji(zodiac);
 
       html += ViewCommon.renderZodiacCardHtml(zodiac, rankNum, cardClass, emoji);
     });
@@ -205,7 +205,7 @@ const ViewZodiacGiong = {
    * 区域回测追踪
    */
   renderZoneBacktest: function(summary) {
-    var container = document.getElementById('giongBacktestPanel');
+    const container = document.getElementById('giongBacktestPanel');
     if (!container) return;
 
     if (!summary || !summary.total) {
@@ -213,9 +213,9 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var hitClass = ViewCommon.getRateClass(summary.hitRate);
+    const hitClass = ViewCommon.getRateClass(summary.hitRate);
 
-    var html = '<div class="backtest-summary">';
+    let html = '<div class="backtest-summary">';
     html += '<div class="backtest-summary-title">区域回测追踪（前6名）</div>';
     html += '<div class="backtest-summary-row">';
     html += '<div class="backtest-stat">';
@@ -239,13 +239,13 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     html += '<div class="backtest-records backtest-records-inline">';
-    var recentRecords = summary.records.slice(0, 30);
+    const recentRecords = summary.records.slice(0, 30);
     recentRecords.forEach(function(r) {
-      var hitText = r.hit ? '准' : '错';
-      var hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
-      var top6Html;
+      const hitText = r.hit ? '准' : '错';
+      const hitRowClass = r.hit ? 'backtest-hit' : 'backtest-miss';
+      let top6Html;
       if (r.hit && r.hitRank >= 1 && r.hitRank <= r.top6.length) {
-        var hitIdx = r.hitRank - 1;
+        const hitIdx = r.hitRank - 1;
         top6Html = r.top6.map(function(z, i) {
           if (i === hitIdx) return '<span class="backtest-record-zodiac-hit">' + z + '</span>';
           return z;
@@ -253,8 +253,8 @@ const ViewZodiacGiong = {
       } else {
         top6Html = r.top6.join('');
       }
-      var actualNumRaw = r.actualTe !== undefined ? r.actualTe : (r.actualNumber !== undefined ? r.actualNumber : '');
-      var actualNum = Utils.formatNum(actualNumRaw);
+      const actualNumRaw = r.actualTe !== undefined ? r.actualTe : (r.actualNumber !== undefined ? r.actualNumber : '');
+      const actualNum = Utils.formatNum(actualNumRaw);
       html += '<div class="backtest-record-row ' + hitRowClass + '">';
       html += '<span class="backtest-record-period">' + r.expect + '期:</span>';
       html += '<span class="backtest-record-predict">【<span class="backtest-record-zodiacs">' + top6Html + '</span>】</span>';
@@ -267,7 +267,7 @@ const ViewZodiacGiong = {
   },
 
   renderZoneBacktestEmpty: function() {
-    var container = document.getElementById('giongBacktestPanel');
+    const container = document.getElementById('giongBacktestPanel');
     if (!container) return;
     container.innerHTML = '<div class="empty-tip">计算中…</div>';
   },
@@ -286,7 +286,7 @@ const ViewZodiacGiong = {
    * 子标签页内容由 view-zodiac-giong-size.js 等子文件挂载到 ViewZodiacGiong
    */
   renderCombinedAnalysis: function(sizeData, oddEvenData, wuxingData, colorData) {
-    var container = document.getElementById('combinedAnalysisPanel');
+    const container = document.getElementById('combinedAnalysisPanel');
     if (!container) return;
 
     if (!sizeData && !oddEvenData && !wuxingData && !colorData) {
@@ -294,7 +294,7 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var html = '';
+    let html = '';
     html += '<div class="combined-analysis-card">';
 
     html += '<div class="combined-tabs">';
@@ -332,7 +332,7 @@ const ViewZodiacGiong = {
         container.querySelectorAll('.combined-tab').forEach(function(t) { t.classList.remove('active'); });
         container.querySelectorAll('.combined-panel').forEach(function(p) { p.classList.remove('active'); });
         tab.classList.add('active');
-        var panelId = 'panel-' + tab.getAttribute('data-tab');
+        const panelId = 'panel-' + tab.getAttribute('data-tab');
         document.getElementById(panelId).classList.add('active');
       });
     });
@@ -364,11 +364,11 @@ const ViewZodiacGiong = {
    */
   renderZoneChangeTracking: function(changeData) {
     // 确保容器存在，动态注入到 giongFreqGrid 下方
-    var container = document.getElementById('giongZoneChangePanel');
+    let container = document.getElementById('giongZoneChangePanel');
     if (!container) {
       container = document.createElement('div');
       container.id = 'giongZoneChangePanel';
-      var freqGrid = document.getElementById('giongFreqGrid');
+      const freqGrid = document.getElementById('giongFreqGrid');
       if (freqGrid && freqGrid.parentNode) {
         freqGrid.parentNode.appendChild(container);
       }
@@ -376,7 +376,7 @@ const ViewZodiacGiong = {
 
     if (!changeData || !changeData.records || !changeData.records.length) {
       // 数据不足时显示空状态
-      var wsLabel = (changeData && changeData.windowSize === 24) ? '24期' : (changeData && changeData.windowSize === 36 ? '36期' : '12期');
+      const wsLabel = (changeData && changeData.windowSize === 24) ? '24期' : (changeData && changeData.windowSize === 36 ? '36期' : '12期');
       container.innerHTML =
         '<div class="zone-change-card zone-change-empty">' +
           '<div class="zone-change-header">' +
@@ -387,11 +387,11 @@ const ViewZodiacGiong = {
       return;
     }
 
-    var html = '';
+    let html = '';
     html += '<div class="zone-change-card">';
 
     // 头部
-    var wsLabel = (changeData.windowSize === 24) ? '24期' : (changeData.windowSize === 36 ? '36期' : '12期');
+    const wsLabel = (changeData.windowSize === 24) ? '24期' : (changeData.windowSize === 36 ? '36期' : '12期');
     html += '<div class="zone-change-header">';
     html += '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>';
     if (changeData.topZone && changeData.topCount > 0) {
@@ -405,15 +405,15 @@ const ViewZodiacGiong = {
 
     // 区域统计条
     html += '<div class="zone-change-stats">';
-    var statZones = [];
+    const statZones = [];
     Object.keys(changeData.sourceZoneCount).forEach(function(z) {
       statZones.push({ zone: z, count: changeData.sourceZoneCount[z] });
     });
     statZones.sort(function(a, b) { return b.count - a.count; });
-    var total = statZones.reduce(function(s, item) { return s + item.count; }, 0);
+    const total = statZones.reduce(function(s, item) { return s + item.count; }, 0);
     statZones.forEach(function(item) {
       if (item.count === 0) return;
-      var pct = total > 0 ? Math.round(item.count / total * 100) : 0;
+      const pct = total > 0 ? Math.round(item.count / total * 100) : 0;
       html += '<div class="zone-change-stat-item">';
       html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
       html += '<div class="zone-change-bar-track">';
@@ -425,25 +425,25 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     // 变动记录列表（默认只显示2期，可展开/折叠）
-    var preferExpanded = Storage.getZoneChangeExpanded();
-    var listClass = preferExpanded ? 'zone-change-list expanded' : 'zone-change-list';
+    const preferExpanded = Storage.getZoneChangeExpanded();
+    const listClass = preferExpanded ? 'zone-change-list expanded' : 'zone-change-list';
     html += '<div class="' + listClass + '">';
-    var visibleCount = 2;
+    const visibleCount = 2;
     changeData.records.forEach(function(r, idx) {
-      var changeClass = r.changed ? 'zone-changed' : 'zone-unchanged';
-      var arrow = r.changed ? '↗' : '→';
+      const changeClass = r.changed ? 'zone-changed' : 'zone-unchanged';
+      const arrow = r.changed ? '↗' : '→';
       // 始终给超过 visibleCount 的项加 zone-change-hidden class，
       // 由 CSS (.zone-change-list.expanded .zone-change-hidden { display: flex })
       // 统一控制展开/折叠。
       // 修复：当用户上次选择"展开"后刷新页面，!preferExpanded=false 会导致
       // 所有项都不带 zone-change-hidden class，点击"收起"按钮时虽然 CSS 切了
       // expanded class，但没有任何项需要被隐藏，看起来"无法收起"。
-      var hiddenClass = (idx >= visibleCount) ? ' zone-change-hidden' : '';
+      const hiddenClass = (idx >= visibleCount) ? ' zone-change-hidden' : '';
       html += '<div class="zone-change-item ' + changeClass + hiddenClass + '">';
       html += '<span class="zone-change-expect">' + r.expect + '期</span>';
       html += '<span class="zone-change-zodiac">' + r.zodiac + '</span>';
       // 遗漏间隔：-1=首次出现，>=1=距离上次出现的期数
-      var missText = r.missInterval === -1 ? '首现' : '隔' + r.missInterval + '期';
+      const missText = r.missInterval === -1 ? '首现' : '隔' + r.missInterval + '期';
       html += '<span class="zone-change-miss">' + missText + '</span>';
       html += '<span class="zone-change-zone-tag ' + ViewCommon.getZoneClass(r.prevZone, '') + '">' + r.prevZone + '</span>';
       html += '<span class="zone-change-arrow">' + arrow + '</span>';
@@ -452,8 +452,8 @@ const ViewZodiacGiong = {
     });
     // 展开/折叠按钮（超过2条时显示）
     if (changeData.records.length > visibleCount) {
-      var toggleLabel = preferExpanded ? '收起' : '展开更多（共' + changeData.records.length + '期）';
-      var toggleIconChar = preferExpanded ? '▲' : '▼';
+      const toggleLabel = preferExpanded ? '收起' : '展开更多（共' + changeData.records.length + '期）';
+      const toggleIconChar = preferExpanded ? '▲' : '▼';
       html += '<div class="zone-change-toggle" data-action="toggleZoneChangeList">';
       html += '<span class="zone-change-toggle-text">' + toggleLabel + '</span>';
       html += '<span class="zone-change-toggle-icon">' + toggleIconChar + '</span>';
@@ -474,10 +474,10 @@ const ViewZodiacGiong = {
    *       不展示 curZone、变动箭头、miss 等字段
    */
   renderZoneChangeTrackingMulti: function(p12Data, p24Data, p36Data) {
-    var host = document.getElementById('giongZoneChangePanel');
+    const host = document.getElementById('giongZoneChangePanel');
     if (!host) return;
 
-    var container = document.getElementById('giongZoneChangePanelMulti');
+    let container = document.getElementById('giongZoneChangePanelMulti');
     if (!container) {
       container = document.createElement('div');
       container.id = 'giongZoneChangePanelMulti';
@@ -487,7 +487,7 @@ const ViewZodiacGiong = {
     }
 
     // 按期号把三组数据索引化，方便按 expect 对齐
-    var map12 = {}, map24 = {}, map36 = {};
+    const map12 = {}, map24 = {}, map36 = {};
     if (p12Data && p12Data.records) {
       p12Data.records.forEach(function(r) { map12[r.expect] = r; });
     }
@@ -499,11 +499,11 @@ const ViewZodiacGiong = {
     }
 
     // 以 p12 的 records 顺序为基准（按 expect 降序），三期窗口均覆盖同一批期号
-    var baseRecords = (p12Data && p12Data.records) || [];
+    let baseRecords = (p12Data && p12Data.records) || [];
     if (!baseRecords.length && p24Data && p24Data.records) baseRecords = p24Data.records;
     if (!baseRecords.length && p36Data && p36Data.records) baseRecords = p36Data.records;
 
-    var html = '<div class="zone-change-card zone-change-multi-card">';
+    let html = '<div class="zone-change-card zone-change-multi-card">';
     html += '<div class="zone-change-header">';
     html += '<span class="zone-change-title">区域追踪</span>';
     html += '</div>';
@@ -517,7 +517,7 @@ const ViewZodiacGiong = {
     }
 
     // ===== 三窗口独立的区域变动统计（复用业务层 calcZoneChangeTracking 返回的 sourceZoneCount / topZone / topCount）=====
-    var statsList = [
+    const statsList = [
       { ws: 12, label: '12期窗口', data: p12Data },
       { ws: 24, label: '24期窗口', data: p24Data },
       { ws: 36, label: '36期窗口', data: p36Data }
@@ -533,7 +533,7 @@ const ViewZodiacGiong = {
       html += '<div class="zone-change-combo-stats-title">' + s.label + '·变动最多</div>';
 
       if (s.data && s.data.records && s.data.records.length) {
-        var totalCount = s.data.records.length;
+        const totalCount = s.data.records.length;
 
         // 顶部：变动最多区域
         if (s.data.topZone && s.data.topCount > 0) {
@@ -544,8 +544,8 @@ const ViewZodiacGiong = {
         }
 
         // 各区域统计条（按次数降序，跳过 0 次）
-        var sortedZones = [];
-        var zoneCount = s.data.sourceZoneCount || {};
+        let sortedZones = [];
+        const zoneCount = s.data.sourceZoneCount || {};
         Object.keys(zoneCount).forEach(function(z) {
           sortedZones.push({ zone: z, count: zoneCount[z] });
         });
@@ -554,7 +554,7 @@ const ViewZodiacGiong = {
         html += '<div class="zone-change-combo-stats-bars">';
         sortedZones.forEach(function(item) {
           if (item.count === 0) return;
-          var pct = totalCount > 0 ? Math.round(item.count / totalCount * 100) : 0;
+          const pct = totalCount > 0 ? Math.round(item.count / totalCount * 100) : 0;
           html += '<div class="zone-change-stat-item">';
           html += '<span class="zone-change-stat-name">' + item.zone + '</span>';
           html += '<div class="zone-change-bar-track">';
@@ -574,19 +574,19 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     html += '<div class="zone-change-combo-list">';
-    var comboVisibleCount = 2;
+    const comboVisibleCount = 2;
     baseRecords.forEach(function(r, idx) {
-      var rec12 = map12[r.expect];
-      var rec24 = map24[r.expect];
-      var rec36 = map36[r.expect];
+      const rec12 = map12[r.expect];
+      const rec24 = map24[r.expect];
+      const rec36 = map36[r.expect];
 
       // 记录【变动前】的区域 prevZone（即该期开出前所在窗口的所属区域）
-      var z12 = rec12 ? rec12.prevZone : '-';
-      var z24 = rec24 ? rec24.prevZone : '-';
-      var z36 = rec36 ? rec36.prevZone : '-';
+      const z12 = rec12 ? rec12.prevZone : '-';
+      const z24 = rec24 ? rec24.prevZone : '-';
+      const z36 = rec36 ? rec36.prevZone : '-';
 
       // 默认只显示前 2 期，超出部分加 zone-change-hidden 由 CSS 折叠
-      var hiddenClass = (idx >= comboVisibleCount) ? ' zone-change-hidden' : '';
+      const hiddenClass = (idx >= comboVisibleCount) ? ' zone-change-hidden' : '';
 
       html += '<div class="zone-change-combo-item' + hiddenClass + '">';
       html += '<span class="zone-change-expect">' + r.expect + '期</span>';

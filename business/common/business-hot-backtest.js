@@ -32,42 +32,42 @@ const BusinessHotBacktest = {
   runBacktest: function(historyData, testCount, analyzeLimit) {
     if (!historyData || !historyData.length) return null;
 
-    var windowSize = analyzeLimit || 12;
+    const windowSize = analyzeLimit || 12;
     if (historyData.length < windowSize + 1) return null;
 
     testCount = Math.min(testCount || this.DEFAULT_TEST_COUNT, 24, historyData.length - windowSize);
     if (testCount <= 0) return null;
 
     // v2.6.1 优化：预计算全量 specials（一次 batchGetSpecial，循环内 O(1) 取值）
-    var allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
+    const allSpecials = BusinessCommonSpecials.buildWindowed(historyData);
 
     // v2.6.1 优化：初始化第一个窗口的 numCount（offset=0 的窗口：historyData[1..windowSize]）
-    var numCount = {};
-    for (var i = 1; i <= 49; i++) {
+    const numCount = {};
+    for (let i = 1; i <= 49; i++) {
       numCount[CommonString.formatNum(i)] = 0;
     }
-    for (var wi = 0; wi < windowSize; wi++) {
-      var initS = allSpecials[1 + wi];
+    for (let wi = 0; wi < windowSize; wi++) {
+      const initS = allSpecials[1 + wi];
       if (initS && initS.te) {
         numCount[CommonString.formatNum(initS.te)]++;
       }
     }
 
-    var results = [];
+    const results = [];
 
-    for (var offset = 0; offset < testCount; offset++) {
-      var targetItem = historyData[offset];
+    for (let offset = 0; offset < testCount; offset++) {
+      const targetItem = historyData[offset];
       if (!targetItem) break;
 
-      var actualSpecial = allSpecials[offset];
+      const actualSpecial = allSpecials[offset];
       if (!actualSpecial || !actualSpecial.te) continue;
 
       // 取 TOP5（与 calcFullAnalysis 中 hotNum 逻辑一致）
-      var top5 = Utils.getTopN(numCount, 5, undefined, ' ');
+      const top5 = Utils.getTopN(numCount, 5, undefined, ' ');
 
-      var actualTe = CommonString.formatNum(actualSpecial.te);
-      var top5Arr = top5.split(' ');
-      var isHit = top5Arr.indexOf(actualTe) !== -1;
+      const actualTe = CommonString.formatNum(actualSpecial.te);
+      const top5Arr = top5.split(' ');
+      const isHit = top5Arr.indexOf(actualTe) !== -1;
 
       results.push({
         expect: targetItem.expect,
@@ -83,8 +83,8 @@ const BusinessHotBacktest = {
       //   移除 historyData[offset+1]（离开窗口的第一个元素）
       //   添加 historyData[offset+1+windowSize]（新进入窗口的元素）
       if (offset < testCount - 1) {
-        var removeSpec = allSpecials[offset + 1];
-        var addSpec = allSpecials[offset + 1 + windowSize];
+        const removeSpec = allSpecials[offset + 1];
+        const addSpec = allSpecials[offset + 1 + windowSize];
         if (removeSpec && removeSpec.te) {
           numCount[CommonString.formatNum(removeSpec.te)]--;
         }
@@ -96,8 +96,8 @@ const BusinessHotBacktest = {
 
     if (!results.length) return null;
 
-    var hitCount = results.filter(function(r) { return r.isHit; }).length;
-    var hitRate = Math.round((hitCount / results.length) * 100);
+    const hitCount = results.filter(function(r) { return r.isHit; }).length;
+    const hitRate = Math.round((hitCount / results.length) * 100);
 
     return {
       totalTests: results.length,

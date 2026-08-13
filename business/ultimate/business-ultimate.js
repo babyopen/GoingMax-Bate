@@ -38,9 +38,9 @@ const BusinessUltimate = {
   // NUM_TO_ZODIAC / ZODIAC_TO_NUM 已迁移到 CONFIG（2026-06-09 重构）
   NUM_TO_ZODIAC: CONFIG.NUM_TO_ZODIAC,
   ZODIAC_TO_NUM: (function() {
-    var map = {};
+    const map = {};
     Object.keys(CONFIG.NUM_TO_ZODIAC).forEach(function(num) {
-      var zodiac = CONFIG.NUM_TO_ZODIAC[num];
+      const zodiac = CONFIG.NUM_TO_ZODIAC[num];
       // 2026-06-09 修复 55a01d3 重构引入的 BUG：
       // CONFIG.NUM_TO_ZODIAC 是 1-49 完整映射（按当前年份生肖轮换），
       // 同一生肖对应多个号码（最多 4 个）。原重构未加去重逻辑，
@@ -84,8 +84,8 @@ const BusinessUltimate = {
   },
 
   updateAdaptiveState: function(isHit) {
-    var state = this.getAdaptiveState();
-    var trackWindow = this.ADAPTIVE_CONFIG.TRACK_WINDOW;
+    const state = this.getAdaptiveState();
+    const trackWindow = this.ADAPTIVE_CONFIG.TRACK_WINDOW;
 
     state.recentResults.push(isHit ? 1 : 0);
     if (state.recentResults.length > trackWindow) {
@@ -100,11 +100,11 @@ const BusinessUltimate = {
       state.consecutiveMiss++;
     }
 
-    var recentHits = state.recentResults.filter(function(r) { return r === 1; }).length;
-    var hitRate = state.recentResults.length > 0 ? (recentHits / state.recentResults.length) : 0;
+    const recentHits = state.recentResults.filter(function(r) { return r === 1; }).length;
+    const hitRate = state.recentResults.length > 0 ? (recentHits / state.recentResults.length) : 0;
 
-    var mainAdjust = 0;
-    var backupAdjust = 0;
+    let mainAdjust = 0;
+    let backupAdjust = 0;
 
     if (state.consecutiveMiss >= 4) {
       mainAdjust = 2;
@@ -132,8 +132,8 @@ const BusinessUltimate = {
       backupAdjust = 0;
     }
 
-    var baseMain = this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
-    var baseBackup = this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
+    const baseMain = this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
+    const baseBackup = this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
 
     state.currentMainCount = Math.max(this.ADAPTIVE_CONFIG.MIN_MAIN, Math.min(this.ADAPTIVE_CONFIG.MAX_MAIN, baseMain + mainAdjust));
     state.currentBackupCount = Math.max(this.ADAPTIVE_CONFIG.MIN_BACKUP, Math.min(this.ADAPTIVE_CONFIG.MAX_BACKUP, baseBackup + backupAdjust));
@@ -153,9 +153,9 @@ const BusinessUltimate = {
   },
 
   countFrequency: function(history, n) {
-    var freq = {};
-    for (var i = 1; i <= 12; i++) freq[i] = 0;
-    var recent = history.slice(-n);
+    const freq = {};
+    for (let i = 1; i <= 12; i++) freq[i] = 0;
+    const recent = history.slice(-n);
     recent.forEach(function(item) {
       if (item.number >= 1 && item.number <= 12) {
         freq[item.number]++;
@@ -165,13 +165,13 @@ const BusinessUltimate = {
   },
 
   getNextInCycle: function(current, cycleChain) {
-    var index = cycleChain.indexOf(current);
+    const index = cycleChain.indexOf(current);
     return index === -1 ? null : cycleChain[(index + 1) % cycleChain.length];
   },
 
   checkConsecutive: function(history, pool, n) {
     if (history.length < n) return false;
-    var recent = history.slice(-n);
+    const recent = history.slice(-n);
     return recent.every(function(item) { return pool.indexOf(item.number) !== -1; });
   },
 
@@ -206,14 +206,14 @@ const BusinessUltimate = {
     if (history.length <= this.WINDOW_SIZE) {
       return this.getCurrent12Freq(history);
     }
-    var newHistory = history.slice(1);
+    const newHistory = history.slice(1);
     return this.countFrequency(newHistory, this.WINDOW_SIZE);
   },
 
   getNumberPositions: function(history, num, windowSize) {
-    var positions = [];
-    var recent = history.slice(-windowSize);
-    for (var i = 0; i < recent.length; i++) {
+    const positions = [];
+    const recent = history.slice(-windowSize);
+    for (let i = 0; i < recent.length; i++) {
       if (recent[i].number === num) {
         positions.push(recent.length - 1 - i);
       }
@@ -230,10 +230,10 @@ const BusinessUltimate = {
   },
 
   updateCoolingInfo: function(history, blackList) {
-    var cooling = this.getCoolingInfo();
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const cooling = this.getCoolingInfo();
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
 
-    var i, num, positions, count;
+    let i, num, positions, count;
     for (num = 1; num <= 12; num++) {
       positions = this.getNumberPositions(history, num, this.WINDOW_SIZE);
       count = positions.length;
@@ -257,13 +257,13 @@ const BusinessUltimate = {
   },
 
   getDownWeightBlackList: function(history) {
-    var currFreq12 = this.getCurrent12Freq(history);
-    var currFreq11 = this.getCurrent11Freq(history);
-    var blackList = [];
+    const currFreq12 = this.getCurrent12Freq(history);
+    const currFreq11 = this.getCurrent11Freq(history);
+    const blackList = [];
 
-    for (var num = 1; num <= 12; num++) {
-      var freq12 = currFreq12[num] || 0;
-      var freq11 = currFreq11[num] || 0;
+    for (let num = 1; num <= 12; num++) {
+      const freq12 = currFreq12[num] || 0;
+      const freq11 = currFreq11[num] || 0;
 
       if (freq12 >= this.DOWN_WEIGHT_THRESHOLD && freq11 > this.RELEASE_THRESHOLD) {
         blackList.push(num);
@@ -275,36 +275,36 @@ const BusinessUltimate = {
   },
 
   _isAtCriticalEdge: function(history, num, windowSize) {
-    var positions = this.getNumberPositions(history, num, windowSize);
+    const positions = this.getNumberPositions(history, num, windowSize);
     if (positions.length < 3) return false;
 
     positions.sort(function(a, b) { return a - b; });
-    var earliestPos = positions[0];
+    const earliestPos = positions[0];
     return earliestPos >= windowSize - 2;
   },
 
   _isIntensivePattern: function(history, num, windowSize) {
-    var positions = this.getNumberPositions(history, num, windowSize);
+    const positions = this.getNumberPositions(history, num, windowSize);
     if (positions.length < 3) return false;
 
     positions.sort(function(a, b) { return a - b; });
-    var span = positions[positions.length - 1] - positions[0];
+    const span = positions[positions.length - 1] - positions[0];
     return span <= 5;
   },
 
   filterByWeight: function(history, candidateNums, config) {
-    var blackList = this.getDownWeightBlackList(history);
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
-    var currFreq12 = this.getCurrent12Freq(history);
-    var nextFreq12 = this.getNext12Freq(history);
+    const blackList = this.getDownWeightBlackList(history);
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const currFreq12 = this.getCurrent12Freq(history);
+    const nextFreq12 = this.getNext12Freq(history);
 
-    var adaptiveState = this.getAdaptiveState();
-    var targetMain = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
-    var targetBackup = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
+    const adaptiveState = this.getAdaptiveState();
+    const targetMain = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
+    const targetBackup = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
 
-    var main = [];
-    var backup = [];
-    var i, num;
+    const main = [];
+    let backup = [];
+    let i, num;
 
     for (i = 0; i < candidateNums.length; i++) {
       num = candidateNums[i];
@@ -312,7 +312,7 @@ const BusinessUltimate = {
         continue;
       }
 
-      var next12 = nextFreq12[num] || 0;
+      const next12 = nextFreq12[num] || 0;
       if (next12 >= 1) {
         main.push(num);
       } else if (next12 === 0 && currFreq12[num] <= 1) {
@@ -323,11 +323,11 @@ const BusinessUltimate = {
     }
 
     if (main.length < targetMain) {
-      var chain = config.cycleChain;
+      const chain = config.cycleChain;
       for (i = 0; i < chain.length && main.length < targetMain; i++) {
         num = chain[i];
         if (main.indexOf(num) === -1 && blackList.indexOf(num) === -1 && backup.indexOf(num) === -1) {
-          var next12 = nextFreq12[num] || 0;
+          const next12 = nextFreq12[num] || 0;
           if (next12 >= 1 || next12 === 0) {
             main.push(num);
           }
@@ -347,13 +347,13 @@ const BusinessUltimate = {
     }
 
     if (main.length > targetMain) {
-      var extraMains = main.splice(targetMain);
+      const extraMains = main.splice(targetMain);
       backup = extraMains.concat(backup);
     }
 
-    var totalTarget = targetMain + targetBackup;
+    const totalTarget = targetMain + targetBackup;
     if (main.length + backup.length < totalTarget) {
-      var chain = config.cycleChain;
+      const chain = config.cycleChain;
       for (i = 0; i < chain.length; i++) {
         num = chain[i];
         if (main.indexOf(num) === -1 && blackList.indexOf(num) === -1 && backup.indexOf(num) === -1) {
@@ -377,7 +377,7 @@ const BusinessUltimate = {
   },
 
   detectCycleStage: function(history) {
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
 
     if (sortedHistory.length < 15) {
       return {
@@ -388,24 +388,24 @@ const BusinessUltimate = {
       };
     }
 
-    var freq20 = this.countFrequency(sortedHistory, 15);
-    var v1Config = this.CYCLE_CONFIG.V1;
-    var v2Config = this.CYCLE_CONFIG.V2;
+    const freq20 = this.countFrequency(sortedHistory, 15);
+    const v1Config = this.CYCLE_CONFIG.V1;
+    const v2Config = this.CYCLE_CONFIG.V2;
 
-    var v1Count = 0;
-    var v2Count = 0;
+    let v1Count = 0;
+    let v2Count = 0;
     v1Config.mainPool.forEach(function(num) { v1Count += freq20[num]; });
     v2Config.mainPool.forEach(function(num) { v2Count += freq20[num]; });
 
-    var cons3V1 = this.checkConsecutive(sortedHistory, v1Config.mainPool, 3);
-    var cons3V2 = this.checkConsecutive(sortedHistory, v2Config.mainPool, 3);
-    var cons2V1 = this.checkConsecutive(sortedHistory, v1Config.mainPool, 2);
-    var cons2V2 = this.checkConsecutive(sortedHistory, v2Config.mainPool, 2);
+    const cons3V1 = this.checkConsecutive(sortedHistory, v1Config.mainPool, 3);
+    const cons3V2 = this.checkConsecutive(sortedHistory, v2Config.mainPool, 3);
+    const cons2V1 = this.checkConsecutive(sortedHistory, v1Config.mainPool, 2);
+    const cons2V2 = this.checkConsecutive(sortedHistory, v2Config.mainPool, 2);
 
-    var recent4 = sortedHistory.slice(-4).map(function(item) { return item.number; });
-    var chainValidV1 = 0;
-    var chainValidV2 = 0;
-    for (var i = 0; i < recent4.length - 1; i++) {
+    const recent4 = sortedHistory.slice(-4).map(function(item) { return item.number; });
+    let chainValidV1 = 0;
+    let chainValidV2 = 0;
+    for (let i = 0; i < recent4.length - 1; i++) {
       if (v1Config.mainPool.indexOf(recent4[i]) !== -1 && this.getNextInCycle(recent4[i], v1Config.cycleChain) === recent4[i + 1]) {
         chainValidV1++;
       }
@@ -414,7 +414,7 @@ const BusinessUltimate = {
       }
     }
 
-    var dominantCycle = null;
+    let dominantCycle = null;
 
     if (v2Count >= v1Count + 1) {
       if (cons3V2 || cons2V2 || chainValidV2 >= 1) dominantCycle = v2Config;
@@ -438,9 +438,9 @@ const BusinessUltimate = {
       };
     }
 
-    var otherCycle = dominantCycle === v1Config ? v2Config : v1Config;
+    const otherCycle = dominantCycle === v1Config ? v2Config : v1Config;
 
-    var newCycleSignals = [];
+    const newCycleSignals = [];
     if (this.checkConsecutive(sortedHistory, otherCycle.mainPool, 3)) {
       newCycleSignals.push('连续3期开出新周期号码');
     }
@@ -467,14 +467,14 @@ const BusinessUltimate = {
   },
 
   checkReHeatAndRelock: function(history) {
-    var currFreq = this.getCurrent12Freq(history);
-    var cooling = this.getCoolingInfo();
-    var updated = false;
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const currFreq = this.getCurrent12Freq(history);
+    const cooling = this.getCoolingInfo();
+    let updated = false;
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
 
-    for (var num = 1; num <= 12; num++) {
+    for (let num = 1; num <= 12; num++) {
       if (cooling[num]) {
-        var currentCount = currFreq[num] || 0;
+        const currentCount = currFreq[num] || 0;
         if (currentCount >= 3 && !cooling[num].reLocked) {
           cooling[num].reLocked = true;
           cooling[num].reLockIssue = sortedHistory.length > 0 ? sortedHistory[sortedHistory.length - 1].issue : 0;
@@ -490,36 +490,36 @@ const BusinessUltimate = {
   },
 
   generateStableNumbers: function(history, config) {
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
-    var cycleChain = config.cycleChain;
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const cycleChain = config.cycleChain;
 
-    var recentMainNums = this.getRecentMainNumbers(sortedHistory, config.mainPool, 5);
+    const recentMainNums = this.getRecentMainNumbers(sortedHistory, config.mainPool, 5);
 
-    var candidate = [];
+    let candidate = [];
 
     if (recentMainNums.length >= 2) {
       recentMainNums.forEach(function(num) {
-        var idx = cycleChain.indexOf(num);
+        const idx = cycleChain.indexOf(num);
         if (idx !== -1) {
-          var nextIdx = (idx + 1) % cycleChain.length;
+          const nextIdx = (idx + 1) % cycleChain.length;
           candidate.push(cycleChain[nextIdx]);
         }
       });
     } else if (recentMainNums.length === 1) {
-      var idx = cycleChain.indexOf(recentMainNums[0]);
+      const idx = cycleChain.indexOf(recentMainNums[0]);
       if (idx !== -1) {
-        var nextIdx = (idx + 1) % cycleChain.length;
+        const nextIdx = (idx + 1) % cycleChain.length;
         candidate.push(cycleChain[nextIdx]);
-        var nextIdx2 = (nextIdx + 1) % cycleChain.length;
+        const nextIdx2 = (nextIdx + 1) % cycleChain.length;
         candidate.push(cycleChain[nextIdx2]);
       }
     }
 
     if (candidate.length > 0) {
-      var startIdx = cycleChain.indexOf(candidate[0]);
+      const startIdx = cycleChain.indexOf(candidate[0]);
       if (startIdx !== -1) {
-        for (var i = 1; i <= 2; i++) {
-          var idx = (startIdx + i) % cycleChain.length;
+        for (let i = 1; i <= 2; i++) {
+          const idx = (startIdx + i) % cycleChain.length;
           if (candidate.indexOf(cycleChain[idx]) === -1) {
             candidate.push(cycleChain[idx]);
           }
@@ -533,26 +533,26 @@ const BusinessUltimate = {
       });
     }
 
-    var filterRes = this.filterByWeight(sortedHistory, candidate, config);
-    var result = filterRes.main;
-    var backup = filterRes.backup;
+    const filterRes = this.filterByWeight(sortedHistory, candidate, config);
+    const result = filterRes.main;
+    let backup = filterRes.backup;
 
     if (result.length < 4 && backup.length > 0) {
-      var toAdd = 4 - result.length;
-      for (var k = 0; k < toAdd && k < backup.length; k++) {
+      const toAdd = 4 - result.length;
+      for (let k = 0; k < toAdd && k < backup.length; k++) {
         result.push(backup[k]);
       }
       backup = backup.slice(toAdd);
     }
 
-    var otherConfig = config.name === 'V1' ? this.CYCLE_CONFIG.V2 : this.CYCLE_CONFIG.V1;
-    var otherRecentNums = this.getRecentMainNumbers(sortedHistory, otherConfig.mainPool, 2);
-    var crossPoolCandidate = [];
+    const otherConfig = config.name === 'V1' ? this.CYCLE_CONFIG.V2 : this.CYCLE_CONFIG.V1;
+    const otherRecentNums = this.getRecentMainNumbers(sortedHistory, otherConfig.mainPool, 2);
+    let crossPoolCandidate = [];
 
     otherRecentNums.forEach(function(num) {
-      var idx = otherConfig.cycleChain.indexOf(num);
+      const idx = otherConfig.cycleChain.indexOf(num);
       if (idx !== -1) {
-        var nextIdx = (idx + 1) % otherConfig.cycleChain.length;
+        const nextIdx = (idx + 1) % otherConfig.cycleChain.length;
         crossPoolCandidate.push(otherConfig.cycleChain[nextIdx]);
       }
     });
@@ -563,16 +563,16 @@ const BusinessUltimate = {
                backup.indexOf(num) === -1 &&
                filterRes.downWeight.indexOf(num) === -1;
       });
-      var adaptiveState = this.getAdaptiveState();
-      var extraCount = (adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT) - backup.length;
+      const adaptiveState = this.getAdaptiveState();
+      const extraCount = (adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT) - backup.length;
       if (extraCount > 0) {
         backup = backup.concat(crossPoolCandidate.slice(0, extraCount));
       }
     }
 
-    var adaptiveState = this.getAdaptiveState();
-    var mainCount = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
-    var backupCount = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
+    const adaptiveState = this.getAdaptiveState();
+    const mainCount = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
+    const backupCount = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
 
     return {
       mainNumbers: result.slice(0, mainCount),
@@ -583,28 +583,28 @@ const BusinessUltimate = {
   },
 
   generateTransitionNumbers: function(history) {
-    var sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
+    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
 
-    var oldPoolNumbers = this.getRecentMainNumbers(sortedHistory, this.CYCLE_CONFIG.V1.mainPool, 3);
-    var newPoolNumbers = this.getRecentMainNumbers(sortedHistory, this.CYCLE_CONFIG.V2.mainPool, 3);
+    const oldPoolNumbers = this.getRecentMainNumbers(sortedHistory, this.CYCLE_CONFIG.V1.mainPool, 3);
+    const newPoolNumbers = this.getRecentMainNumbers(sortedHistory, this.CYCLE_CONFIG.V2.mainPool, 3);
 
-    var candidate = [];
+    let candidate = [];
 
-    var oldHot = oldPoolNumbers[0] || this.CYCLE_CONFIG.V1.mainPool[0];
-    var newHot = newPoolNumbers[0] || this.CYCLE_CONFIG.V2.mainPool[0];
+    const oldHot = oldPoolNumbers[0] || this.CYCLE_CONFIG.V1.mainPool[0];
+    const newHot = newPoolNumbers[0] || this.CYCLE_CONFIG.V2.mainPool[0];
 
     if (oldPoolNumbers.length > 0) {
-      var idx = this.CYCLE_CONFIG.V1.cycleChain.indexOf(oldPoolNumbers[0]);
+      const idx = this.CYCLE_CONFIG.V1.cycleChain.indexOf(oldPoolNumbers[0]);
       if (idx !== -1) {
-        var nextIdx = (idx + 1) % this.CYCLE_CONFIG.V1.cycleChain.length;
+        const nextIdx = (idx + 1) % this.CYCLE_CONFIG.V1.cycleChain.length;
         candidate.push(this.CYCLE_CONFIG.V1.cycleChain[nextIdx]);
       }
     }
 
     if (newPoolNumbers.length > 0) {
-      var idx = this.CYCLE_CONFIG.V2.cycleChain.indexOf(newPoolNumbers[0]);
+      const idx = this.CYCLE_CONFIG.V2.cycleChain.indexOf(newPoolNumbers[0]);
       if (idx !== -1) {
-        var nextIdx = (idx + 1) % this.CYCLE_CONFIG.V2.cycleChain.length;
+        const nextIdx = (idx + 1) % this.CYCLE_CONFIG.V2.cycleChain.length;
         candidate.push(this.CYCLE_CONFIG.V2.cycleChain[nextIdx]);
       }
     }
@@ -616,15 +616,15 @@ const BusinessUltimate = {
     }
 
     if (candidate.length < 2) {
-      var allChains = this.CYCLE_CONFIG.V1.cycleChain.concat(this.CYCLE_CONFIG.V2.cycleChain);
-      for (var i = 0; i < allChains.length && candidate.length < 2; i++) {
+      const allChains = this.CYCLE_CONFIG.V1.cycleChain.concat(this.CYCLE_CONFIG.V2.cycleChain);
+      for (let i = 0; i < allChains.length && candidate.length < 2; i++) {
         if (candidate.indexOf(allChains[i]) === -1) {
           candidate.push(allChains[i]);
         }
       }
     }
 
-    var filterRes = this.filterByWeight(sortedHistory, candidate, this.CYCLE_CONFIG.V2);
+    const filterRes = this.filterByWeight(sortedHistory, candidate, this.CYCLE_CONFIG.V2);
 
     if (filterRes.main.length === 0) {
       return {
@@ -635,9 +635,9 @@ const BusinessUltimate = {
       };
     }
 
-    var adaptiveState = this.getAdaptiveState();
-    var mainCount = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
-    var backupCount = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
+    const adaptiveState = this.getAdaptiveState();
+    const mainCount = adaptiveState.currentMainCount || this.ADAPTIVE_CONFIG.BASE_MAIN_COUNT;
+    const backupCount = adaptiveState.currentBackupCount || this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT;
 
     return {
       mainNumbers: filterRes.main.sort(function(a, b) { return a - b; }).slice(0, mainCount),
@@ -653,7 +653,7 @@ const BusinessUltimate = {
     switch (stage) {
       case this.CYCLE_STAGES.V1_STABLE:
       case this.CYCLE_STAGES.V2_STABLE:
-        var maxMiss = stage === this.CYCLE_STAGES.V1_STABLE ? '6' : '5';
+        const maxMiss = stage === this.CYCLE_STAGES.V1_STABLE ? '6' : '5';
         return {
           riskLevel: this.RISK_LEVELS.LOW,
           mustDo: [
@@ -695,12 +695,12 @@ const BusinessUltimate = {
   },
 
   generateFullReport: function(history) {
-    var cycleStatus = this.detectCycleStage(history);
-    var advice = this.generateOperationAdvice(cycleStatus.stage);
+    const cycleStatus = this.detectCycleStage(history);
+    const advice = this.generateOperationAdvice(cycleStatus.stage);
 
     this.checkReHeatAndRelock(history);
 
-    var numbersResult = null;
+    let numbersResult = null;
 
     if (cycleStatus.stage !== this.CYCLE_STAGES.INSUFFICIENT_DATA) {
       if (cycleStatus.stage === this.CYCLE_STAGES.V1_STABLE) {
@@ -724,12 +724,12 @@ const BusinessUltimate = {
   },
 
   historyDataToUltimateFormat: function(historyData) {
-    var result = [];
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var zodArr = Utils.parseZodiacArr(item);
-      var zod = zodArr[6] || '';
-      var num = this.ZODIAC_TO_NUM[zod];
+    const result = [];
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const zodArr = Utils.parseZodiacArr(item);
+      const zod = zodArr[6] || '';
+      const num = this.ZODIAC_TO_NUM[zod];
       if (num) {
         result.push({
           issue: Number(item.expect || 0),
@@ -755,7 +755,7 @@ const BusinessUltimate = {
   },
 
   saveRecommendHistory: function(issue, numbers) {
-    var history = this.getRecommendHistory();
+    let history = this.getRecommendHistory();
     history.unshift({ issue: issue, numbers: numbers, timestamp: Date.now() });
     if (history.length > 50) history = history.slice(0, 50);
     Storage.set(this.RECOMMEND_HISTORY_KEY, history);
@@ -763,10 +763,10 @@ const BusinessUltimate = {
 
   isNumberDowngraded: function(num, windowSize) {
     windowSize = windowSize || 12;
-    var history = this.getRecommendHistory();
-    var recentHistory = history.slice(0, windowSize);
-    var count = 0;
-    for (var i = 0; i < recentHistory.length; i++) {
+    const history = this.getRecommendHistory();
+    const recentHistory = history.slice(0, windowSize);
+    let count = 0;
+    for (let i = 0; i < recentHistory.length; i++) {
       if (recentHistory[i].numbers.indexOf(num) !== -1) {
         count++;
         if (count >= 3) return true;
@@ -786,39 +786,39 @@ const BusinessUltimate = {
       currentBackupCount: this.ADAPTIVE_CONFIG.BASE_BACKUP_COUNT
     });
 
-    var records = [];
-    var maxBacktest = Math.min(40, historyData.length - 15);
-    var self = this;
+    const records = [];
+    const maxBacktest = Math.min(40, historyData.length - 15);
+    const self = this;
 
 
-    for (var i = 0; i < maxBacktest; i++) {
-      var predictHistory = historyData.slice(0, historyData.length - i - 1);
+    for (let i = 0; i < maxBacktest; i++) {
+      const predictHistory = historyData.slice(0, historyData.length - i - 1);
       if (predictHistory.length < 15) break;
 
-      var report = this.generateFullReport(predictHistory);
+      const report = this.generateFullReport(predictHistory);
 
       if (!report || !report.numbers) continue;
 
-      var targetItem = historyData[historyData.length - i - 1];
+      const targetItem = historyData[historyData.length - i - 1];
       if (!targetItem) continue;
 
-      var predictedNums = report.numbers.mainNumbers || report.numbers.transitionNumbers || [];
-      var backupNums = report.numbers.alternativeNumbers || [];
-      var actualNum = targetItem.number;
-      var predictIssue = targetItem.issue;
-      var blackList = report.numbers.downWeightList || [];
+      const predictedNums = report.numbers.mainNumbers || report.numbers.transitionNumbers || [];
+      const backupNums = report.numbers.alternativeNumbers || [];
+      const actualNum = targetItem.number;
+      const predictIssue = targetItem.issue;
+      const blackList = report.numbers.downWeightList || [];
 
-      var hitRank = 0;
-      for (var j = 0; j < predictedNums.length; j++) {
+      let hitRank = 0;
+      for (let j = 0; j < predictedNums.length; j++) {
         if (predictedNums[j] === actualNum) {
           hitRank = j + 1;
           break;
         }
       }
 
-      var backupHitRank = 0;
+      let backupHitRank = 0;
       if (hitRank === 0 && backupNums.length > 0) {
-        for (var k = 0; k < backupNums.length; k++) {
+        for (let k = 0; k < backupNums.length; k++) {
           if (backupNums[k] === actualNum) {
             backupHitRank = k + 1;
             break;
@@ -826,10 +826,10 @@ const BusinessUltimate = {
         }
       }
 
-      var totalHitRank = hitRank > 0 ? hitRank : (backupHitRank > 0 ? predictedNums.length + backupHitRank : 0);
+      const totalHitRank = hitRank > 0 ? hitRank : (backupHitRank > 0 ? predictedNums.length + backupHitRank : 0);
 
-      var actualInBlackList = (blackList.indexOf(actualNum) !== -1);
-      var actualZodiac = this._getZodiacByNum(actualNum);
+      const actualInBlackList = (blackList.indexOf(actualNum) !== -1);
+      const actualZodiac = this._getZodiacByNum(actualNum);
 
       records.push({
         expect: predictIssue,
@@ -852,21 +852,21 @@ const BusinessUltimate = {
 
     if (!records.length) return null;
 
-    var hits = 0;
-    var top1Hits = 0;
-    var top2Hits = 0;
-    var top3Hits = 0;
-    var missInBlackList = 0;
-    var missNotInRecommend = 0;
+    let hits = 0;
+    let top1Hits = 0;
+    let top2Hits = 0;
+    let top3Hits = 0;
+    let missInBlackList = 0;
+    let missNotInRecommend = 0;
 
-    var backupHits = 0;
-    var backupTop1Hits = 0;
-    var backupTop2Hits = 0;
-    var totalHits = 0;
-    var totalTop1Hits = 0;
-    var totalTop2Hits = 0;
-    var totalTop3Hits = 0;
-    var missTotalNotInRecommend = 0;
+    let backupHits = 0;
+    let backupTop1Hits = 0;
+    let backupTop2Hits = 0;
+    let totalHits = 0;
+    let totalTop1Hits = 0;
+    let totalTop2Hits = 0;
+    let totalTop3Hits = 0;
+    let missTotalNotInRecommend = 0;
 
     records.forEach(function(r) {
       if (r.hit) {
@@ -906,7 +906,7 @@ const BusinessUltimate = {
       }
     });
 
-    var summary = {
+    const summary = {
       total: records.length,
       hits: hits,
       hitRate: Math.round((hits / records.length) * 100),

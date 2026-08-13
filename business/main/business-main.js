@@ -5,7 +5,7 @@
 //       兼容：Safari 16.4 之前不支持，回退到 setTimeout(150ms)（行为与原来一致）
 const _requestIdleCallback = window.requestIdleCallback || function(fn) {
   return setTimeout(function() {
-    var start = Date.now();
+    const start = Date.now();
     fn({
       didTimeout: false,
       timeRemaining: function() { return Math.max(0, 50 - (Date.now() - start)); }
@@ -766,13 +766,13 @@ const Business = {
    *   - 用户首次进入资料页（index=2）则只渲染资料相关视图，避免重复渲染分析页
    */
   renderHistoryViews: (scope) => {
-    var data = BusinessCommonData.getHistoryData(StateManager._state);
-    var latest = data && data.length ? data[0] : null;
+    const data = BusinessCommonData.getHistoryData(StateManager._state);
+    const latest = data && data.length ? data[0] : null;
 
     // 主页/分析页需要：最新开奖 + 历史记录 + 全维度 + 生肖关联 + 生肖预测 + 回测 + Giong + TongJi
     // 资料页需要：生肖预测 + 回测 + Giong + TongJi
-    var wantAnalysis = scope === 'all' || scope === 'analysis' || scope === undefined;
-    var wantRandom   = scope === 'all' || scope === 'random';
+    const wantAnalysis = scope === 'all' || scope === 'analysis' || scope === undefined;
+    const wantRandom = scope === 'all' || scope === 'random';
 
     if (wantAnalysis) {
       if (latest) Business.renderLatest(latest);
@@ -1411,7 +1411,7 @@ const Business = {
     //    现改为：在 RECENT_N 期窗口内对每个号码投票，取出现最频繁的生肖作为该号码生肖映射）==========
     const RECENT_N = windowSize || 12;
     const recentListForMap = list.slice(0, Math.min(RECENT_N, list.length));
-    const numZodiacVotes = {};   // { num: { zodiac: count } }
+    const numZodiacVotes = {}; // { num: { zodiac: count } }
     recentListForMap.forEach(item => {
       const codeArr = (item.openCode || '').split(',');
       const zodArr = Utils.parseZodiacArr(item);
@@ -1438,38 +1438,38 @@ const Business = {
     const numColorMap = {};
     const numWuxingMap = {};
     for(let n = 1; n <= 49; n++) {
-      numColorMap[n]  = Utils.getColorName(n);
+      numColorMap[n] = Utils.getColorName(n);
       numWuxingMap[n] = Utils.getWuxing(n);
     }
 
     // ========== 3. 近期N期 头/尾/波色/五行 频次统计 ==========
     // 2026-07-14 优化：窗口期数可调，默认 12 期。改为 24 期可观察更长趋势。
     const recentList = list.slice(0, Math.min(RECENT_N, list.length));
-    const headCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
-    const tailCount  = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    const headCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+    const tailCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
     const colorCount = { '红': 0, '蓝': 0, '绿': 0 };
     const wuxingCount = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
     recentList.forEach(item => {
       const s = BusinessCommonSpecials.getOne(item);
       // 修复 #3：边界保护 - 特码为 0 或空时跳过，防止 NaN/Undefined 污染统计
       if(!s || !s.te || s.te < 1) return;
-      headCount[s.head]   = (headCount[s.head]   || 0) + 1;
-      tailCount[s.tail]   = (tailCount[s.tail]   || 0) + 1;
+      headCount[s.head] = (headCount[s.head] || 0) + 1;
+      tailCount[s.tail] = (tailCount[s.tail] || 0) + 1;
       // 修复 #3：颜色/五行仅统计合法值，避免无意义 key 污染 topN 结果
       if(['红','蓝','绿'].includes(s.colorName)) {
-        colorCount[s.colorName]  = (colorCount[s.colorName]  || 0) + 1;
+        colorCount[s.colorName] = (colorCount[s.colorName] || 0) + 1;
       }
       if(['金','木','水','火','土'].includes(s.wuxing)) {
-        wuxingCount[s.wuxing]    = (wuxingCount[s.wuxing]    || 0) + 1;
+        wuxingCount[s.wuxing] = (wuxingCount[s.wuxing] || 0) + 1;
       }
     });
 
     // ========== 4. 提取热头/热尾/热色/热五行 TOP ==========
     // 2026-06-21 通用化：复用 Utils.getTopN（用空格分隔输出便于后续 Number 转换）
-    const topHeads   = Utils.getTopN(headCount, 2, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
-    const topTails   = Utils.getTopN(tailCount, 3, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
-    const topColors  = Utils.getTopN(colorCount, 2, undefined, ' ').split(' ').filter(Boolean);
-    const topWuxing  = Utils.getTopN(wuxingCount, 2, undefined, ' ').split(' ').filter(Boolean);
+    const topHeads = Utils.getTopN(headCount, 2, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
+    const topTails = Utils.getTopN(tailCount, 3, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
+    const topColors = Utils.getTopN(colorCount, 2, undefined, ' ').split(' ').filter(Boolean);
+    const topWuxing = Utils.getTopN(wuxingCount, 2, undefined, ' ').split(' ').filter(Boolean);
     // 修复 #8：topFollowZodiacs 长度兜底去重，限制最多 3 个合法生肖，防止外部传入错误数据导致权重过度放大
     const zodiacAll = (CONFIG && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
     const topFollowZodiacs = Array.isArray(followZodiacs)
@@ -1477,13 +1477,13 @@ const Business = {
       : [];
 
     // ========== 4.5 频次总和（用于比例加权）==========
-    const headTotal  = Object.values(headCount).reduce((a, b) => a + b, 0) || 1;
-    const tailTotal  = Object.values(tailCount).reduce((a, b) => a + b, 0) || 1;
+    const headTotal = Object.values(headCount).reduce((a, b) => a + b, 0) || 1;
+    const tailTotal = Object.values(tailCount).reduce((a, b) => a + b, 0) || 1;
     const colorTotal = Object.values(colorCount).reduce((a, b) => a + b, 0) || 1;
     const wuxingTotal = Object.values(wuxingCount).reduce((a, b) => a + b, 0) || 1;
 
     // ========== 4.6 号码遗漏统计（用于冷热加权）==========
-    const numMissCount = {};   // { num: 遗漏期数 }
+    const numMissCount = {}; // { num: 遗漏期数 }
     for (let n = 1; n <= 49; n++) {
       numMissCount[n] = recentList.length; // 默认全遗漏
     }
@@ -1496,8 +1496,8 @@ const Business = {
       }
     }
     // 计算平均遗漏
-    var missTotal = 0;
-    for (var mn = 1; mn <= 49; mn++) { missTotal += numMissCount[mn]; }
+    let missTotal = 0;
+    for (let mn = 1; mn <= 49; mn++) { missTotal += numMissCount[mn]; }
     const avgMiss = missTotal / 49;
 
     // ========== 4.7 邻号 & 惯性计算 ==========
@@ -1529,11 +1529,11 @@ const Business = {
     const candidateNums = [];
     for(let num = 1; num <= 49; num++) {
       // 优先使用窗口投票结果，兜底用公式计算（确保所有49个号码都能参与评分）
-      const zod   = numZodiacMap.get(num) || (ZodiacPrediction && ZodiacPrediction.ZODIAC_ORDER ? ZodiacPrediction.ZODIAC_ORDER[(num - 1) % 12] : '');
-      const head  = (typeof num === 'number' && num >= 1 && num <= 49) ? Math.floor(num / 10) : -1;
-      const tail  = (typeof num === 'number' && num >= 1 && num <= 49) ? num % 10 : -1;
+      const zod = numZodiacMap.get(num) || (ZodiacPrediction && ZodiacPrediction.ZODIAC_ORDER ? ZodiacPrediction.ZODIAC_ORDER[(num - 1) % 12] : '');
+      const head = (typeof num === 'number' && num >= 1 && num <= 49) ? Math.floor(num / 10) : -1;
+      const tail = (typeof num === 'number' && num >= 1 && num <= 49) ? num % 10 : -1;
       const color = numColorMap[num];
-      const wx    = numWuxingMap[num];
+      const wx = numWuxingMap[num];
 
       let score = 0;
       let dimFollow = 0, dimHead = 0, dimTail = 0, dimColor = 0, dimWuxing = 0;
@@ -1584,7 +1584,7 @@ const Business = {
 
       // 冷热维度（v3.0 新增）：遗漏超过平均值的号码反弹潜力
       if(numMissCount[num] > avgMiss) {
-        var missRatio = numMissCount[num] / Math.max(avgMiss, 1);
+        const missRatio = numMissCount[num] / Math.max(avgMiss, 1);
         dimMiss = W_MISS * Math.min(missRatio, 2.0); // 上限 2 倍
         score += dimMiss;
       }
@@ -1596,12 +1596,12 @@ const Business = {
     }
 
     // ========== 6. 排序 + 选取 + 补位 ==========
-    const primary  = candidateNums.filter(c => c.score > 0)
+    const primary = candidateNums.filter(c => c.score > 0)
       .sort((a, b) => b.score - a.score || a.num - b.num);
     const fallback = candidateNums.filter(c => c.score === 0)
       .sort((a, b) => a.num - b.num);
 
-    let numbers = primary.slice(0, targetCount).map(c => c.num);
+    const numbers = primary.slice(0, targetCount).map(c => c.num);
 
     if(numbers.length < targetCount) {
       const fillNums = fallback.map(c => c.num)
@@ -1659,7 +1659,7 @@ const Business = {
       return { num, score: candidate ? candidate.score : 0 };
     }).sort((a, b) => b.score - a.score || a.num - b.num);
 
-    var displayItems = scoredNums.slice(5);
+    const displayItems = scoredNums.slice(5);
     const finalFormatNums = displayItems.map(item => CommonString.formatNum(item.num));
     return '✅ 精选特码：' + (finalFormatNums.join(' ') || '无');
   },
@@ -1915,19 +1915,19 @@ const Business = {
   // ====================== 生肖预测相关 ======================
   initZodiacPrediction: () => {
     // 2026-06-24 完整迁移：使用 BusinessCommonData.ensureHistoryData
-    var historyData = BusinessCommonData.ensureHistoryData();
+    const historyData = BusinessCommonData.ensureHistoryData();
     Business.renderZodiacPrediction();
     Business.initZodiacBacktest();
   },
 
   renderZodiacPrediction: () => {
-    var state = StateManager._state;
-    var historyData = BusinessCommonData.getHistoryData(state);
+    const state = StateManager._state;
+    const historyData = BusinessCommonData.getHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacPredict.renderEmpty();
       return;
     }
-    var result = ZodiacPrediction.calcContinuousScores(historyData);
+    const result = ZodiacPrediction.calcContinuousScores(historyData);
     // 保存 v1 推荐结果到状态（仅前 6 名，与卡片展示一致）
     if (result && result.cards && result.cards.length) {
       StateManager._state.analysis.v1Recommend = result.cards.slice(0, 6);
@@ -1936,8 +1936,8 @@ const Business = {
   },
 
   initZodiacBacktest: () => {
-    var state = StateManager._state;
-    var historyData = BusinessCommonData.getHistoryData(state);
+    const state = StateManager._state;
+    const historyData = BusinessCommonData.getHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacPredict.renderBacktest(null);
       return;
@@ -1945,7 +1945,7 @@ const Business = {
     ViewZodiacPredict.renderBacktestEmpty();
     // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
     _scheduleIdle(function() {
-      var result = ZodiacPrediction.runBacktest(historyData);
+      const result = ZodiacPrediction.runBacktest(historyData);
       ViewZodiacPredict.renderBacktest(result);
     });
   },
@@ -1968,23 +1968,23 @@ const Business = {
    * 流程：加载历史数据 → 调业务层计算 → 交由视图层渲染
    */
   initTongJiTab: () => {
-    var state = StateManager._state;
-    var historyData = BusinessCommonData.ensureHistoryData(state);
+    const state = StateManager._state;
+    const historyData = BusinessCommonData.ensureHistoryData(state);
     if (!historyData || !historyData.length) {
       ViewZodiacTongJi.render(null);
       return;
     }
 
-    var zodiacStats = ZodiacPrediction.calcZodiacTongJiStats(historyData);
-    var numLevelStats = ZodiacPrediction.calcNumLevelStats(historyData);
+    const zodiacStats = ZodiacPrediction.calcZodiacTongJiStats(historyData);
+    const numLevelStats = ZodiacPrediction.calcNumLevelStats(historyData);
     // 2026-06-24 用户需求：每期"特码开出前"的等级分布
-    var preDrawStats = ZodiacPrediction.calcPreDrawLevelHistory(historyData);
+    const preDrawStats = ZodiacPrediction.calcPreDrawLevelHistory(historyData);
     // 2026-07-12 用户需求：下一期可能开出的等级 Top3
-    var preDrawPredictStats = ZodiacPrediction.predictNextLevel(historyData);
+    const preDrawPredictStats = ZodiacPrediction.predictNextLevel(historyData);
     // 2026-07-12 回测验证：滚动窗口预测，与预测卡结果对标
-    var preDrawPredictBacktest = ZodiacPrediction.predictLevelBacktest(historyData);
+    const preDrawPredictBacktest = ZodiacPrediction.predictLevelBacktest(historyData);
     // 缓存 stats，供排序切换时重渲染（2026-06-20 用户需求：表头点击升序降序）
-    var stats = {
+    const stats = {
       zodiac: zodiacStats,
       numLevel: numLevelStats,
       preDraw: preDrawStats,
@@ -2009,7 +2009,7 @@ const Business = {
       Business.initTongJiTab();
       if (!ZodiacPrediction._stats) return;
     }
-    var next = ZodiacPrediction.computeNextSort(key);
+    const next = ZodiacPrediction.computeNextSort(key);
     ZodiacPrediction._sort = next;
     try {
       ViewZodiacTongJi.render(ZodiacPrediction._stats, next);
@@ -2038,15 +2038,15 @@ const Business = {
    */
   initMainTab: () => {
     // 2026-06-24 完整迁移：使用 BusinessCommonData.getDataWithTimestamp / ensureHistoryData
-    var state = StateManager._state;
-    var data = BusinessCommonData.getDataWithTimestamp(state);
-    var historyData = data.historyData;
-    var cacheTimestamp = data.timestamp;
+    const state = StateManager._state;
+    const data = BusinessCommonData.getDataWithTimestamp(state);
+    let historyData = data.historyData;
+    let cacheTimestamp = data.timestamp;
 
     // 尝试加载缓存
     if (!historyData || !historyData.length) {
       Business.loadHistoryCache();
-      var retry = BusinessCommonData.getDataWithTimestamp();
+      const retry = BusinessCommonData.getDataWithTimestamp();
       historyData = retry.historyData;
       cacheTimestamp = retry.timestamp;
     }
@@ -2058,22 +2058,22 @@ const Business = {
     }
 
     // 数据陈旧检测：超过24小时未更新则提示用户
-    var now = Date.now();
-    var ageMs = cacheTimestamp > 0 ? (now - cacheTimestamp) : 0;
-    var ageHours = ageMs > 0 ? Math.floor(ageMs / (60 * 60 * 1000)) : null;
+    const now = Date.now();
+    const ageMs = cacheTimestamp > 0 ? (now - cacheTimestamp) : 0;
+    const ageHours = ageMs > 0 ? Math.floor(ageMs / (60 * 60 * 1000)) : null;
 
     // [V1.4.2 优化] 一次性获取交叉排除完整结果，避免 predict 内部重复调用 collectAllRecommend
-    var crossResult = BusinessCrossExclusion.collectAllRecommend(historyData);
+    const crossResult = BusinessCrossExclusion.collectAllRecommend(historyData);
 
     // 调用滑动窗口预测算法（传入完整 crossResult）
-    var result = BusinessSlidingWindow._predictWithLRU(historyData, { crossResult: crossResult });
+    const result = BusinessSlidingWindow._predictWithLRU(historyData, { crossResult: crossResult });
     ViewZodiacMain.renderSlidingWindowPrediction(result, cacheTimestamp, ageHours);
 
     // 回测追踪：基于历史 N 期模拟预测，与实际开奖比对
     // 2026-06-25 适配：runBacktestEnrichedWithCache 在 bcdd524 精简时被移除，
     //                   暂退回 runBacktest（仅 records）。signalStats 功能后续按需恢复。
-    var backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
-    var pendingPrediction = {
+    const backtestRecords = BusinessSlidingWindowHistory.runBacktest(historyData, 30);
+    const pendingPrediction = {
       nextExpect: result.nextExpect,
       candidates: result.candidates
     };
@@ -2082,49 +2082,49 @@ const Business = {
 
   initGiongTab: () => {
     // 2026-06-24 完整迁移：使用 BusinessCommonData.ensureHistoryData
-    var historyData = BusinessCommonData.ensureHistoryData();
+    const historyData = BusinessCommonData.ensureHistoryData();
     if (!historyData || !historyData.length) return;
 
-    var freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
+    const freqResult = ZodiacPrediction.calcFrequencyRating(historyData);
     ViewZodiacGiong.renderFrequencyRating(freqResult);
 
     // 2026-06-21 性能优化：一次性预计算 recentSpecials（前 12 期），后续 4 个 stats 函数复用
     // 节省 ~48 次 Utils.SpecialCalculator.getSpecial 调用（4 函数 × 12 期）
-    var recentSpecials = BusinessCommonSpecials.precompute(historyData.slice(0, 12));
+    const recentSpecials = BusinessCommonSpecials.precompute(historyData.slice(0, 12));
 
-    var latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
+    const latestFollowStats = ZodiacPrediction.getLatestFollowStats(historyData, 4, 20);
     ViewZodiacGiong.renderLatestFollowStats(latestFollowStats);
 
-    var latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12, recentSpecials);
-    var latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12, recentSpecials);
-    var latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12, recentSpecials);
-    var latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12, recentSpecials);
+    const latestSizeStats = ZodiacPrediction.getLatestSizeStats(historyData, 12, recentSpecials);
+    const latestOddEvenStats = ZodiacPrediction.getLatestOddEvenStats(historyData, 12, recentSpecials);
+    const latestWuxingStats = ZodiacPrediction.getLatestWuxingStats(historyData, 12, recentSpecials);
+    const latestColorStats = ZodiacPrediction.getLatestColorStats(historyData, 12, recentSpecials);
 
     ViewZodiacGiong.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
 
-    var patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
+    const patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
 
     if (freqResult && patternResult) {
-      var recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
-      var nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
+      const recommend = ZodiacPrediction.getZoneRecommend(historyData, freqResult, patternResult);
+      const nextExpect = (Number(historyData[0].expect || 0) + 1) || '';
       ViewZodiacGiong.renderZoneRecommend(recommend, nextExpect);
     }
 
     ViewZodiacGiong.renderZoneBacktestEmpty();
     // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
     _scheduleIdle(function() {
-      var zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
+      const zoneBt = ZodiacPrediction.runZoneBacktest(historyData);
       if (zoneBt) ViewZodiacGiong.renderZoneBacktest(zoneBt);
     });
 
     // 区域变动追踪
-    var zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
+    const zoneChangeData = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
     ViewZodiacGiong.renderZoneChangeTracking(zoneChangeData);
 
     // 多窗口区域变动追踪（12/24/36 期三列并排）
-    var zoneChangeP12 = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
-    var zoneChangeP24 = ZodiacPrediction.calcZoneChangeTracking(historyData, 24);
-    var zoneChangeP36 = ZodiacPrediction.calcZoneChangeTracking(historyData, 36);
+    const zoneChangeP12 = ZodiacPrediction.calcZoneChangeTracking(historyData, 12);
+    const zoneChangeP24 = ZodiacPrediction.calcZoneChangeTracking(historyData, 24);
+    const zoneChangeP36 = ZodiacPrediction.calcZoneChangeTracking(historyData, 36);
     ViewZodiacGiong.renderZoneChangeTrackingMulti(zoneChangeP12, zoneChangeP24, zoneChangeP36);
 
     // v2.1.0 新增：最不可能出现 卡片（基于最近 24 期 4 维加权评分）
@@ -2132,7 +2132,7 @@ const Business = {
     // view-impossible.js 内部再加载 business-impossible.js。完成后按需渲染，异步失败兜底。
     // v2.1.0 同时支持回测：传入第三参数=回测最近 N 期（默认 10）。
     if (typeof ViewExclude !== 'undefined' && typeof ViewExclude.ensureImpossibleLoaded === 'function') {
-      var window24Specials = BusinessCommonSpecials.precompute(historyData.slice(0, 24));
+      const window24Specials = BusinessCommonSpecials.precompute(historyData.slice(0, 24));
       ViewExclude.ensureImpossibleLoaded()
         .then(function() {
           if (typeof ViewImpossible !== 'undefined' && typeof ViewImpossible.render === 'function') {
@@ -2150,13 +2150,13 @@ const Business = {
   },
 
   initUltimateAlgorithm: () => {
-    var state = StateManager._state;
-    var historyData = BusinessCommonData.getHistoryData(state);
+    const state = StateManager._state;
+    let historyData = BusinessCommonData.getHistoryData(state);
     // 缓存优化：若终极算法标签页已经渲染过且历史数据未变化，则跳过重复渲染
     // 避免重复点击底部导航按钮时整页闪烁
     if (Business._ultimateInitialized && historyData.length) {
-      var cachedExpect = Business._ultimateCachedExpect;
-      var currentExpect = historyData[0] ? historyData[0].expect : null;
+      const cachedExpect = Business._ultimateCachedExpect;
+      const currentExpect = historyData[0] ? historyData[0].expect : null;
       if (cachedExpect === currentExpect) {
         return;
       }
@@ -2169,16 +2169,16 @@ const Business = {
       return;
     }
 
-    var ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
+    const ultimateHistory = BusinessUltimate.historyDataToUltimateFormat(historyData);
     if (!ultimateHistory || !ultimateHistory.length) {
       ViewZodiacUltimate.renderUltimateAlgorithm(null);
       ViewZodiacUltimate.renderUltimateBacktestEmpty();
       return;
     }
 
-    var report = BusinessUltimate.generateFullReport(ultimateHistory);
-    var nextExpect = Number(historyData[0].expect || 0) + 1;
-    var numbers = report.numbers ? (report.numbers.mainNumbers || report.numbers.transitionNumbers || []) : [];
+    const report = BusinessUltimate.generateFullReport(ultimateHistory);
+    const nextExpect = Number(historyData[0].expect || 0) + 1;
+    const numbers = report.numbers ? (report.numbers.mainNumbers || report.numbers.transitionNumbers || []) : [];
 
     if (numbers.length > 0) {
       BusinessUltimate.saveRecommendHistory(nextExpect, numbers);
@@ -2204,10 +2204,10 @@ const Business = {
 
     if (ultimateHistory.length >= 25) {
       ViewZodiacUltimate.renderUltimateBacktestEmpty();
-      var currentBackupCount = (report.numbers && report.numbers.alternativeNumbers) ? report.numbers.alternativeNumbers.length : (BusinessUltimate.getAdaptiveState().currentBackupCount || 3);
+      const currentBackupCount = (report.numbers && report.numbers.alternativeNumbers) ? report.numbers.alternativeNumbers.length : (BusinessUltimate.getAdaptiveState().currentBackupCount || 3);
       // v2.0.9：改用 requestIdleCallback 替代 setTimeout，浏览器空闲时执行，不打断滚动
       _scheduleIdle(function() {
-        var btSummary = BusinessUltimate.runBacktest(ultimateHistory);
+        const btSummary = BusinessUltimate.runBacktest(ultimateHistory);
         if (btSummary) ViewZodiacUltimate.renderUltimateBacktest(btSummary, currentBackupCount);
       });
     } else {
@@ -2218,12 +2218,12 @@ const Business = {
   _deduplicateByExpect: (records) => {
     if (!records || !Array.isArray(records) || records.length <= 1) return records || [];
 
-    var seen = {};
-    var unique = [];
+    const seen = {};
+    const unique = [];
 
-    for (var i = records.length - 1; i >= 0; i--) {
-      var record = records[i];
-      var key = record.expect || ('time_' + record.predictTime);
+    for (let i = records.length - 1; i >= 0; i--) {
+      const record = records[i];
+      const key = record.expect || ('time_' + record.predictTime);
       if (!seen[key]) {
         seen[key] = true;
         unique.unshift(record);
@@ -2236,12 +2236,12 @@ const Business = {
   _cleanInvalidRecords: (records, latestExpect) => {
     if (!records || !records.length || !latestExpect) return records;
 
-    var latestNum = Number(latestExpect);
+    const latestNum = Number(latestExpect);
 
     records.forEach(function(record) {
       if (!record.expect) return;
 
-      var recordExpect = Number(record.expect);
+      const recordExpect = Number(record.expect);
       if (isNaN(recordExpect)) return;
 
       if (recordExpect > latestNum && record.actualResult !== null) {
@@ -2257,30 +2257,30 @@ const Business = {
   saveGiongBacktestRecord: (giongData, currentNum, expect) => {
     if (!giongData || giongData.insufficient) return;
 
-    var mainPredictions = giongData.mergedResult ? giongData.mergedResult.main.map(function(item) { return item.zodiac; }) : [];
-    var backupPredictions = giongData.mergedResult ? giongData.mergedResult.backup.map(function(item) { return item.zodiac; }) : [];
+    let mainPredictions = giongData.mergedResult ? giongData.mergedResult.main.map(function(item) { return item.zodiac; }) : [];
+    let backupPredictions = giongData.mergedResult ? giongData.mergedResult.backup.map(function(item) { return item.zodiac; }) : [];
 
     if (mainPredictions.length === 0) {
-      var newMain = giongData.newResult.main.map(function(item) { return item.zodiac; });
-      var newBackup = giongData.newResult.backup.map(function(item) { return item.zodiac; });
+      const newMain = giongData.newResult.main.map(function(item) { return item.zodiac; });
+      const newBackup = giongData.newResult.backup.map(function(item) { return item.zodiac; });
       mainPredictions = newMain;
       backupPredictions = newBackup;
     }
 
-    var records = Storage.getGiongBacktestRecords();
+    let records = Storage.getGiongBacktestRecords();
     records = Business._deduplicateByExpect(records);
     records = Business._cleanInvalidRecords(records, expect);
 
     if (expect && currentNum >= 1 && currentNum <= 12) {
-      var prevExpect = String(Number(expect) - 1);
-      var prevIndex = records.findIndex(function(r) {
+      const prevExpect = String(Number(expect) - 1);
+      const prevIndex = records.findIndex(function(r) {
         return r.expect === prevExpect && r.actualResult === null;
       });
       if (prevIndex !== -1) {
-        var prevRecord = records[prevIndex];
+        const prevRecord = records[prevIndex];
         prevRecord.actualResult = currentNum;
-        var mainHit = prevRecord.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
-        var backupHit = prevRecord.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+        const mainHit = prevRecord.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+        const backupHit = prevRecord.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
         if (mainHit) {
           prevRecord.isHit = true;
           prevRecord.hitType = 'main';
@@ -2295,11 +2295,11 @@ const Business = {
     }
 
     if (expect) {
-      var existingIndex = records.findIndex(function(r) { return r.expect === expect; });
+      const existingIndex = records.findIndex(function(r) { return r.expect === expect; });
       if (existingIndex !== -1) {
-        var exist = records[existingIndex];
-        var sameMain = JSON.stringify(exist.mainPredictions) === JSON.stringify(mainPredictions);
-        var sameBackup = JSON.stringify(exist.backupPredictions) === JSON.stringify(backupPredictions);
+        const exist = records[existingIndex];
+        const sameMain = JSON.stringify(exist.mainPredictions) === JSON.stringify(mainPredictions);
+        const sameBackup = JSON.stringify(exist.backupPredictions) === JSON.stringify(backupPredictions);
         if (!sameMain || !sameBackup) {
           exist.mainPredictions = mainPredictions.slice();
           exist.backupPredictions = backupPredictions.slice();
@@ -2310,11 +2310,11 @@ const Business = {
       }
     } else {
       if (records.length > 0 && currentNum >= 1 && currentNum <= 12) {
-        var last = records[0];
+        const last = records[0];
         if (last.actualResult === null) {
           last.actualResult = currentNum;
-          var mh = last.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
-          var bh = last.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+          const mh = last.mainPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
+          const bh = last.backupPredictions.indexOf(BusinessGiong._toZodiac(currentNum)) !== -1;
           if (mh) { last.isHit = true; last.hitType = 'main'; }
           else if (bh) { last.isHit = true; last.hitType = 'backup'; }
           else { last.isHit = false; last.hitType = null; }
@@ -2324,8 +2324,8 @@ const Business = {
       }
     }
 
-    var now = new Date();
-    var newRecord = {
+    const now = new Date();
+    const newRecord = {
       id: now.getTime(),
       predictTime: now.toISOString(),
       expect: expect || '',
@@ -2343,12 +2343,12 @@ const Business = {
   },
 
   calculateGiongBacktestStats: (latestExpect) => {
-    var records = Storage.getGiongBacktestRecords();
+    let records = Storage.getGiongBacktestRecords();
     records = Business._deduplicateByExpect(records);
     records = Business._cleanInvalidRecords(records, latestExpect);
     if (latestExpect) Storage.saveGiongBacktestRecords(records);
 
-    var stats = {
+    const stats = {
       totalRecords: records.length,
       hitCount: 0,
       mainHitCount: 0,
@@ -2361,7 +2361,7 @@ const Business = {
       hitRate: '0.0'
     };
 
-    var validRecords = records.filter(function(r) { return r.isHit !== null; });
+    const validRecords = records.filter(function(r) { return r.isHit !== null; });
     stats.pendingCount = records.length - validRecords.length;
 
     validRecords.forEach(function(record) {
@@ -2374,8 +2374,8 @@ const Business = {
       }
     });
 
-    var tempConsecutive = 0;
-    for (var i = validRecords.length - 1; i >= 0; i--) {
+    let tempConsecutive = 0;
+    for (let i = validRecords.length - 1; i >= 0; i--) {
       if (validRecords[i].isHit) {
         tempConsecutive++;
         if (tempConsecutive > stats.maxConsecutiveHits) stats.maxConsecutiveHits = tempConsecutive;
@@ -2384,7 +2384,7 @@ const Business = {
       }
     }
 
-    for (var j = 0; j < validRecords.length; j++) {
+    for (let j = 0; j < validRecords.length; j++) {
       if (validRecords[j].isHit) stats.consecutiveHits++;
       else break;
     }

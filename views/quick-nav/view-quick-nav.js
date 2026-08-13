@@ -60,7 +60,7 @@ const ViewQuickNav = {
 
     // 读取当前激活的子 tab（用于高亮快捷导航按钮）
     // 仅 analysis/random/profile 需要高亮（filter 页面是滚动定位类型不需要）
-    var currentActiveTab = null;
+    let currentActiveTab = null;
     if (pageKey !== 'filter' && typeof Storage !== 'undefined' && Storage.getLastTab) {
       currentActiveTab = Storage.getLastTab(pageKey);
     }

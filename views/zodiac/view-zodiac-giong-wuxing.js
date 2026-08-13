@@ -7,7 +7,7 @@
 const ViewZodiacGiongWuxing = {
 
   renderLatestWuxingStats: function(wuxingData) {
-    var container = document.getElementById('latestWuxingStatsPanel');
+    const container = document.getElementById('latestWuxingStatsPanel');
     if (!container) return;
 
     if (!wuxingData) {
@@ -15,7 +15,7 @@ const ViewZodiacGiongWuxing = {
       return;
     }
 
-    var wuxingColors = {
+    const wuxingColors = {
       '金': { bg: 'linear-gradient(135deg, #FFD700, #FFA500)', text: '#B8860B', light: 'rgba(255,215,0,0.12)' },
       '木': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D', light: 'rgba(34,197,94,0.12)' },
       '水': { bg: 'linear-gradient(135deg, #0EA5E9, #06B6D4)', text: '#0369A1', light: 'rgba(14,165,233,0.12)' },
@@ -23,7 +23,7 @@ const ViewZodiacGiongWuxing = {
       '土': { bg: 'linear-gradient(135deg, #A78BFA, #8B5CF6)', text: '#7C3AED', light: 'rgba(167,139,250,0.12)' }
     };
 
-    var html = '';
+    let html = '';
     html += '<div class="wuxing-analysis-card">';
     html += '<div class="wuxing-analysis-header">';
     html += '<div class="wuxing-analysis-title">最近' + wuxingData.period + '期五行分析</div>';
@@ -32,19 +32,19 @@ const ViewZodiacGiongWuxing = {
     html += '<div class="wuxing-analysis-content">';
 
     html += '<div class="wuxing-sequence-row">';
-    var reversedSequence = wuxingData.sequence.slice().reverse();
+    const reversedSequence = wuxingData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var wxColor = wuxingColors[item.wuxing] || wuxingColors['金'];
+      const wxColor = wuxingColors[item.wuxing] || wuxingColors['金'];
       html += '<span class="wuxing-seq-item" style="background:' + wxColor.bg + ';color:#fff;">' + item.wuxing + '</span>';
     });
     html += '</div>';
 
     html += '<div class="wuxing-stats-grid">';
-    var wuxingOrder = ['金', '木', '水', '火', '土'];
+    const wuxingOrder = ['金', '木', '水', '火', '土'];
     wuxingOrder.forEach(function(wx) {
-      var count = wuxingData.count[wx] || 0;
-      var percent = Math.round((count / wuxingData.period) * 100);
-      var wxColor = wuxingColors[wx];
+      const count = wuxingData.count[wx] || 0;
+      const percent = Math.round((count / wuxingData.period) * 100);
+      const wxColor = wuxingColors[wx];
       html += '<div class="wuxing-stat-item">';
       html += '<div class="wuxing-stat-header" style="color:' + wxColor.text + ';border-left:3px solid ' + wxColor.text + ';">';
       html += '<span class="wuxing-stat-name">' + wx + '</span>';
@@ -63,8 +63,8 @@ const ViewZodiacGiongWuxing = {
       html += '<div class="wuxing-patterns-title">规律特征</div>';
       html += '<div class="wuxing-patterns-list">';
       wuxingData.patterns.forEach(function(pattern) {
-        var patternWx = pattern.type.charAt(0);
-        var wxColor = wuxingColors[patternWx] || { bg: '#666' };
+        const patternWx = pattern.type.charAt(0);
+        const wxColor = wuxingColors[patternWx] || { bg: '#666' };
         html += '<div class="wuxing-pattern-tag" style="background:' + wxColor.bg + ';">';
         html += pattern.type;
         if (pattern.count > 1) {
@@ -77,8 +77,8 @@ const ViewZodiacGiongWuxing = {
     }
 
     if (wuxingData.trend && wuxingData.trend.prediction !== '-') {
-      var predWx = wuxingData.trend.prediction;
-      var predColor = wuxingColors[predWx] || wuxingColors['金'];
+      const predWx = wuxingData.trend.prediction;
+      const predColor = wuxingColors[predWx] || wuxingColors['金'];
       html += '<div class="wuxing-trend-section" data-action="showWuxingBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="wuxing-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="wuxing-trend-prediction">';

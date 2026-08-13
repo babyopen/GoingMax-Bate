@@ -43,16 +43,16 @@ const BusinessSlidingWindow = {
   convertHistoryToZodiacSequence: function(historyData) {
     if (!historyData || !historyData.length) return [];
 
-    var result = [];
-    var self = this;
+    const result = [];
+    const self = this;
 
-    for (var i = 0; i < historyData.length; i++) {
-      var item = historyData[i];
-      var expect = Number(item.expect || 0);
+    for (let i = 0; i < historyData.length; i++) {
+      const item = historyData[i];
+      const expect = Number(item.expect || 0);
       if (!expect) continue;
 
-      var zodArr = Utils.parseZodiacArr(item);
-      var specialZodiac = zodArr[6] || '';
+      const zodArr = Utils.parseZodiacArr(item);
+      const specialZodiac = zodArr[6] || '';
 
       if (specialZodiac && self.SHENGXIAO_ALL.indexOf(specialZodiac) !== -1) {
         result.push({
@@ -75,11 +75,11 @@ const BusinessSlidingWindow = {
    * @returns {Object} windows - {window6, window12, window11, window24, window36}
    */
   calculateWindows: function(zodiacSeq) {
-    var self = this;
-    var total = zodiacSeq.length;
+    const self = this;
+    const total = zodiacSeq.length;
 
     // 初始化计数器
-    var window6 = {}, window12 = {}, window11 = {}, window24 = {}, window36 = {};
+    const window6 = {}, window12 = {}, window11 = {}, window24 = {}, window36 = {};
     self.SHENGXIAO_ALL.forEach(function(sx) {
       window6[sx] = 0;
       window12[sx] = 0;
@@ -89,12 +89,12 @@ const BusinessSlidingWindow = {
     });
 
     // 从最近期开始往前统计（zodiacSeq 是正序，最后一项是最新）
-    for (var i = total - 1; i >= 0; i--) {
-      var offset = total - 1 - i;
+    for (let i = total - 1; i >= 0; i--) {
+      const offset = total - 1 - i;
       if (offset >= 36) break;
 
-      var sx = zodiacSeq[i].shengxiao;
-      if (offset < 6)  window6[sx]  = (window6[sx]  || 0) + 1;   // V1.1 新增
+      const sx = zodiacSeq[i].shengxiao;
+      if (offset < 6) window6[sx] = (window6[sx] || 0) + 1; // V1.1 新增
       if (offset < 12) window12[sx] = (window12[sx] || 0) + 1;
       if (offset < 11) window11[sx] = (window11[sx] || 0) + 1;
       if (offset < 24) window24[sx] = (window24[sx] || 0) + 1;
@@ -115,10 +115,10 @@ const BusinessSlidingWindow = {
    * 理论概率：0次≈59%、1次≈34%、2次≈8%、3+次≈0.2%
    */
   getZone6: function(count) {
-    if (count >= 3) return '短过热';   // 极端罕见（P<0.2%）
-    if (count === 2) return '短热号';   // 短期热号（P≈8%）
-    if (count === 1) return '短穿插';   // 单次穿插（P≈34%）
-    return '短冷号';                    // 6期未开（P≈59%）
+    if (count >= 3) return '短过热'; // 极端罕见（P<0.2%）
+    if (count === 2) return '短热号'; // 短期热号（P≈8%）
+    if (count === 1) return '短穿插'; // 单次穿插（P≈34%）
+    return '短冷号'; // 6期未开（P≈59%）
   },
 
   /**
@@ -166,7 +166,7 @@ const BusinessSlidingWindow = {
    * @returns {number} 距离最近一次出现的期数
    */
   getMissPeriods: function(shengxiao, zodiacSeq) {
-    for (var i = zodiacSeq.length - 1; i >= 0; i--) {
+    for (let i = zodiacSeq.length - 1; i >= 0; i--) {
       if (zodiacSeq[i].shengxiao === shengxiao) {
         return zodiacSeq.length - 1 - i;
       }
@@ -194,26 +194,26 @@ const BusinessSlidingWindow = {
    * @returns {{ trend: string, shortRate: number, longRate: number, diff: number }}
    */
   detectTrend: function(w6, w12, w24, w36) {
-    var rate6  = (w6  || 0) / 6;
-    var rate12 = (w12 || 0) / 12;
-    var rate24 = (w24 || 0) / 24;
-    var rate36 = (w36 || 0) / 36;
+    const rate6 = (w6 || 0) / 6;
+    const rate12 = (w12 || 0) / 12;
+    const rate24 = (w24 || 0) / 24;
+    const rate36 = (w36 || 0) / 36;
 
-    var shortRate = (rate6 + rate12) / 2;
-    var longRate  = (rate24 + rate36) / 2;
-    var diff = shortRate - longRate;
+    const shortRate = (rate6 + rate12) / 2;
+    const longRate = (rate24 + rate36) / 2;
+    const diff = shortRate - longRate;
 
-    var trend;
+    let trend;
     if (diff > 0.04) {
-      trend = 'HEATING';     // 短期频率明显高于长期 → 变热中
+      trend = 'HEATING'; // 短期频率明显高于长期 → 变热中
     } else if (diff < -0.04) {
-      trend = 'COOLING';     // 短期频率明显低于长期 → 变冷中
+      trend = 'COOLING'; // 短期频率明显低于长期 → 变冷中
     } else if (shortRate > 0.12 && longRate > 0.12) {
-      trend = 'HOT';         // 持续热（短期和长期都高）
+      trend = 'HOT'; // 持续热（短期和长期都高）
     } else if (shortRate < 0.05 && longRate < 0.05) {
-      trend = 'COLD';        // 持续冷（短期和长期都低）
+      trend = 'COLD'; // 持续冷（短期和长期都低）
     } else {
-      trend = 'STABLE';      // 稳定
+      trend = 'STABLE'; // 稳定
     }
 
     return {
@@ -244,10 +244,10 @@ const BusinessSlidingWindow = {
     if (!zodiacSeq || zodiacSeq.length < 2) {
       return { pattern: 'STEADY', detail: '数据不足，默认平稳' };
     }
-    var len = zodiacSeq.length;
-    var last1 = zodiacSeq[len - 1].shengxiao;
-    var last2 = zodiacSeq[len - 2].shengxiao;
-    var last3 = len >= 3 ? zodiacSeq[len - 3].shengxiao : '';
+    const len = zodiacSeq.length;
+    const last1 = zodiacSeq[len - 1].shengxiao;
+    const last2 = zodiacSeq[len - 2].shengxiao;
+    const last3 = len >= 3 ? zodiacSeq[len - 3].shengxiao : '';
 
     // 1. 检测连号模式（最近 3 期）
     if (last1 === last2 && last2 === last3 && last1) {
@@ -267,8 +267,8 @@ const BusinessSlidingWindow = {
 
     // 2. 检测轮转模式（最近 6 期全不同）
     if (zodiacSeq.length >= 6) {
-      var unique = {};
-      for (var i = len - 6; i < len; i++) {
+      const unique = {};
+      for (let i = len - 6; i < len; i++) {
         unique[zodiacSeq[i].shengxiao] = true;
       }
       if (Object.keys(unique).length === 6) {
@@ -306,32 +306,32 @@ const BusinessSlidingWindow = {
    * ============================================================
    */
   SW_BASE_RULES: [
-    { weight: 100, signal: '24/36期双过热(5/7)', reason: '24/36期双过热是最强信号',  flag: 'strongest', match: function(w) { return w.w24 === 5 && w.w36 === 7; } },
-    { weight: 90,  signal: '24/36期双过热',      reason: '24/36期双过热是极强信号',  flag: 'strongest', match: function(w) { return w.w24 >= 5 && w.w36 >= 6; } },
-    { weight: 80,  signal: '三窗热号(2/4/5+)',    reason: '三窗热号是强信号',          flag: 'dualHot',   match: function(w) { return w.w12 === 2 && w.w24 === 4 && w.w36 >= 5; } },
-    { weight: 70,  signal: '24/36期双热号(4/6)',  reason: '24/36期双热号是强信号',    flag: 'dualHot',   match: function(w) { return w.w24 === 4 && w.w36 === 6; } },
+    { weight: 100, signal: '24/36期双过热(5/7)', reason: '24/36期双过热是最强信号', flag: 'strongest', match: function(w) { return w.w24 === 5 && w.w36 === 7; } },
+    { weight: 90, signal: '24/36期双过热', reason: '24/36期双过热是极强信号', flag: 'strongest', match: function(w) { return w.w24 >= 5 && w.w36 >= 6; } },
+    { weight: 80, signal: '三窗热号(2/4/5+)', reason: '三窗热号是强信号', flag: 'dualHot', match: function(w) { return w.w12 === 2 && w.w24 === 4 && w.w36 >= 5; } },
+    { weight: 70, signal: '24/36期双热号(4/6)', reason: '24/36期双热号是强信号', flag: 'dualHot', match: function(w) { return w.w24 === 4 && w.w36 === 6; } },
     // V1.4.3 修复：w36≥7 单窗过热（24期未达5+）此前无规则命中，导致 2026138 期马评分 -30
-    { weight: 75,  signal: '36期单窗过热(7+)',    reason: '36期单窗过热(7+)是强信号（24期未达5+）', flag: 'strongest', match: function(w) { return w.w36 >= 7 && w.w24 < 5; } },
+    { weight: 75, signal: '36期单窗过热(7+)', reason: '36期单窗过热(7+)是强信号（24期未达5+）', flag: 'strongest', match: function(w) { return w.w36 >= 7 && w.w24 < 5; } },
     // V1.1 新增：短期反弹（6期0+12期≥1+36期≥2）—— 短期冷但中长期有戏，捕捉反弹起始信号
-    { weight: 70,  signal: '短期反弹(6期0+12期≥1+36期≥2)', reason: '短期反弹：6期未开但中长期活跃，反弹可能持续',
+    { weight: 70, signal: '短期反弹(6期0+12期≥1+36期≥2)', reason: '短期反弹：6期未开但中长期活跃，反弹可能持续',
       match: function(w) { return w.w6 === 0 && w.w12 >= 1 && w.w36 >= 2 && w.w36 <= 6; } },
-    { weight: 65,  signal: '2.7规则触发',         reason: '2.7规则触发（穿插+活跃+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 3 && w.w36 >= 5; } },
-    { weight: 65,  signal: '2.7规则触发',         reason: '2.7规则触发（穿插+热号+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 4 && w.w36 >= 4; } },
-    { weight: 60,  signal: '24/36期热号(4/5)',    reason: '24/36期热号是中强信号',    flag: 'dualHot',   match: function(w) { return w.w24 === 4 && w.w36 === 5; } },
-    { weight: 55,  signal: '36期热号(6)',         reason: '36期热号(6)是中强信号',    match: function(w) { return w.w36 === 6; } },
-    { weight: 50,  signal: '24/36期双冷+超长遗漏', reason: '24/36期双冷+超长遗漏是必出信号', match: function(w) { return w.w24 === 1 && w.w36 === 2; } },
-    { weight: 45,  signal: '24/36期活跃(3/4)',    reason: '24/36期活跃是中等信号',    match: function(w) { return w.w24 === 3 && w.w36 === 4; } },
-    { weight: 40,  signal: '36期活跃(4)',         reason: '36期活跃(4)是中等信号',    match: function(w) { return w.w36 === 4; } },
+    { weight: 65, signal: '2.7规则触发', reason: '2.7规则触发（穿插+活跃+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 3 && w.w36 >= 5; } },
+    { weight: 65, signal: '2.7规则触发', reason: '2.7规则触发（穿插+热号+热号）', match: function(w) { return w.w12 === 1 && w.w24 === 4 && w.w36 >= 4; } },
+    { weight: 60, signal: '24/36期热号(4/5)', reason: '24/36期热号是中强信号', flag: 'dualHot', match: function(w) { return w.w24 === 4 && w.w36 === 5; } },
+    { weight: 55, signal: '36期热号(6)', reason: '36期热号(6)是中强信号', match: function(w) { return w.w36 === 6; } },
+    { weight: 50, signal: '24/36期双冷+超长遗漏', reason: '24/36期双冷+超长遗漏是必出信号', match: function(w) { return w.w24 === 1 && w.w36 === 2; } },
+    { weight: 45, signal: '24/36期活跃(3/4)', reason: '24/36期活跃是中等信号', match: function(w) { return w.w24 === 3 && w.w36 === 4; } },
+    { weight: 40, signal: '36期活跃(4)', reason: '36期活跃(4)是中等信号', match: function(w) { return w.w36 === 4; } },
     // V1.1 新增：短期热号（6期≥2）—— 短期连续活跃，跟随概率高
-    { weight: 40,  signal: '短期热号(6期≥2)',     reason: '短期热号：6期内开2+次，短期跟随概率高',
+    { weight: 40, signal: '短期热号(6期≥2)', reason: '短期热号：6期内开2+次，短期跟随概率高',
       match: function(w) { return w.w6 >= 2; } },
-    { weight: 30,  signal: '36期活跃(3)',         reason: '36期活跃(3)是中等信号',    match: function(w) { return w.w36 === 3; } },
+    { weight: 30, signal: '36期活跃(3)', reason: '36期活跃(3)是中等信号', match: function(w) { return w.w36 === 3; } },
     // V1.1 新增：短期冷号（6期0+12期0）—— 12期冷号+6期也冷，可能即将反弹
-    { weight: 30,  signal: '短期冷号(6期0+12期0)', reason: '短期冷号：6期和12期均未开，冷补信号启动',
+    { weight: 30, signal: '短期冷号(6期0+12期0)', reason: '短期冷号：6期和12期均未开，冷补信号启动',
       match: function(w) { return w.w6 === 0 && w.w12 === 0 && w.w36 >= 2; } },
-    { weight: 10,  signal: '36期冷号(2)',         reason: '36期冷号(2)是基础信号',    match: function(w) { return w.w36 === 2; } },
-    { weight: 5,   signal: '36期冷号(1)',         reason: '36期冷号(1)是弱信号',      match: function(w) { return w.w36 === 1; } },
-    { weight: 0,   signal: '无明显信号',          reason: '无可匹配的评分规则',        isDefault: true, match: function() { return true; } }
+    { weight: 10, signal: '36期冷号(2)', reason: '36期冷号(2)是基础信号', match: function(w) { return w.w36 === 2; } },
+    { weight: 5, signal: '36期冷号(1)', reason: '36期冷号(1)是弱信号', match: function(w) { return w.w36 === 1; } },
+    { weight: 0, signal: '无明显信号', reason: '无可匹配的评分规则', isDefault: true, match: function() { return true; } }
   ],
 
   /**
@@ -464,7 +464,7 @@ const BusinessSlidingWindow = {
    * @returns {Object} 评分结果
    */
   calculateScore: function(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor) {
-    var self = this;
+    const self = this;
     // V1.2 兼容：rhythm 可选，未传时使用默认 STEADY
     if (!rhythm) rhythm = { pattern: 'STEADY', detail: '未提供节奏' };
     excludedZodiacs = excludedZodiacs || [];
@@ -496,28 +496,28 @@ const BusinessSlidingWindow = {
         originalScore: 0
       };
     }
-    var w6 = windows.window6[shengxiao] || 0;     // V1.1 新增
-    var w12 = windows.window12[shengxiao] || 0;
-    var w11 = windows.window11[shengxiao] || 0;
-    var w24 = windows.window24[shengxiao] || 0;
-    var w36 = windows.window36[shengxiao] || 0;
+    const w6 = windows.window6[shengxiao] || 0; // V1.1 新增
+    const w12 = windows.window12[shengxiao] || 0;
+    const w11 = windows.window11[shengxiao] || 0;
+    const w24 = windows.window24[shengxiao] || 0;
+    const w36 = windows.window36[shengxiao] || 0;
 
-    var zone6 = this.getZone6(w6);                 // V1.1 新增
-    var zone12 = this.getZone12(w12);
-    var zone24 = this.getZone24(w24);
-    var zone36 = this.getZone36(w36);
+    const zone6 = this.getZone6(w6); // V1.1 新增
+    const zone12 = this.getZone12(w12);
+    const zone24 = this.getZone24(w24);
+    const zone36 = this.getZone36(w36);
 
-    var miss = this.getMissPeriods(shengxiao, zodiacSeq);
+    const miss = this.getMissPeriods(shengxiao, zodiacSeq);
 
-    var w = { w6: w6, w12: w12, w11: w11, w24: w24, w36: w36 };   // V1.1 新增 w6
-    var flags = { strongest: false, dualHot: false };
-    var score = 0;
-    var signals = [];
-    var reasons = [];
+    const w = { w6: w6, w12: w12, w11: w11, w24: w24, w36: w36 }; // V1.1 新增 w6
+    const flags = { strongest: false, dualHot: false };
+    let score = 0;
+    const signals = [];
+    const reasons = [];
 
     // ========== 阶段 1：基础规则（互斥，最多命中 1 条）==========
-    for (var i = 0; i < self.SW_BASE_RULES.length; i++) {
-      var rule = self.SW_BASE_RULES[i];
+    for (let i = 0; i < self.SW_BASE_RULES.length; i++) {
+      const rule = self.SW_BASE_RULES[i];
       if (rule.match(w)) {
         score += rule.weight;
         signals.push(rule.signal);
@@ -527,11 +527,11 @@ const BusinessSlidingWindow = {
         break;
       }
     }
-    var baseScore = score;
+    const baseScore = score;
 
     // ========== 阶段 2：叠加规则（可多条；跳过阈值由 skipIfBaseWeightGte 控制）==========
-    for (var j = 0; j < self.SW_ADDITIVE_RULES.length; j++) {
-      var add = self.SW_ADDITIVE_RULES[j];
+    for (let j = 0; j < self.SW_ADDITIVE_RULES.length; j++) {
+      const add = self.SW_ADDITIVE_RULES[j];
       if (!add.match(w)) continue;
       if (typeof add.skipIfBaseWeightGte === 'number' && baseScore >= add.skipIfBaseWeightGte) continue;
       score += add.weight;
@@ -540,21 +540,21 @@ const BusinessSlidingWindow = {
     }
 
     // V1.3 新增：趋势计算（在 ctx 之前，供修正层使用）
-    var trendObj = this.detectTrend(w6, w12, w24, w36);
+    const trendObj = this.detectTrend(w6, w12, w24, w36);
 
     // ========== 阶段 3：修正层（按顺序应用，每条规则独立判断 ctx）==========
-    var ctx = {
+    const ctx = {
       score: score,
       baseScore: baseScore,
       miss: miss,
-      w6: w6, w12: w12, w11: w11, w24: w24, w36: w36,    // V1.1 新增 w6
-      zone6: zone6, zone12: zone12, zone24: zone24, zone36: zone36,   // V1.1 新增 zone6
+      w6: w6, w12: w12, w11: w11, w24: w24, w36: w36, // V1.1 新增 w6
+      zone6: zone6, zone12: zone12, zone24: zone24, zone36: zone36, // V1.1 新增 zone6
       flags: flags,
-      rhythm: rhythm,                                     // V1.2 新增：行情节奏
-      trend: trendObj.trend                               // V1.3 新增：个体趋势
+      rhythm: rhythm, // V1.2 新增：行情节奏
+      trend: trendObj.trend // V1.3 新增：个体趋势
     };
-    for (var k = 0; k < self.SW_MODIFIER_RULES.length; k++) {
-      var mod = self.SW_MODIFIER_RULES[k];
+    for (let k = 0; k < self.SW_MODIFIER_RULES.length; k++) {
+      const mod = self.SW_MODIFIER_RULES[k];
       if (!mod.match(ctx)) continue;
       if (mod.signal) signals.push(mod.signal);
       else if (typeof mod.signalFn === 'function') signals.push(mod.signalFn(ctx));
@@ -575,9 +575,9 @@ const BusinessSlidingWindow = {
     //   2. 虎易连开 → 开出后下期可能重开
     //   3. 虎连开后 → 下期鼠概率极高
     // ============================================================
-    var len = zodiacSeq.length;
-    var last1 = zodiacSeq[len - 1].shengxiao;   // 最近一期
-    var last2 = len >= 2 ? zodiacSeq[len - 2].shengxiao : '';  // 前一期
+    const len = zodiacSeq.length;
+    const last1 = zodiacSeq[len - 1].shengxiao; // 最近一期
+    const last2 = len >= 2 ? zodiacSeq[len - 2].shengxiao : ''; // 前一期
 
     // 规则1：马不连开 — 最近一期开了马，本期马直接归零
     if (shengxiao === '马' && last1 === '马') {
@@ -595,7 +595,7 @@ const BusinessSlidingWindow = {
 
     // 规则3：虎连开后的鼠 — 虎连号出现后，下期鼠概率极高
     if (shengxiao === '鼠' && last1 === '虎') {
-      var tigerConsecutive = (last2 === '虎');
+      const tigerConsecutive = (last2 === '虎');
       if (tigerConsecutive) {
         score += 50;
         signals.push('生肖特化：虎连后出鼠');
@@ -614,11 +614,11 @@ const BusinessSlidingWindow = {
 
     // 轮转加分（ALL_DIFFERENT）—— 差异化冷号奖励
     if (rhythm.pattern === 'ALL_DIFFERENT' && w12 <= 1 && w6 === 0) {
-      var rotBonus = 0;
-      if (miss >= 15) rotBonus = 25;           // 超长遗漏：+25
-      else if (miss >= 12) rotBonus = 20;      // 长期遗漏：+20
-      else if (miss >= 8) rotBonus = 15;       // 中期遗漏：+15
-      else if (miss >= 5) rotBonus = 10;       // 短期遗漏：+10
+      let rotBonus = 0;
+      if (miss >= 15) rotBonus = 25; // 超长遗漏：+25
+      else if (miss >= 12) rotBonus = 20; // 长期遗漏：+20
+      else if (miss >= 8) rotBonus = 15; // 中期遗漏：+15
+      else if (miss >= 5) rotBonus = 10; // 短期遗漏：+10
       if (rotBonus > 0) {
         score += rotBonus;
         signals.push('轮转冷号+' + rotBonus);
@@ -631,8 +631,8 @@ const BusinessSlidingWindow = {
     //   触发条件：3 源全覆盖（excluded 为空）+ 该生肖不在"Giong+终极算法"二源并集中
     //   作用：分数 × downweightFactor（默认 0.5）
     // ============================================================
-    var isDownweighted = false;
-    var originalScore = score;
+    let isDownweighted = false;
+    const originalScore = score;
     if (downweightFactor > 0 && downweightFactor < 1 && downweightedZodiacs.indexOf(shengxiao) !== -1) {
       score = Math.round(score * downweightFactor);
       isDownweighted = true;
@@ -645,17 +645,17 @@ const BusinessSlidingWindow = {
       score: score,
       reason: reasons.join('；') || '无特殊原因',
       signals: signals,
-      window6: w6,            // V1.1 新增
+      window6: w6, // V1.1 新增
       window12: w12,
       window11: w11,
       window24: w24,
       window36: w36,
-      zone6: zone6,           // V1.1 新增
+      zone6: zone6, // V1.1 新增
       zone12: zone12,
       zone24: zone24,
       zone36: zone36,
       miss: miss,
-      trend: trendObj,                               // V1.3 新增：个体热度趋势
+      trend: trendObj, // V1.3 新增：个体热度趋势
       // V1.4 新增：Rule 2 软降权元信息（用于视图层展示与调试）
       downweighted: isDownweighted,
       downweightFactor: isDownweighted ? downweightFactor : 0,
@@ -680,20 +680,20 @@ const BusinessSlidingWindow = {
    *   - crossExclusion: 交叉排除元信息（含 rule2Triggered / downweighted / downweightFactor）
    */
   predict: function(historyData, options) {
-    var self = this;
+    const self = this;
     options = options || {};
 
     // 1. 转换数据格式
-    var zodiacSeq = this.convertHistoryToZodiacSequence(historyData);
+    const zodiacSeq = this.convertHistoryToZodiacSequence(historyData);
     if (!zodiacSeq || zodiacSeq.length < 12) {
       return null; // 数据不足（至少需要12期）
     }
 
     // 2. 计算窗口（2026-06-23 V1.4.6 集成 LRU 缓存：行为完全等价，仅优化多次调用的性能）
-    var windows = this._calculateWindowsWithLRU(zodiacSeq);
+    const windows = this._calculateWindowsWithLRU(zodiacSeq);
 
     // 3. V1.2 新增：识别最近期开奖节奏（用于行情跟随）
-    var rhythm = this.detectRecentRhythm(zodiacSeq);
+    const rhythm = this.detectRecentRhythm(zodiacSeq);
 
     // ============================================================
     // V1.4.2 优化：交叉排除信息获取（避免与调用方重复调用 collectAllRecommend）
@@ -702,7 +702,7 @@ const BusinessSlidingWindow = {
     //     2. options.excludedZodiacs + options.downweightedZodiacs/factor（兼容旧接口）
     //     3. 自动检测 BusinessCrossExclusion.collectAllRecommend（兜底）
     // ============================================================
-    var excludedZodiacs, downweightedZodiacs, downweightFactor, rule2Triggered;
+    let excludedZodiacs, downweightedZodiacs, downweightFactor, rule2Triggered;
 
     if (options.crossResult && typeof options.crossResult === 'object') {
       // [Bug#2+#7 修复] 路径 1：调用方已传完整结果，零额外调用
@@ -723,7 +723,7 @@ const BusinessSlidingWindow = {
         // 路径 3：自动从交叉排除模块获取（兜底，可能与调用方重复）
         try {
           if (typeof BusinessCrossExclusion !== 'undefined' && BusinessCrossExclusion.collectAllRecommend) {
-            var autoCross = BusinessCrossExclusion.collectAllRecommend(historyData);
+            const autoCross = BusinessCrossExclusion.collectAllRecommend(historyData);
             downweightedZodiacs = options.downweightedZodiacs !== undefined ? options.downweightedZodiacs : (autoCross.downweighted || []);
             downweightFactor = options.downweightFactor !== undefined ? options.downweightFactor : (autoCross.downweightFactor || 0);
             rule2Triggered = autoCross.rule2Triggered === true;
@@ -745,20 +745,20 @@ const BusinessSlidingWindow = {
     }
 
     // 4. 计算所有生肖的评分
-    var allScores = [];
+    const allScores = [];
     self.SHENGXIAO_ALL.forEach(function(sx) {
-      var scoreObj = self._calculateScoreWithLRU(sx, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
+      const scoreObj = self._calculateScoreWithLRU(sx, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
       allScores.push(scoreObj);
     });
 
     // 5. 按评分降序排列（同分时按生肖数组索引升序，确保确定性）
-    var sxIndex = {};
+    const sxIndex = {};
     self.SHENGXIAO_ALL.forEach(function(sx, idx) { sxIndex[sx] = idx; });
     allScores.sort(function(a, b) {
       if (b.score !== a.score) return b.score - a.score;
       // 次级排序：按生肖数组原始索引（鼠->猪）
-      var ia = sxIndex[a.shengxiao];
-      var ib = sxIndex[b.shengxiao];
+      const ia = sxIndex[a.shengxiao];
+      const ib = sxIndex[b.shengxiao];
       if (ia === undefined && ib === undefined) return 0;
       if (ia === undefined) return 1;
       if (ib === undefined) return -1;
@@ -766,8 +766,8 @@ const BusinessSlidingWindow = {
     });
 
     // 6. 取前6名为候选
-    var top6 = allScores.slice(0, 6);
-    var candidates = top6.map(function(item, idx) {
+    const top6 = allScores.slice(0, 6);
+    const candidates = top6.map(function(item, idx) {
       return {
         shengxiao: item.shengxiao,
         emoji: self.SHENGXIAO_EMOJI[item.shengxiao] || '❓',
@@ -775,12 +775,12 @@ const BusinessSlidingWindow = {
         rank: idx + 1,
         reason: item.reason,
         signals: item.signals,
-        window6: item.window6,         // V1.1 新增
+        window6: item.window6, // V1.1 新增
         window12: item.window12,
         window11: item.window11,
         window24: item.window24,
         window36: item.window36,
-        zone6: item.zone6,             // V1.1 新增
+        zone6: item.zone6, // V1.1 新增
         zone12: item.zone12,
         zone24: item.zone24,
         zone36: item.zone36,
@@ -792,21 +792,21 @@ const BusinessSlidingWindow = {
     });
 
     // 7. 计算下一期期号
-    var latestExpect = zodiacSeq.length > 0 ? zodiacSeq[zodiacSeq.length - 1].period : 0;
-    var nextExpect = latestExpect + 1;
+    const latestExpect = zodiacSeq.length > 0 ? zodiacSeq[zodiacSeq.length - 1].period : 0;
+    const nextExpect = latestExpect + 1;
 
     // 8. 窗口概览统计
-    var windowSummary = {
-      max6: 0, max12: 0, max24: 0, max36: 0,        // V1.1 新增 max6
-      hotZones: { zone6: {}, zone12: {}, zone24: {}, zone36: {} }   // V1.1 新增 zone6
+    const windowSummary = {
+      max6: 0, max12: 0, max24: 0, max36: 0, // V1.1 新增 max6
+      hotZones: { zone6: {}, zone12: {}, zone24: {}, zone36: {} } // V1.1 新增 zone6
     };
     allScores.forEach(function(item) {
-      if (item.window6 > windowSummary.max6) windowSummary.max6 = item.window6;    // V1.1 新增
+      if (item.window6 > windowSummary.max6) windowSummary.max6 = item.window6; // V1.1 新增
       if (item.window12 > windowSummary.max12) windowSummary.max12 = item.window12;
       if (item.window24 > windowSummary.max24) windowSummary.max24 = item.window24;
       if (item.window36 > windowSummary.max36) windowSummary.max36 = item.window36;
 
-      var z6 = item.zone6, z12 = item.zone12, z24 = item.zone24, z36 = item.zone36;   // V1.1 新增 z6
+      const z6 = item.zone6, z12 = item.zone12, z24 = item.zone24, z36 = item.zone36; // V1.1 新增 z6
       windowSummary.hotZones.zone6[z6] = (windowSummary.hotZones.zone6[z6] || 0) + 1; // V1.1 新增
       windowSummary.hotZones.zone12[z12] = (windowSummary.hotZones.zone12[z12] || 0) + 1;
       windowSummary.hotZones.zone24[z24] = (windowSummary.hotZones.zone24[z24] || 0) + 1;
@@ -818,7 +818,7 @@ const BusinessSlidingWindow = {
       allScores: allScores,
       nextExpect: nextExpect,
       summary: windowSummary,
-      rhythm: rhythm,                          // V1.2 新增：当前行情节奏（供视图层展示）
+      rhythm: rhythm, // V1.2 新增：当前行情节奏（供视图层展示）
       algorithm: self.ALGORITHM_VERSION,
       timestamp: Date.now(),
       // V1.4 新增：交叉排除元信息（供视图层展示与调试）
@@ -838,8 +838,8 @@ const BusinessSlidingWindow = {
    * @returns {Array} 区域概览数组
    */
   getZoneOverview: function(windows) {
-    var self = this;
-    var result = [];
+    const self = this;
+    const result = [];
     self.SHENGXIAO_ALL.forEach(function(sx) {
       result.push({
         shengxiao: sx,
@@ -923,7 +923,7 @@ const BusinessSlidingWindow = {
    * @returns {string} 'loose' | 'standard' | 'strict'
    */
   getAdaptiveLevel: function(totalHistorySize) {
-    var t = this.SW_ADAPTIVE_LEVEL_THRESHOLDS;
+    const t = this.SW_ADAPTIVE_LEVEL_THRESHOLDS;
     if (typeof totalHistorySize !== 'number' || totalHistorySize < t.looseMax) return 'loose';
     if (totalHistorySize < t.standardMax) return 'standard';
     return 'strict';
@@ -939,8 +939,8 @@ const BusinessSlidingWindow = {
    * @returns {string} zone 字符串（与原 getZone 兼容）
    */
   getAdaptiveZone: function(zoneSize, count, totalHistorySize) {
-    var level = this.getAdaptiveLevel(totalHistorySize);
-    var t = this.SW_ADAPTIVE_THRESHOLDS[zoneSize] && this.SW_ADAPTIVE_THRESHOLDS[zoneSize][level];
+    const level = this.getAdaptiveLevel(totalHistorySize);
+    const t = this.SW_ADAPTIVE_THRESHOLDS[zoneSize] && this.SW_ADAPTIVE_THRESHOLDS[zoneSize][level];
     if (!t || typeof count !== 'number') {
       // fallback: 调用原 getZone
       if (zoneSize === 6) return this.getZone6(count);
@@ -976,16 +976,16 @@ const BusinessSlidingWindow = {
    * }
    */
   getAdaptiveThresholdComparison: function(totalHistorySize) {
-    var level = this.getAdaptiveLevel(totalHistorySize);
-    var t = this.SW_ADAPTIVE_LEVEL_THRESHOLDS;
-    var reasons = {
+    const level = this.getAdaptiveLevel(totalHistorySize);
+    const t = this.SW_ADAPTIVE_LEVEL_THRESHOLDS;
+    const reasons = {
       loose: '数据量较少（<' + t.looseMax + '期），阈值降低，更敏感',
       standard: '数据量适中（' + t.looseMax + '-' + t.standardMax + '期），使用标准阈值',
       strict: '数据量充足（>=' + t.standardMax + '期），阈值提高，更严格'
     };
-    var currentThresholds = {};
-    var all = this.SW_ADAPTIVE_THRESHOLDS;
-    for (var k in all) {
+    const currentThresholds = {};
+    const all = this.SW_ADAPTIVE_THRESHOLDS;
+    for (const k in all) {
       if (Object.prototype.hasOwnProperty.call(all, k) && all[k][level]) {
         currentThresholds[k] = all[k][level];
       }
@@ -1040,8 +1040,8 @@ const BusinessSlidingWindow = {
    */
   _computeWindowsLRUKey: function(zodiacSeq) {
     if (!Array.isArray(zodiacSeq) || zodiacSeq.length === 0) return 'empty';
-    var first = zodiacSeq[0];
-    var last = zodiacSeq[zodiacSeq.length - 1];
+    const first = zodiacSeq[0];
+    const last = zodiacSeq[zodiacSeq.length - 1];
     // 2026-06-23 V1.4.9.1 修复：key 加 ALGORITHM_VERSION（虽然 windows LRU 当前不受规则影响，但保持一致性）
     return 'V_' + this.ALGORITHM_VERSION + '_W_' + zodiacSeq.length + '_' + (first.period || '') + '_' + (last.period || '');
   },
@@ -1059,13 +1059,13 @@ const BusinessSlidingWindow = {
     this._setupStorageSync();
     // 2026-06-23 V1.4.9.4 修复：V1.4.8 漏掉的懒加载 LRU
     if (!this._lruLoaded.windows) {
-      var loadedWindows = this._loadLRUFromStorage('windows');
+      const loadedWindows = this._loadLRUFromStorage('windows');
       if (loadedWindows) this._windowsLRU = loadedWindows;
       this._lruLoaded.windows = true;
     }
     this._windowsLRUStats.total++;
-    var key = this._computeWindowsLRUKey(zodiacSeq);
-    var entry = this._windowsLRU[key];
+    const key = this._computeWindowsLRUKey(zodiacSeq);
+    const entry = this._windowsLRU[key];
     if (entry) {
       this._windowsLRUStats.hit++;
       entry.lastUsed = Date.now();
@@ -1073,7 +1073,7 @@ const BusinessSlidingWindow = {
       return entry.value;
     }
     // 缓存未命中 → 调原 calculateWindows
-    var result = this.calculateWindows(zodiacSeq);
+    const result = this.calculateWindows(zodiacSeq);
     // 写入 LRU
     if (Object.keys(this._windowsLRU).length >= this._windowsLRUConfig.maxSize) {
       this._evictLRU(this._windowsLRU);
@@ -1099,9 +1099,9 @@ const BusinessSlidingWindow = {
    * @returns {Object} { total, hit, miss, hitRate, cacheSize, maxSize }
    */
   getWindowsLRUStats: function() {
-    var stats = this._windowsLRUStats;
-    var total = stats.total;
-    var hit = stats.hit;
+    const stats = this._windowsLRUStats;
+    const total = stats.total;
+    const hit = stats.hit;
     return {
       total: total,
       hit: hit,
@@ -1152,10 +1152,10 @@ const BusinessSlidingWindow = {
    */
   _computePredictLRUKey: function(historyData, options) {
     if (!Array.isArray(historyData) || historyData.length === 0) return 'empty';
-    var first = historyData[0];
-    var last = historyData[historyData.length - 1];
+    const first = historyData[0];
+    const last = historyData[historyData.length - 1];
     // options 指纹：仅记录关键字段
-    var optSig = 'no_opts';
+    let optSig = 'no_opts';
     if (options) {
       optSig = [];
       if (options.crossResult) optSig.push('xr');
@@ -1178,13 +1178,13 @@ const BusinessSlidingWindow = {
     this._setupStorageSync();
     // 2026-06-23 V1.4.8：懒加载 LRU（仅首次调用时从 localStorage 恢复）
     if (!this._lruLoaded.predict) {
-      var loadedPredict = this._loadLRUFromStorage('predict');
+      const loadedPredict = this._loadLRUFromStorage('predict');
       if (loadedPredict) this._predictLRU = loadedPredict;
       this._lruLoaded.predict = true;
     }
     this._predictLRUStats.total++;
-    var key = this._computePredictLRUKey(historyData, options);
-    var entry = this._predictLRU[key];
+    const key = this._computePredictLRUKey(historyData, options);
+    const entry = this._predictLRU[key];
     if (entry) {
       this._predictLRUStats.hit++;
       entry.lastUsed = Date.now();
@@ -1192,7 +1192,7 @@ const BusinessSlidingWindow = {
       return entry.value;
     }
     // 缓存未命中 → 调原 predict
-    var result = this.predict(historyData, options);
+    const result = this.predict(historyData, options);
     // 写入 LRU（容量超限则淘汰最旧）
     if (Object.keys(this._predictLRU).length >= this._predictLRUConfig.maxSize) {
       this._evictLRU(this._predictLRU);
@@ -1215,9 +1215,9 @@ const BusinessSlidingWindow = {
    * 获取 predict LRU 统计
    */
   getPredictLRUStats: function() {
-    var stats = this._predictLRUStats;
-    var total = stats.total;
-    var hit = stats.hit;
+    const stats = this._predictLRUStats;
+    const total = stats.total;
+    const hit = stats.hit;
     return {
       total: total,
       hit: hit,
@@ -1271,22 +1271,22 @@ const BusinessSlidingWindow = {
    * @private
    */
   _computeCalculateScoreLRUKey: function(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor) {
-    var w = windows || {};
-    var w6 = (w.window6 || {})[shengxiao] || 0;
-    var w12 = (w.window12 || {})[shengxiao] || 0;
-    var w24 = (w.window24 || {})[shengxiao] || 0;
-    var w36 = (w.window36 || {})[shengxiao] || 0;
-    var miss = 0;
+    const w = windows || {};
+    const w6 = (w.window6 || {})[shengxiao] || 0;
+    const w12 = (w.window12 || {})[shengxiao] || 0;
+    const w24 = (w.window24 || {})[shengxiao] || 0;
+    const w36 = (w.window36 || {})[shengxiao] || 0;
+    let miss = 0;
     if (Array.isArray(zodiacSeq)) {
-      for (var i = zodiacSeq.length - 1; i >= 0; i--) {
+      for (let i = zodiacSeq.length - 1; i >= 0; i--) {
         if (zodiacSeq[i].shengxiao === shengxiao) { miss = zodiacSeq.length - 1 - i; break; }
         miss++;
       }
     }
-    var r = rhythm ? rhythm.pattern : 'no_rhythm';
-    var exN = Array.isArray(excludedZodiacs) ? excludedZodiacs.length : 0;
-    var dwN = Array.isArray(downweightedZodiacs) ? downweightedZodiacs.length : 0;
-    var df = typeof downweightFactor === 'number' ? downweightFactor : 0;
+    const r = rhythm ? rhythm.pattern : 'no_rhythm';
+    const exN = Array.isArray(excludedZodiacs) ? excludedZodiacs.length : 0;
+    const dwN = Array.isArray(downweightedZodiacs) ? downweightedZodiacs.length : 0;
+    const df = typeof downweightFactor === 'number' ? downweightFactor : 0;
     return 'CS_' + shengxiao + '_' + w6 + '_' + w12 + '_' + w24 + '_' + w36 + '_' + miss + '_' + r + '_' + exN + '_' + dwN + '_' + df;
   },
 
@@ -1299,13 +1299,13 @@ const BusinessSlidingWindow = {
     this._setupStorageSync();
     // 2026-06-23 V1.4.8：懒加载 LRU（仅首次调用时从 localStorage 恢复）
     if (!this._lruLoaded.calculateScore) {
-      var loadedCS = this._loadLRUFromStorage('calculateScore');
+      const loadedCS = this._loadLRUFromStorage('calculateScore');
       if (loadedCS) this._calculateScoreLRU = loadedCS;
       this._lruLoaded.calculateScore = true;
     }
     this._calculateScoreLRUStats.total++;
-    var key = this._computeCalculateScoreLRUKey(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
-    var entry = this._calculateScoreLRU[key];
+    const key = this._computeCalculateScoreLRUKey(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
+    const entry = this._calculateScoreLRU[key];
     if (entry) {
       this._calculateScoreLRUStats.hit++;
       entry.lastUsed = Date.now();
@@ -1313,7 +1313,7 @@ const BusinessSlidingWindow = {
       return entry.value;
     }
     // 缓存未命中 → 调原 calculateScore
-    var result = this.calculateScore(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
+    const result = this.calculateScore(shengxiao, windows, zodiacSeq, rhythm, excludedZodiacs, downweightedZodiacs, downweightFactor);
     // 写入 LRU
     if (Object.keys(this._calculateScoreLRU).length >= this._calculateScoreLRUConfig.maxSize) {
       this._evictLRU(this._calculateScoreLRU);
@@ -1338,9 +1338,9 @@ const BusinessSlidingWindow = {
    * 获取 calculateScore LRU 统计
    */
   getCalculateScoreLRUStats: function() {
-    var stats = this._calculateScoreLRUStats;
-    var total = stats.total;
-    var hit = stats.hit;
+    const stats = this._calculateScoreLRUStats;
+    const total = stats.total;
+    const hit = stats.hit;
     return {
       total: total,
       hit: hit,
@@ -1359,9 +1359,9 @@ const BusinessSlidingWindow = {
    */
   _evictLRU: function(lruStore) {
     if (!lruStore) return;
-    var oldestKey = null;
-    var oldestTime = Infinity;
-    for (var k in lruStore) {
+    let oldestKey = null;
+    let oldestTime = Infinity;
+    for (const k in lruStore) {
       if (!Object.prototype.hasOwnProperty.call(lruStore, k)) continue;
       if (lruStore[k].lastUsed < oldestTime) {
         oldestTime = lruStore[k].lastUsed;
@@ -1410,8 +1410,8 @@ const BusinessSlidingWindow = {
     if (this._pendingLRUPersist[storageKey]) {
       clearTimeout(this._pendingLRUPersist[storageKey].timer);
     }
-    var self = this;
-    var timer = setTimeout(function() {
+    const self = this;
+    const timer = setTimeout(function() {
       self._persistLRUToStorage(storageKey, lruStore);
       if (self._pendingLRUPersist[storageKey]) {
         delete self._pendingLRUPersist[storageKey];
@@ -1429,10 +1429,10 @@ const BusinessSlidingWindow = {
   _persistLRUToStorage: function(storageKey, lruStore) {
     if (typeof Storage === 'undefined' || !Storage || typeof Storage.set !== 'function') return;
     try {
-      var entries = [];
-      for (var k in lruStore) {
+      const entries = [];
+      for (const k in lruStore) {
         if (!Object.prototype.hasOwnProperty.call(lruStore, k)) continue;
-        var e = lruStore[k];
+        const e = lruStore[k];
         entries.push({ key: k, value: e.value, lastUsed: e.lastUsed, hitCount: e.hitCount || 0 });
       }
       Storage.set('LRU_' + storageKey, { entries: entries, savedAt: Date.now() });
@@ -1450,12 +1450,12 @@ const BusinessSlidingWindow = {
   _loadLRUFromStorage: function(storageKey) {
     if (typeof Storage === 'undefined' || !Storage || typeof Storage.get !== 'function') return null;
     try {
-      var data = Storage.get('LRU_' + storageKey, null);
+      const data = Storage.get('LRU_' + storageKey, null);
       if (!data || !Array.isArray(data.entries)) return null;
-      var now = Date.now();
-      var store = {};
-      for (var i = 0; i < data.entries.length; i++) {
-        var e = data.entries[i];
+      const now = Date.now();
+      const store = {};
+      for (let i = 0; i < data.entries.length; i++) {
+        const e = data.entries[i];
         if (!e || !e.key) continue;
         store[e.key] = {
           value: e.value,
@@ -1521,12 +1521,12 @@ const BusinessSlidingWindow = {
    */
   _handleStorageEvent: function(event) {
     if (!event || !event.key) return;
-    var MAPPING = {
+    const MAPPING = {
       'LRU_predict': '_predictLRU',
       'LRU_calculateScore': '_calculateScoreLRU',
       'LRU_windows': '_windowsLRU'
     };
-    var target = MAPPING[event.key];
+    const target = MAPPING[event.key];
     if (!target) return;
     // newValue 为空 = 清除
     if (!event.newValue) {
@@ -1534,13 +1534,13 @@ const BusinessSlidingWindow = {
       return;
     }
     try {
-      var raw = event.newValue;
-      var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const raw = event.newValue;
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (!data || !Array.isArray(data.entries)) return;
-      var now = Date.now();
-      var store = {};
-      for (var i = 0; i < data.entries.length; i++) {
-        var e = data.entries[i];
+      const now = Date.now();
+      const store = {};
+      for (let i = 0; i < data.entries.length; i++) {
+        const e = data.entries[i];
         if (!e || !e.key) continue;
         store[e.key] = {
           value: e.value,
@@ -1560,7 +1560,7 @@ const BusinessSlidingWindow = {
    * @returns {Function} storage 事件处理函数
    */
   getStorageEventHandler: function() {
-    var self = this;
+    const self = this;
     return function(e) {
       self._handleStorageEvent(e);
     };

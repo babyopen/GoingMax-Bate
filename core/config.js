@@ -7,14 +7,14 @@
 // ============================================================
 
 // 生肖 Emoji 映射（12 生肖 → emoji）
-var _ZODIAC_EMOJI = Object.freeze({
+const _ZODIAC_EMOJI = Object.freeze({
   '鼠': '🐭', '牛': '🐂', '虎': '🐯', '兔': '🐰',
   '龙': '🐉', '蛇': '🐍', '马': '🐴', '羊': '🐑',
   '猴': '🐵', '鸡': '🐔', '狗': '🐶', '猪': '🐷'
 });
 
 // 阴阳映射（奇数=阳，偶数=阴）
-var _YIN_YANG = Object.freeze({
+const _YIN_YANG = Object.freeze({
   1:'阳',2:'阴',3:'阳',4:'阴',5:'阳',6:'阴',7:'阳',8:'阴',9:'阳',10:'阴',
   11:'阳',12:'阴',13:'阳',14:'阴',15:'阳',16:'阴',17:'阳',18:'阴',19:'阳',20:'阴',
   21:'阳',22:'阴',23:'阳',24:'阴',25:'阳',26:'阴',27:'阳',28:'阴',29:'阳',30:'阴',
@@ -23,13 +23,13 @@ var _YIN_YANG = Object.freeze({
 });
 
 // 六合映射（生肖 → 六合地支）
-var _LIUHE = Object.freeze({
+const _LIUHE = Object.freeze({
   '鼠':'酉','牛':'申','虎':'亥','兔':'戌','龙':'卯','蛇':'辰',
   '马':'丑','羊':'子','猴':'巳','鸡':'寅','狗':'未','猪':'午'
 });
 
 // 号码 → 生肖映射源数据（1-49，每年春节后需更新）
-var _NUM_TO_ZODIAC_DATA = Object.freeze({
+const _NUM_TO_ZODIAC_DATA = Object.freeze({
   1:'马',2:'蛇',3:'龙',4:'兔',5:'虎',6:'牛',7:'鼠',8:'猪',9:'狗',10:'鸡',11:'猴',12:'羊',
   13:'马',14:'蛇',15:'龙',16:'兔',17:'虎',18:'牛',19:'鼠',20:'猪',21:'狗',22:'鸡',23:'猴',24:'羊',
   25:'马',26:'蛇',27:'龙',28:'兔',29:'虎',30:'牛',31:'鼠',32:'猪',33:'狗',34:'鸡',35:'猴',36:'羊',
@@ -37,12 +37,12 @@ var _NUM_TO_ZODIAC_DATA = Object.freeze({
 });
 
 // 生肖 → 号码映射（从 _NUM_TO_ZODIAC_DATA 反向构建）
-var _ZODIAC_TO_NUM = Object.freeze((function() {
-  var map = {};
-  var all = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+const _ZODIAC_TO_NUM = Object.freeze((function() {
+  const map = {};
+  const all = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
   all.forEach(function(z) { map[z] = []; });
-  for (var i = 1; i <= 49; i++) {
-    var z = _NUM_TO_ZODIAC_DATA[i];
+  for (let i = 1; i <= 49; i++) {
+    const z = _NUM_TO_ZODIAC_DATA[i];
     if (z && map[z]) map[z].push(i);
   }
   all.forEach(function(z) { map[z] = Object.freeze(map[z]); });
@@ -50,16 +50,16 @@ var _ZODIAC_TO_NUM = Object.freeze((function() {
 })());
 
 // 头映射（0-4 头）
-var _HEAD_MAP = Object.freeze((function() {
-  var m = {};
-  for (var i = 1; i <= 49; i++) { m[i] = Math.floor(i / 10); }
+const _HEAD_MAP = Object.freeze((function() {
+  const m = {};
+  for (let i = 1; i <= 49; i++) { m[i] = Math.floor(i / 10); }
   return Object.freeze(m);
 })());
 
 // 尾映射（0-9 尾）
-var _TAIL_MAP = Object.freeze((function() {
-  var m = {};
-  for (var i = 1; i <= 49; i++) { m[i] = i % 10; }
+const _TAIL_MAP = Object.freeze((function() {
+  const m = {};
+  for (let i = 1; i <= 49; i++) { m[i] = i % 10; }
   return Object.freeze(m);
 })());
 

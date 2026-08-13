@@ -10,7 +10,7 @@ const ViewZodiacGiongOddEven = {
    * 最近 N 期单双分析
    */
   renderLatestOddEvenStats: function(oddEvenData) {
-    var container = document.getElementById('latestOddEvenStatsPanel');
+    const container = document.getElementById('latestOddEvenStatsPanel');
     if (!container) return;
 
     if (!oddEvenData) {
@@ -18,7 +18,7 @@ const ViewZodiacGiongOddEven = {
       return;
     }
 
-    var html = '';
+    let html = '';
     html += '<div class="oddeven-analysis-card">';
     html += '<div class="oddeven-analysis-header">';
     html += '<div class="oddeven-analysis-title">最近' + oddEvenData.period + '期单双分析</div>';
@@ -27,9 +27,9 @@ const ViewZodiacGiongOddEven = {
     html += '<div class="oddeven-analysis-content">';
 
     html += '<div class="oddeven-sequence-row">';
-    var reversedSequence = oddEvenData.sequence.slice().reverse();
+    const reversedSequence = oddEvenData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var typeClass = item.type === '单' ? 'type-odd' : 'type-even';
+      const typeClass = item.type === '单' ? 'type-odd' : 'type-even';
       html += '<span class="oddeven-seq-item ' + typeClass + '">' + item.type + '</span>';
     });
     html += '</div>';
@@ -67,7 +67,7 @@ const ViewZodiacGiongOddEven = {
       html += '<div class="oddeven-trend-section" data-action="showOddEvenBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="oddeven-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="oddeven-trend-prediction">';
-      var trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
+      const trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
       html += '<span class="trend-result ' + trendClass + '">' + oddEvenData.trend.prediction + '</span>';
       html += '<span class="trend-confidence">' + oddEvenData.trend.confidence + '%可信度</span>';
       html += '</div>';
@@ -109,11 +109,11 @@ const ViewZodiacGiongOddEven = {
   _renderOddEvenContent: function(oddEvenData) {
     if (!oddEvenData) return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
 
-    var html = '';
+    let html = '';
     html += '<div class="combined-sequence-row">';
-    var reversedSequence = oddEvenData.sequence.slice().reverse();
+    const reversedSequence = oddEvenData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var typeClass = item.type === '单' ? 'type-odd' : 'type-even';
+      const typeClass = item.type === '单' ? 'type-odd' : 'type-even';
       html += '<span class="combined-seq-item oddeven-' + typeClass + '">' + item.type + '</span>';
     });
     html += '</div>';
@@ -130,7 +130,7 @@ const ViewZodiacGiongOddEven = {
     }
 
     if (oddEvenData.trend && oddEvenData.trend.prediction !== '-') {
-      var trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
+      const trendClass = oddEvenData.trend.prediction === '单' ? 'trend-odd' : 'trend-even';
       html += '<div class="combined-trend" data-action="showOddEvenBacktest" style="cursor:pointer;">';
       html += '<span class="trend-predict ' + trendClass + '">' + oddEvenData.trend.prediction + '</span>';
       html += '<span class="trend-conf">' + oddEvenData.trend.confidence + '%</span>';

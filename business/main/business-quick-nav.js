@@ -44,10 +44,10 @@ const BusinessQuickNav = {
    *           默认 true；所有页面均支持
    */
   _TAB_MEMORY: [
-    { index: 0, page: null,       toggleQuickNav: true,  restore: function() {} },
-    { index: 1, page: 'analysis', toggleQuickNav: true,  restore: function(tab) { Business.switchAnalysisTab(tab); } },
-    { index: 2, page: 'random',   toggleQuickNav: true,  restore: function(tab) { Business.switchZodiacTab(tab); } },
-    { index: 3, page: 'profile',  toggleQuickNav: true,  restore: function(tab) {
+    { index: 0, page: null, toggleQuickNav: true, restore: function() {} },
+    { index: 1, page: 'analysis', toggleQuickNav: true, restore: function(tab) { Business.switchAnalysisTab(tab); } },
+    { index: 2, page: 'random', toggleQuickNav: true, restore: function(tab) { Business.switchZodiacTab(tab); } },
+    { index: 3, page: 'profile', toggleQuickNav: true, restore: function(tab) {
         if (typeof ViewProfile !== 'undefined' && ViewProfile.switchProfileTabUI) {
           ViewProfile.switchProfileTabUI(tab);
         }
@@ -140,8 +140,8 @@ const BusinessQuickNav = {
     }
 
     // 3. 查找 memItem
-    var memItem = null;
-    for (var i = 0; i < BusinessQuickNav._TAB_MEMORY.length; i++) {
+    let memItem = null;
+    for (let i = 0; i < BusinessQuickNav._TAB_MEMORY.length; i++) {
       if (BusinessQuickNav._TAB_MEMORY[i].index === index) {
         memItem = BusinessQuickNav._TAB_MEMORY[i];
         break;
@@ -149,7 +149,7 @@ const BusinessQuickNav = {
     }
 
     // 4. 快捷导航栏联动
-    var isRepeatClick = memItem
+    const isRepeatClick = memItem
                       && memItem.toggleQuickNav
                       && BusinessQuickNav._currentBottomNavIndex === index;
     if (isRepeatClick) {
@@ -166,7 +166,7 @@ const BusinessQuickNav = {
 
     // 6. 恢复对应页面的子 tab
     if (memItem && typeof Storage !== 'undefined' && Storage.getLastTab) {
-      var lastTab = Storage.getLastTab(memItem.page);
+      const lastTab = Storage.getLastTab(memItem.page);
       if (lastTab) memItem.restore(lastTab);
     }
   }

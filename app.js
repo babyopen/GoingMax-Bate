@@ -62,6 +62,10 @@ async function initApp() {
     ViewFilter.refreshQuickNav('filter');
     // 10.1 注入主页生肖卡片的"复制已选生肖"按钮（仅主页生肖卡片，不影响其它页面）
     ViewFilter.injectZodiacCopyBtn();
+    // 10.2 注入分析页的"直播"按钮（在"刷新历史"按钮旁边）
+    if (typeof ViewAnalysis !== 'undefined' && typeof ViewAnalysis.injectLiveBtn === 'function') {
+      ViewAnalysis.injectLiveBtn();
+    }
     // 11. 初始化事件绑定
     EventBinder.init();
     // 12. 启动分析页面倒计时和自动刷新检查
@@ -139,9 +143,9 @@ async function initApp() {
  *   - 集中尾部调度更便于一次 review + 保留逐行解释
  */
 function scheduleIdleStartupTail() {
-  var _ric = window.requestIdleCallback || function(fn) {
+  const _ric = window.requestIdleCallback || function(fn) {
     return setTimeout(function() {
-      var start = Date.now();
+      const start = Date.now();
       fn({
         didTimeout: false,
         timeRemaining: function() { return Math.max(0, 50 - (Date.now() - start)); }
@@ -157,7 +161,7 @@ function scheduleIdleStartupTail() {
       //    - 此处提供 idle 帧内的"提前预渲染"，用户首次进入相关页面时几乎零延迟
       //    - 仅当 historyData 已在 state（来自 loadHistoryCache 写 state）时执行，避免空数据
       if (typeof Business !== 'undefined' && typeof Business.renderHistoryViews === 'function') {
-        var histData = typeof BusinessCommonData !== 'undefined'
+        const histData = typeof BusinessCommonData !== 'undefined'
           ? BusinessCommonData.getHistoryData(StateManager._state)
           : null;
         if (histData && histData.length) {

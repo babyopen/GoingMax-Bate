@@ -81,8 +81,8 @@ const BusinessExclude = {
     
     // 反向操作
     act === 'in'
-      ? newExcluded.splice(newExcluded.indexOf(num), 1)  // 恢复
-      : newExcluded.push(num);                            // 重新排除
+      ? newExcluded.splice(newExcluded.indexOf(num), 1) // 恢复
+      : newExcluded.push(num); // 重新排除
     
     StateManager.setState({ 
       excluded: newExcluded, 

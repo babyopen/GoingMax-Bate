@@ -83,9 +83,9 @@ const CommonPlatform = {
    * @returns {number} 解析后的数值（px），无值返回 0
    */
   getCssVar: (name, target) => {
-    var el = target || (typeof document !== 'undefined' ? document.documentElement : null);
+    const el = target || (typeof document !== 'undefined' ? document.documentElement : null);
     if (!el) return 0;
-    var raw = getComputedStyle(el).getPropertyValue(name);
+    const raw = getComputedStyle(el).getPropertyValue(name);
     return parseFloat(raw) || 0;
   },
 
@@ -140,9 +140,9 @@ const CommonPlatform = {
    */
   copyToClipboard: async (text, opts) => {
     opts = opts || {};
-    var successMsg = opts.successMsg || '已复制';
-    var errorMsg = opts.errorMsg || '复制失败，请手动复制';
-    var fallback = opts.fallback;
+    const successMsg = opts.successMsg || '已复制';
+    const errorMsg = opts.errorMsg || '复制失败，请手动复制';
+    const fallback = opts.fallback;
 
     // 优先：navigator.clipboard API
     if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
@@ -157,7 +157,7 @@ const CommonPlatform = {
 
     // 降级：textarea + execCommand
     try {
-      var textarea = document.createElement('textarea');
+      const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';
       textarea.style.top = '0';
@@ -165,7 +165,7 @@ const CommonPlatform = {
       textarea.style.opacity = '0';
       document.body.appendChild(textarea);
       textarea.select();
-      var ok = document.execCommand('copy');
+      const ok = document.execCommand('copy');
       document.body.removeChild(textarea);
       if (ok) {
         if (typeof Toast !== 'undefined' && Toast.show) Toast.show(successMsg);
@@ -205,8 +205,8 @@ const CommonPlatform = {
    */
   watchNetwork: (onOnline, onOffline) => {
     if (typeof window === 'undefined') return function() {};
-    var onlineHandler = function() { if (typeof onOnline === 'function') onOnline(); };
-    var offlineHandler = function() { if (typeof onOffline === 'function') onOffline(); };
+    const onlineHandler = function() { if (typeof onOnline === 'function') onOnline(); };
+    const offlineHandler = function() { if (typeof onOffline === 'function') onOffline(); };
     window.addEventListener('online', onlineHandler);
     window.addEventListener('offline', offlineHandler);
     return function unbind() {
@@ -225,7 +225,7 @@ const CommonPlatform = {
    */
   hasLocalStorage: () => {
     try {
-      var testKey = '__test_' + Date.now();
+      const testKey = '__test_' + Date.now();
       localStorage.setItem(testKey, '1');
       localStorage.removeItem(testKey);
       return true;
@@ -240,7 +240,7 @@ const CommonPlatform = {
    */
   hasSessionStorage: () => {
     try {
-      var testKey = '__test_' + Date.now();
+      const testKey = '__test_' + Date.now();
       sessionStorage.setItem(testKey, '1');
       sessionStorage.removeItem(testKey);
       return true;

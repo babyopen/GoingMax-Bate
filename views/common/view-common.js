@@ -18,10 +18,10 @@ const ViewCommon = {
     '穿插区': 'zone-low',
     '冷号区': 'zone-wait',
     // V1.1 新增：6 期短期窗口区域（与同语义区域配色一致：同区域同色）
-    '短过热': 'zone-peak',   // ≥3次，极罕见 → 同「封顶区」色
-    '短热号': 'zone-mid',    // 2次，短期热 → 同「热号区」色
-    '短穿插': 'zone-low',    // 1次，偶尔穿插 → 同「穿插区」色
-    '短冷号': 'zone-wait'    // 0次，完全冷 → 同「冷号区」色
+    '短过热': 'zone-peak', // ≥3次，极罕见 → 同「封顶区」色
+    '短热号': 'zone-mid', // 2次，短期热 → 同「热号区」色
+    '短穿插': 'zone-low', // 1次，偶尔穿插 → 同「穿插区」色
+    '短冷号': 'zone-wait' // 0次，完全冷 → 同「冷号区」色
   }),
 
   /**
@@ -66,7 +66,7 @@ const ViewCommon = {
    */
   $: function(id) {
     if (!ViewCommon._domCache.has(id)) {
-      var el = document.getElementById(id);
+      const el = document.getElementById(id);
       if (el) ViewCommon._domCache.set(id, el);
     }
     return ViewCommon._domCache.get(id) || null;
@@ -78,7 +78,7 @@ const ViewCommon = {
    * @returns {Object} id → 元素 的映射对象
    */
   $batch: function(ids) {
-    var result = {};
+    const result = {};
     ids.forEach(function(id) {
       result[id] = ViewCommon.$(id);
     });
@@ -106,7 +106,7 @@ const ViewCommon = {
    * @returns {{parts: string[], push: Function, toString: Function}}
    */
   createHtmlBuilder: function() {
-    var parts = [];
+    const parts = [];
     return {
       parts: parts,
       push: function(str) { parts.push(str); return this; },
@@ -124,7 +124,7 @@ const ViewCommon = {
    * @returns {string} 卡片 HTML
    */
   renderZodiacCardHtml: function(zodiac, rank, cardClass, emoji, extraHtml) {
-    var html = '<div class="zodiac-static-card ' + cardClass + '">';
+    let html = '<div class="zodiac-static-card ' + cardClass + '">';
     html += '<div class="zodiac-static-rank">' + rank + '</div>';
     html += '<div class="zodiac-static-emoji">' + emoji + '</div>';
     html += '<div class="zodiac-static-name">' + zodiac + '</div>';
@@ -162,8 +162,8 @@ const ViewCommon = {
    * @param {string} tab - 要切换的 tab 名
    */
   switchTabUI: function(config, tab) {
-    var panelMap = config.panelMap || {};
-    var tabs = Object.keys(panelMap);
+    const panelMap = config.panelMap || {};
+    const tabs = Object.keys(panelMap);
     // 非法值兜底：使用第一个合法 tab
     if (tabs.indexOf(tab) < 0) tab = tabs[0];
 
@@ -183,7 +183,7 @@ const ViewCommon = {
 
     // 面板切换（通过 ID 精确控制）
     Object.keys(panelMap).forEach(function(key) {
-      var panel = document.getElementById(panelMap[key]);
+      const panel = document.getElementById(panelMap[key]);
       if (panel) panel.classList.toggle('active', key === tab);
     });
   },
@@ -216,17 +216,17 @@ const ViewCommon = {
    * 满足红线 12（禁止 mouseover/mouseenter/mouseleave 等鼠标事件）
    */
   _createTouchSwiper: function(config) {
-    var w = document.getElementById(config.wrapperId);
+    const w = document.getElementById(config.wrapperId);
     if (!w) return;
     if (w.dataset.swiperInit) return;
     w.dataset.swiperInit = '1';
-    var cards = w.querySelectorAll(config.cardSelector);
+    const cards = w.querySelectorAll(config.cardSelector);
     if (!cards || !cards.length) return;
-    var idx = config.initialIndex || 0;
-    var total = cards.length;
-    var sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
-    var animating = false;
-    var animTimer = null;
+    let idx = config.initialIndex || 0;
+    const total = cards.length;
+    let sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
+    let animating = false;
+    let animTimer = null;
 
     function getWidth() {
       return w.offsetWidth || 0;
@@ -242,9 +242,9 @@ const ViewCommon = {
     }
 
     function updateDots() {
-      var dc = document.getElementById(config.dotsId);
+      const dc = document.getElementById(config.dotsId);
       if (dc) {
-        var dots = dc.querySelectorAll('.' + config.dotClass);
+        const dots = dc.querySelectorAll('.' + config.dotClass);
         dots.forEach(function(d, di) { d.classList.toggle('active', di === idx); });
       }
     }
@@ -261,9 +261,9 @@ const ViewCommon = {
     }
 
     function start(e) {
-      var touch = e.touches && e.touches[0];
+      const touch = e.touches && e.touches[0];
       if (!touch) return;
-      var ww = getWidth();
+      const ww = getWidth();
       if (!ww) return;
       dragging = true;
       w.style.transition = 'none';
@@ -276,15 +276,15 @@ const ViewCommon = {
       lastT = Date.now();
     }
 
-    var moveHandler = function(e) {
+    const moveHandler = function(e) {
       if (!dragging) return;
-      var touch = e.touches && e.touches[0];
+      const touch = e.touches && e.touches[0];
       if (!touch) return;
-      var nowX = touch.clientX;
-      var nowY = touch.clientY;
+      const nowX = touch.clientX;
+      const nowY = touch.clientY;
 
-      var dx = Math.abs(nowX - lastX);
-      var dy = Math.abs(nowY - lastY);
+      const dx = Math.abs(nowX - lastX);
+      const dy = Math.abs(nowY - lastY);
 
       if (e.cancelable !== false && dx > 2 && dx > dy) {
         e.preventDefault();
@@ -294,10 +294,10 @@ const ViewCommon = {
       lastX = nowX;
       lastY = nowY;
       lastT = Date.now();
-      var d = sx - cx;
-      var ww = getWidth();
+      const d = sx - cx;
+      const ww = getWidth();
       if (!ww) return;
-      var offsetPercent = -(idx * 100) - (d / ww * 100);
+      const offsetPercent = -(idx * 100) - (d / ww * 100);
       w.style.transform = 'translate3d(' + offsetPercent + '%, 0, 0)';
     };
 
@@ -307,16 +307,16 @@ const ViewCommon = {
       if (e.changedTouches && e.changedTouches.length) {
         cx = e.changedTouches[0].clientX;
       }
-      var d = sx - cx;
-      var ad = Math.abs(d);
-      var now = Date.now();
-      var elapsed = Math.max(now - lastT, 16);
-      var vel = ad / elapsed;
-      var ww = getWidth();
+      const d = sx - cx;
+      const ad = Math.abs(d);
+      const now = Date.now();
+      const elapsed = Math.max(now - lastT, 16);
+      const vel = ad / elapsed;
+      const ww = getWidth();
       if (!ww) { slide(idx, true); return; }
-      var cardW = ww / total;
-      var swipeThreshold = cardW * 0.04;
-      var velThreshold = 0.12;
+      const cardW = ww / total;
+      const swipeThreshold = cardW * 0.04;
+      const velThreshold = 0.12;
 
       if (ad > swipeThreshold || (ad > cardW * 0.02 && vel > velThreshold)) {
         if (d > 0 && idx < total - 1) {
@@ -335,7 +335,7 @@ const ViewCommon = {
     w.addEventListener('touchcancel', end, { passive: true });
 
     // 性能优化：提供清理方法，避免内存泄漏
-    var cleanup = function() {
+    const cleanup = function() {
       w.removeEventListener('touchstart', start);
       w.removeEventListener('touchmove', moveHandler);
       w.removeEventListener('touchend', end);
@@ -346,12 +346,12 @@ const ViewCommon = {
     w._cleanupSwiper = cleanup;
 
     if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
-    var updateRef = config.updateRef;
+    const updateRef = config.updateRef;
     if (updateRef) {
       if (updateRef.indexOf('.') !== -1) {
-        var parts = updateRef.split('.');
-        var target = window;
-        for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+        const parts = updateRef.split('.');
+        let target = window;
+        for (let i = 0; i < parts.length - 1; i++) target = target[parts[i]];
         target[parts[parts.length - 1]] = slide;
       } else {
         window[updateRef] = slide;
@@ -367,17 +367,17 @@ const ViewCommon = {
    */
   _createLegacySwiper: function(config) {
     // 与原 _createSwiper 实现一致，仅作历史兜底
-    var w = document.getElementById(config.wrapperId);
+    const w = document.getElementById(config.wrapperId);
     if (!w) return;
     if (w.dataset.swiperInit) return;
     w.dataset.swiperInit = '1';
-    var cards = w.querySelectorAll(config.cardSelector);
+    const cards = w.querySelectorAll(config.cardSelector);
     if (!cards || !cards.length) return;
-    var idx = config.initialIndex || 0;
-    var total = cards.length;
-    var sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
-    var animating = false;
-    var animTimer = null;
+    let idx = config.initialIndex || 0;
+    const total = cards.length;
+    let sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
+    let animating = false;
+    let animTimer = null;
 
     function getWidth() { return w.offsetWidth || 0; }
 
@@ -391,9 +391,9 @@ const ViewCommon = {
     }
 
     function updateDots() {
-      var dc = document.getElementById(config.dotsId);
+      const dc = document.getElementById(config.dotsId);
       if (dc) {
-        var dots = dc.querySelectorAll('.' + config.dotClass);
+        const dots = dc.querySelectorAll('.' + config.dotClass);
         dots.forEach(function(d, di) { d.classList.toggle('active', di === idx); });
       }
     }
@@ -410,9 +410,9 @@ const ViewCommon = {
     }
 
     function start(e) {
-      var touch = e.type === 'mousedown' ? null : (e.touches && e.touches[0]);
+      const touch = e.type === 'mousedown' ? null : (e.touches && e.touches[0]);
       if (!touch && e.type !== 'mousedown') return;
-      var ww = getWidth();
+      const ww = getWidth();
       if (!ww) return;
       dragging = true;
       w.style.transition = 'none';
@@ -425,14 +425,14 @@ const ViewCommon = {
       lastT = Date.now();
     }
 
-    var moveHandler = function(e) {
+    const moveHandler = function(e) {
       if (!dragging) return;
-      var touch = e.type === 'mousemove' ? null : (e.touches && e.touches[0]);
+      const touch = e.type === 'mousemove' ? null : (e.touches && e.touches[0]);
       if (!touch && e.type !== 'mousemove') return;
-      var nowX = touch ? touch.clientX : e.clientX;
-      var nowY = touch ? touch.clientY : lastY;
-      var dx = Math.abs(nowX - lastX);
-      var dy = Math.abs(nowY - lastY);
+      const nowX = touch ? touch.clientX : e.clientX;
+      const nowY = touch ? touch.clientY : lastY;
+      const dx = Math.abs(nowX - lastX);
+      const dy = Math.abs(nowY - lastY);
       if (e.type === 'touchmove' && e.cancelable !== false && dx > 2 && dx > dy) {
         e.preventDefault();
       }
@@ -440,10 +440,10 @@ const ViewCommon = {
       lastX = nowX;
       lastY = nowY;
       lastT = Date.now();
-      var d = sx - cx;
-      var ww = getWidth();
+      const d = sx - cx;
+      const ww = getWidth();
       if (!ww) return;
-      var offsetPercent = -(idx * 100) - (d / ww * 100);
+      const offsetPercent = -(idx * 100) - (d / ww * 100);
       w.style.transform = 'translate3d(' + offsetPercent + '%, 0, 0)';
     };
 
@@ -453,16 +453,16 @@ const ViewCommon = {
       if (e.type === 'touchend' && e.changedTouches && e.changedTouches.length) {
         cx = e.changedTouches[0].clientX;
       }
-      var d = sx - cx;
-      var ad = Math.abs(d);
-      var now = Date.now();
-      var elapsed = Math.max(now - lastT, 16);
-      var vel = ad / elapsed;
-      var ww = getWidth();
+      const d = sx - cx;
+      const ad = Math.abs(d);
+      const now = Date.now();
+      const elapsed = Math.max(now - lastT, 16);
+      const vel = ad / elapsed;
+      const ww = getWidth();
       if (!ww) { slide(idx, true); return; }
-      var cardW = ww / total;
-      var swipeThreshold = cardW * 0.04;
-      var velThreshold = 0.12;
+      const cardW = ww / total;
+      const swipeThreshold = cardW * 0.04;
+      const velThreshold = 0.12;
       if (ad > swipeThreshold || (ad > cardW * 0.02 && vel > velThreshold)) {
         if (d > 0 && idx < total - 1) idx++;
         else if (d < 0 && idx > 0) idx--;
@@ -479,7 +479,7 @@ const ViewCommon = {
     w.addEventListener('mouseup', end);
     w.addEventListener('mouseleave', end);
 
-    var cleanup = function() {
+    const cleanup = function() {
       w.removeEventListener('touchstart', start);
       w.removeEventListener('touchmove', moveHandler);
       w.removeEventListener('touchend', end);
@@ -494,12 +494,12 @@ const ViewCommon = {
     w._cleanupSwiper = cleanup;
 
     if (config.dataAttr) w.setAttribute(config.dataAttr[0], config.dataAttr[1]);
-    var updateRef = config.updateRef;
+    const updateRef = config.updateRef;
     if (updateRef) {
       if (updateRef.indexOf('.') !== -1) {
-        var parts = updateRef.split('.');
-        var target = window;
-        for (var i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+        const parts = updateRef.split('.');
+        let target = window;
+        for (let i = 0; i < parts.length - 1; i++) target = target[parts[i]];
         target[parts[parts.length - 1]] = slide;
       } else {
         window[updateRef] = slide;
@@ -535,18 +535,18 @@ const ViewCommon = {
    * @param {string} [config.footerNote] - 底部说明文案
    */
   showBacktestModal: function(config) {
-    var existingModal = document.getElementById(config.modalId);
+    const existingModal = document.getElementById(config.modalId);
     if (existingModal) existingModal.remove();
 
-    var overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     overlay.id = config.modalId;
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;opacity:0;animation:fadeIn 0.25s ease forwards;';
 
-    var bd = config.backtestData;
-    var hl = config.highlightColor || 'var(--primary)';
-    var labels = config.labels || { predicted: '预测', actual: '实际' };
+    const bd = config.backtestData;
+    const hl = config.highlightColor || 'var(--primary)';
+    const labels = config.labels || { predicted: '预测', actual: '实际' };
 
-    var html = '';
+    let html = '';
     html += '<div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);transform:scale(0.95);animation:scaleIn 0.25s ease forwards;">';
 
     // 标题
@@ -586,10 +586,10 @@ const ViewCommon = {
 
     (bd.details || []).forEach(function(item) {
       // 2026-06-23 优化：预测正确固定显示蓝色（#3B82F6），与 highlightColor 主题色区分
-      var hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
-      var hitColor = item.isHit ? '#3B82F6' : '#FF453A';
-      var hitIcon = item.isHit ? '✓' : '✗';
-      var fmtVal = config.formatValue ? config.formatValue(item) : { pred: item.predicted, actual: item.actual };
+      const hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
+      const hitColor = item.isHit ? '#3B82F6' : '#FF453A';
+      const hitIcon = item.isHit ? '✓' : '✗';
+      const fmtVal = config.formatValue ? config.formatValue(item) : { pred: item.predicted, actual: item.actual };
 
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
       html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
@@ -603,7 +603,7 @@ const ViewCommon = {
     html += '</div></div>';
 
     // 底部说明
-    var note = config.footerNote ||
+    const note = config.footerNote ||
       '• 最近 ' + bd.recentTests + ' 期命中 <strong>' + bd.recentHits + '</strong> 次 (' + bd.recentHitRate + '%)<br>' +
       '• 数据仅供参考，不构成投资建议';
 
@@ -616,22 +616,22 @@ const ViewCommon = {
     document.body.appendChild(overlay);
 
     // 关闭逻辑
-    var closeHandler = function() {
+    const closeHandler = function() {
       overlay.style.animation = 'fadeOut 0.2s ease forwards';
       // 性能优化：清理内部 swiper（如果存在）
-      var innerSwiper = overlay.querySelector('[data-swiper-init]');
+      const innerSwiper = overlay.querySelector('[data-swiper-init]');
       if (innerSwiper && typeof innerSwiper._cleanupSwiper === 'function') {
         innerSwiper._cleanupSwiper();
       }
       setTimeout(function() { overlay.remove(); }, 200);
     };
-    var closeBtn = document.getElementById(config.closeBtnId);
+    const closeBtn = document.getElementById(config.closeBtnId);
     if (closeBtn) closeBtn.addEventListener('click', closeHandler);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) closeHandler(); });
 
     // 注入动画样式
     if (!document.getElementById('backtestModalAnimations')) {
-      var styleSheet = document.createElement('style');
+      const styleSheet = document.createElement('style');
       styleSheet.id = 'backtestModalAnimations';
       styleSheet.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.95)}to{transform:scale(1)}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
       document.head.appendChild(styleSheet);
@@ -661,31 +661,31 @@ const ViewCommon = {
       return '<div style="padding:20px;text-align:center;color:var(--sub-text);">暂无数据</div>';
     }
 
-    var prefix = config.typePrefix || '';
-    var valueKey = config.valueKey || 'value';
-    var colors = config.colors || {};
-    var html = '';
+    const prefix = config.typePrefix || '';
+    const valueKey = config.valueKey || 'value';
+    const colors = config.colors || {};
+    let html = '';
 
     // 序列
     html += '<div class="combined-sequence-row">';
-    var reversedSeq = config.sequence.slice().reverse();
+    const reversedSeq = config.sequence.slice().reverse();
     reversedSeq.forEach(function(item) {
-      var val = item[valueKey] || item.value || '';
-      var color = colors[val] || '#999';
+      const val = item[valueKey] || item.value || '';
+      const color = colors[val] || '#999';
       html += '<span class="combined-seq-item ' + prefix + '-item" style="background:' + color + ';color:#fff;">' + val + '</span>';
     });
     html += '</div>';
 
     // 统计（支持对象格式）
     if (config.stats && typeof config.stats === 'object') {
-      var statKeys = Object.keys(config.stats);
+      const statKeys = Object.keys(config.stats);
       if (statKeys.length > 0) {
         html += '<div class="combined-stats-grid">';
         statKeys.forEach(function(key) {
-          var count = config.stats[key] || 0;
-          var total = config.total || 1;
-          var percent = total > 0 ? Math.round((count / total) * 100) : 0;
-          var color = colors[key] || '#999';
+          const count = config.stats[key] || 0;
+          const total = config.total || 1;
+          const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+          const color = colors[key] || '#999';
           html += '<div class="' + prefix + '-stat"><span class="' + prefix + '-name" style="color:' + color + '">' + key + '</span><span class="' + prefix + '-count">' + count + '</span><span class="' + prefix + '-bar-bg"><span class="' + prefix + '-bar-fill" style="width:' + percent + '%;background:' + color + ';"></span></span><span class="' + prefix + '-pct">' + percent + '%</span></div>';
         });
         html += '</div>';
@@ -696,7 +696,7 @@ const ViewCommon = {
     if (config.patterns && config.patterns.length > 0) {
       html += '<div class="combined-patterns">';
       config.patterns.forEach(function(p) {
-        var pColor = colors[p.type.charAt(0)] || '#666';
+        const pColor = colors[p.type.charAt(0)] || '#666';
         html += '<span class="pattern-tag" style="background:' + pColor + ';color:#fff;">' + p.type + p.count + '</span>';
       });
       html += '</div>';
@@ -704,7 +704,7 @@ const ViewCommon = {
 
     // 趋势
     if (config.trend && config.trend.prediction !== '-') {
-      var predColor = colors[config.trend.prediction] || '#999';
+      const predColor = colors[config.trend.prediction] || '#999';
       html += '<div class="combined-trend" data-action="' + config.trendAction + '" style="cursor:pointer;">';
       html += '<span class="trend-predict ' + prefix + '-predict" style="background:' + predColor + ';color:#fff;">' + config.trend.prediction + '</span>';
       html += '<span class="trend-conf">' + config.trend.confidence + '%</span>';
@@ -793,10 +793,10 @@ const ViewCommon = {
    */
   getZoneLabel: function(zone, window) {
     if (!zone) return '';
-    var winKey = String(window);
-    var map = ViewCommon.ZONE_RANGE_MAP[winKey];
+    const winKey = String(window);
+    const map = ViewCommon.ZONE_RANGE_MAP[winKey];
     if (!map) return zone; // 不支持的窗口（如 6 期）：原样返回
-    var range = map[zone];
+    const range = map[zone];
     if (range === undefined) return zone; // 区域不在映射表：原样返回
     return zone + range;
   }

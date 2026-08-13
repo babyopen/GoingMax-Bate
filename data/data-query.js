@@ -193,9 +193,9 @@ const DataQuery = {
    */
   hasHistoryChanged: (historyData) => {
     if (!Array.isArray(historyData)) return false;
-    var snap = DataQuery._historySnapshot;
-    var lastItem = historyData[historyData.length - 1];
-    var lastExpect = lastItem ? (lastItem.expect || '') : null;
+    const snap = DataQuery._historySnapshot;
+    const lastItem = historyData[historyData.length - 1];
+    const lastExpect = lastItem ? (lastItem.expect || '') : null;
     return snap.length !== historyData.length || snap.lastExpect !== lastExpect;
   },
 
@@ -205,7 +205,7 @@ const DataQuery = {
    */
   updateHistorySnapshot: (historyData) => {
     if (!Array.isArray(historyData)) return;
-    var lastItem = historyData[historyData.length - 1];
+    const lastItem = historyData[historyData.length - 1];
     DataQuery._historySnapshot = {
       length: historyData.length,
       lastExpect: lastItem ? (lastItem.expect || '') : null,
@@ -222,9 +222,9 @@ const DataQuery = {
    * @returns {Object} 新的统计结果
    */
   incrementalReduce: (oldData, newData, cachedStats, reducer) => {
-    var stats = cachedStats || {};
+    const stats = cachedStats || {};
     if (!Array.isArray(newData)) return stats;
-    for (var i = 0; i < newData.length; i++) {
+    for (let i = 0; i < newData.length; i++) {
       reducer(newData[i], stats);
     }
     return stats;

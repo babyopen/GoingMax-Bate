@@ -7,7 +7,7 @@
 const ViewZodiacGiongColor = {
 
   renderLatestColorStats: function(colorData) {
-    var container = document.getElementById('latestColorStatsPanel');
+    const container = document.getElementById('latestColorStatsPanel');
     if (!container) return;
 
     if (!colorData) {
@@ -15,13 +15,13 @@ const ViewZodiacGiongColor = {
       return;
     }
 
-    var colorColors = {
+    const colorColors = {
       '红': { bg: 'linear-gradient(135deg, #EF4444, #DC2626)', text: '#B91C1C', light: 'rgba(239,68,68,0.12)' },
       '蓝': { bg: 'linear-gradient(135deg, #3B82F6, #2563EB)', text: '#1D4ED8', light: 'rgba(59,130,246,0.12)' },
       '绿': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D', light: 'rgba(34,197,94,0.12)' }
     };
 
-    var html = '';
+    let html = '';
     html += '<div class="color-analysis-card">';
     html += '<div class="color-analysis-header">';
     html += '<div class="color-analysis-title">最近' + colorData.period + '期波色分析</div>';
@@ -30,19 +30,19 @@ const ViewZodiacGiongColor = {
     html += '<div class="color-analysis-content">';
 
     html += '<div class="color-sequence-row">';
-    var reversedSequence = colorData.sequence.slice().reverse();
+    const reversedSequence = colorData.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
-      var clColor = colorColors[item.color] || colorColors['红'];
+      const clColor = colorColors[item.color] || colorColors['红'];
       html += '<span class="color-seq-item" style="background:' + clColor.bg + ';color:#fff;">' + item.color + '</span>';
     });
     html += '</div>';
 
     html += '<div class="color-stats-grid">';
-    var colorOrder = ['红', '蓝', '绿'];
+    const colorOrder = ['红', '蓝', '绿'];
     colorOrder.forEach(function(cl) {
-      var count = colorData.count[cl] || 0;
-      var percent = colorData.period > 0 ? Math.round((count / colorData.period) * 100) : 0;
-      var clColor = colorColors[cl];
+      const count = colorData.count[cl] || 0;
+      const percent = colorData.period > 0 ? Math.round((count / colorData.period) * 100) : 0;
+      const clColor = colorColors[cl];
       html += '<div class="color-stat-item">';
       html += '<div class="color-stat-header" style="color:' + clColor.text + ';border-left:3px solid ' + clColor.text + ';">';
       html += '<span class="color-stat-name">' + cl + '</span>';
@@ -61,8 +61,8 @@ const ViewZodiacGiongColor = {
       html += '<div class="color-patterns-title">规律特征</div>';
       html += '<div class="color-patterns-list">';
       colorData.patterns.forEach(function(pattern) {
-        var patternCl = pattern.type.charAt(0);
-        var clColor = colorColors[patternCl] || { bg: '#666' };
+        const patternCl = pattern.type.charAt(0);
+        const clColor = colorColors[patternCl] || { bg: '#666' };
         html += '<div class="color-pattern-tag" style="background:' + clColor.bg + ';">';
         html += pattern.type;
         if (pattern.count > 1) {
@@ -75,8 +75,8 @@ const ViewZodiacGiongColor = {
     }
 
     if (colorData.trend && colorData.trend.prediction !== '-') {
-      var predCl = colorData.trend.prediction;
-      var predColor = colorColors[predCl] || colorColors['红'];
+      const predCl = colorData.trend.prediction;
+      const predColor = colorColors[predCl] || colorColors['红'];
       html += '<div class="color-trend-section" data-action="showColorBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="color-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="color-trend-prediction">';

@@ -11,8 +11,8 @@ const ViewAnalysisHistory = {
    */
   renderLatest: function(displayData) {
     if(!displayData) return;
-    var latestBalls = document.getElementById('latestBalls');
-    var curExpect = document.getElementById('curExpect');
+    const latestBalls = document.getElementById('latestBalls');
+    const curExpect = document.getElementById('curExpect');
     if(latestBalls && displayData.ballsHtml !== undefined) latestBalls.innerHTML = displayData.ballsHtml;
     if(curExpect && displayData.expect !== undefined) curExpect.innerText = displayData.expect || '--';
   },
@@ -21,26 +21,26 @@ const ViewAnalysisHistory = {
    * 渲染历史列表（接收预处理的历史HTML和行HTML）
    */
   renderHistory: function(historyData) {
-    var historyList = document.getElementById('historyList');
+    const historyList = document.getElementById('historyList');
     if(!historyList) return;
     if(historyData.isEmpty) {
       historyList.innerHTML = '<div style="padding:20px;text-align:center;">暂无历史数据</div>';
     } else {
       historyList.innerHTML = historyData.historyHtml;
     }
-    var loadMore = document.getElementById('loadMore');
+    const loadMore = document.getElementById('loadMore');
     if(loadMore) {
       loadMore.style.display = historyData.loadMoreVisible ? 'block' : 'none';
     }
   },
 
   showHistoryLoading: function() {
-    var historyList = document.getElementById('historyList');
+    const historyList = document.getElementById('historyList');
     if(historyList) historyList.innerHTML = '<div style="padding:20px;text-align:center;">加载中...</div>';
   },
 
   showHistoryError: function() {
-    var historyList = document.getElementById('historyList');
+    const historyList = document.getElementById('historyList');
     if(historyList) {
       historyList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger);">数据加载失败，请刷新重试</div>';
     }
@@ -50,7 +50,7 @@ const ViewAnalysisHistory = {
    * 更新加载更多按钮可见性
    */
   updateLoadMoreBtn: function(visible) {
-    var loadMore = document.getElementById('loadMore');
+    const loadMore = document.getElementById('loadMore');
     if(loadMore) loadMore.style.display = visible ? 'block' : 'none';
   },
 
@@ -58,7 +58,7 @@ const ViewAnalysisHistory = {
    * 更新倒计时显示
    */
   updateCountdown: function(timeStr) {
-    var countdown = document.getElementById('countdown');
+    const countdown = document.getElementById('countdown');
     if(countdown) countdown.innerText = timeStr;
   }
 

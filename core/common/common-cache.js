@@ -33,11 +33,11 @@ const CommonCache = {
    * @returns {{get: Function, set: Function, clear: Function, has: Function, size: number}}
    */
   createLRU: (maxSize) => {
-    var cache = new Map();
+    const cache = new Map();
     return {
       get: function(key) {
         if (!cache.has(key)) return undefined;
-        var value = cache.get(key);
+        const value = cache.get(key);
         cache.delete(key);
         cache.set(key, value);
         return value;
@@ -45,7 +45,7 @@ const CommonCache = {
       set: function(key, value) {
         if (cache.has(key)) cache.delete(key);
         else if (cache.size >= maxSize) {
-          var firstKey = cache.keys().next().value;
+          const firstKey = cache.keys().next().value;
           cache.delete(firstKey);
         }
         cache.set(key, value);
@@ -68,22 +68,22 @@ const CommonCache = {
    * @returns {Function} 带缓存的函数
    */
   memoize: (fn, keyFn, ttl) => {
-    var cache = new Map();
+    const cache = new Map();
     if (!keyFn) {
       keyFn = function(args) {
         try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
       };
     }
     return function() {
-      var key = keyFn(arguments);
+      const key = keyFn(arguments);
       if (cache.has(key)) {
-        var entry = cache.get(key);
+        const entry = cache.get(key);
         if (!ttl || Date.now() - entry.time < ttl) {
           return entry.value;
         }
         cache.delete(key);
       }
-      var value = fn.apply(this, arguments);
+      const value = fn.apply(this, arguments);
       cache.set(key, { value: value, time: Date.now() });
       return value;
     };
@@ -98,17 +98,17 @@ const CommonCache = {
    * @returns {Function} 带 LRU 缓存的函数
    */
   memoizeLRU: (fn, maxSize, keyFn) => {
-    var cache = CommonCache.createLRU(maxSize || 500);
+    const cache = CommonCache.createLRU(maxSize || 500);
     if (!keyFn) {
       keyFn = function(args) {
         try { return JSON.stringify(args); } catch(e) { return String(args[0]); }
       };
     }
     return function() {
-      var key = keyFn(arguments);
-      var cached = cache.get(key);
+      const key = keyFn(arguments);
+      const cached = cache.get(key);
       if (cached !== undefined) return cached;
-      var value = fn.apply(this, arguments);
+      const value = fn.apply(this, arguments);
       cache.set(key, value);
       return value;
     };
@@ -125,10 +125,10 @@ const CommonCache = {
    * @returns {Function} 节流后的函数
    */
   throttle: (fn, delay) => {
-    var timer = null;
+    let timer = null;
     return function() {
-      var args = arguments;
-      var context = this;
+      const args = arguments;
+      const context = this;
       if (!timer) {
         timer = setTimeout(function() {
           fn.apply(context, args);
@@ -145,10 +145,10 @@ const CommonCache = {
    * @returns {Function} 防抖后的函数
    */
   debounce: (fn, delay) => {
-    var timer = null;
+    let timer = null;
     return function() {
-      var args = arguments;
-      var context = this;
+      const args = arguments;
+      const context = this;
       clearTimeout(timer);
       timer = setTimeout(function() { fn.apply(context, args); }, delay);
     };
@@ -180,9 +180,9 @@ const CommonCache = {
    *   h.cancel();   // 主动取消
    */
   delayedToggle: (fn, delay) => {
-    var d = delay || 50;
-    var timer = null;
-    var handle = {
+    const d = delay || 50;
+    let timer = null;
+    const handle = {
       trigger: function() {
         if (timer) clearTimeout(timer);
         timer = setTimeout(function() {
@@ -232,8 +232,8 @@ const CommonCache = {
      */
     setTimeout: function(name, fn, delay) {
       this.clearTimeout(name);
-      var self = this;
-      var timer = setTimeout(function() {
+      const self = this;
+      const timer = setTimeout(function() {
         self._timers.delete(name);
         fn();
       }, delay);
@@ -261,7 +261,7 @@ const CommonCache = {
      */
     setInterval: function(name, fn, interval) {
       this.clearInterval(name);
-      var timer = setInterval(fn, interval);
+      const timer = setInterval(fn, interval);
       this._intervals.set(name, timer);
       return timer;
     },

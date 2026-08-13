@@ -18,11 +18,11 @@ const ViewAnalysis = {
    * @param {string} targetId - 目标元素ID
    */
   toggleDetail: function(targetId) {
-    var el = document.getElementById(targetId);
+    const el = document.getElementById(targetId);
     if(!el) return;
-    var isVisible = window.getComputedStyle(el).display !== 'none';
+    const isVisible = window.getComputedStyle(el).display !== 'none';
     el.style.display = isVisible ? 'none' : 'block';
-    var btn = document.querySelector('[data-action="toggleDetail"][data-target="' + targetId + '"]');
+    const btn = document.querySelector('[data-action="toggleDetail"][data-target="' + targetId + '"]');
     if(btn) btn.textContent = isVisible ? '展开详情' : '收起详情';
   },
 
@@ -30,18 +30,18 @@ const ViewAnalysis = {
    * 切换号码统计表显示（纯DOM操作）
    */
   toggleNumStatistics: function() {
-    var el = document.getElementById('numStatisticsBox');
+    const el = document.getElementById('numStatisticsBox');
     if(!el) return;
-    var isVisible = window.getComputedStyle(el).display !== 'none';
+    const isVisible = window.getComputedStyle(el).display !== 'none';
     el.style.display = isVisible ? 'none' : 'block';
-    var btn = document.querySelector('[data-action="toggleNumStatistics"]');
+    const btn = document.querySelector('[data-action="toggleNumStatistics"]');
     if(btn) btn.textContent = isVisible ? '展开号码统计' : '收起号码统计';
     // 展开时立即渲染（绕过 renderFullAnalysis 可能的失败路径）
     if(!isVisible) {
-      var wrap = document.getElementById('numStatisticsTable');
-      var stats = (typeof Business !== 'undefined' && Business.calcFullAnalysis) ? Business.calcFullAnalysis().numStatistics : null;
+      const wrap = document.getElementById('numStatisticsTable');
+      const stats = (typeof Business !== 'undefined' && Business.calcFullAnalysis) ? Business.calcFullAnalysis().numStatistics : null;
       if(wrap && stats && stats.length) {
-        var html = '<div class="num-stat-row num-stat-head">'
+        let html = '<div class="num-stat-row num-stat-head">'
           + '<div class="num-stat-cell">号码</div>'
           + '<div class="num-stat-cell">出现次数</div>'
           + '<div class="num-stat-cell">出现概率</div>'
@@ -50,9 +50,9 @@ const ViewAnalysis = {
           + '<div class="num-stat-cell">最小间隔</div>'
           + '<div class="num-stat-cell">当前遗漏</div>'
           + '</div>';
-        for(var i = 0; i < stats.length; i++) {
-          var ns = stats[i];
-          var colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
+        for(let i = 0; i < stats.length; i++) {
+          const ns = stats[i];
+          const colorClass = (ns.count >= 4) ? 'hot' : (ns.count >= 2) ? 'warm' : (ns.count >= 1) ? 'normal' : 'cold';
           html += '<div class="num-stat-row num-stat-' + colorClass + '">'
             + '<div class="num-stat-cell num-stat-num">' + ns.num + '</div>'
             + '<div class="num-stat-cell">' + ns.count + '</div>'
@@ -92,11 +92,42 @@ const ViewAnalysis = {
    * @param {Object} vals
    */
   syncSelectors: function(vals) {
-    if(vals.zodiacAnalyzeSelect) { var el = document.getElementById('zodiacAnalyzeSelect'); if(el) el.value = vals.zodiacAnalyzeSelect; }
-    if(vals.zodiacCustomNum !== undefined) { var el = document.getElementById('zodiacCustomNum'); if(el) el.value = vals.zodiacCustomNum; }
-    if(vals.analyzeSelect) { var el = document.getElementById('analyzeSelect'); if(el) el.value = vals.analyzeSelect; }
-    if(vals.customNum !== undefined) { var el = document.getElementById('customNum'); if(el) el.value = vals.customNum; }
-    if(vals.customNumCountVisible !== undefined) { var el = document.getElementById('customNumCount'); if(el) el.style.display = vals.customNumCountVisible ? 'inline-block' : 'none'; }
+    if(vals.zodiacAnalyzeSelect) { const el = document.getElementById('zodiacAnalyzeSelect'); if(el) el.value = vals.zodiacAnalyzeSelect; }
+    if(vals.zodiacCustomNum !== undefined) { const el = document.getElementById('zodiacCustomNum'); if(el) el.value = vals.zodiacCustomNum; }
+    if(vals.analyzeSelect) { const el = document.getElementById('analyzeSelect'); if(el) el.value = vals.analyzeSelect; }
+    if(vals.customNum !== undefined) { const el = document.getElementById('customNum'); if(el) el.value = vals.customNum; }
+    if(vals.customNumCountVisible !== undefined) { const el = document.getElementById('customNumCount'); if(el) el.style.display = vals.customNumCountVisible ? 'inline-block' : 'none'; }
+  },
+
+  /**
+   * 注入"直播"按钮到"刷新历史"按钮旁边（纯DOM操作）
+   * 两个按钮组成按钮组靠右对齐
+   */
+  injectLiveBtn: function() {
+    const refreshBtn = document.querySelector('[data-action="refreshHistory"]');
+    if(!refreshBtn) return;
+    // 幂等检查：已注入则跳过（检查父节点是否是按钮组）
+    if(refreshBtn.parentNode && refreshBtn.parentNode.style && refreshBtn.parentNode.style.marginLeft === 'auto') return;
+
+    // 创建按钮组容器，让两个按钮靠右
+    const btnGroup = document.createElement('div');
+    btnGroup.style.display = 'flex';
+    btnGroup.style.gap = '8px';
+    btnGroup.style.marginLeft = 'auto';
+
+    // 把刷新按钮移到按钮组里
+    const parent = refreshBtn.parentNode;
+    parent.insertBefore(btnGroup, refreshBtn);
+    btnGroup.appendChild(refreshBtn);
+
+    // 创建直播按钮
+    const liveBtn = document.createElement('button');
+    liveBtn.className = 'analysis-refresh-btn';
+    liveBtn.setAttribute('data-action', 'openLive');
+    liveBtn.textContent = '直播';
+    liveBtn.style.background = 'var(--primary, #007AFF)';
+
+    btnGroup.appendChild(liveBtn);
   }
 
 };

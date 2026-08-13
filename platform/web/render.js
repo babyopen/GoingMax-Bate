@@ -61,7 +61,7 @@ const Render = {
       if (!Render._tagByGroupCache || Render._tagByGroupCacheInvalid) {
         Render._tagByGroupCache = {};
         document.querySelectorAll('.tag[data-group]').forEach(function(tag) {
-          var tg = tag.dataset.group;
+          const tg = tag.dataset.group;
           if (!Render._tagByGroupCache[tg]) Render._tagByGroupCache[tg] = [];
           Render._tagByGroupCache[tg].push(tag);
         });
@@ -107,7 +107,7 @@ const Render = {
         });
 
         // 更新锁定按钮样式（2026-06-21 优化：用缓存的 allLockBtns 查找）
-        let lockBtn = allLockBtns.find(btn => (btn.dataset.group || '').split(',').includes(g));
+        const lockBtn = allLockBtns.find(btn => (btn.dataset.group || '').split(',').includes(g));
         if (lockBtn) {
           const btnGroups = (lockBtn.dataset.group || '').split(',');
           const anyLocked = btnGroups.some(bg => (state.locked[bg] || []).length > 0);
