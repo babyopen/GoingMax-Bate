@@ -988,10 +988,30 @@ const Business = {
    * @returns {string} HTML字符串
    */
   buildBall: (num, color, zodiac) => {
+    // 2026-07-26：通过号码 → 五行映射，显示 "生肖/五行" 格式（如：09/金）
+    //   使用用户提供的五行表（1-49 五行对应，2026-07-26 终版）：
+    //     金: 4,5,12,13,26,27,34,35,42,43
+    //     木: 8,9,16,17,24,25,38,39,46,47
+    //     水: 1,14,15,22,23,30,31,44,45
+    //     火: 2,3,10,11,18,19,32,33,40,41,48,49
+    //     土: 6,7,20,21,28,29,36,37
+    const NUM_WUXING = Business._NUM_WUXING || (Business._NUM_WUXING = {
+      '金': [4,5,12,13,26,27,34,35,42,43],
+      '木': [8,9,16,17,24,25,38,39,46,47],
+      '水': [1,14,15,22,23,30,31,44,45],
+      '火': [2,3,10,11,18,19,32,33,40,41,48,49],
+      '土': [6,7,20,21,28,29,36,37]
+    });
+    const n = Number(num);
+    let wuxing = '';
+    for (const wx in NUM_WUXING) {
+      if (NUM_WUXING[wx].indexOf(n) !== -1) { wuxing = wx; break; }
+    }
+    const zodiacLabel = wuxing ? (zodiac + '/' + wuxing) : zodiac;
     return `
     <div class="ball-item">
       <div class="ball ${color}">${num}</div>
-      <div class="ball-zodiac">${zodiac}</div>
+      <div class="ball-zodiac">${zodiacLabel}</div>
     </div>`;
   },
 
