@@ -7,6 +7,8 @@
  * 拆分原则（只新增不破坏）：
  * - 原 ViewFilter.refreshQuickNav() 调用方式完全保留（通过文件末尾的 Object.assign 挂载）
  * - _navConfigs 从 view-filter.js 搬入此处
+ *
+ * 2026-08-14 新增：profile 页书签列表展示 + 添加按钮注入到快捷导航栏
  */
 const ViewQuickNav = {
   /**
@@ -41,11 +43,8 @@ const ViewQuickNav = {
       { label: 'TongJi', type: 'tab', page: 'random', tabName: 'tongji' }
     ],
     profile: [
-      { label: '我的', type: 'tab', page: 'profile', tabName: 'mine' },
-      { label: '官方', type: 'tab', page: 'profile', tabName: 'official' },
-      { label: '凤凰', type: 'tab', page: 'profile', tabName: 'phoenix' },
-      { label: '大仙', type: 'tab', page: 'profile', tabName: 'daxian' },
-      { label: 'Max', type: 'tab', page: 'profile', tabName: 'max' }
+      // 2026-08-14 调整：「我的」tab 已移除（用户要求），书签入口直接承担导航作用
+      { label: '+书签', type: 'bookmark', id: 'bookmarkAddBtn' }
     ]
   },
 
@@ -81,12 +80,38 @@ const ViewQuickNav = {
         if (currentActiveTab && cfg.tabName === currentActiveTab) {
           btn.classList.add('active');
         }
+      } else if (cfg.type === 'bookmark') {
+        // 2026-08-14 新增：书签添加按钮（不参与激活高亮逻辑）
+        btn.dataset.navType = 'bookmark';
+        btn.id = cfg.id || 'bookmarkAddBtn';
+        // 2026-08-14 调整：按钮内容改为 Font Awesome 图标（fa-bookmark）
+        // 长按入口仍由事件层识别 #bookmarkAddBtn，单击弹输入框
+        btn.setAttribute('title', '添加书签');
+        btn.setAttribute('aria-label', '添加书签');
+        // 图标按钮更紧凑：方形小尺寸 + 图标居中
+        btn.style.padding = '8px 12px';
+        btn.style.minWidth = '40px';
+        btn.style.display = 'inline-flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.fontSize = '14px';
       }
-      btn.textContent = cfg.label;
+      // 内容渲染：bookmark 类型使用图标，其他类型用文本
+      if (cfg.type === 'bookmark') {
+        // 2026-08-14 调整：图标改为「圆圈内 + 号」（fa-circle-plus）
+        btn.innerHTML = '<i class="fa-solid fa-circle-plus"></i>';
+      } else {
+        btn.textContent = cfg.label;
+      }
       fragment.appendChild(btn);
     });
     navTabs.innerHTML = '';
     navTabs.appendChild(fragment);
+
+    // 2026-08-14 新增：profile 页渲染书签标签到快捷导航栏内
+    if (pageKey === 'profile' && typeof ViewBookmark !== 'undefined') {
+      ViewBookmark.renderBookmarkTagsIntoNav(navTabs);
+    }
   }
 };
 

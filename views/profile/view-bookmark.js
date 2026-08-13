@@ -1,8 +1,8 @@
 /**
  * 视图层：用户书签管理（2026-07-04 新增）
  * 职责：
- *   1. 在个人中心页「我的」面板注入书签管理卡片（含书签列表 + iframe 容器）
- *   2. 渲染书签列表
+ *   1. 在个人中心页「我的」面板注入书签管理卡片（仅保留 iframe 容器）
+ *   2. 渲染书签标签到快捷导航栏内（#navTabs）
  *   3. 显示/隐藏书签输入弹窗（双输入：标题 + URL）
  *   4. iframe 加载书签 URL
  *
@@ -10,6 +10,9 @@
  *   ❌ 禁止业务计算（URL 校验交由 BusinessBookmark）
  *   ❌ 禁止写存储/状态变更（交由 BusinessBookmark）
  *   ✅ 只做 DOM 渲染与展示
+ *
+ * 2026-08-14 变更：书签列表从「我的」面板迁移到快捷导航栏；
+ *                 「+书签」按钮（#bookmarkAddBtn）也在快捷导航栏内。
  */
 const ViewBookmark = {
 
@@ -18,29 +21,37 @@ const ViewBookmark = {
   // ============================================================
   // 2026-07-04 新增：HTML 构造函数（纯字符串拼接，从原函数拆出）
   // 目的：降低原函数复杂度，提升可读性；原函数改为调用此处
+  // 2026-08-14 调整：移除书签列表部分，仅保留 iframe 容器
   // ============================================================
 
   /**
-   * 构造书签管理卡片主体 HTML（含 list 容器 + iframe 容器）
-   * @param {string} listHtml - 书签列表 HTML（已由 renderListHtml 生成）
+   * 构造书签管理卡片主体 HTML
+   * 2026-08-14 调整：去除 .card / .card-body 嵌套，只保留 #bookmarkIframeWrap 一个容器
    * @returns {string}
    */
-  _buildCardBodyHtml: function(listHtml) {
-    return '<div class="card-body" id="bookmarkCardBody" ' +
-      'style="display:flex;flex-direction:column;min-height:calc(100vh - 80px);">' +
-      '<div id="bookmarkList">' + listHtml + '</div>' +
-      // 2026-07-04 优化：标签容器 id，供 refreshListPatch 精确选中（替代脆性 querySelector）
-      '<div id="bookmarkIframeWrap" style="display:none;flex:1;min-height:0;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-          '<div id="bookmarkIframeTitle" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>' +
-          '<button data-action="closeBookmarkIframe" ' +
-            'style="padding:4px 10px;background:var(--bg-secondary);border:none;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-secondary);">关闭</button>' +
-        '</div>' +
-        '<iframe id="bookmarkIframe" ' +
-          'sandbox="allow-scripts allow-forms allow-popups allow-same-origin" ' +
-          'style="width:100%;height:100%;min-height:calc(100vh - 160px);border:1px solid var(--border);border-radius:8px;background:#fff;">' +
-        '</iframe>' +
-      '</div>' +
+  _buildCardBodyHtml: function() {
+    // 悬浮按钮通用样式：右上角圆形半透明背景，绝对定位
+    var floatBtnBase = 'position:absolute;top:8px;width:36px;height:36px;border:none;border-radius:50%;' +
+      'background:rgba(0,0,0,0.55);color:#fff;cursor:pointer;z-index:10;' +
+      'display:flex;align-items:center;justify-content:center;font-size:16px;' +
+      'box-shadow:0 2px 6px rgba(0,0,0,0.3);';
+    return '<div id="bookmarkIframeWrap" style="display:none;width:100%;height:100%;min-height:0;position:relative;">' +
+      '<iframe id="bookmarkIframe" ' +
+        'sandbox="allow-scripts allow-forms allow-popups allow-same-origin" ' +
+        'style="position:absolute;top:0;left:0;width:100%;height:100%;border:1px solid var(--border);border-radius:8px;background:#fff;">' +
+      '</iframe>' +
+      // 2026-08-14 新增：刷新悬浮按钮（右上角偏左）
+      '<button data-action="refreshBookmarkIframe" ' +
+        'title="刷新当前页面" aria-label="刷新" ' +
+        'style="' + floatBtnBase + 'right:52px;">' +
+        '<i class="fa-solid fa-rotate-right"></i>' +
+      '</button>' +
+      // 2026-08-14 新增：关闭悬浮按钮（右上角）
+      '<button data-action="closeBookmarkIframe" ' +
+        'title="关闭" aria-label="关闭" ' +
+        'style="' + floatBtnBase + 'right:8px;">' +
+        '<i class="fa-solid fa-xmark"></i>' +
+      '</button>' +
     '</div>';
   },
 
@@ -125,7 +136,8 @@ const ViewBookmark = {
   // ============================================================
 
   /**
-   * patch 式刷新书签列表（增量更新单个 tag，避免整段 innerHTML 重建）
+   * patch 式刷新书签标签（增量更新单个 tag，避免整段 innerHTML 重建）
+   * 2026-08-14 变更：操作目标从 #bookmarkList 改为 #bookmarkTagListInNav（快捷导航栏内）
    * @param {Object} [opts]
    * @param {number} [opts.addedId] - 新增的书签 id（仅新增该节点）
    * @param {number} [opts.removedId] - 删除的书签 id（仅移除该节点）
@@ -133,8 +145,7 @@ const ViewBookmark = {
    */
   refreshListPatch: function(opts) {
     opts = opts || {};
-    const listEl = document.getElementById('bookmarkList');
-    if (!listEl) return;
+    const wrapInNav = document.getElementById('bookmarkTagListInNav');
 
     // 全量重建路径
     if (opts.full || (!opts.addedId && !opts.removedId)) {
@@ -145,13 +156,14 @@ const ViewBookmark = {
     const list = BusinessBookmark.getBookmarks();
 
     if (opts.removedId) {
-      const tagEl = listEl.querySelector('.bookmark-tag[data-bookmark-id="' + opts.removedId + '"]');
-      if (tagEl && tagEl.parentNode) {
-        tagEl.parentNode.removeChild(tagEl);
-      }
-      // 删空后回退到空提示
-      if (!list.length) {
-        listEl.innerHTML = ViewBookmark._buildEmptyListHtml();
+      const sel = '.bookmark-tag[data-bookmark-id="' + opts.removedId + '"]';
+      if (wrapInNav) {
+        const tagEl = wrapInNav.querySelector(sel);
+        if (tagEl && tagEl.parentNode) tagEl.parentNode.removeChild(tagEl);
+        // 删空后显示空提示
+        if (!list.length) {
+          wrapInNav.innerHTML = ViewBookmark._buildEmptyListHtml();
+        }
       }
       return;
     }
@@ -159,63 +171,92 @@ const ViewBookmark = {
     if (opts.addedId) {
       const target = list.find(function(b) { return b.id === opts.addedId; });
       if (!target) return;
-      // 2026-07-04 优化：用 id 精确选中（替代原脆性的 div[style*=...] 模糊匹配）
-      const wrap = document.getElementById('bookmarkTagList');
-      // 当前是空提示 → 整体替换为标签容器
-      if (!wrap) {
-        listEl.innerHTML = ViewBookmark.renderListHtml();
-        return;
+      if (wrapInNav) {
+        // 当前是空提示 → 整体替换为标签容器
+        if (!wrapInNav.querySelector('.bookmark-tag')) {
+          wrapInNav.innerHTML = ViewBookmark.renderNavListHtml();
+        } else {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = ViewBookmark._buildBookmarkTagHtml(target);
+          const newTag = tmp.firstElementChild;
+          if (newTag) wrapInNav.appendChild(newTag);
+        }
       }
-      // 已有标签容器 → 仅追加一个新 tag 节点
-      const tmp = document.createElement('div');
-      tmp.innerHTML = ViewBookmark._buildBookmarkTagHtml(target);
-      const newTag = tmp.firstElementChild;
-      if (newTag) wrap.appendChild(newTag);
     }
   },
 
   /**
    * 渲染书签管理卡片到 #profileMinePanel（动态注入，幂等）
+   * 2026-08-14 变更：去除 .card / .card-body 嵌套，直接把 #bookmarkIframeWrap 挂到面板下
    */
   renderBookmarkCard: function() {
     const panel = document.getElementById('profileMinePanel');
     if (!panel) return;
-    if (document.getElementById('bookmarkManagerCard')) return;
+    if (document.getElementById('bookmarkIframeWrap')) return;
 
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.id = 'bookmarkManagerCard';
-    // 2026-07-04 重构：HTML 字符串挪到 _buildCardBodyHtml，提升可读性
-    card.innerHTML = ViewBookmark._buildCardBodyHtml(ViewBookmark.renderListHtml());
+    // 直接创建 #bookmarkIframeWrap 容器并挂到面板下（无 card / card-body 包装）
+    const tmp = document.createElement('div');
+    tmp.innerHTML = ViewBookmark._buildCardBodyHtml().trim();
+    const wrap = tmp.firstElementChild;
+    if (wrap) panel.appendChild(wrap);
+  },
 
-    panel.appendChild(card);
+  /**
+   * 渲染快捷导航栏内的书签标签
+   * 2026-08-14 新增：把书签列表注入到 #navTabs 内，与「+书签」按钮并排显示
+   * @param {Element} navTabsEl - 快捷导航容器元素
+   */
+  renderBookmarkTagsIntoNav: function(navTabsEl) {
+    if (!navTabsEl) return;
+    // 已注入则跳过（幂等）
+    if (document.getElementById('bookmarkTagListInNav')) return;
+
+    const list = BusinessBookmark.getBookmarks();
+    const wrap = document.createElement('div');
+    wrap.id = 'bookmarkTagListInNav';
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-left:8px;';
+
+    if (!list.length) {
+      wrap.innerHTML = '';
+    } else {
+      wrap.innerHTML = list.map(function(b) { return ViewBookmark._buildBookmarkTagHtml(b); }).join('');
+    }
+
+    // 追加到「+书签」按钮之后（末尾）
+    navTabsEl.appendChild(wrap);
+  },
+
+  /**
+   * 渲染快捷导航栏内书签列表的 HTML（用于空列表/全量重建）
+   * 2026-08-14 新增
+   * @returns {string}
+   */
+  renderNavListHtml: function() {
+    const list = BusinessBookmark.getBookmarks();
+    if (!list.length) {
+      return ViewBookmark._buildEmptyListHtml();
+    }
+    return list.map(function(b) { return ViewBookmark._buildBookmarkTagHtml(b); }).join('');
   },
 
   /**
    * 渲染书签列表 HTML（从 state 读取）
+   * 2026-08-14 变更：保留方法签名以兼容旧调用，但不再被默认调用；快捷导航栏改用 renderNavListHtml
    * @returns {string} HTML 片段
    */
   renderListHtml: function() {
-    const list = BusinessBookmark.getBookmarks();
-    if (!list.length) {
-      // 2026-07-04 重构：空提示挪到 _buildEmptyListHtml
-      return ViewBookmark._buildEmptyListHtml();
-    }
-    // 2026-07-04 优化：容器加 id="bookmarkTagList"，供 refreshListPatch 精确选中
-    let html = '<div id="bookmarkTagList" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">';
-    list.forEach(function(b) {
-      html += ViewBookmark._buildBookmarkTagHtml(b);
-    });
-    html += '</div>';
-    return html;
+    return ViewBookmark.renderNavListHtml();
   },
 
   /**
    * 刷新书签列表 DOM（调用场景：新增/删除/初始化后）
+   * 2026-08-14 变更：刷新目标改为快捷导航栏内的 #bookmarkTagListInNav
    */
   refreshList: function() {
-    const listEl = document.getElementById('bookmarkList');
-    if (listEl) listEl.innerHTML = ViewBookmark.renderListHtml();
+    const wrapInNav = document.getElementById('bookmarkTagListInNav');
+    if (wrapInNav) {
+      wrapInNav.innerHTML = ViewBookmark.renderNavListHtml();
+    }
   },
 
   /**
@@ -293,26 +334,45 @@ const ViewBookmark = {
     // 2026-07-04 性能优化：新增用 patch 入口，仅插入单个 tag
     ViewBookmark.refreshListPatch({ addedId: result.bookmark.id });
     // 自动打开刚添加的书签
-    ViewBookmark.openInIframe(result.bookmark.url, result.bookmark.title);
+    ViewBookmark.openInIframe(result.bookmark.url, result.bookmark.title, result.bookmark.id);
   },
 
   /**
    * 在 iframe 中加载指定 URL
    * @param {string} url - 已校验的合法 URL
    * @param {string} title - 显示标题
+   * @param {number|string} [bookmarkId] - 书签 ID，用于识别"重复点击同一书签"以触发刷新
    */
-  openInIframe: function(url, title) {
+  openInIframe: function(url, title, bookmarkId) {
     if (!BusinessBookmark.isOpenableUrl(url)) {
       Toast.show('网址无效，无法打开');
       return;
     }
     const wrap = document.getElementById('bookmarkIframeWrap');
     const iframe = document.getElementById('bookmarkIframe');
-    const titleEl = document.getElementById('bookmarkIframeTitle');
-    if (!wrap || !iframe || !titleEl) return;
+    if (!wrap || !iframe) return;
 
-    iframe.src = url;
-    titleEl.textContent = title || url;
+    // 重复点击同一书签时强制刷新 iframe
+    // 通过 about:blank 中转 + requestAnimationFrame 确保浏览器真正重新加载页面
+    //（直接赋相同 src 浏览器不会触发 reload；用 ID 识别避免 URL 字符串比较的坑）
+    const isRepeat = (bookmarkId !== undefined && bookmarkId !== null
+      && ViewBookmark._currentBookmarkId !== undefined
+      && String(ViewBookmark._currentBookmarkId) === String(bookmarkId));
+
+    if (isRepeat) {
+      iframe.src = 'about:blank';
+      // 双层异步确保 about:blank 先提交，再赋值新 URL
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          iframe.src = url;
+        });
+      });
+    } else {
+      iframe.src = url;
+    }
+    ViewBookmark._currentBookmarkId = bookmarkId;
+    ViewBookmark._currentUrl = url;
+    // 2026-08-14：标题已不再单独显示，记录到内部供刷新等场景使用
     wrap.style.display = 'block';
     // 滚动到 iframe 区域
     setTimeout(function() {
@@ -328,6 +388,31 @@ const ViewBookmark = {
     const iframe = document.getElementById('bookmarkIframe');
     if (wrap) wrap.style.display = 'none';
     if (iframe) iframe.src = '';
+    // 关闭后清空当前书签记录，避免下次打开其它书签被误判为"重复点击"
+    ViewBookmark._currentBookmarkId = null;
+    ViewBookmark._currentUrl = null;
+  },
+
+  /**
+   * 刷新当前 iframe 中的页面（2026-08-14 新增）
+   * 通过 about:blank 中转 + 双层 requestAnimationFrame 确保浏览器真正重新加载页面
+   * 适用于悬浮"刷新"按钮调用
+   */
+  refreshIframe: function() {
+    const iframe = document.getElementById('bookmarkIframe');
+    if (!iframe) return;
+    const url = ViewBookmark._currentUrl;
+    if (!url) {
+      Toast.show('当前无可刷新的页面');
+      return;
+    }
+    // 中转刷新（与 openInIframe 中"重复点击"逻辑同源，确保稳定触发 reload）
+    iframe.src = 'about:blank';
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        iframe.src = url;
+      });
+    });
   },
 
   /**
@@ -389,10 +474,10 @@ const ViewBookmark = {
 
     document.body.appendChild(overlay);
 
-    // 自动滚动到顶部让用户能看到
+    // 自动滚动到顶部让用户能看到（2026-08-14：改滚到快捷导航栏，因书签已迁出卡片）
     setTimeout(function() {
-      const card = document.getElementById('bookmarkManagerCard');
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const nav = document.getElementById('navTabs');
+      if (nav) nav.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
   },
 
@@ -441,8 +526,9 @@ const ViewBookmark = {
    * 判定给定元素是否应该触发长按书签菜单
    * 2026-07-04 更新：返回对象 { kind, el, id?, title? }
    *   - kind: 'add' | 'bookmark' | null
-   *   - 'add': 长按个人中心页任意 .card-body 区域，弹出「输入网址跳转」入口
+   *   - 'add': 长按快捷导航栏内的「+书签」按钮，弹出「输入网址跳转」入口
    *   - 'bookmark': 长按某个书签标签按钮，弹出「删除该书签」入口
+   * 2026-08-14 变更：长按触发位置从「我的」面板迁移到快捷导航栏（#navTabs）
    * @param {Element} target - 触摸事件触发元素
    * @returns {Object|null}
    */
@@ -452,23 +538,18 @@ const ViewBookmark = {
     // 1) 优先判定书签标签按钮
     const tag = target.closest('.bookmark-tag');
     if (tag) {
-      // 不响应标签内部嵌套的 button/iframe 上的长按
       if (target.closest('button, iframe, input, textarea, [data-no-longpress]')) return null;
       const id = Number(tag.dataset.bookmarkId);
-      // 2026-07-04 修复：取最后一个 span（书签名）而非整个 div 文本
-      // 2026-07-05 更新：书签标签已移除 🔖 emoji 标识，但 lastElementChild 仍指向书签名 span，逻辑不变
       const titleNode = tag.lastElementChild;
       const title = titleNode ? (titleNode.textContent || '').trim().slice(0, 20) : '';
       return { kind: 'bookmark', el: tag, id: id, title: title };
     }
 
-    // 2) 其次判定个人中心页任意区域（保留旧「输入网址跳转」入口）
-    //    2026-07-04 适配：原 .card-body 空容器已删除，改为面板内任意空白处都触发
-    const panelArea = target.closest('#profileMinePanel');
-    if (panelArea) {
-      // 但命中了书签标签的，会被上面的 .bookmark-tag 优先捕获，不会走这里
-      if (target.closest('input, textarea, button, iframe, [data-no-longpress]')) return null;
-      return { kind: 'add', el: panelArea };
+    // 2) 其次判定快捷导航栏内的「+书签」按钮（2026-08-14 变更）
+    //    原逻辑是「#profileMinePanel 任意空白处」，现改为「+书签」按钮自身长按
+    const addBtn = target.closest('#bookmarkAddBtn');
+    if (addBtn) {
+      return { kind: 'add', el: addBtn };
     }
 
     return null;

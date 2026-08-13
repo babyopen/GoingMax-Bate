@@ -69,7 +69,7 @@ const ViewProfile = {
 
   /**
    * 切换『我的』页面子 tab 的 UI（仅渲染 DOM，不做业务）
-   * @param {string} tab - mine / official / phoenix / daxian / max
+   * @param {string} tab - mine
    */
   switchProfileTabUI: function(tab) {
     // 切到「我的」时确保书签卡片已注入（幂等）
@@ -80,11 +80,7 @@ const ViewProfile = {
       tabSelector: '#profilePage .zodiac-tab-btn[data-profile-tab]',
       tabDataAttr: 'profileTab',
       panelMap: {
-        mine: 'profileMinePanel',
-        official: 'profileOfficialPanel',
-        phoenix: 'profilePhoenixPanel',
-        daxian: 'profileDaxianPanel',
-        max: 'profileMaxPanel'
+        mine: 'profileMinePanel'
       },
       navBtnSelector: '.nav-tab[data-page="profile"]'
     }, tab);

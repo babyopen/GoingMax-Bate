@@ -204,6 +204,11 @@ const EventBinder = {
           // v2.0.9 新增：主页面快捷导航里的"排除"按钮，切换到独立标签页 excludePage
           Business.switchExcludePage();
         }
+      } else if (navType === 'bookmark') {
+        // 2026-08-14 新增：快捷导航栏「+书签」按钮，单击直接弹出输入框
+        if (typeof ViewBookmark !== 'undefined' && ViewBookmark.showInputModal) {
+          ViewBookmark.showInputModal();
+        }
       }
       Business.toggleQuickNav(false);
       return;
@@ -368,7 +373,11 @@ const EventBinder = {
         const bookmarkList = (typeof BusinessBookmark !== 'undefined') ? BusinessBookmark.getBookmarks() : [];
         const bookmarkTarget = bookmarkList.find(function(b) { return b.id === bookmarkId; });
         if (bookmarkTarget && typeof ViewBookmark !== 'undefined') {
-          ViewBookmark.openInIframe(bookmarkTarget.url, bookmarkTarget.title);
+          ViewBookmark.openInIframe(bookmarkTarget.url, bookmarkTarget.title, bookmarkId);
+          // 2026-08-14 修复：书签标签位于 #navTabs 内，点击后需收起快捷导航，避免遮挡 iframe
+          if (typeof Business !== 'undefined' && Business.toggleQuickNav) {
+            Business.toggleQuickNav(false);
+          }
         }
       }
       // 删除书签
@@ -390,6 +399,12 @@ const EventBinder = {
       else if(action === 'closeBookmarkIframe') {
         if (typeof ViewBookmark !== 'undefined') {
           ViewBookmark.closeIframe();
+        }
+      }
+      // 2026-08-14 新增：刷新当前 iframe 页面（悬浮图标按钮触发）
+      else if(action === 'refreshBookmarkIframe') {
+        if (typeof ViewBookmark !== 'undefined' && ViewBookmark.refreshIframe) {
+          ViewBookmark.refreshIframe();
         }
       }
       // 关闭长按菜单
@@ -671,13 +686,27 @@ const EventBinder = {
 
   /**
    * 点击空白关闭快捷导航
+   * 2026-08-14 增强：
+   *   - 原逻辑：仅 #quickNav 外点击才收起
+   *   - 增强后：#quickNav 内点击非业务元素（容器空白处/padding）也收起
+   *     业务元素（.nav-tab / .bookmark-tag）由各自 handler 自行决定是否收起
    * @param {MouseEvent} e - 点击事件
    */
   handleClickOutside: (e) => {
-    if(DOM.navToggle && DOM.navToggle.contains(e.target)) return;
-    // 底部导航栏按钮点击时跳过收起（由 switchBottomNav 中的 setTimeout 控制展开/收起）
-    if(e.target.closest('.bottom-nav-item')) return;
-    if(DOM.quickNav && !DOM.quickNav.contains(e.target) && DOM.quickNav.classList.contains('expanded')){
+    const target = e.target;
+    if (!DOM.quickNav || !DOM.quickNav.classList.contains('expanded')) return;
+    // 1) 切换按钮自身：跳过（由 #navToggle 自己的 handler 处理切换）
+    if (DOM.navToggle && DOM.navToggle.contains(target)) return;
+    // 2) 底部导航栏按钮：跳过（由 switchBottomNav 中的 setTimeout 控制展开/收起）
+    if (target.closest('.bottom-nav-item')) return;
+    // 3) #quickNav 外：收起
+    if (!DOM.quickNav.contains(target)) {
+      Business.toggleQuickNav(false);
+      return;
+    }
+    // 4) #quickNav 内：判断是否为"业务元素"，非业务元素（容器空白/padding）则收起
+    const isBusinessEl = target.closest('.nav-tab, .bookmark-tag, .bookmark-tag-list, [data-no-collapse]');
+    if (!isBusinessEl) {
       Business.toggleQuickNav(false);
     }
   },
@@ -797,7 +826,7 @@ const EventBinder = {
 
   /**
    * 我的页面标签切换（委托 ViewProfile 渲染）
-   * @param {string} tab - 标签名称：mine / official / phoenix / daxian / max
+   * @param {string} tab - 标签名称：mine
    */
   _switchProfileTab: function(tab) {
     // 委托视图层渲染（与 ViewProfile.switchProfileTabUI 行为一致）
@@ -808,40 +837,6 @@ const EventBinder = {
     // 保留书签管理卡片的注入（由 ViewProfile.switchProfileTabUI 内部触发）
     // 记录『我的』页面当前子 tab（用于再次进入『我的』时恢复）
     Storage.saveLastTab('profile', tab);
-    // 懒加载iframe
-    if (tab === 'official') {
-      const officialFrame = document.getElementById('officialFrame');
-      const officialLoading = document.getElementById('officialLoading');
-      if (officialFrame && !officialFrame.src) {
-        officialFrame.src = 'https://sjz-xl2.09567k.app:7022/#dh2/';
-        officialFrame.style.display = 'block';
-        officialLoading.style.display = 'none';
-      }
-    } else if (tab === 'phoenix') {
-      const phoenixFrame = document.getElementById('phoenixFrame');
-      const phoenixLoading = document.getElementById('phoenixLoading');
-      if (phoenixFrame && !phoenixFrame.src) {
-        phoenixFrame.src = 'https://176744.com';
-        phoenixFrame.style.display = 'block';
-        phoenixLoading.style.display = 'none';
-      }
-    } else if (tab === 'daxian') {
-      const daxianFrame = document.getElementById('daxianFrame');
-      const daxianLoading = document.getElementById('daxianLoading');
-      if (daxianFrame && !daxianFrame.src) {
-        daxianFrame.src = 'https://rk3lx78d.66660149m.app:2026/66660149.app#66660149://01492026.com';
-        daxianFrame.style.display = 'block';
-        daxianLoading.style.display = 'none';
-      }
-    } else if (tab === 'max') {
-      const maxFrame = document.getElementById('maxFrame');
-      const maxLoading = document.getElementById('maxLoading');
-      if (maxFrame && !maxFrame.src) {
-        maxFrame.src = 'https://15549.rs-k1-gif.lzws0931.com/advice/site.k1/#15549';
-        maxFrame.style.display = 'block';
-        maxLoading.style.display = 'none';
-      }
-    }
   },
 
   /**

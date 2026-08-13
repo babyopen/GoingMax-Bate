@@ -311,7 +311,7 @@ const Storage = {
     profile: {
       key: 'profileLastTab',
       default: 'mine',
-      valid: ['mine', 'official', 'phoenix', 'daxian', 'max']
+      valid: ['mine']
     },
     analysis: {
       key: 'analysisLastTab',
@@ -322,7 +322,8 @@ const Storage = {
       key: 'randomLastTab',
       default: 'ultimate',
       // 注意：『主推』(main) 是从快捷导航进入的（顶部 tab 栏未列出），但需要支持记忆
-      valid: ['main', 'ultimate', 'predict', 'giong']
+      // 2026-08-14 新增：tongji 资料统计标签页（用户需求"切换其他页面后再次点击资料保留 TongJi 页"）
+      valid: ['main', 'ultimate', 'predict', 'giong', 'tongji']
     }
   }),
 
