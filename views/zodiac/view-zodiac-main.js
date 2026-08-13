@@ -123,11 +123,13 @@ const ViewZodiacMain = {
         cardHtml += '<span class="sw-score-card-miss">' + (item.miss !== undefined ? '遗漏' + item.miss + '期' : '—') + '</span>';
         cardHtml += '</div>';
         // 窗口区域行：4个窗口横排
+        // 2026-08-14 标注每个区域次数下限：调用 ViewCommon.getZoneLabel 把区域名渲染为「区域+次数下限」
+        //   例：item.zone12='冷号区' → '冷号区0'；item.zone36='穿插区' → '穿插区2'
         cardHtml += '<div class="sw-score-card-zones">';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">6期</span><span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + item.zone6 + item.window6 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">12期</span><span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + item.zone12 + item.window12 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">24期</span><span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + item.zone24 + item.window24 + '</span></div>';
-        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">36期</span><span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + item.zone36 + item.window36 + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">6期</span><span class="freq-zone-tag ' + zoneClass6 + '" style="font-size:10px;padding:0 4px;">' + ViewCommon.getZoneLabel(item.zone6, 6) + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">12期</span><span class="freq-zone-tag ' + zoneClass12 + '" style="font-size:10px;padding:0 4px;">' + ViewCommon.getZoneLabel(item.zone12, 12) + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">24期</span><span class="freq-zone-tag ' + zoneClass24 + '" style="font-size:10px;padding:0 4px;">' + ViewCommon.getZoneLabel(item.zone24, 24) + '</span></div>';
+        cardHtml += '<div class="sw-zone-item"><span class="sw-zone-label">36期</span><span class="freq-zone-tag ' + zoneClass36 + '" style="font-size:10px;padding:0 4px;">' + ViewCommon.getZoneLabel(item.zone36, 36) + '</span></div>';
         cardHtml += '</div>';
         cardHtml += '</div>';
       });

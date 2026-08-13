@@ -38,6 +38,15 @@ const ViewZodiacGiong = {
 
     var zoneOrder = ['封顶区', '降权区', '过热区', '热号区', '活跃区', '穿插区', '冷号区'];
 
+    // 2026-08-14 按窗口过滤分区：12 期窗口业务侧只有 5 个分区（无"过热区/活跃区"），其他窗口保留 7 个分区
+    //   数据来源：business-sliding-window.js 中 getZone12/24/36 的返回集合
+    var ZONES_12 = ['封顶区', '降权区', '热号区', '穿插区', '冷号区'];
+    var zoneOrderByWindow = {
+      'p12': ZONES_12,
+      'p24': zoneOrder,
+      'p36': zoneOrder
+    };
+
     var html = '';
     html += '<div class="freq-panels-container" id="freqPanelsContainer">';
 
@@ -50,7 +59,8 @@ const ViewZodiacGiong = {
       }
 
       var grouped = {};
-      zoneOrder.forEach(function(z) { grouped[z] = []; });
+      var zonesForWindow = zoneOrderByWindow[period.key] || zoneOrder;
+      zonesForWindow.forEach(function(z) { grouped[z] = []; });
       data.forEach(function(item) {
         grouped[item.zone].push(item);
       });
@@ -58,13 +68,14 @@ const ViewZodiacGiong = {
       var display = period.key === 'p12' ? '' : ' style="display:none;"';
       html += '<div class="freq-panel" data-freq-panel="' + period.key + '"' + display + '>';
 
-      zoneOrder.forEach(function(zone) {
-        var items = grouped[zone];
-        if (!items || !items.length) return;
+      zonesForWindow.forEach(function(zone) {
+        var items = grouped[zone] || [];
+        // 2026-08-14 改为始终渲染区域标题（含 0 个生肖的"空区域"），便于用户查看次数区间
+        var winSize = parseInt(String(period.key).replace(/\D/g, ''), 10) || 12;
 
         html += '<div class="zone-section">';
         html += '<div class="zone-section-header">';
-        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zone, '') + '">' + zone + '</span>';
+        html += '<span class="freq-zone-tag ' + ViewCommon.getZoneClass(zone, '') + '">' + ViewCommon.getZoneLabel(zone, winSize) + '</span>';
         html += '<span class="zone-count-badge">' + items.length + '个</span>';
         html += '</div>';
         html += '<div class="zone-card-list">';
@@ -385,7 +396,8 @@ const ViewZodiacGiong = {
     html += '<span class="zone-change-title">区域变动追踪（' + wsLabel + '）</span>';
     if (changeData.topZone && changeData.topCount > 0) {
       html += '<span class="zone-change-top-info">';
-      html += '变动最多：<span class="freq-zone-tag ' + ViewCommon.getZoneClass(changeData.topZone, '') + '">' + changeData.topZone + '</span>';
+      // 2026-08-14 标注每个区域次数下限（区域变动追踪同样基于 changeData.windowSize）
+      html += '变动最多：<span class="freq-zone-tag ' + ViewCommon.getZoneClass(changeData.topZone, '') + '">' + ViewCommon.getZoneLabel(changeData.topZone, changeData.windowSize) + '</span>';
       html += '<span class="zone-change-top-count">×' + changeData.topCount + '</span>';
       html += '</span>';
     }
