@@ -96,11 +96,8 @@ const LiveModal = {
             padding: 20px;
             box-sizing: border-box;
           ">
-            <div style="margin-bottom: 16px; font-size: 48px;">📺</div>
-            <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">直播未开始</div>
             <div style="font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.8);">
-              直播时间为每晚 <span style="color: #ff4757; font-weight: 700; font-size: 18px;">21:30 - 21:38</span><br>
-              敬请查看
+              直播时间为每晚 <span style="color: #ff4757; font-weight: 700; font-size: 18px;">21:30 - 21:38</span>
             </div>
             <div id="live-modal-countdown" style="margin-top: 16px; font-size: 13px; color: rgba(255,255,255,0.6);"></div>
             <button id="live-modal-refresh" style="
@@ -323,7 +320,7 @@ const LiveModal = {
     } else {
       timeText = `距离直播开始还有 ${minutes}分${seconds}秒`;
     }
-    this._countdownEl.textContent = timeText + '，到点将自动刷新';
+    this._countdownEl.textContent = timeText + '自动刷新';
   },
 
   /**
