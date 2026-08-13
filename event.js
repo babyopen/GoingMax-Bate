@@ -301,6 +301,19 @@ const EventBinder = {
           Business.FilterGroup.deleteGroup(groupId);
         }
       }
+      else if(action === 'clearAllGroups') {
+        // 2026-07-26：先弹确认窗，避免误操作（用户需求"一键清除所有分组"）
+        if (typeof GIONGBETA_CONFIRM_MODAL !== 'undefined') {
+          GIONGBETA_CONFIRM_MODAL.show('确定一键清除所有分组？\n仅保留默认分组，当前未保存的修改将一并丢失', (ok) => {
+            if (!ok) return;
+            if (typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.clearAllGroups === 'function') {
+              Business.FilterGroup.clearAllGroups();
+            }
+          });
+        } else if (typeof Business.FilterGroup === 'object' && typeof Business.FilterGroup.clearAllGroups === 'function') {
+          Business.FilterGroup.clearAllGroups();
+        }
+      }
       // 复制主推与备选生肖（终极推荐卡片右上角按钮，DOM 顺序拼接，空格分隔）
       else if(action === 'copyMainZodiacs') {
         const card = actionBtn.closest('.db-result-container');

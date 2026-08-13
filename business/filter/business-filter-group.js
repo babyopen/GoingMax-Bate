@@ -199,13 +199,113 @@ const FilterGroup = {
 
   /**
    * 加载分组（从 storage 还原到 state），幂等
+   * 2026-07-26：始终保证存在名为"默认"的内置分组（首个分组）
+   *   - storage 中若无任何分组 → 自动创建"默认"分组
+   *   - storage 中存在分组但第一个不是"默认" → 在最前面插入"默认"分组，不影响已有分组
    */
   loadGroupsFromStorage: () => {
     const rawList = Storage.get(Storage.KEYS.FILTER_GROUPS, []);
     const validList = Array.isArray(rawList) ? rawList.filter(g => g && g.id && g.name) : [];
     const rawId = Storage.get(Storage.KEYS.CURRENT_GROUP_ID, null);
     const validId = rawId && validList.some(g => g.id === rawId) ? rawId : null;
-    StateManager.setState({ filterGroups: validList, currentGroupId: validId }, false);
+    // 确保存在默认分组（始终为第一个）
+    const finalList = FilterGroup._ensureDefaultGroup(validList);
+    const finalId = validId && finalList.some(g => g.id === validId) ? validId : finalList[0].id;
+    StateManager.setState({ filterGroups: finalList, currentGroupId: finalId }, false);
+  },
+
+  /**
+   * 确保分组列表中第一个为"默认"分组（私有 helper）
+   * - 若列表为空 → 创建默认分组并返回 [default]
+   * - 若列表第一个不是"默认" → 找到名为"默认"的分组提到首位，若不存在则插入新的到首位
+   * - 否则原样返回
+   * @param {Array} list - 现有分组列表
+   * @returns {Array} 含默认分组且默认分组在首位的新列表
+   */
+  _ensureDefaultGroup: (list) => {
+    const DEFAULT_NAME = '默认';
+    if (!Array.isArray(list) || list.length === 0) {
+      // 空列表：创建默认分组
+      return [{
+        id: 'g_default',
+        name: DEFAULT_NAME,
+        createdAt: Date.now(),
+        ...FilterGroup._defaultSnapshot()
+      }];
+    }
+    if (list[0] && list[0].name === DEFAULT_NAME) {
+      return list; // 第一个就是默认分组
+    }
+    // 在列表中查找名为"默认"的分组
+    const defaultIdx = list.findIndex(g => g && g.name === DEFAULT_NAME);
+    if (defaultIdx >= 0) {
+      // 找到则提到首位
+      const copy = list.slice();
+      const [defaultGroup] = copy.splice(defaultIdx, 1);
+      return [defaultGroup, ...copy];
+    }
+    // 不存在则插入新的默认分组到首位
+    const newDefault = {
+      id: 'g_default',
+      name: DEFAULT_NAME,
+      createdAt: Date.now(),
+      ...FilterGroup._defaultSnapshot()
+    };
+    return [newDefault, ...list];
+  },
+
+  /**
+   * 一键清除所有分组，只保留默认分组（弹窗确认）
+   * 2026-07-26：用户需求"右边添加一个一键清除所有分组，只保留一个默认分组"
+   * - 调用方（如 event.js）需先弹确认窗
+   * - 保留默认分组（不论是否为第一个），其他分组全部删除
+   * - 切换到默认分组并应用其默认快照
+   */
+  clearAllGroups: () => {
+    const s = StateManager._state;
+    const list = s.filterGroups || [];
+    const DEFAULT_NAME = '默认';
+    // 找到默认分组（按名字）
+    const defaultGroup = list.find(g => g && g.name === DEFAULT_NAME);
+    let targetId;
+    let newList;
+    if (defaultGroup) {
+      // 保留默认分组，重置其快照为默认状态
+      const resetDefault = Object.assign({}, defaultGroup, {
+        ...FilterGroup._defaultSnapshot()
+      });
+      newList = [resetDefault];
+      targetId = resetDefault.id;
+    } else {
+      // 没有默认分组则创建一个
+      const newDefault = {
+        id: 'g_default',
+        name: DEFAULT_NAME,
+        createdAt: Date.now(),
+        ...FilterGroup._defaultSnapshot()
+      };
+      newList = [newDefault];
+      targetId = newDefault.id;
+    }
+    StateManager.setState({
+      filterGroups: newList,
+      currentGroupId: targetId,
+      ...FilterGroup._defaultSnapshot()
+    }, false);
+
+    // 同步清空 SAVED_FILTERS 等历史持久化数据
+    if (typeof Storage !== 'undefined' && Storage.remove) {
+      Storage.remove(Storage.KEYS.SAVED_FILTERS);
+    }
+
+    FilterGroup._persistGroups();
+    Render.renderFilterList();
+    Render.renderAll();
+    if (typeof ViewFilterGroup !== 'undefined') {
+      ViewFilterGroup.render();
+      ViewFilterGroup.syncLockExcludeUI(false);
+    }
+    Toast.show('已清除所有分组，仅保留默认分组');
   },
 
   /**

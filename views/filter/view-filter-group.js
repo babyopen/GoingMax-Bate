@@ -70,6 +70,19 @@ const ViewFilterGroup = {
   },
 
   /**
+   * 创建"一键清除所有分组"按钮 DOM（2026-07-26 新增）
+   */
+  _createClearBtn: () => {
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'filter-group-clear';
+    clearBtn.setAttribute('data-action', 'clearAllGroups');
+    clearBtn.setAttribute('aria-label', '一键清除所有分组');
+    clearBtn.innerHTML = '<i class="fa-solid fa-broom"></i>';
+    return clearBtn;
+  },
+
+  /**
    * 构建分组栏 DOM 片段
    */
   _buildFragment: (groups, currentId) => {
@@ -79,6 +92,7 @@ const ViewFilterGroup = {
       fragment.appendChild(ViewFilterGroup._createTabBtn(g, currentId));
     });
     fragment.appendChild(ViewFilterGroup._createAddBtn());
+    fragment.appendChild(ViewFilterGroup._createClearBtn());
     return fragment;
   },
 
@@ -126,8 +140,12 @@ const ViewFilterGroup = {
 
   /**
    * 绑定单个标签的长按事件
+   * 2026-07-26：默认分组（名为"默认"）不可长按/重命名/删除
    */
   _bindTabLongPress: (tab) => {
+    const groupName = tab.getAttribute('aria-label') || '';
+    // 默认分组禁用长按（aria-label 会包含"（当前）"后缀，需要去掉比较）
+    if (groupName.replace(/（当前）$/, '') === '默认') return;
     const state = { timer: null, triggered: false };
     const cancel = () => {
       if (state.timer) { clearTimeout(state.timer); state.timer = null; }

@@ -3142,6 +3142,28 @@
 }
 .filter-group-add:active{opacity:0.55}
 
+/* 2026-07-26：一键清除所有分组按钮（与 + 按钮并列，靠右） */
+.filter-group-clear{
+  flex-shrink:0;
+  width:30px;
+  height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed var(--border);
+  border-radius:15px;
+  background:transparent;
+  color:var(--danger);
+  font-size:13px;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  transition:color 0.15s ease, border-color 0.15s ease;
+  margin-left:4px;
+}
+.filter-group-clear:active{opacity:0.55}
+
 /* 分组长按弹出菜单（z-index 950 < 弹窗 1000/1001，避免遮挡 confirm/input 弹窗） */
 .filter-group-menu{
   position:fixed;
