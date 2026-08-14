@@ -27,6 +27,21 @@ const EventBinder = {
   TAG_CLICK_THROTTLE: 150,
   _lastTagClickTime: 0,
   _lastTagClickedEl: null,
+  // 震动反馈开关
+  _hapticEnabled: true,
+
+  /**
+   * 触觉震动反馈（统一入口）
+   * @param {number|Array} pattern - 震动模式：数字=单次震动时长(ms)，数组=震动节奏如[10,30,10]
+   */
+  hapticFeedback: function(pattern = 10) {
+    if (!this._hapticEnabled) return;
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (_) {}
+    }
+  },
 
   /**
    * 初始化所有事件绑定
@@ -204,9 +219,7 @@ const EventBinder = {
       }, 150);
       
       // 触觉反馈（如果可用）
-      if (navigator.vibrate) {
-        try { navigator.vibrate(10); } catch (_) {}
-      }
+      EventBinder.hapticFeedback(15);
       
       // 使用requestAnimationFrame确保视觉反馈先渲染
       requestAnimationFrame(() => {
@@ -234,9 +247,7 @@ const EventBinder = {
       }, 150);
       
       // 触觉反馈
-      if (navigator.vibrate) {
-        try { navigator.vibrate(10); } catch (_) {}
-      }
+      EventBinder.hapticFeedback(15);
       
       requestAnimationFrame(() => {
         Business.toggleExclude(Number(excludeTag.dataset.num));
@@ -247,6 +258,7 @@ const EventBinder = {
     // 3. 快捷导航跳转
     const navTab = target.closest('.nav-tab');
     if(navTab){
+      EventBinder.hapticFeedback(12);
       const navType = navTab.dataset.navType;
       if (navType === 'scroll') {
         const targetId = navTab.dataset.target;
@@ -289,6 +301,9 @@ const EventBinder = {
     // 6. 按钮动作处理（用枚举避免硬编码错误）
     const actionBtn = target.closest('[data-action]');
     if(actionBtn){
+      // 通用轻震动反馈
+      EventBinder.hapticFeedback(12);
+      
       const action = actionBtn.dataset.action;
       const group = actionBtn.dataset.group;
       const groups = group ? group.split(',') : [];
@@ -696,6 +711,7 @@ const EventBinder = {
     // 7. 分析标签页切换
     const analysisTabBtn = target.closest('.analysis-tab-btn[data-analysis-tab]');
     if(analysisTabBtn){
+      EventBinder.hapticFeedback(12);
       Business.switchAnalysisTab(analysisTabBtn.dataset.analysisTab);
       return;
     }
@@ -703,6 +719,7 @@ const EventBinder = {
     // 8. 加载更多历史
     const loadMoreBtn = target.closest('#loadMore');
     if(loadMoreBtn){
+      EventBinder.hapticFeedback(12);
       Business.loadMoreHistory();
       return;
     }
@@ -710,6 +727,7 @@ const EventBinder = {
     // 8.1 精选推荐回测（#zodiacFinalNum 点击）
     const finalNumEl = target.closest('#zodiacFinalNum');
     if(finalNumEl){
+      EventBinder.hapticFeedback([10, 30, 10]);
       EventBinder._showFinalBacktest();
       return;
     }
@@ -717,6 +735,7 @@ const EventBinder = {
     // 9. 资料页标签切换
     const zodiacTabBtn = target.closest('.zodiac-tab-btn[data-zodiac-tab]');
     if(zodiacTabBtn){
+      EventBinder.hapticFeedback(12);
       Business.switchZodiacTab(zodiacTabBtn.dataset.zodiacTab);
       return;
     }
@@ -724,6 +743,7 @@ const EventBinder = {
     // 9.1 我的页面标签切换
     const profileTabBtn = target.closest('.zodiac-tab-btn[data-profile-tab]');
     if(profileTabBtn){
+      EventBinder.hapticFeedback(12);
       EventBinder._switchProfileTab(profileTabBtn.dataset.profileTab);
       return;
     }
@@ -1034,12 +1054,8 @@ const EventBinder = {
 
       // 按 kind 分发：书签/面板 → ViewBookmark；标签 → toggleTagLock
       const r = EventBinder._longPressResolved;
-      // 触觉反馈（统一处理）
-      if (navigator.vibrate) {
-        try {
-          navigator.vibrate(r.kind === 'tag' ? [10, 30, 10] : 15);
-        } catch (_) {}
-      }
+      // 触觉反馈（长按使用较强震动模式）
+      EventBinder.hapticFeedback(r.kind === 'tag' ? [10, 30, 10] : 15);
       if (r.kind === 'tag') {
         StateManager.toggleTagLock(r.group, r.value);
       } else if (typeof ViewBookmark !== 'undefined') {
