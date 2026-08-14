@@ -29,17 +29,111 @@ const EventBinder = {
   _lastTagClickedEl: null,
   // 震动反馈开关
   _hapticEnabled: true,
+  // iOS设备检测
+  _isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+  // 音频反馈上下文（iOS用短点击音替代震动）
+  _audioCtx: null,
+  _audioEnabled: true,
+
+  /**
+   * 初始化音频上下文（需要用户交互后才能创建）
+   */
+  _initAudioContext: function() {
+    if (this._audioCtx || !this._audioEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        this._audioCtx = new AudioCtx();
+      }
+    } catch(_) {}
+  },
+
+  /**
+   * iOS端播放短点击音（通过Web Audio API生成，无需音频文件）
+   * @param {string} type - 反馈类型：light/medium/heavy
+   */
+  _playIOSClickSound: function(type = 'light') {
+    if (!this._audioEnabled || this._isIOS === false) return;
+    this._initAudioContext();
+    if (!this._audioCtx) return;
+    
+    try {
+      // 恢复被浏览器挂起的音频上下文
+      if (this._audioCtx.state === 'suspended') {
+        this._audioCtx.resume();
+      }
+      
+      const oscillator = this._audioCtx.createOscillator();
+      const gainNode = this._audioCtx.createGain();
+      
+      // 根据类型调整频率和音量
+      let freq = 800;
+      let duration = 0.03;
+      let volume = 0.08;
+      
+      if (type === 'medium') {
+        freq = 600;
+        duration = 0.04;
+        volume = 0.1;
+      } else if (type === 'heavy') {
+        freq = 400;
+        duration = 0.06;
+        volume = 0.12;
+      }
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this._audioCtx.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine';
+      
+      // 快速衰减包络，模拟机械点击声
+      const now = this._audioCtx.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume, now + 0.005);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    } catch(_) {}
+  },
 
   /**
    * 触觉震动反馈（统一入口）
+   * Android: 使用系统震动API
+   * iOS: 使用点击音效 + 视觉动画替代（iOS Safari不支持navigator.vibrate）
    * @param {number|Array} pattern - 震动模式：数字=单次震动时长(ms)，数组=震动节奏如[10,30,10]
+   * @param {Element} [targetEl] - 可选：触发元素，用于在iOS上添加视觉反馈
    */
-  hapticFeedback: function(pattern = 10) {
+  hapticFeedback: function(pattern = 10, targetEl = null) {
     if (!this._hapticEnabled) return;
-    if (navigator.vibrate) {
+    
+    // 判断反馈强度类型
+    let type = 'light';
+    if (Array.isArray(pattern)) {
+      type = 'heavy';
+    } else if (pattern >= 15) {
+      type = 'medium';
+    }
+    
+    // 1. Android/支持vibrate的设备：使用系统震动
+    if (navigator.vibrate && !this._isIOS) {
       try {
         navigator.vibrate(pattern);
       } catch (_) {}
+    }
+    
+    // 2. iOS设备：播放点击音效
+    if (this._isIOS) {
+      this._playIOSClickSound(type);
+    }
+    
+    // 3. 所有平台：如果传入了目标元素，添加短暂的脉冲视觉反馈
+    if (targetEl) {
+      targetEl.classList.add('haptic-pulse');
+      setTimeout(() => {
+        if (targetEl) targetEl.classList.remove('haptic-pulse');
+      }, type === 'heavy' ? 200 : 120);
     }
   },
 
@@ -218,8 +312,8 @@ const EventBinder = {
         if (tag) tag.classList.remove('tag-clicking');
       }, 150);
       
-      // 触觉反馈（如果可用）
-      EventBinder.hapticFeedback(15);
+      // 触觉反馈（如果可用）- iOS用音效+脉冲，Android用震动
+      EventBinder.hapticFeedback(15, tag);
       
       // 使用requestAnimationFrame确保视觉反馈先渲染
       requestAnimationFrame(() => {
@@ -247,7 +341,7 @@ const EventBinder = {
       }, 150);
       
       // 触觉反馈
-      EventBinder.hapticFeedback(15);
+      EventBinder.hapticFeedback(15, excludeTag);
       
       requestAnimationFrame(() => {
         Business.toggleExclude(Number(excludeTag.dataset.num));
@@ -258,7 +352,7 @@ const EventBinder = {
     // 3. 快捷导航跳转
     const navTab = target.closest('.nav-tab');
     if(navTab){
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, navTab);
       const navType = navTab.dataset.navType;
       if (navType === 'scroll') {
         const targetId = navTab.dataset.target;
@@ -302,7 +396,7 @@ const EventBinder = {
     const actionBtn = target.closest('[data-action]');
     if(actionBtn){
       // 通用轻震动反馈
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, actionBtn);
       
       const action = actionBtn.dataset.action;
       const group = actionBtn.dataset.group;
@@ -711,7 +805,7 @@ const EventBinder = {
     // 7. 分析标签页切换
     const analysisTabBtn = target.closest('.analysis-tab-btn[data-analysis-tab]');
     if(analysisTabBtn){
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, analysisTabBtn);
       Business.switchAnalysisTab(analysisTabBtn.dataset.analysisTab);
       return;
     }
@@ -719,7 +813,7 @@ const EventBinder = {
     // 8. 加载更多历史
     const loadMoreBtn = target.closest('#loadMore');
     if(loadMoreBtn){
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, loadMoreBtn);
       Business.loadMoreHistory();
       return;
     }
@@ -727,7 +821,7 @@ const EventBinder = {
     // 8.1 精选推荐回测（#zodiacFinalNum 点击）
     const finalNumEl = target.closest('#zodiacFinalNum');
     if(finalNumEl){
-      EventBinder.hapticFeedback([10, 30, 10]);
+      EventBinder.hapticFeedback([10, 30, 10], finalNumEl);
       EventBinder._showFinalBacktest();
       return;
     }
@@ -735,7 +829,7 @@ const EventBinder = {
     // 9. 资料页标签切换
     const zodiacTabBtn = target.closest('.zodiac-tab-btn[data-zodiac-tab]');
     if(zodiacTabBtn){
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, zodiacTabBtn);
       Business.switchZodiacTab(zodiacTabBtn.dataset.zodiacTab);
       return;
     }
@@ -743,7 +837,7 @@ const EventBinder = {
     // 9.1 我的页面标签切换
     const profileTabBtn = target.closest('.zodiac-tab-btn[data-profile-tab]');
     if(profileTabBtn){
-      EventBinder.hapticFeedback(12);
+      EventBinder.hapticFeedback(12, profileTabBtn);
       EventBinder._switchProfileTab(profileTabBtn.dataset.profileTab);
       return;
     }
@@ -1054,9 +1148,14 @@ const EventBinder = {
 
       // 按 kind 分发：书签/面板 → ViewBookmark；标签 → toggleTagLock
       const r = EventBinder._longPressResolved;
-      // 触觉反馈（长按使用较强震动模式）
-      EventBinder.hapticFeedback(r.kind === 'tag' ? [10, 30, 10] : 15);
+      // 触觉反馈（长按使用较强震动模式，iOS用双音效+强脉冲）
+      EventBinder.hapticFeedback(r.kind === 'tag' ? [10, 30, 10] : 15, r.el);
       if (r.kind === 'tag') {
+        // 长按锁定标签时添加强脉冲class
+        if (r.el) r.el.classList.add('haptic-pulse', 'heavy');
+        setTimeout(() => {
+          if (r.el) r.el.classList.remove('haptic-pulse', 'heavy');
+        }, 250);
         StateManager.toggleTagLock(r.group, r.value);
       } else if (typeof ViewBookmark !== 'undefined') {
         ViewBookmark.triggerLongPressMenu(r);
@@ -1119,7 +1218,34 @@ const EventBinder = {
       .tag .mark-badge {
         pointer-events: none;
       }
+      /* iOS触觉脉冲动画 */
+      .haptic-pulse {
+        animation: hapticPulse 0.15s ease-out;
+      }
+      @keyframes hapticPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.9); }
+        100% { transform: scale(1); }
+      }
+      .haptic-pulse.heavy {
+        animation: hapticPulseHeavy 0.25s ease-out;
+      }
+      @keyframes hapticPulseHeavy {
+        0% { transform: scale(1); }
+        30% { transform: scale(0.85); }
+        60% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
     `;
     document.head.appendChild(style);
+    
+    // 首次用户交互时初始化音频上下文（iOS Safari要求）
+    const initAudio = () => {
+      EventBinder._initAudioContext();
+      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('mousedown', initAudio);
+    };
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('mousedown', initAudio, { once: true });
   }
 };
