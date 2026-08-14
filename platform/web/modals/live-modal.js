@@ -1,16 +1,18 @@
 /**
  * 【平台层】直播弹窗组件
- * 职责：显示直播视频流弹窗，支持FLV格式播放
+ * 职责：显示直播视频流弹窗，支持HLS(m3u8)格式播放
  * 依赖方向：平台层，被视图层/事件层调用
  */
 const LiveModal = {
   _modal: null,
   _video: null,
-  _flvPlayer: null,
+  _hlsPlayer: null,
   _closeBtn: null,
-  _flvLoaded: false,
+  _hlsLoaded: false,
   _checkTimer: null,
   _countdownTimer: null,
+
+  LIVE_URL: 'https://live-macaujc.com/live/livestream/new.m3u8',
 
   init: function() {
     if (this._modal) return;
@@ -189,30 +191,30 @@ const LiveModal = {
     });
   },
 
-  _loadFlvJs: function() {
+  _loadHlsJs: function() {
     return new Promise((resolve, reject) => {
-      if (typeof flvjs !== 'undefined') {
-        this._flvLoaded = true;
+      if (typeof Hls !== 'undefined') {
+        this._hlsLoaded = true;
         resolve();
         return;
       }
 
-      if (this._flvLoading) {
-        this._flvLoading.then(resolve).catch(reject);
+      if (this._hlsLoading) {
+        this._hlsLoading.then(resolve).catch(reject);
         return;
       }
 
-      this._flvLoading = new Promise((res, rej) => {
+      this._hlsLoading = new Promise((res, rej) => {
         const script = document.createElement('script');
-        script.src = 'https://cdn.bootcdn.net/ajax/libs/flv.js/1.6.2/flv.min.js';
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/hls.js/1.5.13/hls.min.js';
         script.onload = () => {
-          this._flvLoaded = true;
+          this._hlsLoaded = true;
           res();
           resolve();
         };
         script.onerror = () => {
-          rej(new Error('flv.js 加载失败'));
-          reject(new Error('flv.js 加载失败'));
+          rej(new Error('hls.js 加载失败'));
+          reject(new Error('hls.js 加载失败'));
         };
         document.head.appendChild(script);
       });
@@ -247,28 +249,20 @@ const LiveModal = {
     this._stopCheckTimer();
   },
 
-  /**
-   * 启动定时检查（每30秒检查一次是否到直播时间）
-   */
   _startCheckTimer: function() {
     this._stopCheckTimer();
     this._updateCountdown();
-    // 每30秒检查一次
     this._checkTimer = setInterval(() => {
       this._updateCountdown();
       if (this._isLiveTime()) {
         this._playLive();
       }
     }, 30000);
-    // 每秒更新倒计时
     this._countdownTimer = setInterval(() => {
       this._updateCountdown();
     }, 1000);
   },
 
-  /**
-   * 停止定时检查
-   */
   _stopCheckTimer: function() {
     if (this._checkTimer) {
       clearInterval(this._checkTimer);
@@ -280,9 +274,6 @@ const LiveModal = {
     }
   },
 
-  /**
-   * 更新倒计时显示
-   */
   _updateCountdown: function() {
     if (!this._countdownEl) return;
     const now = new Date();
@@ -295,16 +286,13 @@ const LiveModal = {
     const liveStartMinutes = LIVE_START_HOUR * 60 + LIVE_START_MIN;
 
     if (currentMinutes < liveStartMinutes) {
-      // 今天还没到直播时间
       targetTime = new Date(now);
       targetTime.setHours(LIVE_START_HOUR, LIVE_START_MIN, 0, 0);
     } else if (currentMinutes > LIVE_START_HOUR * 60 + LIVE_END_MIN) {
-      // 今天直播已结束，显示明天
       targetTime = new Date(now);
       targetTime.setDate(targetTime.getDate() + 1);
       targetTime.setHours(LIVE_START_HOUR, LIVE_START_MIN, 0, 0);
     } else {
-      // 正在直播时间，应该已经进入播放了
       this._countdownEl.textContent = '直播中...';
       return;
     }
@@ -323,18 +311,12 @@ const LiveModal = {
     this._countdownEl.textContent = timeText + '自动刷新';
   },
 
-  /**
-   * 检查当前是否在直播时间段内（21:30-21:38）
-   * @returns {boolean}
-   */
   _isLiveTime: function() {
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
 
-    // 21:30 = 21*60+30 = 1290
-    // 21:38 = 21*60+38 = 1298
     const LIVE_START = 21 * 60 + 30;
     const LIVE_END = 21 * 60 + 38;
 
@@ -342,7 +324,6 @@ const LiveModal = {
   },
 
   _playLive: function() {
-    // 先检查是否在直播时间段
     if (!this._isLiveTime()) {
       this._showOffline();
       return;
@@ -352,48 +333,43 @@ const LiveModal = {
     this._showLoading();
     this._destroyPlayer();
 
-    this._loadFlvJs().then(() => {
-      if (flvjs.isSupported()) {
-        this._flvPlayer = flvjs.createPlayer({
-          type: 'flv',
-          url: 'https://live-macaujc.com/live/livestream/new.flv',
-          isLive: true,
-          hasAudio: true,
-          hasVideo: true,
-          cors: true
-        }, {
+    this._loadHlsJs().then(() => {
+      if (Hls.isSupported()) {
+        this._hlsPlayer = new Hls({
           enableWorker: false,
-          enableStashBuffer: false,
-          stashInitialSize: 128,
-          autoCleanupSourceBuffer: true
+          lowLatencyMode: true,
+          liveSyncDurationCount: 3
         });
 
-        this._flvPlayer.attachMediaElement(this._video);
-        this._flvPlayer.load();
+        this._hlsPlayer.loadSource(this.LIVE_URL);
+        this._hlsPlayer.attachMedia(this._video);
 
-        this._flvPlayer.on(flvjs.Events.ERROR, () => {
-          this._showError();
+        this._hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            this._showError();
+          }
         });
 
-        this._flvPlayer.on(flvjs.Events.MEDIA_INFO, () => {
+        this._hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
           this._hideLoading();
-        });
-
-        this._video.play().catch(() => {
-          // 自动播放失败，用户需要手动点击播放
-          this._hideLoading();
+          this._video.play().catch(() => {});
         });
 
         setTimeout(() => {
           this._hideLoading();
-        }, 5000);
-      } else {
-        // 不支持flv.js，尝试直接播放
-        this._video.src = 'https://live-macaujc.com/live/livestream/new.flv';
-        this._video.play().catch(() => {
+        }, 8000);
+      } else if (this._video.canPlayType('application/vnd.apple.mpegurl')) {
+        this._video.src = this.LIVE_URL;
+        this._video.addEventListener('loadedmetadata', () => {
+          this._hideLoading();
+          this._video.play().catch(() => {});
+        });
+        this._video.addEventListener('error', () => {
           this._showError();
         });
         this._hideLoading();
+      } else {
+        this._showError();
       }
     }).catch(() => {
       this._showError();
@@ -401,14 +377,12 @@ const LiveModal = {
   },
 
   _destroyPlayer: function() {
-    if (this._flvPlayer) {
+    if (this._hlsPlayer) {
       try {
-        this._flvPlayer.pause();
-        this._flvPlayer.unload();
-        this._flvPlayer.detachMediaElement();
-        this._flvPlayer.destroy();
+        this._hlsPlayer.stopLoad();
+        this._hlsPlayer.destroy();
       } catch(e) {}
-      this._flvPlayer = null;
+      this._hlsPlayer = null;
     }
     if (this._video) {
       try {
