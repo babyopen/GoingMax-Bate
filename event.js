@@ -23,11 +23,18 @@ const EventBinder = {
   LONG_PRESS_DURATION: 600,
   // 滑动容差（超过则取消长按，避免误触发）
   LONG_PRESS_MOVE_TOLERANCE: 12,
+  // 标签点击节流（防止快速连续点击误触，单位：毫秒）
+  TAG_CLICK_THROTTLE: 150,
+  _lastTagClickTime: 0,
+  _lastTagClickedEl: null,
 
   /**
    * 初始化所有事件绑定
    */
   init: () => {
+    // 注入标签点击态样式
+    EventBinder._injectTagClickStyle();
+    
     // 全局点击事件委托
     document.addEventListener('click', EventBinder.handleGlobalClick);
     // 2026-07-21 变更：标签由"双击锁定"改为"长按锁定"，不再监听 dblclick
@@ -161,26 +168,79 @@ const EventBinder = {
 
     // 1. 筛选标签点击
     // 2026-07-21 变更：标签锁定/解锁由双击改为长按，此处只处理单击选中
+    // 2026-08-15 优化：添加点击节流，防止快速点击误触；添加即时视觉反馈
     const tag = target.closest('.tag[data-group]');
     if(tag){
       // 长按保护窗：长按命中后 500ms 内不再响应 click，避免长按抬起触发选中
       if (Date.now() < EventBinder._longPressClickGuardUntil) {
         return;
       }
+      
+      // 点击节流：防止快速连续点击（150ms内重复点击同一个标签忽略）
+      const now = Date.now();
+      if (now - EventBinder._lastTagClickTime < EventBinder.TAG_CLICK_THROTTLE) {
+        // 快速点击时，阻止事件冒泡和默认行为，避免误触其他按钮
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
+      // 确保点击的是标签本身或其子元素（如徽章），而不是标签间的空白
+      // closest 已经保证了这一点，但额外检查确保元素可见
+      if (tag.offsetParent === null) {
+        return;
+      }
+      
+      EventBinder._lastTagClickTime = now;
+      EventBinder._lastTagClickedEl = tag;
+      
       const group = tag.dataset.group;
       const value = Utils.formatTagValue(tag.dataset.value, group);
+      
+      // 即时视觉反馈：添加点击态class（由CSS处理，渲染更新前即可见）
+      tag.classList.add('tag-clicking');
+      setTimeout(() => {
+        if (tag) tag.classList.remove('tag-clicking');
+      }, 150);
+      
       // 触觉反馈（如果可用）
       if (navigator.vibrate) {
         try { navigator.vibrate(10); } catch (_) {}
       }
-      StateManager.updateSelected(group, value);
+      
+      // 使用requestAnimationFrame确保视觉反馈先渲染
+      requestAnimationFrame(() => {
+        StateManager.updateSelected(group, value);
+      });
       return;
     }
 
     // 2. 排除号码点击
     const excludeTag = target.closest('.exclude-tag[data-num]');
     if(excludeTag){
-      Business.toggleExclude(Number(excludeTag.dataset.num));
+      // 点击节流，防止快速连续点击误触
+      const now = Date.now();
+      if (now - EventBinder._lastTagClickTime < EventBinder.TAG_CLICK_THROTTLE) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      EventBinder._lastTagClickTime = now;
+      
+      // 即时视觉反馈
+      excludeTag.classList.add('tag-clicking');
+      setTimeout(() => {
+        if (excludeTag) excludeTag.classList.remove('tag-clicking');
+      }, 150);
+      
+      // 触觉反馈
+      if (navigator.vibrate) {
+        try { navigator.vibrate(10); } catch (_) {}
+      }
+      
+      requestAnimationFrame(() => {
+        Business.toggleExclude(Number(excludeTag.dataset.num));
+      });
       return;
     }
 
@@ -1016,5 +1076,34 @@ const EventBinder = {
     EventBinder._longPressStartX = 0;
     EventBinder._longPressStartY = 0;
     EventBinder._longPressTriggered = false;
+  },
+
+  /**
+   * 注入标签点击态样式（避免修改只读的style.css）
+   */
+  _injectTagClickStyle: function() {
+    if (document.getElementById('tag-click-style')) return;
+    const style = document.createElement('style');
+    style.id = 'tag-click-style';
+    style.textContent = `
+      .tag.tag-clicking,
+      .exclude-tag.tag-clicking {
+        transform: scale(0.92) !important;
+        opacity: 0.7 !important;
+        transition: transform 0.1s ease, opacity 0.1s ease !important;
+      }
+      .tag,
+      .exclude-tag {
+        transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+      .tag .mark-badge {
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
   }
 };
