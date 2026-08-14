@@ -1980,9 +1980,9 @@ const Business = {
     // 2026-06-24 用户需求：每期"特码开出前"的等级分布
     const preDrawStats = ZodiacPrediction.calcPreDrawLevelHistory(historyData);
     // 2026-07-12 用户需求：下一期可能开出的等级 Top3
-    const preDrawPredictStats = ZodiacPrediction.predictNextLevel(historyData);
-    // 2026-07-12 回测验证：滚动窗口预测，与预测卡结果对标
-    const preDrawPredictBacktest = ZodiacPrediction.predictLevelBacktest(historyData);
+    const preDrawPredictStats = ZodiacPrediction.predictNextLevelV2(historyData);
+    // 2026-08-15 V2回测：号码驱动+等级聚合+自适应加权，目标命中率90%+
+    const preDrawPredictBacktest = ZodiacPrediction.predictLevelBacktestV2(historyData);
     // 缓存 stats，供排序切换时重渲染（2026-06-20 用户需求：表头点击升序降序）
     const stats = {
       zodiac: zodiacStats,

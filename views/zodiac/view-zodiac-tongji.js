@@ -370,7 +370,7 @@ const ViewZodiacTongJi = {
     html += '<div class="tj-pre-predict">';
     html += '<div class="tj-pre-predict-head">';
     html += '<span class="tj-pre-predict-title">下一期等级预测 · 推荐 3 个</span>';
-    html += '<span class="tj-pre-predict-sub">多因子综合评分模型</span>';
+    html += '<span class="tj-pre-predict-sub">号码驱动+等级聚合 V2</span>';
     html += '</div>';
     html += '<div class="tj-pre-predict-list" data-action="openLevelBacktest">';
 

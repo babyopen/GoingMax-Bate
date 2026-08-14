@@ -604,7 +604,7 @@ const EventBinder = {
         const state = StateManager._state;
         const historyData = BusinessCommonData.ensureHistoryData(state);
         if (historyData && historyData.length) {
-          const backtestData = ZodiacPrediction.predictLevelBacktest(historyData);
+          const backtestData = ZodiacPrediction.predictLevelBacktestV2(historyData);
           LevelPredictModal.show(backtestData);
         }
       }
@@ -701,6 +701,13 @@ const EventBinder = {
       }
       else if(action === 'closeBacktestDetail') {
         ViewZodiacUltimate.toggleBacktestDetailModal(false);
+      }
+      // v2.4.1：最不可能出现 - 36 期回测记录弹窗（冗余处理，视图层也注册了 click）
+      // 视图层 addEventListener 会触发 show；这里也提供事件委托入口，确保架构合规
+      else if(action === 'open-backtrack') {
+        if (typeof ViewImpossible !== 'undefined' && ViewImpossible._openBacktrackModal) {
+          ViewImpossible._openBacktrackModal();
+        }
       }
       // TongJi 生肖表头排序（2026-06-20 用户需求：表头点击升序降序）
       //   - 业务层计算下一排序方向并触发视图重渲染

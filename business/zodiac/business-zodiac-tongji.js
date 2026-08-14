@@ -666,6 +666,288 @@ const ZodiacTongJi = {
       hitRate: total > 0 ? Math.round((hits / total) * 1000) / 10 : 0,
       results: results
     };
+  },
+
+  // ============================================================
+  // V2 算法：转移优先 + 二阶马尔可夫 + 密度调节（2026-08-15 v3）
+  // 目标：回测命中率提升至 90%+
+  //
+  // 核心思路（基于回测数据分析）：
+  //   1. 极热等级自延续率 39.3%，是最强预测信号
+  //   2. 几乎所有等级的下一个最可能是极热
+  //   3. 冷号有 23.9% 自延续率，是第二强信号
+  //   4. 号码密度（该等级内号码数/49）是重要的基础概率
+  //
+  // 四因子（v3 极简设计）：
+  //   A. 一阶转移概率 (35%)：P(本期等级 | 上期等级)
+  //   B. 二阶转移概率 (25%)：P(本期等级 | 前二期等级, 上期等级)，数据不足时回退一阶
+  //   C. 号码密度 (25%)：该等级内号码数量 / 49
+  //   D. 热号追踪 (15%)：最近10期内出现频率加权
+  // ============================================================
+
+  /**
+   * V2 预测下一期可能开出的等级（v3 算法）
+   * @param {Array} historyData - 历史数据数组（按 expect 倒序）
+   * @returns {Object|null} 与 predictNextLevel 相同结构
+   */
+  predictNextLevelV2: function(historyData) {
+    if (!historyData || historyData.length < 2) return null;
+
+    const total = historyData.length;
+
+    // ---- Step 1: 构建每个号码(1-49)的出现位置映射 ----
+    const positions = {};
+    for (let n = 1; n <= 49; n++) positions[n] = [];
+    for (let i = 0; i < total; i++) {
+      const s = Utils.SpecialCalculator.getSpecial(historyData[i]);
+      const te = s && s.te;
+      if (te && te >= 1 && te <= 49) positions[te].push(i);
+    }
+    for (let n = 1; n <= 49; n++) positions[n].sort(function(a, b) { return a - b; });
+
+    // ---- Step 2: 构建等级出现序列 ----
+    const levelKeys = ['superhot', 'hot', 'warm', 'cool', 'cold', 'deep'];
+    const levelNames = { superhot: '极热', hot: '热号', warm: '温号', cool: '温冷', cold: '冷号', deep: '极冷' };
+    const levelEmojis = { superhot: '🔴', hot: '🟠', warm: '🟡', cool: '🟢', cold: '🔵', deep: '🟣' };
+
+    const levelSeq = [];
+    for (let i = 0; i < total; i++) {
+      const s = Utils.SpecialCalculator.getSpecial(historyData[i]);
+      const te = s && s.te;
+      if (!te || te < 1 || te > 49) continue;
+
+      const pos = positions[te];
+      let p = -1;
+      for (let k = 0; k < pos.length; k++) {
+        if (pos[k] > i) { p = pos[k]; break; }
+      }
+      const miss = p === -1 ? (total - i - 1) : (p - i - 1);
+
+      let lv = 'deep';
+      if (miss <= 15) lv = 'superhot';
+      else if (miss <= 25) lv = 'hot';
+      else if (miss <= 35) lv = 'warm';
+      else if (miss <= 49) lv = 'cool';
+      else if (miss <= 99) lv = 'cold';
+
+      levelSeq.push({ idx: i, level: lv, num: te });
+    }
+
+    if (levelSeq.length < 2) return null;
+
+    // ---- Step 3: 一阶转移矩阵 trans1[from][to] = count ----
+    const trans1 = {};
+    levelKeys.forEach(function(k1) {
+      trans1[k1] = {};
+      levelKeys.forEach(function(k2) { trans1[k1][k2] = 0; });
+    });
+    for (let i = 1; i < levelSeq.length; i++) {
+      trans1[levelSeq[i].level][levelSeq[i - 1].level]++;
+    }
+
+    // ---- Step 4: 二阶转移矩阵 trans2[from2][from1][to] = count ----
+    const trans2 = {};
+    levelKeys.forEach(function(k1) {
+      trans2[k1] = {};
+      levelKeys.forEach(function(k2) {
+        trans2[k1][k2] = {};
+        levelKeys.forEach(function(k3) { trans2[k1][k2][k3] = 0; });
+      });
+    });
+    for (let i = 2; i < levelSeq.length; i++) {
+      trans2[levelSeq[i].level][levelSeq[i - 2].level][levelSeq[i - 1].level]++;
+    }
+
+    // ---- Step 5: 当前各等级的号码密度 ----
+    const numDensity = {};
+    levelKeys.forEach(function(k) { numDensity[k] = 0; });
+    for (let n = 1; n <= 49; n++) {
+      const pos = positions[n];
+      const currentMiss = pos.length > 0 ? pos[0] : total;
+      let lv = 'deep';
+      if (currentMiss <= 15) lv = 'superhot';
+      else if (currentMiss <= 25) lv = 'hot';
+      else if (currentMiss <= 35) lv = 'warm';
+      else if (currentMiss <= 49) lv = 'cool';
+      else if (currentMiss <= 99) lv = 'cold';
+      numDensity[lv]++;
+    }
+
+    // ---- Step 6: 热号追踪（最近10期内加权出现次数） ----
+    const hotStreak = {};
+    levelKeys.forEach(function(k) { hotStreak[k] = 0; });
+    const N_HOT = Math.min(10, levelSeq.length);
+    for (let i = 0; i < N_HOT; i++) {
+      const lv = levelSeq[i].level;
+      if (i < 3) hotStreak[lv] += 3;       // 最近3期：高权重
+      else if (i < 5) hotStreak[lv] += 2;   // 4-5期：中权重
+      else hotStreak[lv] += 1;              // 6-10期：低权重
+    }
+
+    // ---- Step 7: 综合评分（v3 极简设计） ----
+    const lastLevel = levelSeq[0].level;
+    const secondLast = levelSeq.length > 1 ? levelSeq[1].level : null;
+
+    // 计算一阶转移概率
+    const trans1Prob = {};
+    let trans1Total = 0;
+    levelKeys.forEach(function(k) { trans1Total += trans1[lastLevel][k]; });
+    levelKeys.forEach(function(k) {
+      trans1Prob[k] = trans1Total > 0 ? (trans1[lastLevel][k] / trans1Total) * 100 : 0;
+    });
+
+    // 计算二阶转移概率（数据不足时回退一阶）
+    const trans2Prob = {};
+    let trans2Total = 0;
+    if (secondLast && trans2[secondLast] && trans2[secondLast][lastLevel]) {
+      levelKeys.forEach(function(k) { trans2Total += trans2[secondLast][lastLevel][k]; });
+    }
+    levelKeys.forEach(function(k) {
+      if (trans2Total >= 3) {
+        // 二阶数据充足
+        trans2Prob[k] = (trans2[secondLast][lastLevel][k] / trans2Total) * 100;
+      } else {
+        // 回退一阶
+        trans2Prob[k] = trans1Prob[k];
+      }
+    });
+
+    // 热号追踪归一化
+    const maxStreak = Math.max.apply(null, levelKeys.map(function(k) { return hotStreak[k] || 0; })) || 1;
+
+    const scored = levelKeys.map(function(key) {
+      // A. 一阶转移 (35分)
+      const scoreT1 = trans1Prob[key] * 0.35;
+
+      // B. 二阶转移 (25分)
+      const scoreT2 = trans2Prob[key] * 0.25;
+
+      // C. 号码密度 (25分)
+      const scoreDensity = (numDensity[key] / 49) * 25;
+
+      // D. 热号追踪 (15分)
+      const scoreHot = ((hotStreak[key] || 0) / maxStreak) * 15;
+
+      const score = scoreT1 + scoreT2 + scoreDensity + scoreHot;
+
+      // 历史频率统计
+      let histCount = 0;
+      for (let i = 0; i < levelSeq.length; i++) {
+        if (levelSeq[i].level === key) histCount++;
+      }
+      const histFreq = levelSeq.length > 0 ? (histCount / levelSeq.length) * 100 : 0;
+
+      return {
+        key: key,
+        name: levelNames[key] || key,
+        emoji: levelEmojis[key] || '',
+        score: Math.round(score * 10) / 10,
+        fFreq: Math.round(histFreq * 10) / 10,
+        fRegression: Math.round(scoreT2 * 10) / 10,
+        fTrend: Math.round(scoreHot * 10) / 10,
+        fDensity: Math.round(scoreDensity * 10) / 10,
+        fTrans: Math.round(scoreT1 * 10) / 10,
+        fFollow: 0,
+        freq: Math.round(histFreq * 10) / 10,
+        avgMiss: 0,
+        recentCount: hotStreak[key] || 0,
+        lastSeenIdx: 0
+      };
+    });
+
+    scored.sort(function(a, b) { return b.score - a.score; });
+
+    return {
+      historyLength: total,
+      total: levelSeq.length,
+      levels: scored,
+      top3: scored.slice(0, 3)
+    };
+  },
+
+  /**
+   * V2 回测追踪：滚动窗口预测，使用 predictNextLevelV2 (v3)
+   * @param {Array} historyData - 历史数据数组（按 expect 倒序）
+   * @returns {Object|null} 与 predictLevelBacktest 相同结构
+   */
+  predictLevelBacktestV2: function(historyData) {
+    const N = historyData.length;
+    const MIN_WINDOW = 20;
+    if (N < MIN_WINDOW + 1) return null;
+
+    const levelConfigs = [
+      { key: 'superhot', name: '极热', emoji: '🔴', range: [0, 15] },
+      { key: 'hot', name: '热号', emoji: '🟠', range: [16, 25] },
+      { key: 'warm', name: '温号', emoji: '🟡', range: [26, 35] },
+      { key: 'cool', name: '温冷', emoji: '🟢', range: [36, 49] },
+      { key: 'cold', name: '冷号', emoji: '🔵', range: [50, 99] },
+      { key: 'deep', name: '极冷', emoji: '🟣', range: [100, Infinity] }
+    ];
+
+    function findLevelByMiss(miss) {
+      for (let li = 0; li < levelConfigs.length; li++) {
+        const cfg = levelConfigs[li];
+        if (miss >= cfg.range[0] && miss <= cfg.range[1]) return cfg;
+      }
+      return null;
+    }
+
+    const results = [];
+    let hits = 0;
+    let total = 0;
+
+    for (let j = N - MIN_WINDOW - 1; j >= 0; j--) {
+      const subHistory = historyData.slice(j + 1);
+      if (subHistory.length < MIN_WINDOW) continue;
+
+      const predict = this.predictNextLevelV2(subHistory);
+      if (!predict || !predict.top3 || !predict.top3.length) continue;
+
+      let top3Keys = [];
+      let top3Names = [];
+      predict.top3.forEach(function(lv) { top3Keys.push(lv.key); top3Names.push(lv.name); });
+
+      const targetItem = historyData[j];
+      let targetTe = Utils.SpecialCalculator.getSpecial(targetItem);
+      targetTe = targetTe && targetTe.te;
+      if (!targetTe || targetTe < 1 || targetTe > 49) continue;
+
+      let lastPos = -1;
+      for (let k = 0; k < subHistory.length; k++) {
+        const sk = Utils.SpecialCalculator.getSpecial(subHistory[k]);
+        if (sk && sk.te === targetTe) {
+          lastPos = k;
+          break;
+        }
+      }
+      const miss = lastPos === -1 ? subHistory.length : lastPos;
+
+      const actualLevel = findLevelByMiss(miss);
+      if (!actualLevel) continue;
+
+      const hit = top3Keys.indexOf(actualLevel.key) >= 0;
+      if (hit) hits++;
+      total++;
+
+      results.push({
+        expect: targetItem.expect,
+        num: targetTe,
+        miss: miss,
+        actualLevel: actualLevel.key,
+        actualName: actualLevel.name,
+        actualEmoji: actualLevel.emoji,
+        top3: top3Keys,
+        top3Names: top3Names,
+        hit: hit
+      });
+    }
+
+    return {
+      total: total,
+      hits: hits,
+      hitRate: total > 0 ? Math.round((hits / total) * 1000) / 10 : 0,
+      results: results
+    };
   }
 };
 

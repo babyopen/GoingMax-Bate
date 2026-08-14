@@ -21,9 +21,13 @@ const ViewImpossible = {
 
   /** 弹窗是否已加载 */
   _modalLoaded: false,
+  /** v2.4.1 修复：保存正在加载的 Promise，防止快速点击导致的 SyntaxError（重复执行 const ImpossibleBacktrackModal） */
+  _modalLoadingPromise: null,
 
   /** 当前回测数据缓存（用于弹窗展示） */
   _btRows: null,
+  /** v2.4.1 修复：打开弹窗的重入保护锁，防止快速连击导致重复 show */
+  _openingModal: false,
 
   /**
    * 确保容器存在。不存在则在 combinedAnalysisPanel 所在 card-body 末尾追加。
@@ -73,24 +77,31 @@ const ViewImpossible = {
 
   /**
    * 按需加载弹窗脚本。
+   * v2.4.1 修复：使用 _modalLoadingPromise 缓存正在加载的 Promise，
+   *   防止快速点击导致同一脚本被插入多次 → 重复执行 const 声明 → SyntaxError
    */
   _loadModal: function() {
     const self = this;
     if (self._modalLoaded) return Promise.resolve();
+    if (self._modalLoadingPromise) return self._modalLoadingPromise;
 
-    return new Promise(function(resolve, reject) {
+    self._modalLoadingPromise = new Promise(function(resolve, reject) {
       const s = document.createElement('script');
       s.src = 'platform/web/modals/impossible-backtrack-modal.js';
       s.async = true;
       s.onload = function() {
         self._modalLoaded = true;
+        self._modalLoadingPromise = null;
         resolve();
       };
       s.onerror = function() {
+        // v2.4.1 修复：失败时清空 Promise，允许下次重试
+        self._modalLoadingPromise = null;
         reject(new Error('加载弹窗脚本失败'));
       };
       document.head.appendChild(s);
     });
+    return self._modalLoadingPromise;
   },
 
   /**
@@ -179,10 +190,17 @@ const ViewImpossible = {
 
   /**
    * 打开弹窗
+   * v2.4.1 修复：添加 _openingModal 重入保护，防止快速连击导致多次 show 调用
+   *   锁只在 script 加载异步期间持有，show 同步执行后立即释放
    */
   _openBacktrackModal: function() {
     const self = this;
+    // v2.4.1 重入保护：如果已经在打开中，直接忽略（避免短时间内多次创建/显示）
+    if (self._openingModal) return;
+    self._openingModal = true;
     self._loadModal().then(function() {
+      // v2.4.1：show() 同步执行完毕，立即释放锁（用户关闭弹窗后再次点击可正常响应）
+      self._openingModal = false;
       if (typeof ImpossibleBacktrackModal === 'undefined') {
         if (typeof Toast !== 'undefined') Toast.show('弹窗加载失败');
         return;
@@ -197,6 +215,7 @@ const ViewImpossible = {
         acc: acc
       });
     }).catch(function() {
+      self._openingModal = false;
       if (typeof Toast !== 'undefined') Toast.show('弹窗加载失败');
     });
   },
