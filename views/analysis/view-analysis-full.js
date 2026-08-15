@@ -202,12 +202,14 @@ const ViewAnalysisFull = {
     (bd.details || []).forEach(function(item) {
       const hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
       const hitColor = item.isHit ? '#3B82F6' : '#FF453A';
-      const hitIcon = item.isHit ? '✓' : '✗';
+      // 2026-08-15 用户要求：移除末尾的 ✓/✗ 图标，仅靠背景色区分
+      const hitIcon = ''; // 2026-08-15 由 '✓'/'✗' 调整为 ''（移除图标显示）
 
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
       html += '<span style="font-size:12px;font-weight:600;min-width:80px;">' + item.expect + '期</span>';
       html += '<span style="font-size:14px;font-weight:700;">' + item.actualNumber + '</span>';
       html += '<span style="font-size:11px;font-weight:600;color:var(--sub-text);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">TOP5:' + item.top5 + '</span>';
+      // 2026-08-15 移除末尾的 hitIcon（✓/✗），命中状态由整行背景色区分
       html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
       html += '</div>';
     });

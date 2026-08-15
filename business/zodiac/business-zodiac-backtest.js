@@ -24,14 +24,30 @@ const ZodiacPredictionBacktest = {
     //   - 这样回测追踪每期的"预测" = 当时实际推荐算法的预测，确保回测与实际推荐一致
     const useTrendPredictor = !!config.trendPredictor && typeof config.buildSequence === 'function';
 
+    // 2026-08-15 新增：与综合分析面板底部展示对齐 — 五行 Top 3 推荐
+    //   - 当 config 提供 top3Predictor 时，每期输出 predictedTop3 = [wx1, wx2, wx3]
+    //   - 命中判定改为「实际值 ∈ top3」（即 Top 3 内即算命中）
+    //   - 若 config 同时提供 trendPredictor，则 top3Predictor 优先；trendPredictor 仅作兼容
+    const useTop3Predictor = !!config.top3Predictor && typeof config.buildSequence === 'function';
+
     for (let offset = 0; offset < maxOffset; offset++) {
       const targetItem = historyData[offset];
       if (!targetItem) continue;
 
       let predictedValue = '-';
+      let predictedTop3 = null;
       let confidence = 45;
 
-      if (useTrendPredictor) {
+      if (useTop3Predictor) {
+        // 2026-08-15 新增：Top3 推荐路径（仅五行）
+        const trendSequence = config.buildSequence(historyData, offset);
+        if (!trendSequence || trendSequence.length < 5) continue;
+        const top3Result = config.top3Predictor(trendSequence);
+        predictedTop3 = (top3Result || []).map(function(t) { return t.wuxing || t.prediction || t; }).filter(Boolean).slice(0, 3);
+        if (!predictedTop3.length) continue;
+        predictedValue = predictedTop3[0];
+        confidence = (top3Result[0] && top3Result[0].confidence) || 45;
+      } else if (useTrendPredictor) {
         // 新增路径：用实际推荐算法（_predictXxxTrend）+ 当时 10 期数据
         const trendSequence = config.buildSequence(historyData, offset);
         if (!trendSequence || trendSequence.length < 5) continue;
@@ -122,7 +138,10 @@ const ZodiacPredictionBacktest = {
       let actualValue = config.extractValue(targetItem);
       if (!actualValue) actualValue = config.categories[0];
 
-      const isHit = predictedValue === actualValue;
+      // 2026-08-15：Top3 命中判定 — 实际值在 Top 3 内即算命中
+      const isHit = predictedTop3
+        ? predictedTop3.indexOf(actualValue) !== -1
+        : predictedValue === actualValue;
       const resultItem = {
         expect: targetItem.expect,
         actualNumber: config.getNumber(targetItem),
@@ -132,6 +151,11 @@ const ZodiacPredictionBacktest = {
 
       resultItem[config.fieldNames.predicted || 'predictedValue'] = predictedValue;
       resultItem[config.fieldNames.actual || 'actualValue'] = actualValue;
+      // 2026-08-15 新增：Top3 推荐列表（仅五行回测输出）
+      if (predictedTop3) {
+        const top3Field = (config.fieldNames.predicted || 'predictedValue') + 'Top3';
+        resultItem[top3Field] = predictedTop3;
+      }
 
       results.push(resultItem);
     }
@@ -271,8 +295,15 @@ const ZodiacPredictionBacktest = {
       trendPredictor: function(sequence) {
         return ZodiacPrediction._predictWuxingTrend(sequence);
       },
+      // 2026-08-15 新增：五行 Top 3 推荐（与综合分析面板底部展示一致）
+      top3Predictor: function(sequence) {
+        return ZodiacPrediction._predictWuxingTrendTop3(sequence);
+      },
+      // 2026-08-15 优化：使用80期窗口（与getLatestWuxingStats中predictSequence一致）构建转移矩阵
       buildSequence: function(historyData, offset) {
-        return historyData.slice(offset + 1, offset + 11).map(function(item) {
+        const WUXING_WINDOW = 80;
+        const end = Math.min(offset + 1 + WUXING_WINDOW, historyData.length);
+        return historyData.slice(offset + 1, end).map(function(item) {
           const special = Utils.SpecialCalculator.getSpecial(item);
           return {
             expect: item.expect,

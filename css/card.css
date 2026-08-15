@@ -1976,6 +1976,18 @@
   font-weight: 600;
 }
 
+/* 2026-08-15 新增：综合分析-五行面板 Top 3 推荐（紧凑横向排列） */
+.combined-trend-top3 {
+  flex-wrap: wrap;
+}
+.combined-trend-top3 .trend-top3-item {
+  font-size: 13px;
+  padding: 2px 9px;
+}
+.combined-trend-top3 .trend-top3-conf {
+  font-size: 10px;
+}
+
 .trend-reason {
   font-size: 10px;
   color: var(--sub-text);

@@ -588,14 +588,35 @@ const ViewCommon = {
       // 2026-06-23 优化：预测正确固定显示蓝色（#3B82F6），与 highlightColor 主题色区分
       const hitBg = item.isHit ? 'rgba(59,130,246,0.12)' : 'rgba(255,69,58,0.12)';
       const hitColor = item.isHit ? '#3B82F6' : '#FF453A';
-      const hitIcon = item.isHit ? '✓' : '✗';
+      // 2026-08-15 用户要求：移除图标，仅靠背景色区分命中/未命中
+      //   - hitIcon 变量保留（仅占位，不再渲染）
+      //   - 命中状态由 hitBg/hitColor 承担视觉信号
+      const hitIcon = ''; // 2026-08-15 由 '✓'/'✗' 调整为 ''（移除图标显示）
       const fmtVal = config.formatValue ? config.formatValue(item) : { pred: item.predicted, actual: item.actual };
+
+      // 2026-08-15 新增：当 fmtVal.pred 是数组（Top 3 推荐）时，逐项渲染，
+      //   并标记实际命中的项（命中: 加 ✓ + 高亮；未命中: 普通色）
+      // 2026-08-15 用户要求：移除命中项后的 ✓ 图标，仅靠背景色区分
+      const predIsArray = Array.isArray(fmtVal.pred);
+      let predHtml;
+      if (predIsArray) {
+        predHtml = fmtVal.pred.map(function(p) {
+          const pHit = p === fmtVal.actual;
+          const pStyle = 'display:inline-block;padding:1px 5px;margin-right:3px;border-radius:3px;font-size:11px;font-weight:600;background:' +
+            (pHit ? hl + '33' : 'rgba(255,255,255,0.08)') + ';color:' + (pHit ? hl : 'var(--text)') + ';';
+          // 2026-08-15 移除命中项的 ✓ 后缀，仅显示文字 + 背景色高亮
+          return '<span style="' + pStyle + '">' + p + '</span>';
+        }).join('');
+      } else {
+        predHtml = '<span style="font-size:12px;font-weight:600;">' + fmtVal.pred + '</span>';
+      }
 
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + hitBg + ';color:' + hitColor + ';">';
       html += '<span style="font-size:12px;font-weight:600;">' + item.expect + '期</span>';
       html += '<span style="font-size:14px;font-weight:700;">' + (item.actualNumber !== undefined ? item.actualNumber : '-') + '</span>';
-      html += '<span style="font-size:12px;font-weight:600;">' + labels.predicted + ':' + fmtVal.pred + '</span>';
+      html += '<span style="display:flex;align-items:center;gap:4px;"><span style="font-size:12px;font-weight:600;color:var(--sub-text);">' + labels.predicted + ':</span>' + predHtml + '</span>';
       html += '<span style="font-size:12px;font-weight:600;">' + labels.actual + ':' + fmtVal.actual + '</span>';
+      // 2026-08-15 移除末尾的 hitIcon（✓/✗），命中状态由整行背景色区分
       html += '<span style="font-size:16px;font-weight:700;">' + hitIcon + '</span>';
       html += '</div>';
     });
@@ -703,7 +724,21 @@ const ViewCommon = {
     }
 
     // 趋势
-    if (config.trend && config.trend.prediction !== '-') {
+    // 2026-08-15 新增：当传入 trendTop3 时渲染3个推荐（综合分析-五行面板底部专用）
+    if (config.trendTop3 && config.trendTop3.length > 0) {
+      html += '<div class="combined-trend combined-trend-top3" data-action="' + config.trendAction + '" style="cursor:pointer;">';
+      config.trendTop3.forEach(function(item, idx) {
+        const wx = item.wuxing || item.prediction;
+        if (!wx || wx === '-') return;
+        const wxColor = colors[wx] || '#999';
+        html += '<span class="trend-predict ' + prefix + '-predict trend-top3-item" data-idx="' + idx + '" style="background:' + wxColor + ';color:#fff;">' + wx + '</span>';
+        html += '<span class="trend-conf trend-top3-conf">' + item.confidence + '%</span>';
+      });
+      if (config.trendTop3[0] && config.trendTop3[0].reason) {
+        html += '<span class="trend-reason">' + config.trendTop3[0].reason + '</span>';
+      }
+      html += '</div>';
+    } else if (config.trend && config.trend.prediction !== '-') {
       const predColor = colors[config.trend.prediction] || '#999';
       html += '<div class="combined-trend" data-action="' + config.trendAction + '" style="cursor:pointer;">';
       html += '<span class="trend-predict ' + prefix + '-predict" style="background:' + predColor + ';color:#fff;">' + config.trend.prediction + '</span>';

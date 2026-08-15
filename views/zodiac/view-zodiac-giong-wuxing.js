@@ -105,14 +105,15 @@ const ViewZodiacGiongWuxing = {
       highlightColor: '#A78BFA',
       backtestData: backtestData,
       labels: { predicted: '预测', actual: '实际' },
+      // 2026-08-15 新增：五行 Top 3 推荐（predictedWuxingTop3）— 与综合分析面板底部展示一致
       formatValue: function(item) {
         return {
-          pred: item.predictedWuxing,
+          pred: item.predictedWuxingTop3 || item.predictedWuxing,
           actual: item.actualWuxing
         };
       },
-      footerNote: '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)<br>' +
-        '• 基于五行趋势预测算法回测<br>' +
+      footerNote: '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)（Top 3 命中）<br>' +
+        '• 基于五行 Top 3 推荐算法回测<br>' +
         '• 数据仅供参考，不构成投资建议'
     });
   },
@@ -130,6 +131,8 @@ const ViewZodiacGiongWuxing = {
       total: wuxingData ? wuxingData.period : 0,
       patterns: wuxingData && wuxingData.patterns ? wuxingData.patterns : [],
       trend: wuxingData && wuxingData.trend ? wuxingData.trend : null,
+      // 2026-08-15 新增：综合分析-五行面板底部展示3个推荐
+      trendTop3: wuxingData && wuxingData.trendTop3 ? wuxingData.trendTop3 : null,
       trendAction: 'showWuxingBacktest'
     });
   }
