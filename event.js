@@ -31,83 +31,17 @@ const EventBinder = {
   _hapticEnabled: true,
   // iOS设备检测
   _isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-  // 音频反馈上下文（iOS用短点击音替代震动）
-  _audioCtx: null,
-  _audioEnabled: true,
-
-  /**
-   * 初始化音频上下文（需要用户交互后才能创建）
-   */
-  _initAudioContext: function() {
-    if (this._audioCtx || !this._audioEnabled) return;
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        this._audioCtx = new AudioCtx();
-      }
-    } catch(_) {}
-  },
-
-  /**
-   * iOS端播放短点击音（通过Web Audio API生成，无需音频文件）
-   * @param {string} type - 反馈类型：light/medium/heavy
-   */
-  _playIOSClickSound: function(type = 'light') {
-    if (!this._audioEnabled || this._isIOS === false) return;
-    this._initAudioContext();
-    if (!this._audioCtx) return;
-    
-    try {
-      // 恢复被浏览器挂起的音频上下文
-      if (this._audioCtx.state === 'suspended') {
-        this._audioCtx.resume();
-      }
-      
-      const oscillator = this._audioCtx.createOscillator();
-      const gainNode = this._audioCtx.createGain();
-      
-      // 根据类型调整频率和音量
-      let freq = 800;
-      let duration = 0.03;
-      let volume = 0.08;
-      
-      if (type === 'medium') {
-        freq = 600;
-        duration = 0.04;
-        volume = 0.1;
-      } else if (type === 'heavy') {
-        freq = 400;
-        duration = 0.06;
-        volume = 0.12;
-      }
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(this._audioCtx.destination);
-      
-      oscillator.frequency.value = freq;
-      oscillator.type = 'sine';
-      
-      // 快速衰减包络，模拟机械点击声
-      const now = this._audioCtx.currentTime;
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(volume, now + 0.005);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-      
-      oscillator.start(now);
-      oscillator.stop(now + duration);
-    } catch(_) {}
-  },
 
   /**
    * 触觉震动反馈（统一入口）
    * Android: 使用系统震动API
-   * iOS: 使用点击音效 + 视觉动画替代（iOS Safari不支持navigator.vibrate）
+   * iOS: 使用视觉动画替代（iOS Safari不支持navigator.vibrate）
    * @param {number|Array} pattern - 震动模式：数字=单次震动时长(ms)，数组=震动节奏如[10,30,10]
    * @param {Element} [targetEl] - 可选：触发元素，用于在iOS上添加视觉反馈
    */
   hapticFeedback: function(pattern = 10, targetEl = null) {
     if (!this._hapticEnabled) return;
-    
+
     // 判断反馈强度类型
     let type = 'light';
     if (Array.isArray(pattern)) {
@@ -115,20 +49,15 @@ const EventBinder = {
     } else if (pattern >= 15) {
       type = 'medium';
     }
-    
-    // 1. Android/支持vibrate的设备：使用系统震动
+
+    // Android/支持vibrate的设备：使用系统震动
     if (navigator.vibrate && !this._isIOS) {
       try {
         navigator.vibrate(pattern);
       } catch (_) {}
     }
-    
-    // 2. iOS设备：播放点击音效
-    if (this._isIOS) {
-      this._playIOSClickSound(type);
-    }
-    
-    // 3. 所有平台：如果传入了目标元素，添加短暂的脉冲视觉反馈
+
+    // 所有平台：如果传入了目标元素，添加短暂的脉冲视觉反馈
     if (targetEl) {
       targetEl.classList.add('haptic-pulse');
       setTimeout(() => {
@@ -1245,14 +1174,5 @@ const EventBinder = {
       }
     `;
     document.head.appendChild(style);
-    
-    // 首次用户交互时初始化音频上下文（iOS Safari要求）
-    const initAudio = () => {
-      EventBinder._initAudioContext();
-      document.removeEventListener('touchstart', initAudio);
-      document.removeEventListener('mousedown', initAudio);
-    };
-    document.addEventListener('touchstart', initAudio, { once: true });
-    document.addEventListener('mousedown', initAudio, { once: true });
   }
 };
