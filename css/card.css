@@ -207,6 +207,9 @@
 .data-item-z.hot{background:rgba(19,166,98,0.1);color:#13a662;font-weight:700}
 .data-item-z.cold{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
 .data-item-z.warm{background:rgba(250,140,22,0.1);color:#fa8c16}
+/* 2026-08-17 新增：#tailZodiacGrid / #zodiacTotalGrid 二档配色：有次数=蓝，无次数=红 */
+.data-item-z.has{background:rgba(0,122,255,0.1);color:#007aff;font-weight:700}
+.data-item-z.none{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
 .final-recommend-z{
   background:rgba(19,166,98,0.1);border-radius:12px;padding:14px;text-align:center;
   font-size:15px;font-weight:700;color:#13a662;margin-top:14px;margin-bottom:14px;word-break:break-all;line-height:1.6;
