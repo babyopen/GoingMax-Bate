@@ -195,7 +195,8 @@
 /* 生肖关联专用样式 */
 .core-conclusion{background:rgba(255,59,48,0.05);border-radius:12px;padding:12px;margin-bottom:16px}
 .conclusion-title{font-size:16px;font-weight:700;color:#13a662;margin-bottom:8px}
-.conclusion-item{font-size:14px;line-height:1.6;color:var(--text)}
+.conclusion-item{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:6px}
+.conclusion-item:last-child{margin-bottom:0}
 .data-grid-z{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
 .data-grid-4{grid-template-columns:repeat(4,1fr) !important}
 .data-grid-3{grid-template-columns:repeat(3,1fr) !important}
@@ -208,7 +209,7 @@
 .data-item-z.warm{background:rgba(250,140,22,0.1);color:#fa8c16}
 .final-recommend-z{
   background:rgba(19,166,98,0.1);border-radius:12px;padding:14px;text-align:center;
-  font-size:15px;font-weight:700;color:#13a662;margin-top:10px;word-break:break-all;line-height:1.6;
+  font-size:15px;font-weight:700;color:#13a662;margin-top:14px;margin-bottom:14px;word-break:break-all;line-height:1.6;
   /* 2026-06-28 用户需求：手机端允许滑动选中复制
      覆盖 body 全局 user-select:none，开启长按文本选择（参考 .tj-num-chip 实现） */
   -webkit-user-select:text;user-select:text;-webkit-touch-callout:default;
