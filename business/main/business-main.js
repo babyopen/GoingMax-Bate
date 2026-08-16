@@ -1340,14 +1340,27 @@ const Business = {
     const combo2 = '2. 次选：尾' + (data.topTail[1]?.t ?? '-') + ' + ' + (data.topZod[1]?.[0] ?? '-') + '（出现' + (data.topZod[1]?.[1] ?? 0) + '次）';
     const combo3 = '3. 备选：尾' + (data.topTail[2]?.t ?? '-') + ' + ' + (data.topZod[2]?.[0] ?? '-') + '（出现' + (data.topZod[2]?.[1] ?? 0) + '次）';
 
+    // 2026-08-17 变更：#tailZodiacGrid 卡片按"次数从大到小"排列，0次垫底
     let tailZodiacHtml = '';
+    const tailZodiacItems = [];
     for(let t = 0; t <= 9; t++) {
       const arr = Object.entries(data.tailZodMap[t]).sort((a, b) => b[1] - a[1]);
       const topZ = arr.length ? arr[0][0] : '-';
       const cnt = arr.length ? arr[0][1] : 0;
-      const level = Business.getZodiacLevel(cnt, data.zodMiss[topZ] || 0, data.total);
-      tailZodiacHtml += '<div class="data-item-z ' + level.cls + '">尾' + t + '<br>' + topZ + '<br>' + cnt + '次</div>';
+      tailZodiacItems.push({ t, topZ, cnt });
     }
+    tailZodiacItems.sort((a, b) => {
+      if (a.cnt === 0 && b.cnt === 0) return a.t - b.t;
+      if (a.cnt === 0) return 1;
+      if (b.cnt === 0) return -1;
+      if (b.cnt !== a.cnt) return b.cnt - a.cnt;
+      return a.t - b.t;
+    });
+    tailZodiacItems.forEach(item => {
+      // 2026-08-17 变更：仅 #tailZodiacGrid / #zodiacTotalGrid 改二档：有次数=蓝，无次数=红
+      const cls = item.cnt > 0 ? 'has' : 'none';
+      tailZodiacHtml += '<div class="data-item-z ' + cls + '">尾' + item.t + '<br>' + item.topZ + '<br>' + item.cnt + '次</div>';
+    });
 
     let followTableHtml = '<tr><th>上期生肖</th><th>首选(次数)</th><th>次选(次数)</th><th>排除生肖</th></tr>';
     const followKeys = Object.keys(data.followMap).slice(0, 4);
@@ -1359,13 +1372,24 @@ const Business = {
       followTableHtml += '<tr><td>' + k + '</td><td>' + first + '</td><td>' + second + '</td><td>' + (exclude || '-') + '</td></tr>';
     });
 
+    // 2026-08-17 变更：#zodiacTotalGrid 卡片按"次数从大到小"排列，0次垫底
     let zodiacTotalHtml = '';
+    const zodiacTotalItems = [];
     CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
-      const cnt = data.zodCount[z];
-      const miss = data.zodMiss[z];
-      const rate = ((cnt / data.total) * 100).toFixed(0) + '%';
-      const level = Business.getZodiacLevel(cnt, miss, data.total);
-      zodiacTotalHtml += '<div class="data-item-z ' + level.cls + '">' + z + '<br>' + cnt + '次/' + rate + '<br>遗' + miss + '</div>';
+      zodiacTotalItems.push({ z, cnt: data.zodCount[z], miss: data.zodMiss[z] });
+    });
+    zodiacTotalItems.sort((a, b) => {
+      if (a.cnt === 0 && b.cnt === 0) return 0;
+      if (a.cnt === 0) return 1;
+      if (b.cnt === 0) return -1;
+      if (b.cnt !== a.cnt) return b.cnt - a.cnt;
+      return 0;
+    });
+    zodiacTotalItems.forEach(item => {
+      const rate = ((item.cnt / data.total) * 100).toFixed(0) + '%';
+      // 2026-08-17 变更：仅 #tailZodiacGrid / #zodiacTotalGrid 改二档：有次数=蓝，无次数=红
+      const cls = item.cnt > 0 ? 'has' : 'none';
+      zodiacTotalHtml += '<div class="data-item-z ' + cls + '">' + item.z + '<br>' + item.cnt + '次/' + rate + '<br>遗' + item.miss + '</div>';
     });
 
     let zodiacMissHtml = '';
