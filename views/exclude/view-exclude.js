@@ -17,6 +17,7 @@
  * - 多维排除（生肖+波色+五行+尾数 组合）
  * - 智能排除（基于历史数据的反推排除）
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ViewExclude 引用
 const ViewExclude = {
   /** v2.1.0 新增：按需加载 guard，幂等保证只加载一次 */
   _impossibleLoaderPromise: null,

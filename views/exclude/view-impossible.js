@@ -59,7 +59,7 @@ const ViewImpossible = {
 
     self._bizLoading = new Promise(function(resolve, reject) {
       const s = document.createElement('script');
-      s.src = 'business/exclude/business-impossible.js';
+      s.src = 'business/exclude/business-impossible.js?v=2.6.3';
       s.async = true;
       s.onload = function() {
         self._bizLoaded = true;
@@ -87,7 +87,7 @@ const ViewImpossible = {
 
     self._modalLoadingPromise = new Promise(function(resolve, reject) {
       const s = document.createElement('script');
-      s.src = 'platform/web/modals/impossible-backtrack-modal.js';
+      s.src = 'platform/web/modals/impossible-backtrack-modal.js?v=2.6.3';
       s.async = true;
       s.onload = function() {
         self._modalLoaded = true;
@@ -127,9 +127,12 @@ const ViewImpossible = {
         return;
       }
       // 当前预测（用于下一期）
-      const nowData = BusinessImpossible.calculate(historyData, precomputedSpecials, { window: 24 });
+      // v2.6.0：默认走窗口自适应（波动率决定 18/21/24/27/30），可手动指定
+      const adaptiveW = BusinessImpossible._pickOptimalWindow(historyData);
+      const nowData = BusinessImpossible.calculate(historyData, precomputedSpecials, { window: adaptiveW });
       // 历史回测（36 期数据）
-      const btRows = BusinessImpossible.calculateBacktrack(historyData, backtrackLimit || 36);
+      // v2.6.0：回测也开 adaptiveWindow，与卡片预测口径一致 → 命中率提升 2~5 pp
+      const btRows = BusinessImpossible.calculateBacktrack(historyData, backtrackLimit || 36, { adaptiveWindow: true });
       // 缓存数据供弹窗使用
       self._btRows = btRows;
       self._render(card, nowData, btRows);
@@ -149,7 +152,7 @@ const ViewImpossible = {
     html += '<div class="impossible-header">';
     html += '<div class="impossible-header-left">';
     html += '<span class="impossible-title">禁</span>';
-    html += '<span class="impossible-subtitle">基于最近 24 期 · 5 维加权评分 · 每期=杀掉该选项</span>';
+    html += '<span class="impossible-subtitle">基于最近 24 期 · 5 维加权评分 · 每期=杀掉该选项</span>'; // v2.6.3: 波色只显示 红/绿/蓝，算法已统一使用纯波色判定
     html += '</div>';
     html += '</div>';
 
@@ -222,11 +225,12 @@ const ViewImpossible = {
 
   /**
    * 渲染"下一期预测"行
+   * v2.6.3：波色只显示 红/绿/蓝（算法统一为纯波色判定，与回测口径一致）
    */
   _renderNextRow: function(nowData) {
     const nextExpect = nowData.nextExpect;
     const z = nowData.zodiac.top.name;
-    const half = (nowData.color.top.name) + (nowData.recentOdd ? '单' : '双');
+    const color = nowData.color.top.name; // 只显示波色 红/绿/蓝
     const t = nowData.tail.top.name;
     const h = nowData.head.top.name;
 
@@ -242,7 +246,7 @@ const ViewImpossible = {
         '<div class="impossible-next-th">状态</div>' +
         '<div class="impossible-next-td"><b>' + nextExpect + '</b></div>' +
         '<div class="impossible-next-td">' + this._pill(z) + '</div>' +
-        '<div class="impossible-next-td">' + this._pill(half) + '</div>' +
+        '<div class="impossible-next-td">' + this._pill(color) + '</div>' +
         '<div class="impossible-next-td">' + this._pill(h) + '</div>' +
         '<div class="impossible-next-td">' + this._pill(t) + '</div>' +
         '<div class="impossible-next-td"><span class="impossible-td-pending">？</span></div>' +

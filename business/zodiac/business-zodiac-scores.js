@@ -169,7 +169,8 @@ const ZodiacPredictionScores = {
 
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       const nums = DataQuery.getNumsByAttr('zodiac', z);
-      let oddMatch = 0, bigMatch = 0, totalN = nums.length || 1;
+      let oddMatch = 0, bigMatch = 0;
+      const totalN = nums.length || 1;
       nums.forEach(function(n) {
         if (n % 2 === 1) oddMatch++;
         if (n >= 25) bigMatch++;
@@ -312,7 +313,7 @@ const ZodiacPredictionScores = {
     return scores;
   },
 
-  _calcTrendScores: function(zodiacRecords, list) {
+  _calcTrendScores: function(zodiacRecords, _list) {
     const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       const records = zodiacRecords[z] || [];
@@ -332,7 +333,7 @@ const ZodiacPredictionScores = {
     return scores;
   },
 
-  _calcMomentumScores: function(zodiacRecords, list) {
+  _calcMomentumScores: function(zodiacRecords, _list) {
     const scores = {};
     ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) {
       const records = zodiacRecords[z] || [];

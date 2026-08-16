@@ -225,7 +225,6 @@ const ViewCommon = {
     let idx = config.initialIndex || 0;
     const total = cards.length;
     let sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
-    let animating = false;
     let animTimer = null;
 
     function getWidth() {
@@ -253,11 +252,10 @@ const ViewCommon = {
       if (i < 0) i = 0;
       if (i >= total) i = total - 1;
       idx = i;
-      animating = true;
       if (animTimer) clearTimeout(animTimer);
       setTransform(-i * 100, animate !== false);
       updateDots();
-      animTimer = setTimeout(function() { animating = false; }, 320);
+      animTimer = setTimeout(function() {}, 320);
     }
 
     function start(e) {
@@ -268,7 +266,6 @@ const ViewCommon = {
       dragging = true;
       w.style.transition = 'none';
       if (animTimer) clearTimeout(animTimer);
-      animating = false;
       sx = touch.clientX;
       cx = sx;
       lastX = sx;
@@ -376,7 +373,6 @@ const ViewCommon = {
     let idx = config.initialIndex || 0;
     const total = cards.length;
     let sx = 0, cx = 0, dragging = false, lastT = 0, lastX = 0, lastY = 0;
-    let animating = false;
     let animTimer = null;
 
     function getWidth() { return w.offsetWidth || 0; }
@@ -402,11 +398,10 @@ const ViewCommon = {
       if (i < 0) i = 0;
       if (i >= total) i = total - 1;
       idx = i;
-      animating = true;
       if (animTimer) clearTimeout(animTimer);
       setTransform(-i * 100, animate !== false);
       updateDots();
-      animTimer = setTimeout(function() { animating = false; }, 320);
+      animTimer = setTimeout(function() {}, 320);
     }
 
     function start(e) {
@@ -417,7 +412,6 @@ const ViewCommon = {
       dragging = true;
       w.style.transition = 'none';
       if (animTimer) clearTimeout(animTimer);
-      animating = false;
       sx = touch ? touch.clientX : e.clientX;
       cx = sx;
       lastX = sx;
@@ -597,13 +591,15 @@ const ViewCommon = {
       // 2026-08-15 新增：当 fmtVal.pred 是数组（Top 3 推荐）时，逐项渲染，
       //   并标记实际命中的项（命中: 加 ✓ + 高亮；未命中: 普通色）
       // 2026-08-15 用户要求：移除命中项后的 ✓ 图标，仅靠背景色区分
+      // 2026-08-15 用户要求：命中项统一使用紫色（#A78BFA），与 highlightColor 主题色解耦
+      const HIT_COLOR = '#A78BFA'; // 紫色（命中标记）
       const predIsArray = Array.isArray(fmtVal.pred);
       let predHtml;
       if (predIsArray) {
         predHtml = fmtVal.pred.map(function(p) {
           const pHit = p === fmtVal.actual;
           const pStyle = 'display:inline-block;padding:1px 5px;margin-right:3px;border-radius:3px;font-size:11px;font-weight:600;background:' +
-            (pHit ? hl + '33' : 'rgba(255,255,255,0.08)') + ';color:' + (pHit ? hl : 'var(--text)') + ';';
+            (pHit ? HIT_COLOR + '33' : 'rgba(255,255,255,0.08)') + ';color:' + (pHit ? HIT_COLOR : 'var(--text)') + ';';
           // 2026-08-15 移除命中项的 ✓ 后缀，仅显示文字 + 背景色高亮
           return '<span style="' + pStyle + '">' + p + '</span>';
         }).join('');
@@ -736,6 +732,20 @@ const ViewCommon = {
       });
       if (config.trendTop3[0] && config.trendTop3[0].reason) {
         html += '<span class="trend-reason">' + config.trendTop3[0].reason + '</span>';
+      }
+      html += '</div>';
+    } else if (config.trendTop2 && config.trendTop2.length > 0) {
+      // 2026-08-15 新增：当传入 trendTop2 时渲染2个推荐（综合分析-波色面板底部专用，3选2）
+      html += '<div class="combined-trend combined-trend-top2" data-action="' + config.trendAction + '" style="cursor:pointer;">';
+      config.trendTop2.forEach(function(item, idx) {
+        const cl = item.color || item.prediction;
+        if (!cl || cl === '-') return;
+        const clColor = colors[cl] || '#999';
+        html += '<span class="trend-predict ' + prefix + '-predict trend-top2-item" data-idx="' + idx + '" style="background:' + clColor + ';color:#fff;">' + cl + '</span>';
+        html += '<span class="trend-conf trend-top2-conf">' + item.confidence + '%</span>';
+      });
+      if (config.trendTop2[0] && config.trendTop2[0].reason) {
+        html += '<span class="trend-reason">' + config.trendTop2[0].reason + '</span>';
       }
       html += '</div>';
     } else if (config.trend && config.trend.prediction !== '-') {

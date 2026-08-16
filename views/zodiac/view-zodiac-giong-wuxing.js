@@ -9,42 +9,58 @@ const ViewZodiacGiongWuxing = {
   renderLatestWuxingStats: function(wuxingData) {
     const container = document.getElementById('latestWuxingStatsPanel');
     if (!container) return;
-
     if (!wuxingData) {
       container.innerHTML = '';
       return;
     }
+    const html = ViewZodiacGiongWuxing._buildWuxingAnalysisHTML(wuxingData);
+    container.innerHTML = html;
+  },
 
-    const wuxingColors = {
-      '金': { bg: 'linear-gradient(135deg, #FFD700, #FFA500)', text: '#B8860B', light: 'rgba(255,215,0,0.12)' },
-      '木': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D', light: 'rgba(34,197,94,0.12)' },
-      '水': { bg: 'linear-gradient(135deg, #0EA5E9, #06B6D4)', text: '#0369A1', light: 'rgba(14,165,233,0.12)' },
-      '火': { bg: 'linear-gradient(135deg, #EF4444, #DC2626)', text: '#B91C1C', light: 'rgba(239,68,68,0.12)' },
-      '土': { bg: 'linear-gradient(135deg, #A78BFA, #8B5CF6)', text: '#7C3AED', light: 'rgba(167,139,250,0.12)' }
-    };
+  /** v2.6.9 拆分：五行调色板 */
+  _WUXING_PALETTE: {
+    '金': { bg: 'linear-gradient(135deg, #FFD700, #FFA500)', text: '#B8860B' },
+    '木': { bg: 'linear-gradient(135deg, #22C55E, #16A34A)', text: '#15803D' },
+    '水': { bg: 'linear-gradient(135deg, #0EA5E9, #06B6D4)', text: '#0369A1' },
+    '火': { bg: 'linear-gradient(135deg, #EF4444, #DC2626)', text: '#B91C1C' },
+    '土': { bg: 'linear-gradient(135deg, #A78BFA, #8B5CF6)', text: '#7C3AED' }
+  },
 
-    let html = '';
-    html += '<div class="wuxing-analysis-card">';
+  /**
+   * 构建五行分析卡片 HTML（v2.6.9 拆分）
+   */
+  _buildWuxingAnalysisHTML: function(wuxingData) {
+    let html = '<div class="wuxing-analysis-card">';
     html += '<div class="wuxing-analysis-header">';
     html += '<div class="wuxing-analysis-title">最近' + wuxingData.period + '期五行分析</div>';
-    html += '</div>';
+    html += '</div><div class="wuxing-analysis-content">';
+    html += ViewZodiacGiongWuxing._renderWuxingSequence(wuxingData.sequence);
+    html += ViewZodiacGiongWuxing._renderWuxingStatsGrid(wuxingData);
+    html += ViewZodiacGiongWuxing._renderWuxingPatterns(wuxingData.patterns);
+    html += ViewZodiacGiongWuxing._renderWuxingTrend(wuxingData.trend);
+    html += '</div></div>';
+    return html;
+  },
 
-    html += '<div class="wuxing-analysis-content">';
-
-    html += '<div class="wuxing-sequence-row">';
-    const reversedSequence = wuxingData.sequence.slice().reverse();
-    reversedSequence.forEach(function(item) {
-      const wxColor = wuxingColors[item.wuxing] || wuxingColors['金'];
-      html += '<span class="wuxing-seq-item" style="background:' + wxColor.bg + ';color:#fff;">' + item.wuxing + '</span>';
+  /** 渲染五行序列 */
+  _renderWuxingSequence: function(sequence) {
+    const palette = ViewZodiacGiongWuxing._WUXING_PALETTE;
+    let html = '<div class="wuxing-sequence-row">';
+    sequence.slice().reverse().forEach(function(item) {
+      const wx = palette[item.wuxing] || palette['金'];
+      html += '<span class="wuxing-seq-item" style="background:' + wx.bg + ';color:#fff;">' + item.wuxing + '</span>';
     });
-    html += '</div>';
+    return html + '</div>';
+  },
 
-    html += '<div class="wuxing-stats-grid">';
-    const wuxingOrder = ['金', '木', '水', '火', '土'];
-    wuxingOrder.forEach(function(wx) {
-      const count = wuxingData.count[wx] || 0;
-      const percent = Math.round((count / wuxingData.period) * 100);
-      const wxColor = wuxingColors[wx];
+  /** 渲染五行统计网格 */
+  _renderWuxingStatsGrid: function(data) {
+    const palette = ViewZodiacGiongWuxing._WUXING_PALETTE;
+    let html = '<div class="wuxing-stats-grid">';
+    ['金', '木', '水', '火', '土'].forEach(function(wx) {
+      const count = data.count[wx] || 0;
+      const percent = Math.round((count / data.period) * 100);
+      const wxColor = palette[wx];
       html += '<div class="wuxing-stat-item">';
       html += '<div class="wuxing-stat-header" style="color:' + wxColor.text + ';border-left:3px solid ' + wxColor.text + ';">';
       html += '<span class="wuxing-stat-name">' + wx + '</span>';
@@ -56,45 +72,40 @@ const ViewZodiacGiongWuxing = {
       html += '<div class="wuxing-stat-percent" style="color:' + wxColor.text + ';">' + percent + '%</div>';
       html += '</div>';
     });
+    return html + '</div>';
+  },
+
+  /** 渲染规律特征列表 */
+  _renderWuxingPatterns: function(patterns) {
+    if (!patterns || patterns.length === 0) return '';
+    const palette = ViewZodiacGiongWuxing._WUXING_PALETTE;
+    let html = '<div class="wuxing-patterns-section">';
+    html += '<div class="wuxing-patterns-title">规律特征</div>';
+    html += '<div class="wuxing-patterns-list">';
+    patterns.forEach(function(pattern) {
+      const wx = palette[pattern.type.charAt(0)] || { bg: '#666' };
+      html += '<div class="wuxing-pattern-tag" style="background:' + wx.bg + ';">';
+      html += pattern.type;
+      if (pattern.count > 1) html += '<span class="pattern-count">' + pattern.count + '次</span>';
+      html += '</div>';
+    });
+    return html + '</div></div>';
+  },
+
+  /** 渲染趋势预测（点击触发回测） */
+  _renderWuxingTrend: function(trend) {
+    if (!trend || trend.prediction === '-') return '';
+    const palette = ViewZodiacGiongWuxing._WUXING_PALETTE;
+    const predWx = trend.prediction;
+    const predColor = palette[predWx] || palette['金'];
+    let html = '<div class="wuxing-trend-section" data-action="showWuxingBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
+    html += '<div class="wuxing-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
+    html += '<div class="wuxing-trend-prediction">';
+    html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predWx + '</span>';
+    html += '<span class="trend-confidence">' + trend.confidence + '%可信度</span>';
     html += '</div>';
-
-    if (wuxingData.patterns && wuxingData.patterns.length > 0) {
-      html += '<div class="wuxing-patterns-section">';
-      html += '<div class="wuxing-patterns-title">规律特征</div>';
-      html += '<div class="wuxing-patterns-list">';
-      wuxingData.patterns.forEach(function(pattern) {
-        const patternWx = pattern.type.charAt(0);
-        const wxColor = wuxingColors[patternWx] || { bg: '#666' };
-        html += '<div class="wuxing-pattern-tag" style="background:' + wxColor.bg + ';">';
-        html += pattern.type;
-        if (pattern.count > 1) {
-          html += '<span class="pattern-count">' + pattern.count + '次</span>';
-        }
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '</div>';
-    }
-
-    if (wuxingData.trend && wuxingData.trend.prediction !== '-') {
-      const predWx = wuxingData.trend.prediction;
-      const predColor = wuxingColors[predWx] || wuxingColors['金'];
-      html += '<div class="wuxing-trend-section" data-action="showWuxingBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
-      html += '<div class="wuxing-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
-      html += '<div class="wuxing-trend-prediction">';
-      html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predWx + '</span>';
-      html += '<span class="trend-confidence">' + wuxingData.trend.confidence + '%可信度</span>';
-      html += '</div>';
-      if (wuxingData.trend.reason) {
-        html += '<div class="wuxing-trend-reason">' + wuxingData.trend.reason + '</div>';
-      }
-      html += '</div>';
-    }
-
-    html += '</div>';
-    html += '</div>';
-
-    container.innerHTML = html;
+    if (trend.reason) html += '<div class="wuxing-trend-reason">' + trend.reason + '</div>';
+    return html + '</div>';
   },
 
   showWuxingBacktestModal: function(backtestData) {

@@ -19,7 +19,6 @@ const ViewZodiacTongJi = {
    */
   _getWaveOfNum: function(num) {
     const cmap = (typeof CONFIG !== 'undefined' && CONFIG.COLOR_MAP) || {};
-    const numStr = String(num);
     for (const color in cmap) {
       if (Object.prototype.hasOwnProperty.call(cmap, color) && cmap[color].indexOf(num) >= 0) {
         // color 是中文'红/蓝/绿'，映射到英文用于 data-wave

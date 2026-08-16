@@ -192,8 +192,9 @@ const ImpossibleBacktrackModal = {
     let html = '<table class="impossible-bm-table">';
     html += '<thead><tr>' +
       '<th>期数</th>' +
+      '<th>窗口</th>' +
       '<th>杀一肖</th>' +
-      '<th>杀半波</th>' +
+      '<th>波色</th>' +
       '<th>禁一头</th>' +
       '<th>杀一尾</th>' +
       '<th>开奖结果</th>' +
@@ -204,7 +205,8 @@ const ImpossibleBacktrackModal = {
     rows.forEach(function(r) {
       const rowCls = r.allHit ? 'impossible-bm-tr-ok' : 'impossible-bm-tr-err';
       const zCls = r.zodiacHit ? '' : 'impossible-bm-err-cell';
-      const halfCls = r.halfHit ? '' : 'impossible-bm-err-cell';
+      // v2.6.3 清理：halfHit 字段已移除，弹窗只比对 colorHit
+      const colorCls = r.colorHit ? '' : 'impossible-bm-err-cell';
       const headCls = r.headHit ? '' : 'impossible-bm-err-cell';
       const tailCls = r.tailHit ? '' : 'impossible-bm-err-cell';
 
@@ -212,10 +214,12 @@ const ImpossibleBacktrackModal = {
         ? '<span class="impossible-bm-status impossible-bm-status-ok">准</span>'
         : '<span class="impossible-bm-status impossible-bm-status-err">错</span>';
 
+      // v2.6.3 清理：展示用 r.color（纯净波色 红/绿/蓝），判定用 r.colorHit
       html += '<tr class="' + rowCls + '">' +
         '<th>' + r.expect + '</th>' +
+        '<td class="impossible-bm-window">' + (r.windowUsed || 24) + '</td>' +
         '<td class="' + zCls + '">' + r.zodiac + '</td>' +
-        '<td class="' + halfCls + '">' + r.half + '</td>' +
+        '<td class="' + colorCls + '">' + r.color + '</td>' +
         '<td class="' + headCls + '">' + r.head + '</td>' +
         '<td class="' + tailCls + '">' + r.tail + '</td>' +
         '<td>' + r.actualZodiac + Utils.formatNum(r.actualTe) + '</td>' +

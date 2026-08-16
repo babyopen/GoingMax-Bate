@@ -233,7 +233,7 @@ const BusinessUltimate = {
     const cooling = this.getCoolingInfo();
     const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
 
-    let i, num, positions, count;
+    let num, positions, count;
     for (num = 1; num <= 12; num++) {
       positions = this.getNumberPositions(history, num, this.WINDOW_SIZE);
       count = positions.length;
@@ -294,7 +294,6 @@ const BusinessUltimate = {
 
   filterByWeight: function(history, candidateNums, config) {
     const blackList = this.getDownWeightBlackList(history);
-    const sortedHistory = history.slice().sort(function(a, b) { return a.issue - b.issue; });
     const currFreq12 = this.getCurrent12Freq(history);
     const nextFreq12 = this.getNext12Freq(history);
 

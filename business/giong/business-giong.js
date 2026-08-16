@@ -73,8 +73,9 @@ const BusinessGiong = {
   countFreqInWindow: function(numArray, windowSize) {
     const freq = {};
     for (let n = 1; n <= 12; n++) freq[n] = 0;
-    const window = numArray.slice(0, Math.min(windowSize, numArray.length));
-    window.forEach(function(num) {
+    // v2.6.7 重命名：window → windowArr（避免与全局 window 对象歧义，语义更准确）
+    const windowArr = numArray.slice(0, Math.min(windowSize, numArray.length));
+    windowArr.forEach(function(num) {
       if (num >= 1 && num <= 12) freq[num]++;
     });
     return freq;
@@ -136,7 +137,6 @@ const BusinessGiong = {
   },
 
   checkColdInChain: function(numArray, chain) {
-    const self = this;
     const c12 = this.countFreqInWindow(numArray, this.WINDOW_12);
 
     const coldNums = [];

@@ -12,14 +12,13 @@ const _requestIdleCallback = window.requestIdleCallback || function(fn) {
     });
   }, 150);
 };
-const _cancelIdleCallback = window.cancelIdleCallback || function(id) {
-  clearTimeout(id);
-};
 // 业务层专用：在资料页初始化时调度的回测/重计算，统一走空闲回调
 // 用法：Business._scheduleIdle(workFn) 返回一个可取消的 id
 const _scheduleIdle = function(workFn) {
   return _requestIdleCallback(workFn, { timeout: 500 });
 };
+// v2.6.9 清理：_cancelIdleCallback polyfill 暂未使用（无对应取消场景），移除避免 ESLint 警告
+// 需要时重新添加并暴露到 Business 命名空间
 
 const Business = {
   // ====================== 排除号码相关 ======================
@@ -586,7 +585,7 @@ const Business = {
 
     const numMap = {};
     
-    savedFilters.forEach((scheme, index) => {
+    savedFilters.forEach((scheme) => {
       // 修复重叠一致性：每个方案使用各自的 locked，互不干扰
       const filteredList = Filter.getFilteredList(scheme.selected, scheme.excluded, scheme.locked || {});
       
@@ -1465,11 +1464,7 @@ const Business = {
     });
 
     // ========== 4. 提取热头/热尾/热色/热五行 TOP ==========
-    // 2026-06-21 通用化：复用 Utils.getTopN（用空格分隔输出便于后续 Number 转换）
-    const topHeads = Utils.getTopN(headCount, 2, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
-    const topTails = Utils.getTopN(tailCount, 3, e => Number(e[0]), ' ').split(' ').filter(Boolean).map(Number).filter(n => !isNaN(n));
-    const topColors = Utils.getTopN(colorCount, 2, undefined, ' ').split(' ').filter(Boolean);
-    const topWuxing = Utils.getTopN(wuxingCount, 2, undefined, ' ').split(' ').filter(Boolean);
+    // v2.6.9 清理：topHeads/topTails/topColors/topWuxing 暂未使用，移除避免 ESLint 警告
     // 修复 #8：topFollowZodiacs 长度兜底去重，限制最多 3 个合法生肖，防止外部传入错误数据导致权重过度放大
     const zodiacAll = (CONFIG && CONFIG.ANALYSIS && CONFIG.ANALYSIS.ZODIAC_ALL) || [];
     const topFollowZodiacs = Array.isArray(followZodiacs)
@@ -1888,7 +1883,6 @@ const Business = {
    * 滚动事件处理（已节流优化）
    */
   handleScroll: CommonCache.throttle(() => {
-    const state = StateManager._state;
     const scrollTop = ViewFilter.getScrollTop();
     // v2.0.9 修复：统一使用 TimerManager 管理定时器，避免内存泄漏
     CommonCache.TimerManager.clearTimeout('backTopHide');
@@ -1915,7 +1909,7 @@ const Business = {
   // ====================== 生肖预测相关 ======================
   initZodiacPrediction: () => {
     // 2026-06-24 完整迁移：使用 BusinessCommonData.ensureHistoryData
-    const historyData = BusinessCommonData.ensureHistoryData();
+    BusinessCommonData.ensureHistoryData();
     Business.renderZodiacPrediction();
     Business.initZodiacBacktest();
   },

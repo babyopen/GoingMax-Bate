@@ -4,6 +4,7 @@
  * 依赖方向：被 business-main.js 调用
  * 拆分记录：2026-06-09 从 view-zodiac-prediction.js 拆分
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ViewZodiacMain 引用
 const ViewZodiacMain = {
 
   /**

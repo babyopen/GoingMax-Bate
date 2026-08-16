@@ -1988,6 +1988,18 @@
   font-size: 10px;
 }
 
+/* 2026-08-15 新增：综合分析-波色面板 Top 2 推荐（紧凑横向排列，3选2） */
+.combined-trend-top2 {
+  flex-wrap: wrap;
+}
+.combined-trend-top2 .trend-top2-item {
+  font-size: 13px;
+  padding: 2px 9px;
+}
+.combined-trend-top2 .trend-top2-conf {
+  font-size: 10px;
+}
+
 .trend-reason {
   font-size: 10px;
   color: var(--sub-text);
@@ -3616,11 +3628,15 @@
   background: rgba(0,0,0,0.015);
 }
 .impossible-bm-tr-err {
-  background: rgba(239,68,68,0.05) !important;
+  /* 2026-08-15 用户要求：错误只需要标记 td 为红色，取消整行背景 */
+  background: transparent !important;
 }
 .impossible-bm-err-cell {
+  /* 2026-08-15 用户要求：错误 td 红色背景+红色文字 */
   color: #DC2626;
   font-weight: 700;
+  background: rgba(239,68,68,0.12);
+  border-radius: 4px;
 }
 .impossible-bm-status {
   display: inline-block;
@@ -3668,10 +3684,13 @@
     background: rgba(255,255,255,0.03);
   }
   .impossible-bm-tr-err {
-    background: rgba(239,68,68,0.12) !important;
+    /* 2026-08-15 用户要求：取消整行背景 */
+    background: transparent !important;
   }
   .impossible-bm-err-cell {
+    /* 2026-08-15 用户要求：错误 td 红色背景（深色模式） */
     color: #F87171;
+    background: rgba(239,68,68,0.18);
   }
   .impossible-bm-status-ok {
     background: rgba(52,199,89,0.20);

@@ -9,6 +9,7 @@
  * - 清空排除
  * - 锁定排除状态
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessExclude 引用
 const BusinessExclude = {
   /**
    * 切换号码排除状态

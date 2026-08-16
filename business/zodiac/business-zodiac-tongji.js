@@ -34,7 +34,6 @@ const ZodiacTongJi = {
       ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
 
     const total = historyData.length;
-    const latestExpect = Number(historyData[0] && historyData[0].expect || 0);
 
     // 1) 收集每个生肖的所有出现位置（index 0 为最新，index 越大越旧）
     const appearancesMap = {};
@@ -619,8 +618,8 @@ const ZodiacTongJi = {
       const predict = this.predictNextLevel(subHistory);
       if (!predict || !predict.top3 || !predict.top3.length) continue;
 
-      let top3Keys = [];
-      let top3Names = [];
+      const top3Keys = [];
+      const top3Names = [];
       predict.top3.forEach(function(lv) { top3Keys.push(lv.key); top3Names.push(lv.name); });
 
       // 计算目标期 j 的实际等级
@@ -779,9 +778,9 @@ const ZodiacTongJi = {
     const N_HOT = Math.min(10, levelSeq.length);
     for (let i = 0; i < N_HOT; i++) {
       const lv = levelSeq[i].level;
-      if (i < 3) hotStreak[lv] += 3;       // 最近3期：高权重
-      else if (i < 5) hotStreak[lv] += 2;   // 4-5期：中权重
-      else hotStreak[lv] += 1;              // 6-10期：低权重
+      if (i < 3) hotStreak[lv] += 3; // 最近3期：高权重
+      else if (i < 5) hotStreak[lv] += 2; // 4-5期：中权重
+      else hotStreak[lv] += 1; // 6-10期：低权重
     }
 
     // ---- Step 7: 综合评分（v3 极简设计） ----
@@ -903,8 +902,8 @@ const ZodiacTongJi = {
       const predict = this.predictNextLevelV2(subHistory);
       if (!predict || !predict.top3 || !predict.top3.length) continue;
 
-      let top3Keys = [];
-      let top3Names = [];
+      const top3Keys = [];
+      const top3Names = [];
       predict.top3.forEach(function(lv) { top3Keys.push(lv.key); top3Names.push(lv.name); });
 
       const targetItem = historyData[j];

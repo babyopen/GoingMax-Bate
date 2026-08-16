@@ -9,6 +9,7 @@
  *
  * 禁止业务计算（仅渲染）
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ViewSlidingWindowHistory 引用
 const ViewSlidingWindowHistory = {
 
   /**

@@ -17,6 +17,7 @@
  * 依赖方向：被 business/* / views/* / event.js 等任何模块调用
  * 跨项目复用：直接复制此文件即可，零依赖
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.CommonString 引用
 const CommonString = {
 
   // ============================================================

@@ -14,6 +14,7 @@
  * 依赖方向: views/ -> business/ -> core/
  * 禁止DOM操作，只做纯计算和逻辑
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessSlidingWindow 引用
 const BusinessSlidingWindow = {
 
   /** 12生肖列表 */

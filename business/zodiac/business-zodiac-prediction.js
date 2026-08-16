@@ -20,6 +20,7 @@
  * - 子模块加载完毕后通过 Object.assign 自动挂载到本门面上
  * - 各子模块内通过运行时查找 `ZodiacPrediction.xxx` 引用门面上的共享数据/工具
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ZodiacPrediction 引用
 const ZodiacPrediction = {
   ZODIAC_ORDER: ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'],
 

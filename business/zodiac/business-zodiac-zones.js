@@ -131,7 +131,7 @@ const ZodiacPredictionZones = {
         const windowData = historyData.slice(offset + 1, offset + 1 + w);
         if (!nextItem || windowData.length < w) continue;
 
-        let freq = {};
+        const freq = {};
         ZodiacPrediction.ZODIAC_ORDER.forEach(function(z) { freq[z] = 0; });
         // 2026-06-21 优化：用 specials 替代 getSpecial 调用
         for (let wi = 0; wi < windowData.length; wi++) {

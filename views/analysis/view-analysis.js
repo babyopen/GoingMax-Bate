@@ -11,6 +11,7 @@
  *   - view-analysis-full.js     ：全维度分析标签页
  *   - view-analysis-zodiac.js   ：生肖关联分析标签页
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ViewAnalysis 引用
 const ViewAnalysis = {
 
   /**

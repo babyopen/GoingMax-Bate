@@ -153,7 +153,6 @@ const LevelPredictModal = {
         : 'background:rgba(255,59,48,0.03);';
       const resultText = r.hit ? '命中' : '未中';
       const resultColor = r.hit ? '#34c759' : '#ff3b30';
-      const levelCls = 'tj-level-' + r.actualLevel;
 
       html += '<tr class="lp-backtest-' + (r.hit ? 'hit' : 'miss') + '" style="' + rowBg + '">';
       html += '<td style="padding:5px 4px;border-bottom:1px solid #eee;">' + r.expect + '</td>';

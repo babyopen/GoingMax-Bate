@@ -138,7 +138,7 @@ const ViewZodiacGiong = {
       html += '<div class="latest-follow-chain">';
       html += '<span class="latest-zodiac">' + latestData.zodiac + '</span>';
 
-      latestData.topFollowers.forEach(function(item, idx) {
+      latestData.topFollowers.forEach(function(item) {
         html += '<span class="follow-arrow">→</span>';
         html += '<span class="follow-zodiac">' + item.zodiac + '</span>';
       });

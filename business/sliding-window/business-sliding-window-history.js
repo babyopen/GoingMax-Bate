@@ -10,6 +10,7 @@
  * 依赖方向: views/ -> business/ -> core/
  * 禁止 DOM 操作
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessSlidingWindowHistory 引用
 const BusinessSlidingWindowHistory = {
 
   /** 默认回测窗口大小（最近 N 期） */

@@ -7,6 +7,7 @@
  * - 分析参数同步（期数、号码数量等）
  * - 加载更多历史数据
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessAnalysis 引用
 const BusinessAnalysis = {
   /**
    * 刷新历史数据

@@ -9,6 +9,7 @@
  *   // 在 state.js 中发布事件（替代直接调用 Render.renderAll()）
  *   BusinessEventBus.emit('state:change');
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessEventBus 引用
 const BusinessEventBus = (function() {
   'use strict';
   

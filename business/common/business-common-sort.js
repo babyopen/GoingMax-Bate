@@ -12,6 +12,7 @@
  * 拆分记录：2026-06-20 从 views/view-analysis-full.js / view-zodiac-giong.js
  *          等多处重复 .sort 提取为统一业务层函数
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessCommonSort 引用
 const BusinessCommonSort = {
 
   /**

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.Filter 引用
 const Filter = {
   /**
    * 通用筛选函数

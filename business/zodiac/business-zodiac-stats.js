@@ -57,53 +57,8 @@ const ZodiacPredictionStats = {
   },
 
   _analyzeSizePatterns: function(sequence) {
-    if (!sequence || sequence.length < 2) return [];
-
-    const patterns = [];
-    let currentStreak = 1;
-    let streakType = sequence[0].size;
-
-    for (let i = 1; i < sequence.length; i++) {
-      if (sequence[i].size === streakType) {
-        currentStreak++;
-      } else {
-        if (currentStreak >= 2) {
-          patterns.push({
-            type: streakType + '连',
-            count: currentStreak,
-            startIdx: i - currentStreak,
-            endIdx: i - 1
-          });
-        }
-        streakType = sequence[i].size;
-        currentStreak = 1;
-      }
-    }
-
-    if (currentStreak >= 2) {
-      patterns.push({
-        type: streakType + '连',
-        count: currentStreak,
-        startIdx: sequence.length - currentStreak,
-        endIdx: sequence.length - 1
-      });
-    }
-
-    let alternations = 0;
-    for (let j = 1; j < sequence.length - 1; j++) {
-      if (sequence[j].size !== sequence[j - 1].size && sequence[j].size !== sequence[j + 1].size) {
-        alternations++;
-      }
-    }
-    if (alternations >= 3) {
-      patterns.push({
-        type: '交替频繁',
-        count: alternations,
-        description: '近期大小交替出现较频繁'
-      });
-    }
-
-    return patterns;
+    // v2.6.5 重构：委托通用方法（仅 size 字段 + 无热度统计）
+    return this._analyzeGenericPatterns(sequence, 'size', { label: '大小' });
   },
 
   _predictSizeTrend: function(sequence) {
@@ -248,53 +203,8 @@ const ZodiacPredictionStats = {
 },
 
 _analyzeOddEvenPatterns: function(sequence) {
-  if (!sequence || sequence.length < 2) return [];
-
-  const patterns = [];
-  let currentStreak = 1;
-  let streakType = sequence[0].type;
-
-  for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].type === streakType) {
-      currentStreak++;
-    } else {
-      if (currentStreak >= 2) {
-        patterns.push({
-          type: streakType + '连',
-          count: currentStreak,
-          startIdx: i - currentStreak,
-          endIdx: i - 1
-        });
-      }
-      streakType = sequence[i].type;
-      currentStreak = 1;
-    }
-  }
-
-  if (currentStreak >= 2) {
-    patterns.push({
-      type: streakType + '连',
-      count: currentStreak,
-      startIdx: sequence.length - currentStreak,
-      endIdx: sequence.length - 1
-    });
-  }
-
-  let alternations = 0;
-  for (let j = 1; j < sequence.length - 1; j++) {
-    if (sequence[j].type !== sequence[j - 1].type && sequence[j].type !== sequence[j + 1].type) {
-      alternations++;
-    }
-  }
-  if (alternations >= 3) {
-    patterns.push({
-      type: '交替频繁',
-      count: alternations,
-      description: '近期单双交替出现较频繁'
-    });
-  }
-
-  return patterns;
+  // v2.6.5 重构：委托通用方法（仅 type 字段 + 无热度统计）
+  return this._analyzeGenericPatterns(sequence, 'type', { label: '单双' });
 },
 
 _predictOddEvenTrend: function(sequence) {
@@ -447,57 +357,9 @@ _predictOddEvenTrend: function(sequence) {
   },
 
   _analyzeWuxingPatterns: function(sequence) {
-    if (!sequence || sequence.length < 2) return [];
-
-    const patterns = [];
-    let currentStreak = 1;
-    let streakType = sequence[0].wuxing;
-
-    for (let i = 1; i < sequence.length; i++) {
-      if (sequence[i].wuxing === streakType) {
-        currentStreak++;
-      } else {
-        if (currentStreak >= 2) {
-          patterns.push({
-            type: streakType + '连',
-            count: currentStreak,
-            startIdx: i - currentStreak,
-            endIdx: i - 1
-          });
-        }
-        streakType = sequence[i].wuxing;
-        currentStreak = 1;
-      }
-    }
-
-    if (currentStreak >= 2) {
-      patterns.push({
-        type: streakType + '连',
-        count: currentStreak,
-        startIdx: sequence.length - currentStreak,
-        endIdx: sequence.length - 1
-      });
-    }
-
-    const hotWuxing = {};
-    sequence.forEach(function(item) {
-      hotWuxing[item.wuxing] = (hotWuxing[item.wuxing] || 0) + 1;
-    });
-
-    const sortedWuxing = Object.keys(hotWuxing).sort(function(a, b) {
-      return hotWuxing[b] - hotWuxing[a];
-    });
-
-    if (sortedWuxing.length > 0 && hotWuxing[sortedWuxing[0]] >= 3) {
-      patterns.push({
-        type: sortedWuxing[0] + '热',
-        count: hotWuxing[sortedWuxing[0]],
-        description: sortedWuxing[0] + '近期出现' + hotWuxing[sortedWuxing[0]] + '次'
-      });
-    }
-
-    return patterns;
-  },
+  // v2.6.5 重构：委托通用方法（wuxing 字段 + 启用热度统计，阈值 3）
+  return this._analyzeGenericPatterns(sequence, 'wuxing', { hotThreshold: 3, label: '五行' });
+},
 
   /**
    * 2026-08-15 五行趋势预测（多信号融合算法）
@@ -517,65 +379,65 @@ _predictOddEvenTrend: function(sequence) {
   _predictWuxingTrend: function(sequence) {
     if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
 
-    var WX = ['金', '木', '水', '火', '土'];
-    var lastWuxing = sequence[0].wuxing;
+    const WX = ['金', '木', '水', '火', '土'];
+    const lastWuxing = sequence[0].wuxing;
 
     // 信号1：1阶马尔可夫（用 sequence 全部数据作为训练）
-    var t1 = {};
+    const t1 = {};
     WX.forEach(function(a) { t1[a] = {}; WX.forEach(function(b) { t1[a][b] = 0; }); });
-    for (var j = 1; j < sequence.length; j++) {
-      var prev = sequence[j].wuxing;
-      var curr = sequence[j - 1].wuxing;
+    for (let j = 1; j < sequence.length; j++) {
+      const prev = sequence[j].wuxing;
+      const curr = sequence[j - 1].wuxing;
       if (prev && curr && t1[prev]) t1[prev][curr]++;
     }
-    var m1Total = 0;
+    let m1Total = 0;
     WX.forEach(function(w) { m1Total += t1[lastWuxing][w] || 0; });
-    var m1Dist = {};
+    const m1Dist = {};
     WX.forEach(function(w) {
       m1Dist[w] = ((t1[lastWuxing][w] || 0) + 1) / (m1Total + WX.length);
     });
 
     // 信号2：近期热度（最近10期）
-    var recentN = Math.min(10, sequence.length);
-    var recentFreq = {};
+    const recentN = Math.min(10, sequence.length);
+    const recentFreq = {};
     WX.forEach(function(w) { recentFreq[w] = 0; });
-    for (var r = 0; r < recentN; r++) recentFreq[sequence[r].wuxing]++;
-    var recentDist = {};
+    for (let r = 0; r < recentN; r++) recentFreq[sequence[r].wuxing]++;
+    const recentDist = {};
     WX.forEach(function(w) {
       recentDist[w] = (recentFreq[w] + 1) / (recentN + WX.length);
     });
 
     // 信号3：遗漏值
-    var miss = {};
+    const miss = {};
     WX.forEach(function(w) {
-      var idx = -1;
-      for (var m = 0; m < sequence.length; m++) {
+      let idx = -1;
+      for (let m = 0; m < sequence.length; m++) {
         if (sequence[m].wuxing === w) { idx = m; break; }
       }
       miss[w] = idx === -1 ? sequence.length : idx;
     });
-    var missTotal = 0;
+    let missTotal = 0;
     WX.forEach(function(w) { missTotal += miss[w] + 1; });
-    var missDist = {};
+    const missDist = {};
     WX.forEach(function(w) { missDist[w] = (miss[w] + 1) / missTotal; });
 
     // 信号4：全窗口频率
-    var baseFreq = {};
+    const baseFreq = {};
     WX.forEach(function(w) { baseFreq[w] = 0; });
-    for (var b = 0; b < sequence.length; b++) baseFreq[sequence[b].wuxing]++;
-    var baseDist = {};
+    for (let b = 0; b < sequence.length; b++) baseFreq[sequence[b].wuxing]++;
+    const baseDist = {};
     WX.forEach(function(w) {
       baseDist[w] = (baseFreq[w] + 1) / (sequence.length + WX.length);
     });
 
     // 加权融合
-    var W_MK = 3.5;   // 马尔可夫
-    var W_RECENT = 2; // 近期热度
-    var W_MISS = 1.5; // 遗漏
-    var W_BASE = 1;   // 基础频率
-    var totalW = W_MK + W_RECENT + W_MISS + W_BASE;
+    const W_MK = 3.5; // 马尔可夫
+    const W_RECENT = 2; // 近期热度
+    const W_MISS = 1.5; // 遗漏
+    const W_BASE = 1; // 基础频率
+    const totalW = W_MK + W_RECENT + W_MISS + W_BASE;
 
-    var scores = {};
+    const scores = {};
     WX.forEach(function(w) {
       scores[w] = (
         m1Dist[w] * W_MK +
@@ -585,8 +447,8 @@ _predictOddEvenTrend: function(sequence) {
       ) / totalW * 100;
     });
 
-    var maxScore = 0;
-    var prediction = lastWuxing;
+    let maxScore = 0;
+    let prediction = lastWuxing;
     WX.forEach(function(w) {
       if (scores[w] > maxScore) {
         maxScore = scores[w];
@@ -595,7 +457,7 @@ _predictOddEvenTrend: function(sequence) {
     });
 
     // 置信度 40-72
-    var confidence = Math.min(72, Math.max(40, Math.round(40 + maxScore * 0.32)));
+    const confidence = Math.min(72, Math.max(40, Math.round(40 + maxScore * 0.32)));
     return {
       prediction: prediction,
       confidence: confidence,
@@ -616,57 +478,57 @@ _predictOddEvenTrend: function(sequence) {
   _predictWuxingTrendTop3: function(sequence) {
     if (!sequence || sequence.length < 5) return [];
 
-    var single = this._predictWuxingTrend(sequence);
+    const single = this._predictWuxingTrend(sequence);
     if (single.prediction === '-') return [];
 
-    var WX = ['金', '木', '水', '火', '土'];
-    var lastWuxing = sequence[0].wuxing;
+    const WX = ['金', '木', '水', '火', '土'];
+    const lastWuxing = sequence[0].wuxing;
 
     // 复用与 _predictWuxingTrend 相同的计算逻辑来得到 scores
-    var t1 = {};
+    const t1 = {};
     WX.forEach(function(a) { t1[a] = {}; WX.forEach(function(b) { t1[a][b] = 0; }); });
-    for (var j = 1; j < sequence.length; j++) {
-      var prev = sequence[j].wuxing;
-      var curr = sequence[j - 1].wuxing;
+    for (let j = 1; j < sequence.length; j++) {
+      const prev = sequence[j].wuxing;
+      const curr = sequence[j - 1].wuxing;
       if (prev && curr && t1[prev]) t1[prev][curr]++;
     }
-    var m1Total = 0;
+    let m1Total = 0;
     WX.forEach(function(w) { m1Total += t1[lastWuxing][w] || 0; });
-    var m1Dist = {};
+    const m1Dist = {};
     WX.forEach(function(w) {
       m1Dist[w] = ((t1[lastWuxing][w] || 0) + 1) / (m1Total + WX.length);
     });
-    var recentN = Math.min(10, sequence.length);
-    var recentFreq = {};
+    const recentN = Math.min(10, sequence.length);
+    const recentFreq = {};
     WX.forEach(function(w) { recentFreq[w] = 0; });
-    for (var r = 0; r < recentN; r++) recentFreq[sequence[r].wuxing]++;
-    var recentDist = {};
+    for (let r = 0; r < recentN; r++) recentFreq[sequence[r].wuxing]++;
+    const recentDist = {};
     WX.forEach(function(w) {
       recentDist[w] = (recentFreq[w] + 1) / (recentN + WX.length);
     });
-    var miss = {};
+    const miss = {};
     WX.forEach(function(w) {
-      var idx = -1;
-      for (var m = 0; m < sequence.length; m++) {
+      let idx = -1;
+      for (let m = 0; m < sequence.length; m++) {
         if (sequence[m].wuxing === w) { idx = m; break; }
       }
       miss[w] = idx === -1 ? sequence.length : idx;
     });
-    var missTotal = 0;
+    let missTotal = 0;
     WX.forEach(function(w) { missTotal += miss[w] + 1; });
-    var missDist = {};
+    const missDist = {};
     WX.forEach(function(w) { missDist[w] = (miss[w] + 1) / missTotal; });
-    var baseFreq = {};
+    const baseFreq = {};
     WX.forEach(function(w) { baseFreq[w] = 0; });
-    for (var b = 0; b < sequence.length; b++) baseFreq[sequence[b].wuxing]++;
-    var baseDist = {};
+    for (let b = 0; b < sequence.length; b++) baseFreq[sequence[b].wuxing]++;
+    const baseDist = {};
     WX.forEach(function(w) {
       baseDist[w] = (baseFreq[w] + 1) / (sequence.length + WX.length);
     });
 
-    var W_MK = 3.5, W_RECENT = 2, W_MISS = 1.5, W_BASE = 1;
-    var totalW = W_MK + W_RECENT + W_MISS + W_BASE;
-    var scores = {};
+    const W_MK = 3.5, W_RECENT = 2, W_MISS = 1.5, W_BASE = 1;
+    const totalW = W_MK + W_RECENT + W_MISS + W_BASE;
+    const scores = {};
     WX.forEach(function(w) {
       scores[w] = (
         m1Dist[w] * W_MK +
@@ -676,12 +538,12 @@ _predictOddEvenTrend: function(sequence) {
       ) / totalW * 100;
     });
 
-    var sorted = WX.slice().sort(function(a, b) { return scores[b] - scores[a]; });
-    var top3 = sorted.slice(0, 3);
-    var maxScore = scores[top3[0]];
+    const sorted = WX.slice().sort(function(a, b) { return scores[b] - scores[a]; });
+    const top3 = sorted.slice(0, 3);
+    const maxScore = scores[top3[0]];
 
     return top3.map(function(wx, idx) {
-      var confidence;
+      let confidence;
       if (idx === 0) {
         confidence = single.confidence;
       } else {
@@ -721,68 +583,23 @@ _predictOddEvenTrend: function(sequence) {
 
     const patterns = ZodiacPrediction._analyzeColorPatterns(colorSequence);
     const trend = ZodiacPrediction._predictColorTrend(colorSequence);
+    // 2026-08-15 新增：波色 Top2 推荐（综合分析面板底部展示用）
+    const trendTop2 = ZodiacPrediction._predictColorTrendTop2(colorSequence);
 
     return {
       period: period,
       sequence: colorSequence,
       count: colorCount,
       patterns: patterns,
-      trend: trend
+      trend: trend,
+      trendTop2: trendTop2
     };
   },
 
   _analyzeColorPatterns: function(sequence) {
-    if (!sequence || sequence.length < 2) return [];
-
-    const patterns = [];
-    let currentStreak = 1;
-    let streakType = sequence[0].color;
-
-    for (let i = 1; i < sequence.length; i++) {
-      if (sequence[i].color === streakType) {
-        currentStreak++;
-      } else {
-        if (currentStreak >= 2) {
-          patterns.push({
-            type: streakType + '连',
-            count: currentStreak,
-            startIdx: i - currentStreak,
-            endIdx: i - 1
-          });
-        }
-        streakType = sequence[i].color;
-        currentStreak = 1;
-      }
-    }
-
-    if (currentStreak >= 2) {
-      patterns.push({
-        type: streakType + '连',
-        count: currentStreak,
-        startIdx: sequence.length - currentStreak,
-        endIdx: sequence.length - 1
-      });
-    }
-
-    const hotColor = {};
-    sequence.forEach(function(item) {
-      hotColor[item.color] = (hotColor[item.color] || 0) + 1;
-    });
-
-    const sortedColor = Object.keys(hotColor).sort(function(a, b) {
-      return hotColor[b] - hotColor[a];
-    });
-
-    if (sortedColor.length > 0 && hotColor[sortedColor[0]] >= 3) {
-      patterns.push({
-        type: sortedColor[0] + '热',
-        count: hotColor[sortedColor[0]],
-        description: sortedColor[0] + '近期出现' + hotColor[sortedColor[0]] + '次'
-      });
-    }
-
-    return patterns;
-  },
+  // v2.6.5 重构：委托通用方法（color 字段 + 启用热度统计，阈值 3）
+  return this._analyzeGenericPatterns(sequence, 'color', { hotThreshold: 3, label: '波色' });
+},
 
   _predictColorTrend: function(sequence) {
     if (!sequence || sequence.length < 5) return { prediction: '-', confidence: 0 };
@@ -841,6 +658,150 @@ _predictOddEvenTrend: function(sequence) {
     const confidence = Math.min(72, 42 + Math.round((maxScore / 50) * 30));
     const topReasons = reasons.slice(0, 2).join('; ');
     return { prediction: prediction, confidence: confidence, reason: topReasons };
+  },
+
+  /**
+   * 2026-08-15 新增：波色 Top 2 推荐（综合分析-波色面板底部展示用，3选2）
+   *
+   * 输入：sequence 波色序列数组（sequence[0] 为最近已开期，全部为历史数据）
+   * 输出：[{ color, confidence, reason }, ...] 长度固定 2
+   *
+   * 说明：从 _predictColorTrend 的 colorScores 中取 Top 2。
+   * Top2 命中率数学理论上限约 67%（3选2随机基准）。
+   */
+  _predictColorTrendTop2: function(sequence) {
+    if (!sequence || sequence.length < 5) return [];
+
+    const CL = ['红', '蓝', '绿'];
+    const last3 = sequence.slice(0, 3);
+    const lastCl = last3[0].color;
+    const scores = {};
+    CL.forEach(function(c) { scores[c] = 0; });
+
+    // 复用 _predictColorTrend 的核心打分逻辑
+    const allSame3 = last3.every(function(s) { return s.color === last3[0].color; });
+    if (allSame3) {
+      CL.filter(function(c) { return c !== last3[0].color; }).forEach(function(c) { scores[c] += 20; });
+    }
+
+    const last5 = sequence.slice(0, 5);
+    const last5Count = {};
+    last5.forEach(function(s) { last5Count[s.color] = (last5Count[s.color] || 0) + 1; });
+    Object.keys(last5Count).forEach(function(cl) {
+      if (last5Count[cl] >= 3) {
+        const bonus = (last5Count[cl] - 2) * 8;
+        CL.filter(function(c) { return c !== cl; }).forEach(function(c) { scores[c] += Math.max(5, bonus); });
+      }
+    });
+
+    if (sequence.length >= 7 && sequence[2].color === lastCl) {
+      scores[lastCl] += 15;
+    }
+
+    if (last3[0].color === last3[1].color) {
+      scores[last3[0].color] += 12;
+    }
+
+    const sorted = CL.slice().sort(function(a, b) { return scores[b] - scores[a]; });
+    const maxScore = scores[sorted[0]];
+    const maxScoreTop = Math.max(maxScore, 1);
+
+    return sorted.slice(0, 2).map(function(cl, idx) {
+      let confidence;
+      if (idx === 0) {
+        confidence = Math.min(72, 42 + Math.round((scores[cl] / 50) * 30));
+      } else {
+        confidence = Math.max(40, Math.round(40 + (scores[cl] / maxScoreTop) * 25));
+      }
+      return {
+        color: cl,
+        confidence: confidence,
+        reason: idx === 0 ? '顺势+反转信号' : '马尔可夫+频率'
+      };
+    });
+  },
+
+  /**
+   * 通用 pattern 分析（v2.6.5 重构）
+   * 提取自 _analyzeSize/OddEven/Wuxing/ColorPatterns 四个函数的公共逻辑：
+   *   - 连号检测（streak ≥ 2）
+   *   - 交替频率检测（≥ 3 次）
+   *   - 热度 Top1（可选，hotThreshold ≥ 3 启用）
+   *
+   * @param {Array}  sequence    - 特码序列
+   * @param {string} valKey      - 字段名（size/type/wuxing/color）
+   * @param {Object} options     - { hotThreshold: number=0, label: string='交替' }
+   * @returns {Array} patterns   - 检测到的形态
+   */
+  _analyzeGenericPatterns: function(sequence, valKey, options) {
+    options = options || {};
+    if (!sequence || sequence.length < 2) return [];
+    const hotThreshold = options.hotThreshold || 0;
+    const label = options.label || '交替';
+
+    const patterns = [];
+    let currentStreak = 1;
+    let streakType = sequence[0][valKey];
+
+    for (let i = 1; i < sequence.length; i++) {
+      if (sequence[i][valKey] === streakType) {
+        currentStreak++;
+      } else {
+        if (currentStreak >= 2) {
+          patterns.push({
+            type: streakType + '连',
+            count: currentStreak,
+            startIdx: i - currentStreak,
+            endIdx: i - 1
+          });
+        }
+        streakType = sequence[i][valKey];
+        currentStreak = 1;
+      }
+    }
+
+    if (currentStreak >= 2) {
+      patterns.push({
+        type: streakType + '连',
+        count: currentStreak,
+        startIdx: sequence.length - currentStreak,
+        endIdx: sequence.length - 1
+      });
+    }
+
+    // 交替频率检测
+    let alternations = 0;
+    for (let j = 1; j < sequence.length - 1; j++) {
+      if (sequence[j][valKey] !== sequence[j - 1][valKey] &&
+          sequence[j][valKey] !== sequence[j + 1][valKey]) {
+        alternations++;
+      }
+    }
+    if (alternations >= 3) {
+      patterns.push({
+        type: '交替频繁',
+        count: alternations,
+        description: '近期' + label + '交替出现较频繁'
+      });
+    }
+
+    // 热度 Top1（仅当 hotThreshold > 0 启用）
+    if (hotThreshold > 0) {
+      const hot = {};
+      sequence.forEach(function (item) {
+        hot[item[valKey]] = (hot[item[valKey]] || 0) + 1;
+      });
+      const sorted = Object.keys(hot).sort(function (a, b) { return hot[b] - hot[a]; });
+      if (sorted.length > 0 && hot[sorted[0]] >= hotThreshold) {
+        patterns.push({
+          type: sorted[0] + '热',
+          count: hot[sorted[0]],
+          description: sorted[0] + '近期出现' + hot[sorted[0]] + '次'
+        });
+      }
+    }
+
+    return patterns;
   }
 };
 

@@ -66,6 +66,7 @@ const _TAIL_MAP = Object.freeze((function() {
 // ============================================================
 // CONFIG 主对象（只读常量）
 // ============================================================
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.CONFIG 引用
 const CONFIG = Object.freeze({
   VERSION: '2.0.9',
   DATA_VERSION: 1,

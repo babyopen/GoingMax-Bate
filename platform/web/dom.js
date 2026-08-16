@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.DOM 引用
 const DOM = {
   // 加载遮罩
   loadingMask: document.getElementById('loadingMask'),

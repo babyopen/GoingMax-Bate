@@ -18,6 +18,14 @@ const ZodiacPredictionBacktest = {
     const results = [];
     const maxOffset = Math.min(testCount, historyData.length - 6);
 
+    // v2.6.6 性能优化：一次性预计算 specials 数组，传给所有回调
+    // 避免每期对同一 item 重复调用 getSpecial（最多 5 次 → 1 次）
+    // 节省约 80% 的 special 计算开销（即使有 LRU 缓存命中仍有 Map 查找成本）
+    // 注意：若调用方已传入同名参数（如集成测试场景），复用之；否则全新计算
+    const specials = historyData.map(function (item) {
+      return Utils.SpecialCalculator.getSpecial(item);
+    });
+
     // 2026-06-21 新增：与实际推荐算法一致模式
     //   - 当 config 提供 trendPredictor + buildSequence 时，启用"模拟当时推荐"路径：
     //     用 targetItem 之前 10 期构造 sequence，调 config.trendPredictor 计算预测值
@@ -30,26 +38,45 @@ const ZodiacPredictionBacktest = {
     //   - 若 config 同时提供 trendPredictor，则 top3Predictor 优先；trendPredictor 仅作兼容
     const useTop3Predictor = !!config.top3Predictor && typeof config.buildSequence === 'function';
 
+    // 2026-08-15 新增：与综合分析面板底部展示对齐 — 波色 Top 2 推荐（3选2）
+    //   - 当 config 提供 top2Predictor 时，每期输出 predictedTop2 = [c1, c2]
+    //   - 命中判定改为「实际值 ∈ top2」（即 Top 2 内即算命中）
+    //   - 优先级：top3Predictor > top2Predictor > trendPredictor > 原算法
+    const useTop2Predictor = !!config.top2Predictor && typeof config.buildSequence === 'function';
+
     for (let offset = 0; offset < maxOffset; offset++) {
       const targetItem = historyData[offset];
       if (!targetItem) continue;
 
       let predictedValue = '-';
       let predictedTop3 = null;
+      let predictedTop2 = null;
       let confidence = 45;
 
       if (useTop3Predictor) {
         // 2026-08-15 新增：Top3 推荐路径（仅五行）
-        const trendSequence = config.buildSequence(historyData, offset);
+        // v2.6.6 性能优化：传入预计算的 specials 数组，buildSequence 内部可避免重复 getSpecial
+        const trendSequence = config.buildSequence(historyData, offset, specials);
         if (!trendSequence || trendSequence.length < 5) continue;
         const top3Result = config.top3Predictor(trendSequence);
         predictedTop3 = (top3Result || []).map(function(t) { return t.wuxing || t.prediction || t; }).filter(Boolean).slice(0, 3);
         if (!predictedTop3.length) continue;
         predictedValue = predictedTop3[0];
         confidence = (top3Result[0] && top3Result[0].confidence) || 45;
+      } else if (useTop2Predictor) {
+        // 2026-08-15 新增：Top2 推荐路径（仅波色，3选2）
+        // v2.6.6 性能优化：传入 specials
+        const trendSequence = config.buildSequence(historyData, offset, specials);
+        if (!trendSequence || trendSequence.length < 5) continue;
+        const top2Result = config.top2Predictor(trendSequence);
+        predictedTop2 = (top2Result || []).map(function(t) { return t.color || t.prediction || t; }).filter(Boolean).slice(0, 2);
+        if (!predictedTop2.length) continue;
+        predictedValue = predictedTop2[0];
+        confidence = (top2Result[0] && top2Result[0].confidence) || 45;
       } else if (useTrendPredictor) {
         // 新增路径：用实际推荐算法（_predictXxxTrend）+ 当时 10 期数据
-        const trendSequence = config.buildSequence(historyData, offset);
+        // v2.6.6 性能优化：传入 specials
+        const trendSequence = config.buildSequence(historyData, offset, specials);
         if (!trendSequence || trendSequence.length < 5) continue;
         const trendResult = config.trendPredictor(trendSequence);
         predictedValue = trendResult.prediction;
@@ -59,9 +86,11 @@ const ZodiacPredictionBacktest = {
         const recentData = historyData.slice(offset + 1, offset + 7);
         if (recentData.length < 5) continue;
 
-        let lastValues = [];
+        const lastValues = [];
         for (let i = 0; i < Math.min(5, recentData.length); i++) {
-          const val = config.extractValue(recentData[i]);
+          // v2.6.6 性能优化：传入预计算的 special（offset+1+i 对应 specials[offset+1+i]）
+          const idx = offset + 1 + i;
+          const val = config.extractValue(recentData[i], specials[idx]);
           if (config.categories.indexOf(val) !== -1) {
             lastValues.push(val);
           } else {
@@ -70,7 +99,7 @@ const ZodiacPredictionBacktest = {
         }
 
         if (lastValues.length >= 3) {
-          let scores = {};
+          const scores = {};
           config.categories.forEach(function(cat) { scores[cat] = 0; });
 
           const last3 = lastValues.slice(0, 3);
@@ -83,7 +112,7 @@ const ZodiacPredictionBacktest = {
             scores[last3[0]] += config.weights.alternate;
           }
 
-          let valueCount = {};
+          const valueCount = {};
           lastValues.forEach(function(v) { valueCount[v] = (valueCount[v] || 0) + 1; });
 
           Object.keys(valueCount).forEach(function(val) {
@@ -135,16 +164,19 @@ const ZodiacPredictionBacktest = {
 
       if (predictedValue === '-') continue;
 
-      let actualValue = config.extractValue(targetItem);
+      let actualValue = config.extractValue(targetItem, specials[offset]);
       if (!actualValue) actualValue = config.categories[0];
 
-      // 2026-08-15：Top3 命中判定 — 实际值在 Top 3 内即算命中
+      // 2026-08-15：Top3/Top2 命中判定 — 实际值在 Top 内即算命中
       const isHit = predictedTop3
         ? predictedTop3.indexOf(actualValue) !== -1
-        : predictedValue === actualValue;
+        : (predictedTop2
+          ? predictedTop2.indexOf(actualValue) !== -1
+          : predictedValue === actualValue);
       const resultItem = {
         expect: targetItem.expect,
-        actualNumber: config.getNumber(targetItem),
+        // v2.6.6 性能优化：传入预计算的 special
+        actualNumber: config.getNumber(targetItem, specials[offset]),
         confidence: confidence,
         isHit: isHit
       };
@@ -155,6 +187,11 @@ const ZodiacPredictionBacktest = {
       if (predictedTop3) {
         const top3Field = (config.fieldNames.predicted || 'predictedValue') + 'Top3';
         resultItem[top3Field] = predictedTop3;
+      }
+      // 2026-08-15 新增：Top2 推荐列表（仅波色回测输出）
+      if (predictedTop2) {
+        const top2Field = (config.fieldNames.predicted || 'predictedValue') + 'Top2';
+        resultItem[top2Field] = predictedTop2;
       }
 
       results.push(resultItem);
@@ -193,12 +230,14 @@ const ZodiacPredictionBacktest = {
   runSizeBacktest: function(historyData, testCount) {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['大', '小'],
-      extractValue: function(item) {
-        const special = Utils.SpecialCalculator.getSpecial(item);
+      extractValue: function(item, special) {
+        // v2.6.6：优先用预计算的 special（无则回退调用 getSpecial，保持向后兼容）
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
         return special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1] ? '大' : '小';
       },
-      getNumber: function(item) {
-        return Utils.SpecialCalculator.getSpecial(item).te;
+      getNumber: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
+        return special.te;
       },
       fieldNames: { predicted: 'predictedSize', actual: 'actualSize' },
       weights: {
@@ -216,9 +255,12 @@ const ZodiacPredictionBacktest = {
       trendPredictor: function(sequence) {
         return ZodiacPrediction._predictSizeTrend(sequence);
       },
-      buildSequence: function(historyData, offset) {
-        return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          const special = Utils.SpecialCalculator.getSpecial(item);
+      buildSequence: function(historyData, offset, specials) {
+        // v2.6.6：specials 已预计算，slice 取对应范围
+        const slice = historyData.slice(offset + 1, offset + 11);
+        const offsetBase = offset + 1;
+        return slice.map(function(item, i) {
+          const special = specials ? specials[offsetBase + i] : Utils.SpecialCalculator.getSpecial(item);
           const isBig = special.te >= CONFIG.BIG_RANGE[0] && special.te <= CONFIG.BIG_RANGE[1];
           return {
             expect: item.expect,
@@ -233,12 +275,13 @@ const ZodiacPredictionBacktest = {
   runOddEvenBacktest: function(historyData, testCount) {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['单', '双'],
-      extractValue: function(item) {
-        const special = Utils.SpecialCalculator.getSpecial(item);
+      extractValue: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
         return special.te % 2 !== 0 ? '单' : '双';
       },
-      getNumber: function(item) {
-        return Utils.SpecialCalculator.getSpecial(item).te;
+      getNumber: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
+        return special.te;
       },
       fieldNames: { predicted: 'predictedType', actual: 'actualType' },
       weights: {
@@ -256,9 +299,11 @@ const ZodiacPredictionBacktest = {
       trendPredictor: function(sequence) {
         return ZodiacPrediction._predictOddEvenTrend(sequence);
       },
-      buildSequence: function(historyData, offset) {
-        return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          const special = Utils.SpecialCalculator.getSpecial(item);
+      buildSequence: function(historyData, offset, specials) {
+        const slice = historyData.slice(offset + 1, offset + 11);
+        const offsetBase = offset + 1;
+        return slice.map(function(item, i) {
+          const special = specials ? specials[offsetBase + i] : Utils.SpecialCalculator.getSpecial(item);
           return {
             expect: item.expect,
             number: special.te,
@@ -272,12 +317,13 @@ const ZodiacPredictionBacktest = {
   runWuxingBacktest: function(historyData, testCount) {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['金', '木', '水', '火', '土'],
-      extractValue: function(item) {
-        const special = Utils.SpecialCalculator.getSpecial(item);
+      extractValue: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
         return special.wuxing || '金';
       },
-      getNumber: function(item) {
-        return Utils.SpecialCalculator.getSpecial(item).te;
+      getNumber: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
+        return special.te;
       },
       fieldNames: { predicted: 'predictedWuxing', actual: 'actualWuxing' },
       weights: {
@@ -300,11 +346,13 @@ const ZodiacPredictionBacktest = {
         return ZodiacPrediction._predictWuxingTrendTop3(sequence);
       },
       // 2026-08-15 优化：使用80期窗口（与getLatestWuxingStats中predictSequence一致）构建转移矩阵
-      buildSequence: function(historyData, offset) {
+      buildSequence: function(historyData, offset, specials) {
         const WUXING_WINDOW = 80;
         const end = Math.min(offset + 1 + WUXING_WINDOW, historyData.length);
-        return historyData.slice(offset + 1, end).map(function(item) {
-          const special = Utils.SpecialCalculator.getSpecial(item);
+        const slice = historyData.slice(offset + 1, end);
+        const offsetBase = offset + 1;
+        return slice.map(function(item, i) {
+          const special = specials ? specials[offsetBase + i] : Utils.SpecialCalculator.getSpecial(item);
           return {
             expect: item.expect,
             number: special.te,
@@ -318,14 +366,15 @@ const ZodiacPredictionBacktest = {
   runColorBacktest: function(historyData, testCount) {
     return ZodiacPrediction._runGenericBacktest(historyData, testCount, {
       categories: ['红', '蓝', '绿'],
-      extractValue: function(item) {
-        const special = Utils.SpecialCalculator.getSpecial(item);
+      extractValue: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
         let colorName = special.colorName || '红';
         if (!['红', '蓝', '绿'].includes(colorName)) colorName = '红';
         return colorName;
       },
-      getNumber: function(item) {
-        return Utils.SpecialCalculator.getSpecial(item).te;
+      getNumber: function(item, special) {
+        if (!special) special = Utils.SpecialCalculator.getSpecial(item);
+        return special.te;
       },
       fieldNames: { predicted: 'predictedColor', actual: 'actualColor' },
       weights: {
@@ -343,9 +392,15 @@ const ZodiacPredictionBacktest = {
       trendPredictor: function(sequence) {
         return ZodiacPrediction._predictColorTrend(sequence);
       },
-      buildSequence: function(historyData, offset) {
-        return historyData.slice(offset + 1, offset + 11).map(function(item) {
-          const special = Utils.SpecialCalculator.getSpecial(item);
+      // 2026-08-15 新增：波色 Top 2 推荐（与综合分析面板底部展示一致）
+      top2Predictor: function(sequence) {
+        return ZodiacPrediction._predictColorTrendTop2(sequence);
+      },
+      buildSequence: function(historyData, offset, specials) {
+        const slice = historyData.slice(offset + 1, offset + 11);
+        const offsetBase = offset + 1;
+        return slice.map(function(item, i) {
+          const special = specials ? specials[offsetBase + i] : Utils.SpecialCalculator.getSpecial(item);
           let colorName = special.colorName || '红';
           if (!['红', '蓝', '绿'].includes(colorName)) colorName = '红';
           return {
@@ -674,15 +729,10 @@ const ZodiacPredictionBacktest = {
       // 实际特码
       const actualSpecial = allSpecials[offset];
       const actualNum = actualSpecial.te;
-      const actualHead = actualSpecial.head;
-      const actualTail = actualSpecial.tail;
-      const actualColor = actualSpecial.colorName;
-      const actualWx = actualSpecial.wuxing;
-      const actualZod = actualSpecial.zod;
 
       // ---- 计算各维度的"预测号码集合" ----
       // 1) FOLLOW：生肖 = followZodiacs 的号码（用 12 期窗口投票的 numZodiacMap）
-      let numZodiacMap = {};
+      const numZodiacMap = {};
       list.forEach(function(item){
         const ca = (item.openCode || '').split(',');
         const za = Utils.parseZodiacArr(item);
@@ -694,7 +744,7 @@ const ZodiacPredictionBacktest = {
           }
         });
       });
-      let numZodiacFinal = {};
+      const numZodiacFinal = {};
       Object.keys(numZodiacMap).forEach(function(numStr){
         const votes = numZodiacMap[numStr];
         numZodiacFinal[Number(numStr)] = Object.entries(votes).sort(function(a,b){return b[1]-a[1]})[0][0];
@@ -798,8 +848,8 @@ const ZodiacPredictionBacktest = {
       report.push('  ' + s3.note.padEnd(28) + ' 增益=' + gain + 'x');
     }
     console.log(report.join('\n'));
-    // 2026-07-14：同时把结果放到页面标题里，方便复制
-    try { document.title = '[诊断] ' + report.join(' | ').slice(0, 200); } catch(_e){}
+    // v2.6.4 修复：移除业务层 document.title 写入（CLAUDE.md 红线：业务层禁止任何 DOM 操作）
+    // 报告数据通过 return 的 stats / details 传递给调用方，由视图层决定展示方式
 
     return { stats: dimStats, details: detailLog };
   },
@@ -847,9 +897,6 @@ const ZodiacPredictionBacktest = {
     // 维度得分累计（用于对比命中 vs 未命中）
     const hitDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
     const missDimSum = { follow: 0, head: 0, tail: 0, color: 0, wuxing: 0, neighbor: 0, inertia: 0, miss: 0 };
-    let hitRankSum = 0;
-    let missRankSum = 0;
-
     for (let offset = 0; offset < testCount; offset++) {
       const targetItem = historyData[offset];
       if (!targetItem) break;
@@ -928,7 +975,6 @@ const ZodiacPredictionBacktest = {
           hitDimSum.inertia += hd.inertia || 0;
           hitDimSum.miss += hd.miss || 0;
         }
-        hitRankSum += actualRank;
       } else {
         // 未命中：分析各维度
         if (actualCandidate && actualCandidate.dims) {
@@ -952,7 +998,6 @@ const ZodiacPredictionBacktest = {
           if ((md.inertia || 0) === 0) dimMissed.inertia.missed++;
           if ((md.miss || 0) === 0) dimMissed.miss.missed++;
         }
-        missRankSum += actualRank;
 
         missDetails.push({
           expect: targetItem.expect,

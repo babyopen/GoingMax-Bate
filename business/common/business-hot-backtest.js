@@ -16,6 +16,7 @@
  * 依赖方向：被 event.js (事件层) → business-main.js (业务层) 调用
  * 禁止 DOM 操作
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.BusinessHotBacktest 引用
 const BusinessHotBacktest = {
 
   /** 默认回测期数 */

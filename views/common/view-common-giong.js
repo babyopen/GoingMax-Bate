@@ -21,6 +21,7 @@
  * 依赖方向：被 views/zodiac/view-zodiac-giong-{size,oddeven,wuxing,color}.js 调用
  * 依赖底层：ViewCommon.showBacktestModal（views/view-common.js）
  */
+// eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.ViewCommonGiong 引用
 const ViewCommonGiong = {
 
   // ============================================================
