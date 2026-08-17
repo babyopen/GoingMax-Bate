@@ -1421,24 +1421,38 @@ const Business = {
   buildTailBacktest: (data) => {
     if(!data || !data.list || !data.tailZodMap) return '';
 
-    // 逐期渲染：判定该期 (tail, zod) 是否在历史命中表 tailZodMap 中存在过
+    // 逐期渲染：每期展示"带次数的尾数集合" + 当期实际特码号码，判定当期尾数是否在集合内
+    // 2026-08-17 变更：仅回测"带次数的尾数"（历史命中表非空的尾数）对应的期
+
+    // 预先计算"带次数的尾数集合"（按 0-9 升序）
+    const activeTails = [];
+    for(let t = 0; t <= 9; t++) {
+      const map = data.tailZodMap[t] || {};
+      const totalCnt = Object.values(map).reduce((a, b) => a + b, 0);
+      if(totalCnt > 0) activeTails.push(t);
+    }
+    const activeTailsStr = activeTails.join(' ');
+
     let html = '';
     data.list.forEach(item => {
       const s = BusinessCommonSpecials.getOne(item);
       if(!s) return;
       const expect = item.expect;
       const tail = s.tail;
-      const zod = s.zod;
+      // 2026-08-17 变更：显示当期实际特码号码（而非尾数）
+      const teNum = s.te !== undefined ? Utils.formatNum(Number(s.te)) : '?';
 
-      // 2026-08-17 变更：判定 = 该期 (tail, zod) 在历史命中表 tailZodMap 中 cnt > 0
-      // 即历史中该"尾数-生肖"组合是否曾真实命中过
+      // 仅展示"带次数的尾数"对应的期（即历史中该尾数有命中记录）
       const tailMap = data.tailZodMap[tail] || {};
-      const histCnt = tailMap[zod] || 0;
-      const isHit = histCnt > 0;
+      const tailTotalCnt = Object.values(tailMap).reduce((a, b) => a + b, 0);
+      if(tailTotalCnt === 0) return;
+
+      // 判定：当期尾数是否在"带次数的尾数集合"内
+      const isHit = activeTails.indexOf(tail) >= 0;
 
       const hitCls = isHit ? 'tail-backtest-hit-ok' : 'tail-backtest-hit-no';
       const hitText = isHit ? '命中' : '未中';
-      const targetText = '尾' + tail + '+' + zod + '（历史 ' + histCnt + ' 次）';
+      const targetText = activeTailsStr + '｜特码 ' + teNum;
 
       html += '<div class="tail-backtest-period-row ' + hitCls + '">';
       html += '<span class="tail-backtest-period-label">' + expect + '期</span>';
