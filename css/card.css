@@ -210,6 +210,24 @@
 /* 2026-08-17 新增：#tailZodiacGrid / #zodiacTotalGrid 二档配色：有次数=蓝，无次数=红 */
 .data-item-z.has{background:rgba(0,122,255,0.1);color:#007aff;font-weight:700}
 .data-item-z.none{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
+
+/* 2026-08-17 新增：#tailZodiacGrid 回测弹窗样式 */
+.tail-backtest-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999}
+.tail-backtest-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55)}
+.tail-backtest-content{position:relative;background:var(--card);border-radius:14px;width:calc(100% - 32px);max-width:420px;max-height:82vh;margin:48px auto 0;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);display:flex;flex-direction:column}
+.tail-backtest-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(128,128,128,0.18)}
+.tail-backtest-header h3{font-size:16px;font-weight:700;color:var(--text);margin:0}
+.tail-backtest-close{font-size:20px;color:var(--sub-text);cursor:pointer;line-height:1;padding:2px 6px}
+.tail-backtest-body{overflow-y:auto;flex:1;padding-right:4px}
+/* 逐期回测行（2026-08-17 重构：单行紧凑） */
+.tail-backtest-period-row{display:flex;align-items:center;border-bottom:1px solid rgba(128,128,128,0.08);padding:6px 4px;font-size:13px;color:var(--text)}
+.tail-backtest-period-row.tail-backtest-hit-ok{background:rgba(48,209,88,0.06)}
+.tail-backtest-period-label{font-weight:700;min-width:80px;color:var(--text)}
+.tail-backtest-period-target{flex:1;color:#0A84FF;font-size:12px}
+.tail-backtest-period-flag{margin-left:8px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:4px}
+.tail-backtest-hit-ok .tail-backtest-period-flag{background:rgba(48,209,88,0.15);color:#30D158}
+.tail-backtest-hit-no .tail-backtest-period-flag{background:rgba(142,142,147,0.15);color:var(--sub-text)}
+.tail-backtest-empty{text-align:center;color:var(--sub-text);padding:24px 0;font-size:13px}
 .final-recommend-z{
   background:rgba(19,166,98,0.1);border-radius:12px;padding:14px;text-align:center;
   font-size:15px;font-weight:700;color:#13a662;margin-top:14px;margin-bottom:14px;word-break:break-all;line-height:1.6;

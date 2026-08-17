@@ -586,6 +586,23 @@ const EventBinder = {
       else if(action === 'showColorBacktest') EventBinder._showColorBacktest();
       // 热门号码回测操作（v2.6.0 新增）
       else if(action === 'showHotBacktest') EventBinder._showHotBacktest();
+      // 2026-08-17 新增：#tailZodiacGrid 顶部"回测"按钮 + 弹窗关闭
+      else if(action === 'showTailBacktest') {
+        if(typeof ViewAnalysis !== 'undefined' && ViewAnalysis.showTailBacktestModal){
+          ViewAnalysis.showTailBacktestModal();
+        } else if(typeof ViewAnalysisZodiac !== 'undefined' && ViewAnalysisZodiac.showTailBacktestModal){
+          ViewAnalysisZodiac.showTailBacktestModal();
+        } else {
+          console.warn('[tailBacktest] showTailBacktestModal 未挂载');
+        }
+      }
+      else if(action === 'closeTailBacktest') {
+        if(typeof ViewAnalysis !== 'undefined' && ViewAnalysis.closeTailBacktestModal){
+          ViewAnalysis.closeTailBacktestModal();
+        } else if(typeof ViewAnalysisZodiac !== 'undefined' && ViewAnalysisZodiac.closeTailBacktestModal){
+          ViewAnalysisZodiac.closeTailBacktestModal();
+        }
+      }
       // 未推荐生肖 - 查看来源弹窗
       else if(action === 'showUnrecSources') ViewZodiacUltimate.showUnrecSourcesModal();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);

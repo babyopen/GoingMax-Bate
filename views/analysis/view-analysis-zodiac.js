@@ -44,12 +44,43 @@ const ViewAnalysisZodiac = {
     const zodiacFinalNum = document.getElementById('zodiacFinalNum');
     if(zodiacFinalNum) zodiacFinalNum.innerText = renderData.finalNums || '';
 
+    // 2026-08-17 新增：缓存 #tailZodiacGrid 回测弹窗 HTML
+    ViewAnalysisZodiac._tailBacktestHtml = renderData.tailBacktestHtml || '';
+
     // 将精选特码移动到共振组合上方（动态调整 DOM，不修改 index.html）
     const coreConclusion = document.querySelector('.core-conclusion');
     if (zodiacFinalNum && coreConclusion && coreConclusion.parentNode &&
         coreConclusion.compareDocumentPosition(zodiacFinalNum) & Node.DOCUMENT_POSITION_FOLLOWING) {
       coreConclusion.parentNode.insertBefore(zodiacFinalNum, coreConclusion);
     }
+  },
+
+  /**
+   * 2026-08-17 新增：打开 #tailZodiacGrid 回测弹窗
+   * 显示每个有次数的"尾数-生肖"组合的具体命中期号
+   */
+  _tailBacktestHtml: '',
+
+  showTailBacktestModal: function() {
+    const modal = document.getElementById('tailBacktestModal');
+    if(!modal) return;
+    const body = ViewAnalysisZodiac._tailBacktestHtml || '<div class="tail-backtest-empty">暂无数据，请先同步分析</div>';
+    let html = '';
+    html += '<div class="tail-backtest-overlay" data-action="closeTailBacktest"></div>';
+    html += '<div class="tail-backtest-content">';
+    html += '<div class="tail-backtest-header">';
+    html += '<h3>📊 尾数-生肖回测记录</h3>';
+    html += '<span class="tail-backtest-close" data-action="closeTailBacktest">✕</span>';
+    html += '</div>';
+    html += '<div class="tail-backtest-body">' + body + '</div>';
+    html += '</div>';
+    modal.innerHTML = html;
+    modal.style.display = 'block';
+  },
+
+  closeTailBacktestModal: function() {
+    const modal = document.getElementById('tailBacktestModal');
+    if(modal) modal.style.display = 'none';
   },
 
   /**
@@ -216,4 +247,7 @@ const ViewAnalysisZodiac = {
 if (typeof ViewAnalysis !== 'undefined') {
   ViewAnalysis.renderZodiacAnalysis = ViewAnalysisZodiac.renderZodiacAnalysis;
   ViewAnalysis.showFinalBacktestModal = ViewAnalysisZodiac.showFinalBacktestModal;
+  // 2026-08-17 新增：#tailZodiacGrid 回测弹窗
+  ViewAnalysis.showTailBacktestModal = ViewAnalysisZodiac.showTailBacktestModal;
+  ViewAnalysis.closeTailBacktestModal = ViewAnalysisZodiac.closeTailBacktestModal;
 }

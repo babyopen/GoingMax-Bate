@@ -574,8 +574,9 @@
             <div class="conclusion-item" id="combo3">3. 备选：--</div>
           </div>
 
-          <div class="analysis-sub-title" style="color:#13a662;">① 特码尾数 → 特码生肖真实关联</div>
+          <div class="analysis-sub-title" style="color:#13a662;display:flex;justify-content:space-between;align-items:center;">① 特码尾数 → 特码生肖真实关联<button id="tailBacktestBtn" data-action="showTailBacktest" style="background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.3);color:#0A84FF;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-weight:600;">📊 回测</button></div>
           <div class="data-grid-z" id="tailZodiacGrid"></div>
+          <div id="tailBacktestModal" class="tail-backtest-modal" style="display:none;"></div>
 
           <div class="analysis-sub-title" style="color:#13a662;">② 上期特码生肖 → 本期特码生肖跟随</div>
           <table class="follow-table-z" id="zodiacFollowTable"></table>
