@@ -1059,7 +1059,7 @@
 
 /* 2026-08-18 新增：尾数跟随卡片（位于综合分析下方） */
 #latestTailFollowPanel {
-  margin-top: 20px;
+  margin-bottom: 24px;
 }
 
 .tail-follow-card {
