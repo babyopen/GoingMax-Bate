@@ -2179,6 +2179,10 @@ const Business = {
 
     ViewZodiacGiong.renderCombinedAnalysis(latestSizeStats, latestOddEvenStats, latestWuxingStats, latestColorStats);
 
+    // 2026-08-18 新增：尾数跟随卡片（本期特码尾数 → 过去不限期数，凑足 5 个不同尾数即停）
+    const latestTailFollowStats = ZodiacPrediction.getLatestTailFollowStats(historyData);
+    ViewZodiacGiong.renderLatestTailFollowStats(latestTailFollowStats);
+
     const patternResult = ZodiacPrediction.analyzeZonePatterns(historyData);
 
     if (freqResult && patternResult) {

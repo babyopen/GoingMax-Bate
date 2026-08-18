@@ -11,6 +11,73 @@
  * - 内部使用 `Utils.SpecialCalculator.getSpecial / ZODIAC_ORDER / getZodiacEmoji` 引用门面上的共享数据/工具
  */
 const ZodiacPredictionBacktest = {
+  /**
+   * 2026-08-18 新增（私有）：按"新到旧首次出现顺序"采样 Top 6 跟随尾数
+   * 算法：扫历史（不含当前期），每遇到一个 tail===currentTail 的位置，
+   *       取"下一期实际尾数"，按出现次数累加；
+   *       遇到累计出现第 6 个"不同尾数"即停止采样（避免被远期重复出现的尾数拉满）
+   * 排序：Top6 按"新到旧"首次出现顺序排列（用户最新需求：如 2026228 期尾数 3 → 9 8 7 1 6）
+   *
+   * 2026-08-18 调整：不再限定 36 期窗口；
+   *   Top6 排序由"频次降序"改为"新到旧首次出现顺序"（用户反馈数据不符，期望 9 8 7 1 6）
+   *
+   * @param {Array} historyData - 倒序历史数据（[0] 最新；要求严格在该期"之前"的窗口）
+   * @param {number} currentTail - 关注的尾数 0-9
+   * @returns {Object|null} { top6:[尾数字符串], sampleCount, countsByTail:{0:N,...}, scannedPeriods }
+   *                        采样不足或没有匹配位置时返回 null
+   */
+  _calcTop5ByOccurrenceOrder: function(historyData, currentTail) {
+    if (!historyData || historyData.length < 2) return null;
+    const tail = Number(currentTail);
+    if (isNaN(tail) || tail < 0 || tail > 9) return null;
+
+    // 窗口：historyData[1..]（严格限定在「当前期」之前，不含 index 0）
+    const windowData = historyData.slice(1);
+    if (windowData.length < 2) return null;
+
+    const TOP_N = 6;
+
+    // 第一遍：扫描累加（historyData 倒序：windowData[0] 较新；windowData[i-1] = "下一期"（更新））
+    const countsByTail = {};
+    const seenSet = {};
+    const order = []; // 记录"新到旧"首次出现顺序（先出现的尾数排前面）
+    let sampleCount = 0;
+    let scannedPeriods = 0; // 实际扫了多少个"出现 currentTail 的位置"
+
+    // 注意：windowData 倒序存放（index 0 最新）。windowData[i] 的"下一期"（更新）是 windowData[i-1]，
+    //   而非 windowData[i+1]（那是更旧的一期）。故从 i=1 开始扫，取 windowData[i-1] 作为"下一期"。
+    for (let i = 1; i < windowData.length; i++) {
+      const curSpecial = Utils.SpecialCalculator.getSpecial(windowData[i]);
+      if (Number(curSpecial.tail) !== tail) continue;
+      scannedPeriods++;
+      const nextSpecial = Utils.SpecialCalculator.getSpecial(windowData[i - 1]);
+      const nextTail = Number(nextSpecial.tail);
+      if (nextTail < 0 || nextTail > 9) continue;
+
+      const isFirstAppearance = !(nextTail in seenSet);
+      countsByTail[nextTail] = (countsByTail[nextTail] || 0) + 1;
+      sampleCount++;
+      if (isFirstAppearance) {
+        seenSet[nextTail] = true;
+        order.push(nextTail); // 记录首次出现顺序（新到旧）
+      }
+      // 满足 6 个不同尾数即停止采样
+      if (Object.keys(seenSet).length >= TOP_N) break;
+    }
+
+    if (sampleCount === 0) return null;
+
+    // 输出 Top 6：按"新到旧"首次出现顺序排列（用户最新需求）
+    const top5 = order.slice(0, TOP_N).map(function(t) { return String(t); });
+
+    return {
+      top5: top5,
+      sampleCount: sampleCount,
+      countsByTail: countsByTail,
+      scannedPeriods: scannedPeriods
+    };
+  },
+
   _runGenericBacktest: function(historyData, testCount, config) {
     if (!historyData || historyData.length < 10) return null;
 
@@ -411,6 +478,196 @@ const ZodiacPredictionBacktest = {
         });
       }
     });
+  },
+
+  /**
+   * 2026-08-18 新增：尾数跟随 Top 6 推荐回测（自实现，不复用 _runGenericBacktest）
+   *
+   * 两种模式：
+   *   ① 不传 currentTail（默认）：对每期 offset 取其特码尾数 latestTail，
+   *      在过去 36 期窗口里找 tail===latestTail 的位置 → 统计"下一期尾数"Top6 → 判定 actualTail∈Top6
+   *   ② 传入 currentTail（按尾数过滤）：不限期数扫历史，所有 tail===currentTail 的位置都纳入 details；
+   *      Top 6 = 按"新到旧"首次出现顺序累加，直到累计出 6 个不同尾数即停止；
+   *      命中判定 = 下一期实际尾数 ∈ Top 6
+   * 输出结构与 _runGenericBacktest 完全一致，可被 ViewCommon.showBacktestModal 直接消费
+   *
+   * @param {Array} historyData - 历史数据（[0] 最新）
+   * @param {number} testCount - 回测期数（默认 36，仅模式①使用）
+   * @param {number} [currentTail] - 限定尾数；传入后走模式②
+   */
+  runTailBacktest: function(historyData, testCount, currentTail) {
+    // ============ 模式 ②：按 currentTail 回测（仅该尾数相关的过往出现位置）============
+    if (currentTail !== undefined && currentTail !== null && currentTail !== '' && !isNaN(currentTail)) {
+      const tail = Number(currentTail);
+      if (tail < 0 || tail > 9) return null;
+      if (!historyData || historyData.length < 3) return null; // 至少 2 期窗口 + 1 当前
+
+      // 2026-08-18 变更：Top 6 推荐改为"按出现顺序累加采样"（不限期数，累计出 6 个不同尾数即停止）
+      //   - 与 getLatestTailFollowStats（按完整分布 Top 6）不同
+      //   - 排序固定按"新到旧"的首次出现顺序（先达到的尾数排前面）
+      //   - 优势：样本更具"近期代表性"，避免被远期重复出现的尾数拉满统计
+      const top5Result = ZodiacPrediction._calcTop5ByOccurrenceOrder(historyData, tail);
+      if (!top5Result || top5Result.top5.length === 0) return null;
+      const top5 = top5Result.top5;
+      const sampleCount = top5Result.sampleCount;
+
+      // 窗口：historyData[1..]（不限期数，扫到所有"出现 currentTail 的位置"）
+      const windowData = historyData.slice(1);
+      if (windowData.length < 2) return null;
+
+      // 扫窗口：每个 tail===currentTail 的位置，记录"下一期实际尾数"
+      const results = [];
+      // 注意：historyData 倒序存放，windowData[0] 较新，windowData[i+1] 较旧（"下一期"）
+      for (let i = 0; i < windowData.length - 1; i++) {
+        const curSpecial = Utils.SpecialCalculator.getSpecial(windowData[i]);
+        if (Number(curSpecial.tail) !== tail) continue;
+        const nextItem = windowData[i + 1];
+        const nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
+        const nextTail = Number(nextSpecial.tail);
+        if (nextTail < 0 || nextTail > 9) continue;
+        const isHit = top5.indexOf(String(nextTail)) !== -1;
+        // 置信度：该 nextTail 在采样中的占比（粗略指示预测强度）
+        const nextTailCount = top5Result.countsByTail[nextTail] || 0;
+        const confidence = sampleCount > 0 ? Math.round(nextTailCount / sampleCount * 100) : 40;
+        results.push({
+          // 2026-08-18 调整：expect 显示「被验证期（nextExpect）」+ 配套 triggerExpect
+          //   业务逻辑：每条对应"在 triggerExpect 出现 currentTail → 验证 nextExpect 期是否在 Top6"
+          //   弹窗期号列显示 nextExpect（被验证期）——与用户口述"2026229期..."对齐
+          //   但为了避免 historyData 跳号导致的"乱跳"，sort 仍按"被验证期（nextExpect）"降序
+          //   （nextExpect 与 triggerExpect 同属连续相邻期，跳号模式一致，视觉仍然稳定）
+          expect: Number(nextItem.expect || 0),
+          actualNumber: nextSpecial.te,
+          confidence: confidence,
+          isHit: isHit,
+          predictedTail: top5[0],
+          actualTail: String(nextTail),
+          predictedTailTop5: top5,
+          // 配套字段：上一期（即"出现 currentTail"的位点期号），便于追溯因果链
+          triggerExpect: Number(windowData[i].expect || 0),
+          nextExpect: Number(nextItem.expect || 0)
+        });
+      }
+
+      if (!results.length) return null;
+
+      // 按 expect（被验证期 = nextExpect）降序排序，保证"新到旧"严格递减
+      //   nextExpect 与 triggerExpect 是连续相邻期，跳号模式一致，视觉仍然稳定
+      results.sort(function(a, b) { return b.expect - a.expect; });
+
+      const hitCount = results.filter(function(r) { return r.isHit; }).length;
+      const hitRate = Math.round((hitCount / results.length) * 100);
+      // 2026-08-18 变更：明细列表不再限 36 期，显示所有出现 currentTail 的位置
+      const recentResults = results;
+      const recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
+      const recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
+
+      let currentStreak = 0;
+      for (let j = 0; j < recentResults.length; j++) {
+        if (recentResults[j].isHit) currentStreak++;
+        else break;
+      }
+
+      return {
+        totalTests: results.length,
+        totalHits: hitCount,
+        totalHitRate: hitRate,
+        recentTests: recentResults.length,
+        recentHits: recentHitCount,
+        recentHitRate: recentHitRate,
+        currentStreak: currentStreak,
+        details: recentResults,
+        currentTail: tail,
+        sampleSize: sampleCount,
+        scannedPeriods: top5Result.scannedPeriods
+      };
+    }
+
+    // ============ 模式 ①：每期跑全量 Top6 推荐回测（与模式② 算法规格统一）============
+    //   2026-08-18 调整：
+    //     - 不再限定过去 36 期窗口；改为不限期数（实际依赖历史深度）
+    //     - 复用 _calcTop5ByOccurrenceOrder：每期取当期特码尾数 → 在该期之前的历史里凑足 6 个不同尾数即停
+    //     - Top6 按频次降序排列
+    //     - 命中判定 = 该期实际特码尾数 ∈ Top6
+    //     - 每条记录 expect = nextExpect（被验证期 = 下一期）—— 与用户口述"每期 top6 → 下一期核对"对齐
+    if (!historyData || !historyData.length) return null;
+
+    const results = [];
+
+    // 从 index 1 开始扫（index 0 是"最新一期"，没有"下一期"，跳过）
+    for (let offset = 1; offset < historyData.length; offset++) {
+      // 当前期：historyData[offset] = "上一期"（即用户口中的"2026228 期"）
+      const targetItem = historyData[offset];
+      // 下一期：historyData[offset-1] = 更新的那一期（"2026229 期"）
+      const nextItem = historyData[offset - 1];
+      if (!targetItem || !nextItem) continue;
+
+      const targetSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      const latestTail = Number(targetSpecial.tail);
+      if (latestTail < 0 || latestTail > 9) continue;
+
+      // 复用 _calcTop5ByOccurrenceOrder：扫"当前期之前的历史"
+      //   注意：_calcTop5ByOccurrenceOrder 内部会 slice(1) 去掉传入数据的 index 0（视为"当前期"）
+      //   因此这里传入 historyData.slice(offset)（含当前期 targetItem 作为 index 0），
+      //   函数内部去掉当前期后，恰好得到"当前期之前"（2026227期及更早）的正确数据范围
+      const beforeHistory = historyData.slice(offset);
+      const top5Result = ZodiacPrediction._calcTop5ByOccurrenceOrder(beforeHistory, latestTail);
+      if (!top5Result || top5Result.top5.length === 0) continue;
+      const top5 = top5Result.top5;
+
+      // 命中判定：下一期实际特码尾数（actualTail）是否在 Top6 中
+      const nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
+      const actualTail = Number(nextSpecial.tail);
+      if (actualTail < 0 || actualTail > 9) continue;
+      const isHit = top5.indexOf(String(actualTail)) !== -1;
+      const sampleCount = top5Result.sampleCount;
+      const nextTailCount = top5Result.countsByTail[String(actualTail)] || 0;
+      const confidence = sampleCount > 0 ? Math.round(nextTailCount / sampleCount * 100) : 40;
+
+      results.push({
+        // 2026-08-18 调整：expect 显示「被验证期」（= 下一期，即 nextItem）
+        //   与用户口述"每期 top6 → 下一期特码尾数核对"完全对齐
+        expect: Number(nextItem.expect || 0),
+        actualNumber: nextSpecial.te,
+        confidence: confidence,
+        isHit: isHit,
+        predictedTail: top5[0],
+        actualTail: String(actualTail),
+        predictedTailTop5: top5,
+        // 配套字段：上一期（即"出现 currentTail / 用于算 Top6"的位点期号）
+        triggerExpect: Number(targetItem.expect || 0),
+        nextExpect: Number(nextItem.expect || 0)
+      });
+    }
+
+    if (!results.length) return null;
+
+    // 按 expect（被验证期 = nextExpect）降序排序，保证"新到旧"严格递减
+    //   nextExpect 与 triggerExpect 是连续相邻期，跳号模式一致，视觉稳定
+    results.sort(function(a, b) { return b.expect - a.expect; });
+
+    const hitCount = results.filter(function(r) { return r.isHit; }).length;
+    const hitRate = Math.round((hitCount / results.length) * 100);
+
+    const recentResults = results;
+    const recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
+    const recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
+
+    let currentStreak = 0;
+    for (let j = 0; j < recentResults.length; j++) {
+      if (recentResults[j].isHit) currentStreak++;
+      else break;
+    }
+
+    return {
+      totalTests: results.length,
+      totalHits: hitCount,
+      totalHitRate: hitRate,
+      recentTests: recentResults.length,
+      recentHits: recentHitCount,
+      recentHitRate: recentHitRate,
+      currentStreak: currentStreak,
+      details: recentResults
+    };
   },
 
   /**

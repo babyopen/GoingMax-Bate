@@ -165,6 +165,99 @@ const ViewZodiacGiong = {
   },
 
   /**
+   * 2026-08-18 新增：尾数跟随卡片
+   * 取本期特码尾数，过去 24 期窗口内统计该尾数出现后下一期实际开出的尾数分布
+   * 数据源：ZodiacPrediction.getLatestTailFollowStats(historyData, 24)
+   * 容器：#latestTailFollowPanel（位于综合分析卡片下方）
+   */
+  renderLatestTailFollowStats: function(tailData) {
+    const container = document.getElementById('latestTailFollowPanel');
+    if (!container) return;
+
+    if (!tailData) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '';
+    html += '<div class="tail-follow-card">';
+    html += '<div class="tail-follow-header">';
+    html += '<div class="tail-follow-subtitle">第' + tailData.expect + '期 尾数 <strong class="tail-follow-current">' + tailData.tail + '</strong> 后，过去 ' + tailData.windowSize + ' 期内的跟随分布</div>';
+    html += '</div>';
+
+    if (tailData.sampleCount === 0) {
+      html += '<div class="tail-follow-empty">过去 ' + tailData.windowSize + ' 期内未出现相同尾数，暂无跟随数据</div>';
+    } else {
+      // 2026-08-18：点击整张卡片（含链式/统计/样本数）触发回测弹窗
+      //   data-tail=当前特码尾数 → 事件层读取后传给业务层，实现"按该尾数回测"
+      html += '<div class="tail-follow-content" data-action="showTailBacktest" data-tail="' + tailData.tail + '" style="cursor:pointer;">';
+      html += '<div class="tail-follow-chain">';
+      html += '<span class="tail-follow-current-tag">尾' + tailData.tail + '</span>';
+
+      tailData.topFollowers.forEach(function(item) {
+        html += '<span class="follow-arrow">→</span>';
+        html += '<span class="tail-follow-target">尾' + item.tail + '</span>';
+      });
+
+      html += '</div>';
+
+      html += '<div class="tail-follow-stats">';
+      tailData.topFollowers.forEach(function(item) {
+        html += '<div class="tail-follow-item">';
+        html += '<div class="tail-follow-name">尾' + item.tail + '</div>';
+        html += '<div class="tail-follow-count">' + item.count + '次</div>';
+        html += '<div class="tail-follow-percent">' + item.percentage + '%</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      html += '<div class="tail-follow-sample">样本数：' + tailData.sampleCount + ' 次跟随 · 点击查看回测</div>';
+      html += '</div>';
+    }
+
+    html += '</div>';
+
+    container.innerHTML = html;
+  },
+
+  /**
+   * 2026-08-18 新增：尾数跟随 Top 6 回测弹窗
+   * 数据源：ZodiacPrediction.runTailBacktest(historyData, 24)
+   * 模板：复用 ViewCommon.showBacktestModal（含总测试/命中/命中率/连中 + 详情列表）
+   * 命中判定：actualTail ∈ predictedTailTop5（Top 6 推荐命中）
+   */
+  showTailBacktestModal: function(backtestData) {
+    // 2026-08-18：按 currentTail 回测时，标题显示具体尾数（如"尾数 8 跟随回测"）
+    // backtestData.currentTail 由业务层模式②传入
+    const modalTitle = backtestData && backtestData.currentTail !== undefined
+      ? '📊 尾数 ' + backtestData.currentTail + ' 跟随回测'
+      : '📊 尾数跟随回测追踪';
+    ViewCommon.showBacktestModal({
+      modalId: 'tailBacktestModal',
+      title: modalTitle,
+      closeBtnId: 'closeTailBacktestBtn',
+      highlightColor: '#9333EA',
+      backtestData: backtestData,
+      labels: { predicted: '预测', actual: '实际' },
+      // 2026-08-18：弹出窗口显示 Top 6 推荐（与卡片底部 Top 6 列表对齐）
+      //   - fmtVal.pred = 数组 [尾X, 尾Y, ...]，由 showBacktestModal 模板逐项渲染
+      //   - 命中项用紫色高亮（#A78BFA），未命中普通色
+      //   - actual 返回纯数字字符串，便于与 pred 数组元素做精确比对（p === actual）
+      //     避免"尾3" vs "3" 不匹配导致命中项无法高亮
+      formatValue: function(item) {
+        return {
+          pred: item.predictedTailTop5 || [item.predictedTail],
+          actual: String(item.actualTail)
+        };
+      },
+      footerNote: '• 核对逻辑：每条记录对应「上一期特码尾数 → 本期（被验证期）特码尾数」是否在 Top 6 中；命中（紫色高亮）即对应成功<br>' +
+        '• 每期取当期特码尾数，在其之前的历史中凑足 6 个不同跟随尾数（按频次降序）作为本期 Top 6 核对基准<br>' +
+        '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)（Top 6 命中）<br>' +
+        '• 数据仅供参考，不构成投资建议'
+    });
+  },
+
+  /**
    * 区域综合推荐（在 Giong 面板的"区域推荐"区域）
    */
   renderZoneRecommend: function(zodiacList, nextExpect) {

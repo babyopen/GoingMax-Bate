@@ -182,6 +182,66 @@ const ZodiacPredictionMiss = {
       topFollowers: followStats.topFollowers.slice(0, 4),
       totalFollows: followStats.targetAppearCount
     };
+  },
+
+  /**
+   * 2026-08-18 新增：本期特码尾数的"下一期尾数"跟随统计
+   * 取本期开出的特码尾数，在历史中查找该尾数出现过的所有位置，
+   * 统计这些位置"下一期"实际开出的尾数分布，凑足 6 个不同尾数即停止采样，
+   * 按频次降序取 Top 6 作为本期预测参考。
+   *
+   * 2026-08-18 调整：
+   *   - 不再限定固定窗口期数；改为不限期数、凑足 6 个不同尾数即停
+   *   - 与回测算法规格统一（复用 _calcTop5ByOccurrenceOrder）
+   *
+   * @param {Array} historyData - 历史数据（index 0 为最近一期）
+   * @param {number} [windowSize] - 兼容旧调用方保留的参数；本算法不再使用
+   * @returns {Object|null} { tail, expect, topFollowers:[{tail, count, percentage}], sampleCount, scannedPeriods }
+   */
+  getLatestTailFollowStats: function(historyData, _windowSize) {
+    // 注：_windowSize 为旧调用方兼容性保留的参数（2026-08-18 改为不限期数后不再使用）
+    //   ESLint 允许未使用以下划线开头的形参，故加 _ 前缀
+    if (!historyData || !historyData.length) return null;
+
+    // 本期：index 0
+    const latestItem = historyData[0];
+    const latestSpecial = Utils.SpecialCalculator.getSpecial(latestItem);
+    const latestTail = Number(latestSpecial.tail);
+    const latestExpect = Number(latestItem.expect || 0);
+
+    // 2026-08-18 调整：复用 _calcTop5ByOccurrenceOrder
+    //   - windowSize 参数保留以兼容旧调用方，但已不再使用（算法不限期数）
+    const top5Result = ZodiacPrediction._calcTop5ByOccurrenceOrder(historyData, latestTail);
+    if (!top5Result || !top5Result.top5 || top5Result.top5.length === 0) {
+      return {
+        tail: latestTail,
+        expect: latestExpect,
+        topFollowers: [],
+        sampleCount: 0,
+        scannedPeriods: 0,
+        windowSize: historyData.length
+      };
+    }
+
+    // 把字符串尾数映射为 {tail, count, percentage} 卡片所需结构
+    const sampleCount = top5Result.sampleCount;
+    const topFollowers = top5Result.top5.map(function(t) {
+      const cnt = top5Result.countsByTail[t] || 0;
+      return {
+        tail: Number(t),
+        count: cnt,
+        percentage: sampleCount > 0 ? Math.round(cnt / sampleCount * 100) : 0
+      };
+    });
+
+    return {
+      tail: latestTail,
+      expect: latestExpect,
+      topFollowers: topFollowers,
+      sampleCount: sampleCount,
+      scannedPeriods: top5Result.scannedPeriods,
+      windowSize: historyData.length
+    };
   }
 };
 

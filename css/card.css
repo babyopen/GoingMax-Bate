@@ -1057,6 +1057,114 @@
   font-size: 13px;
 }
 
+/* 2026-08-18 新增：尾数跟随卡片（位于综合分析下方） */
+.tail-follow-card {
+  padding: 0;
+  margin-top: 12px;
+}
+
+.tail-follow-header {
+  margin-bottom: 12px;
+}
+
+.tail-follow-subtitle {
+  font-size: 12px;
+  color: var(--sub-text);
+}
+
+.tail-follow-subtitle .tail-follow-current {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 14px;
+  margin: 0 2px;
+}
+
+.tail-follow-content {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.tail-follow-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.tail-follow-current-tag {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0,122,255,0.12);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+.tail-follow-target {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(0,0,0,0.05);
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.tail-follow-stats {
+  display: grid;
+  /* 2026-08-18 调整：自适应列数（不再固定 5 列），实际出现的尾数（count>0）有几个就显示几个 */
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  gap: 6px;
+}
+
+.tail-follow-item {
+  background: rgba(255,255,255,0.8);
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.tail-follow-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.tail-follow-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.tail-follow-percent {
+  font-size: 10px;
+  color: var(--sub-text);
+}
+
+.tail-follow-sample {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(0,0,0,0.08);
+  font-size: 11px;
+  color: var(--sub-text);
+  text-align: center;
+}
+
+.tail-follow-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--sub-text);
+  font-size: 13px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
 /* 大小分析卡片 */
 .size-analysis-card {
   padding: 0;

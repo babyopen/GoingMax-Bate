@@ -588,7 +588,12 @@ const EventBinder = {
       else if(action === 'showHotBacktest') EventBinder._showHotBacktest();
       // 2026-08-17 新增：#tailZodiacGrid 顶部"回测"按钮 + 弹窗关闭
       else if(action === 'showTailBacktest') {
-        if(typeof ViewAnalysis !== 'undefined' && ViewAnalysis.showTailBacktestModal){
+        // 2026-08-18：Giong 面板的"尾数跟随卡片"已挂载到 ViewZodiacGiong，优先调用；
+      // 退路保留旧路径（ViewAnalysis / ViewAnalysisZodiac）以兼容其他页面
+      // 2026-08-18：统一走模式①（每期取当期特码尾数算 Top5 作为下一期核对基准），不再按 data-tail 过滤
+      if(typeof ViewZodiacGiong !== 'undefined' && ViewZodiacGiong.showTailBacktestModal){
+        EventBinder._showTailBacktest();
+        } else if(typeof ViewAnalysis !== 'undefined' && ViewAnalysis.showTailBacktestModal){
           ViewAnalysis.showTailBacktestModal();
         } else if(typeof ViewAnalysisZodiac !== 'undefined' && ViewAnalysisZodiac.showTailBacktestModal){
           ViewAnalysisZodiac.showTailBacktestModal();
@@ -918,6 +923,20 @@ const EventBinder = {
   _showOddEvenBacktest: function() { EventBinder._runGiongBacktest('OddEven', '单双回测'); },
   _showWuxingBacktest: function() { EventBinder._runGiongBacktest('Wuxing', '五行回测'); },
   _showColorBacktest: function() { EventBinder._runGiongBacktest('Color', '波色回测'); },
+  // 2026-08-18 新增：尾数跟随 Top 5 回测（#latestTailFollowPanel 点击触发）
+  // 2026-08-18 调整：统一走"全量 Top5 推荐回测"模式（模式①）
+  //   - 用户最新需求：每期取当期特码尾数 → 在该期之前的历史凑足 5 个不同跟随尾数（按频次降序）作为本期 Top 5 核对基准
+  //   - 命中判定 = 下一期实际特码尾数 ∈ 本期 Top 5
+  //   - 不再按 data-tail 走"按尾数过滤"模式（模式②），保证弹窗每行 Top5 按每期动态计算
+  _showTailBacktest: function() {
+    EventBinder._runBacktest({
+      run: function(hd) { return ZodiacPrediction.runTailBacktest(hd, null, null); },
+      show: function(data) { ViewZodiacGiong.showTailBacktestModal(data); },
+      // 模式①（全量）需 ≥ 2 期（offset 1 到 end）
+      minData: 2,
+      errorLabel: '尾数跟随回测'
+    });
+  },
 
   /**
    * 显示热门号码回测弹窗（v2.6.0 新增）
