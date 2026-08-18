@@ -4021,6 +4021,40 @@
     color: #F87171;
     background: rgba(239, 68, 68, 0.18);
   }
+
+  /* 2026-08-18 新增：尾数跟随卡片 - 黑暗模式适配 */
+  .tail-follow-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .tail-follow-chain {
+    border-bottom-color: var(--border);
+  }
+
+  .tail-follow-current-tag {
+    color: #5AC8FA;
+    background: rgba(10,132,255,0.18);
+  }
+
+  .tail-follow-target {
+    color: var(--text);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .tail-follow-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .tail-follow-count {
+    color: #5AC8FA;
+  }
+
+  .tail-follow-sample {
+    border-top-color: rgba(255,255,255,0.08);
+  }
 }
 
 /* ----- 表格视觉增强 ----- */
