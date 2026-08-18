@@ -192,11 +192,11 @@ const ViewZodiacGiong = {
       //   data-tail=当前特码尾数 → 事件层读取后传给业务层，实现"按该尾数回测"
       html += '<div class="tail-follow-content" data-action="showTailBacktest" data-tail="' + tailData.tail + '" style="cursor:pointer;">';
       html += '<div class="tail-follow-chain">';
-      html += '<span class="tail-follow-current-tag">尾' + tailData.tail + '</span>';
+      html += '<span class="tail-follow-current-tag">' + tailData.tail + '</span>';
 
       tailData.topFollowers.forEach(function(item) {
         html += '<span class="follow-arrow">→</span>';
-        html += '<span class="tail-follow-target">尾' + item.tail + '</span>';
+        html += '<span class="tail-follow-target">' + item.tail + '</span>';
       });
 
       html += '</div>';
@@ -204,7 +204,7 @@ const ViewZodiacGiong = {
       html += '<div class="tail-follow-stats">';
       tailData.topFollowers.forEach(function(item) {
         html += '<div class="tail-follow-item">';
-        html += '<div class="tail-follow-name">尾' + item.tail + '</div>';
+        html += '<div class="tail-follow-name">' + item.tail + '</div>';
         html += '<div class="tail-follow-count">' + item.count + '次</div>';
         html += '<div class="tail-follow-percent">' + item.percentage + '%</div>';
         html += '</div>';
@@ -218,6 +218,15 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     container.innerHTML = html;
+
+    // 2026-08-18 调整：把 #latestTailFollowPanel 移到 #combinedAnalysisPanel 之前
+    //   即"尾数跟随卡片"在上、"综合分析卡片"在下（用户要求对换两个 div 位置）
+    //   HTML 容器顺序固定（综合分析在前，尾数跟随在后），故通过 DOM insertBefore 实现视觉顺序调整
+    const combinedPanel = document.getElementById('combinedAnalysisPanel');
+    // 条件：combinedPanel 在 tailPanel 之前（即 tail 在 combined 后），需要交换到前面
+    if (combinedPanel && combinedPanel.parentNode === container.parentNode && combinedPanel.nextElementSibling === container) {
+      container.parentNode.insertBefore(container, combinedPanel);
+    }
   },
 
   /**
