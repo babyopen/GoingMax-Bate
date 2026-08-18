@@ -608,6 +608,10 @@ const EventBinder = {
           ViewAnalysisZodiac.closeTailBacktestModal();
         }
       }
+      // 2026-08-18 新增：生肖跟随回测追踪弹窗（#latestFollowStatsPanel 点击触发）
+      else if(action === 'showLatestFollowBacktest') {
+        EventBinder._showLatestFollowBacktest();
+      }
       // 未推荐生肖 - 查看来源弹窗
       else if(action === 'showUnrecSources') ViewZodiacUltimate.showUnrecSourcesModal();
       else if(action === 'batchSelectGroup') ViewFilter.showBatchModal(group);
@@ -935,6 +939,17 @@ const EventBinder = {
       // 模式①（全量）需 ≥ 2 期（offset 1 到 end）
       minData: 2,
       errorLabel: '尾数跟随回测'
+    });
+  },
+  // 2026-08-18 新增：生肖跟随 Top 4 回测（#latestFollowStatsPanel 点击触发）
+  //   模式①：每期取当期特码生肖 → 在该期之前的历史凑足 4 个不同跟随生肖（按频次降序）作为本期 Top 4 核对基准
+  //   命中判定 = 下一期实际特码生肖 ∈ 本期 Top 4
+  _showLatestFollowBacktest: function() {
+    EventBinder._runBacktest({
+      run: function(hd) { return ZodiacPrediction.runZodiacFollowBacktest(hd); },
+      show: function(data) { ViewZodiacGiong.showLatestFollowBacktestModal(data); },
+      minData: 2,
+      errorLabel: '生肖跟随回测'
     });
   },
 

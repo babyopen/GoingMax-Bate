@@ -134,7 +134,8 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     if (latestData.topFollowers && latestData.topFollowers.length > 0) {
-      html += '<div class="latest-follow-content">';
+      // 2026-08-18 新增：点击触发回测追踪弹窗（data-zodiac 用于记录"当前关注的生肖"）
+      html += '<div class="latest-follow-content" data-action="showLatestFollowBacktest" data-zodiac="' + latestData.zodiac + '" style="cursor:pointer;">';
       html += '<div class="latest-follow-chain">';
       html += '<span class="latest-zodiac">' + latestData.zodiac + '</span>';
 
@@ -162,6 +163,34 @@ const ViewZodiacGiong = {
     html += '</div>';
 
     container.innerHTML = html;
+  },
+
+  /**
+   * 2026-08-18 新增：生肖跟随 Top 6 回测弹窗
+   * 数据源：ZodiacPrediction.runZodiacFollowBacktest(historyData)
+   * 模板：复用 ViewCommon.showBacktestModal（含总测试/命中/命中率/连中 + 详情列表）
+   * 命中判定：actualZodiac ∈ predictedZodiacTop6（Top 6 推荐命中）
+   */
+  showLatestFollowBacktestModal: function(backtestData) {
+    const modalTitle = '📊 生肖跟随回测追踪';
+    ViewCommon.showBacktestModal({
+      modalId: 'latestFollowBacktestModal',
+      title: modalTitle,
+      closeBtnId: 'closeLatestFollowBacktestBtn',
+      highlightColor: '#AF52DE',
+      backtestData: backtestData,
+      labels: { predicted: '预测', actual: '实际' },
+      formatValue: function(item) {
+        return {
+          pred: item.predictedZodiacTop6 || [item.predictedZodiac],
+          actual: String(item.actualZodiac)
+        };
+      },
+      footerNote: '• 核对逻辑：每条记录对应「上一期特码生肖 → 本期（被验证期）特码生肖」是否在 Top 6 中；命中（紫色高亮）即对应成功<br>' +
+        '• 每期取当期特码生肖，在其之前的历史中凑足 6 个不同跟随生肖（按频次降序）作为本期 Top 6 核对基准<br>' +
+        '• 最近 ' + backtestData.recentTests + ' 期命中 <strong>' + backtestData.recentHits + '</strong> 次 (' + backtestData.recentHitRate + '%)（Top 6 命中）<br>' +
+        '• 数据仅供参考，不构成投资建议'
+    });
   },
 
   /**

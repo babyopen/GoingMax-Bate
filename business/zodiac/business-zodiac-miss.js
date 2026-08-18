@@ -179,7 +179,7 @@ const ZodiacPredictionMiss = {
     return {
       zodiac: latestZod,
       expect: latestExpect,
-      topFollowers: followStats.topFollowers.slice(0, 4),
+      topFollowers: followStats.topFollowers.slice(0, 6),
       totalFollows: followStats.targetAppearCount
     };
   },
@@ -241,6 +241,87 @@ const ZodiacPredictionMiss = {
       sampleCount: sampleCount,
       scannedPeriods: top5Result.scannedPeriods,
       windowSize: historyData.length
+    };
+  },
+
+  /**
+   * 2026-08-18 新增：生肖跟随回测追踪（模式①）
+   * 2026-08-18 调整：数据来源改为与"生肖跟随排行榜前6名"一致（calcZodiacFollowers）
+   *   - 每期 offset 取其特码生肖 → 用 calcZodiacFollowers 算 Top6 跟随生肖（按频次降序）→ 验证下一期是否在 Top6 中
+   * 输出结构与 runTailBacktest 一致，可被 ViewCommon.showBacktestModal 直接消费
+   *
+   * @param {Array} historyData - 历史数据（[0] 最新）
+   */
+  runZodiacFollowBacktest: function(historyData) {
+    if (!historyData || !historyData.length) return null;
+
+    const results = [];
+
+    // 从 index 1 开始扫（index 0 是"最新一期"，没有"下一期"，跳过）
+    for (let offset = 1; offset < historyData.length; offset++) {
+      const targetItem = historyData[offset];
+      const nextItem = historyData[offset - 1];
+      if (!targetItem || !nextItem) continue;
+
+      const targetSpecial = Utils.SpecialCalculator.getSpecial(targetItem);
+      const latestZod = targetSpecial.zod;
+      if (!latestZod) continue;
+
+      // 数据来源与"生肖跟随排行榜前6名"一致：calcZodiacFollowers(historyData, zodiac, 4, 20)
+      // 传入 historyData.slice(offset)（含当前期作为 index 0），取 Top6
+      const beforeHistory = historyData.slice(offset);
+      const followStats = ZodiacPrediction.calcZodiacFollowers(beforeHistory, latestZod, 4, 20);
+      if (!followStats || !followStats.topFollowers || followStats.topFollowers.length === 0) continue;
+      const top6 = followStats.topFollowers.slice(0, 6).map(function(f) { return f.zodiac; });
+
+      const nextSpecial = Utils.SpecialCalculator.getSpecial(nextItem);
+      const actualZod = nextSpecial.zod;
+      if (!actualZod) continue;
+
+      const isHit = top6.indexOf(actualZod) !== -1;
+      const sampleCount = followStats.targetAppearCount;
+      const actualFollow = followStats.topFollowers.filter(function(f) { return f.zodiac === actualZod; })[0];
+      const confidence = actualFollow ? actualFollow.percentage : 0;
+
+      results.push({
+        expect: Number(nextItem.expect || 0),
+        actualNumber: nextSpecial.te,
+        confidence: confidence,
+        isHit: isHit,
+        predictedZodiac: top6[0],
+        actualZodiac: actualZod,
+        predictedZodiacTop6: top6,
+        triggerExpect: Number(targetItem.expect || 0),
+        nextExpect: Number(nextItem.expect || 0)
+      });
+    }
+
+    if (!results.length) return null;
+
+    results.sort(function(a, b) { return b.expect - a.expect; });
+
+    const hitCount = results.filter(function(r) { return r.isHit; }).length;
+    const hitRate = Math.round((hitCount / results.length) * 100);
+
+    const recentResults = results;
+    const recentHitCount = recentResults.filter(function(r) { return r.isHit; }).length;
+    const recentHitRate = recentResults.length > 0 ? Math.round((recentHitCount / recentResults.length) * 100) : 0;
+
+    let currentStreak = 0;
+    for (let j = 0; j < recentResults.length; j++) {
+      if (recentResults[j].isHit) currentStreak++;
+      else break;
+    }
+
+    return {
+      totalTests: results.length,
+      totalHits: hitCount,
+      totalHitRate: hitRate,
+      recentTests: recentResults.length,
+      recentHits: recentHitCount,
+      recentHitRate: recentHitRate,
+      currentStreak: currentStreak,
+      details: recentResults
     };
   }
 };
