@@ -68,7 +68,7 @@ const _TAIL_MAP = Object.freeze((function() {
 // ============================================================
 // eslint-disable-next-line no-unused-vars -- 顶层模块定义，供跨文件通过 window.CONFIG 引用
 const CONFIG = Object.freeze({
-  VERSION: '2.0.9',
+  VERSION: '2.7.1',
   DATA_VERSION: 1,
   API: Object.freeze({
     HISTORY: 'https://history.macaumarksix.com/history/macaujc2/y/'

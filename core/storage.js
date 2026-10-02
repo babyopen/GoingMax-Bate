@@ -23,8 +23,11 @@ const Storage = {
     CURRENT_GROUP_ID: 'currentGroupId',
     // 2026-07-04 新增：用户书签（个人中心页长按 div 添加的外部网址收藏）
     //   结构: [{ id: number, title: string, url: string, createdAt: number }, ...]
-    BOOKMARKS: 'userBookmarks'
+    BOOKMARKS: 'userBookmarks',
     // 注：页面子标签记忆（profile/analysis/random）改由 TAB_MEMORY 配置表管理，见下方
+    // v2.7.0 新增：历史数据 fetch 元数据（避免每秒 fetch 浪费带宽）
+    //   结构: { lastFetchTime: number, lastEtag: string|null, lastLatestExpect: number, lastSuccess: boolean }
+    HISTORY_FETCH_META: 'historyFetchMeta'
   }),
 
   /**
@@ -202,6 +205,45 @@ const Storage = {
   saveHistoryCache: (data) => {
     Storage.set(Storage.KEYS.HISTORY_DATA, data);
     Storage.set(Storage.KEYS.HISTORY_TIMESTAMP, Date.now());
+  },
+
+  // ============================================================
+  // v2.7.0 新增：fetch 元数据存储
+  //   目的：避免短时间内重复 fetch 同一 URL，并支持 ETag/Last-Modified 协商
+  // ============================================================
+
+  /**
+   * 获取历史数据 fetch 元数据
+   * @returns {{ lastFetchTime: number, lastEtag: string|null, lastLatestExpect: number, lastSuccess: boolean }|null}
+   */
+  getHistoryFetchMeta: () => {
+    return Storage.get(Storage.KEYS.HISTORY_FETCH_META, null);
+  },
+
+  /**
+   * 保存历史数据 fetch 元数据
+   * @param {Object} meta - 元数据对象
+   */
+  saveHistoryFetchMeta: (meta) => {
+    if(!meta || typeof meta !== 'object') return false;
+    return Storage.set(Storage.KEYS.HISTORY_FETCH_META, {
+      lastFetchTime: meta.lastFetchTime || Date.now(),
+      lastEtag: meta.lastEtag || null,
+      lastLatestExpect: meta.lastLatestExpect || 0,
+      lastSuccess: !!meta.lastSuccess
+    });
+  },
+
+  /**
+   * 检查是否需要重新 fetch（最小间隔 30 秒，避免短时间内重复请求）
+   * @param {number} minIntervalMs - 最小间隔（默认 30000ms = 30s）
+   * @returns {boolean} true 表示可以 fetch
+   */
+  shouldRefetchHistory: (minIntervalMs = 30000) => {
+    const meta = Storage.getHistoryFetchMeta();
+    if(!meta) return true;
+    const elapsed = Date.now() - (meta.lastFetchTime || 0);
+    return elapsed >= minIntervalMs;
   },
 
   getGiongBacktestRecords: () => {

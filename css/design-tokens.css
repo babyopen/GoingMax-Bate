@@ -1,0 +1,274 @@
+/* ===================================
+   design-tokens.css - 统一设计系统
+   作用：集中所有 CSS 变量（颜色 / 字体 / 间距 / 阴影 / 圆角 / 动画）
+   加载顺序：必须在 global.css 之前
+   =================================== */
+
+/* ========== 设计原则 ==========
+   1. 所有颜色、尺寸、阴影、圆角、动画均使用变量
+   2. 浅色 / 深色主题通过 :root + [data-theme="dark"] 切换
+   3. 自动检测系统主题偏好（prefers-color-scheme）
+   4. 不破坏已有变量名（保留所有 v2.0.8 已有变量）
+   5. 新增变量使用 --ui-* 命名空间，避免冲突
+   ========== */
+
+/* ========== 浅色主题（默认） ========== */
+:root {
+  /* ====== 基础色板（与 global.css 保持一致，避免破坏） ====== */
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --text: #000000;
+  --sub-text: #8E8E93;
+  --primary: #007AFF;
+  --danger: #FF3B30;
+  --blue: #007AFF;
+  --green: #34C759;
+  --border: rgba(0, 0, 0, 0.08);
+  --overlay: rgba(0, 0, 0, 0.75);
+  --bg-secondary: #F8F8F8;
+
+  /* ====== 扩展色板（v2.0.9 新增） ====== */
+  --text-secondary: #3C3C43;
+  --text-tertiary: #48484A;
+  --orange: #FF9500;
+  --purple: #AF52DE;
+  --pink: #FF2D55;
+  --teal: #5AC8FA;
+  --yellow: #FFCC00;
+  --indigo: #5856D6;
+  --mint: #00C7BE;
+
+  /* ====== 语义化颜色（场景化） ====== */
+  /* 命中/成功 */
+  --hit: #34C759;
+  --hit-bg: rgba(52, 199, 89, 0.10);
+  --hit-bg-strong: rgba(52, 199, 89, 0.16);
+  --hit-border: rgba(52, 199, 89, 0.30);
+
+  /* 未命中/警告 */
+  --miss: #FF3B30;
+  --miss-bg: rgba(255, 59, 48, 0.10);
+  --miss-bg-strong: rgba(255, 59, 48, 0.16);
+  --miss-border: rgba(255, 59, 48, 0.30);
+
+  /* 待开奖/等待 */
+  --pending: #FF9500;
+  --pending-bg: rgba(255, 149, 0, 0.10);
+  --pending-border: rgba(255, 149, 0, 0.30);
+
+  /* 紫（备选/特殊） */
+  --accent: #AF52DE;
+  --accent-bg: rgba(175, 82, 222, 0.10);
+
+  /* ====== 阴影体系（5 档） ====== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14);
+  --shadow-color: 0 4px 16px rgba(0, 122, 255, 0.18);
+  --shadow-danger: 0 4px 16px rgba(255, 59, 48, 0.20);
+
+  /* ====== 圆角（6 档） ====== */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  /* ====== 字号梯度（8 档，1.2 倍率） ====== */
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 20px;
+  --fs-3xl: 24px;
+  --fs-4xl: 28px;
+
+  /* ====== 字重 ====== */
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* ====== 行高 ====== */
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.5;
+  --lh-loose: 1.75;
+
+  /* ====== 字间距 ====== */
+  --letter-tight: -0.3px;
+  --letter-normal: 0;
+  --letter-wide: 0.5px;
+
+  /* ====== 间距体系（8 倍率） ====== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  /* ====== 通用组件尺寸 ====== */
+  --ball-size: 28px;
+  --btn-mini-min-width: 50px;
+  --btn-icon-size: 36px;
+  --card-radius: var(--radius);
+
+  /* ====== 动画时长 ====== */
+  --anim-fast: 0.15s;
+  --anim-normal: 0.3s;
+  --anim-slow: 0.5s;
+  --anim-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ====== 动画缓动函数 ====== */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ====== 安全区 ====== */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ====== 布局常量（保留 v2.0.8 已有变量） ====== */
+  --top-card-height: 210px;
+  --top-offset: 240px;
+  --preview-max-count: 8;
+
+  /* ====== 导航栏（毛玻璃） - 浅色 ====== */
+  --nav-glass-bg: rgba(255, 255, 255, 0.55);
+  --nav-glass-border: rgba(255, 255, 255, 0.35);
+  --nav-glass-shadow: rgba(0, 0, 0, 0.06);
+  --nav-item-bg: rgba(0, 0, 0, 0.04);
+  --nav-item-border: rgba(0, 0, 0, 0.06);
+  --nav-item-text: rgba(0, 0, 0, 0.45);
+  --nav-item-active-text: rgba(0, 0, 0, 0.85);
+  --nav-item-active-bg: rgba(0, 0, 0, 0.08);
+
+  /* ====== 区域配色（peak/high/ovht/mid/active/low/wait） ====== */
+  --zone-peak: #FF453A;
+  --zone-peak-bg: rgba(255, 69, 58, 0.18);
+  --zone-peak-bg-12: rgba(255, 69, 58, 0.12);
+  --zone-high: #FF9500;
+  --zone-high-bg: rgba(255, 149, 0, 0.15);
+  --zone-high-bg-12: rgba(255, 149, 0, 0.12);
+  --zone-ovht: #FF6B6B;
+  --zone-ovht-bg: rgba(255, 107, 107, 0.14);
+  --zone-ovht-bg-12: rgba(255, 107, 107, 0.12);
+  --zone-mid: #0A84FF;
+  --zone-mid-bg: rgba(0, 122, 255, 0.12);
+  --zone-mid-bg-8: rgba(0, 122, 255, 0.08);
+  --zone-active: #E6A823;
+  --zone-active-bg: rgba(230, 168, 35, 0.14);
+  --zone-active-bg-12: rgba(230, 168, 35, 0.12);
+  --zone-low: #30D158;
+  --zone-low-bg: rgba(48, 209, 88, 0.12);
+  --zone-wait: #AF52DE;
+  --zone-wait-bg: rgba(175, 82, 222, 0.12);
+
+  /* ====== 渐变色（生肖卡金/银/铜/普通） ====== */
+  --grad-gold: linear-gradient(145deg, #FFD700 0%, #FFB300 100%);
+  --grad-silver: linear-gradient(145deg, #E8E8ED 0%, #C8C8CD 100%);
+  --grad-bronze: linear-gradient(145deg, #E8A962 0%, #CD853F 100%);
+  --grad-other: linear-gradient(145deg, #FAFAFA 0%, #F0F0F0 100%);
+
+  /* ====== 渐变色（命中蓝/危险红/成功绿/紫色） ====== */
+  --grad-blue: linear-gradient(135deg, #5AC8FA 0%, #007AFF 100%);
+  --grad-danger: linear-gradient(135deg, #FF6B6B 0%, #FF3B30 100%);
+  --grad-success: linear-gradient(135deg, #5BD672 0%, #34C759 100%);
+  --grad-purple: linear-gradient(135deg, #BF5AF2 0%, #AF52DE 100%);
+  --grad-warning: linear-gradient(135deg, #FFD60A 0%, #FF9500 100%);
+
+  /* ====== 微交互反馈强度（透明度变化） ====== */
+  --tap-opacity: 0.6;
+  --tap-scale: 0.96;
+  --hover-opacity: 0.85;
+}
+
+/* ========== 深色主题（自动检测） ========== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --text: #FFFFFF;
+    --sub-text: #98989F;
+    --primary: #0A84FF;
+    --danger: #FF453A;
+    --blue: #0A84FF;
+    --green: #30D158;
+    --border: rgba(255, 255, 255, 0.1);
+    --overlay: rgba(0, 0, 0, 0.85);
+    --bg-secondary: #2C2C2E;
+    --text-secondary: rgba(235, 235, 245, 0.85);
+    --text-tertiary: rgba(235, 235, 245, 0.65);
+
+    /* 阴影在深色下需要更黑更明显 */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.6);
+
+    /* 导航栏深色 */
+    --nav-glass-bg: rgba(28, 28, 30, 0.55);
+    --nav-glass-border: rgba(255, 255, 255, 0.1);
+    --nav-glass-shadow: rgba(0, 0, 0, 0.3);
+    --nav-item-bg: rgba(255, 255, 255, 0.06);
+    --nav-item-border: rgba(255, 255, 255, 0.12);
+    --nav-item-text: rgba(255, 255, 255, 0.5);
+    --nav-item-active-text: rgba(255, 255, 255, 0.95);
+    --nav-item-active-bg: rgba(255, 255, 255, 0.12);
+
+    /* 生肖卡深色渐变（更柔和） */
+    --grad-gold: linear-gradient(145deg, #5C4500 0%, #3A2A00 100%);
+    --grad-silver: linear-gradient(145deg, #4A4A4F 0%, #3A3A3F 100%);
+    --grad-bronze: linear-gradient(145deg, #4A3A2A 0%, #3A2A1A 100%);
+    --grad-other: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+  }
+}
+
+/* ========== 手动切换深色模式（即使系统偏好浅色，也支持手动开启） ========== */
+[data-theme="dark"] {
+  --bg: #000000;
+  --card: #1C1C1E;
+  --text: #FFFFFF;
+  --sub-text: #98989F;
+  --primary: #0A84FF;
+  --danger: #FF453A;
+  --blue: #0A84FF;
+  --green: #30D158;
+  --border: rgba(255, 255, 255, 0.1);
+  --overlay: rgba(0, 0, 0, 0.85);
+  --bg-secondary: #2C2C2E;
+  --nav-glass-bg: rgba(28, 28, 30, 0.55);
+  --nav-glass-border: rgba(255, 255, 255, 0.1);
+  --nav-item-text: rgba(255, 255, 255, 0.5);
+  --nav-item-active-text: rgba(255, 255, 255, 0.95);
+}
+
+/* ========== 通用过渡（应用到所有元素，但排除性能敏感元素） ========== */
+:root {
+  --transition-fast: background var(--anim-fast) var(--ease-out),
+                     color var(--anim-fast) var(--ease-out),
+                     border-color var(--anim-fast) var(--ease-out),
+                     box-shadow var(--anim-fast) var(--ease-out),
+                     transform var(--anim-fast) var(--ease-out),
+                     opacity var(--anim-fast) var(--ease-out);
+  --transition-normal: background var(--anim-normal) var(--ease-out),
+                      color var(--anim-normal) var(--ease-out),
+                      border-color var(--anim-normal) var(--ease-out),
+                      box-shadow var(--anim-normal) var(--ease-out),
+                      transform var(--anim-normal) var(--ease-out),
+                      opacity var(--anim-normal) var(--ease-out);
+}

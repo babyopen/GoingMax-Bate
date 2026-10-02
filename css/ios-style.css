@@ -295,3 +295,360 @@
   .filter-expand{background:rgba(255,255,255,0.06);color:rgba(235,235,245,0.85)}
   .filter-expand:active{background:rgba(255,255,255,0.12)}
 }
+
+/* ===============================================
+   v2.0.9 iOS 风格优化补丁（仅追加，不修改任何原有规则）
+   =============================================== */
+
+/* ========== 底部导航栏优化 ========== */
+.bottom-nav-wrapper{
+  position:fixed;
+  left:0;right:0;bottom:0;
+  z-index:1001;
+  display:flex;justify-content:center;align-items:center;
+  padding:0 clamp(10px,2.5vw,16px) clamp(14px,2.5vw,18px) clamp(10px,2.5vw,16px);
+  gap:clamp(10px,2.5vw,14px);
+  width:100%;box-sizing:border-box;
+  /* v2.0.9：底部栏整体增强阴影 */
+  filter:drop-shadow(0 -2px 12px rgba(0,0,0,0.04));
+}
+.bottom-nav{
+  display:flex;justify-content:center;align-items:center;
+  background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(28px) saturate(200%);
+  backdrop-filter:blur(28px) saturate(200%);
+  border-radius:clamp(28px,5vw,32px);
+  padding:clamp(8px,2vw,14px) clamp(10px,2.5vw,20px);
+  height:clamp(54px,9vw,70px);
+  box-sizing:border-box;
+  /* v2.0.9：阴影层次 + 边框 */
+  box-shadow:0 6px 28px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
+  gap:clamp(8px,2vw,16px);
+  max-width:calc(100% - clamp(20px,5vw,32px));
+  width:auto;
+  /* v2.0.9：色彩过渡 */
+  transition:background-color var(--anim-normal) var(--ease-out),
+             box-shadow var(--anim-normal) var(--ease-out);
+}
+
+.bottom-nav-toggle{
+  display:flex;justify-content:center;align-items:center;
+  width:clamp(48px,9vw,58px);height:clamp(48px,9vw,58px);
+  min-width:clamp(48px,9vw,58px);
+  border-radius:clamp(28px,5vw,32px);
+  background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(28px) saturate(200%);
+  backdrop-filter:blur(28px) saturate(200%);
+  border:1px solid var(--nav-glass-border);
+  cursor:pointer;
+  touch-action:manipulation;
+  /* v2.0.9：增强反馈 */
+  transition:all var(--anim-fast) var(--ease-out);
+  box-shadow:0 4px 14px var(--nav-glass-shadow);
+  font-size:clamp(13px,2.8vw,15px);
+  font-weight:var(--fw-semibold);
+  color:var(--nav-item-text);
+  padding:0;font-family:inherit;
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+.bottom-nav-toggle.active{
+  background:var(--nav-item-active-bg);
+  border-color:var(--nav-item-active-text);
+  box-shadow:0 4px 16px rgba(255,107,138,0.30);
+  color:var(--nav-item-active-text);
+  font-weight:var(--fw-bold);
+}
+.bottom-nav-toggle:active{transform:scale(0.92)}
+.bottom-nav-item{
+  display:flex;align-items:center;justify-content:center;
+  flex:1;min-width:0;
+  height:clamp(46px,8vw,58px);
+  border-radius:clamp(28px,5vw,32px);
+  padding:0 clamp(10px,2.5vw,22px);
+  transition:all var(--anim-fast) var(--ease-out);
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.bottom-nav-item span{
+  font-size:clamp(14px,3vw,16px);
+  font-weight:var(--fw-medium);
+  color:var(--nav-item-text);
+  transition:color var(--anim-fast) var(--ease-out),
+             font-weight var(--anim-fast) var(--ease-out);
+  line-height:1.2;
+  white-space:nowrap;
+  letter-spacing:var(--letter-tight);
+}
+.bottom-nav-item.active{
+  background:var(--nav-item-active-bg);
+}
+.bottom-nav-item.active span{
+  color:var(--nav-item-active-text);
+  font-weight:var(--fw-bold);
+}
+.bottom-nav-item:active{transform:scale(0.92)}
+
+/* ========== 快捷导航 ========== */
+.quick-nav{
+  position:fixed;left:16px;right:16px;
+  bottom:calc(70px + var(--safe-bottom));
+  z-index:1000;
+  max-width:calc(100% - 32px);
+  background:var(--nav-glass-bg);
+  -webkit-backdrop-filter:blur(28px) saturate(200%);
+  backdrop-filter:blur(28px) saturate(200%);
+  border-radius:var(--radius-xl);
+  box-shadow:0 6px 28px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border);
+  overflow:hidden;
+  transition:all var(--anim-normal) var(--ease-out);
+}
+.quick-nav.collapsed{height:0;width:0;padding:0;margin:0;opacity:0;overflow:hidden}
+.quick-nav.expanded{height:auto}
+.nav-tabs{
+  display:flex;gap:8px;padding:12px;
+  flex-wrap:wrap;
+  max-height:none;
+  justify-content:center;
+}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  padding:10px 16px;
+  border-radius:var(--radius-md);
+  background:var(--nav-item-bg);
+  color:var(--nav-item-text);
+  font-size:13px;
+  font-weight:var(--fw-medium);
+  border:1px solid var(--nav-item-border);
+  cursor:pointer;
+  flex-shrink:0;
+  letter-spacing:var(--letter-tight);
+  /* v2.0.9：标签页微反馈 */
+  transition:all var(--anim-fast) var(--ease-out);
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-tab:active{
+  background:var(--nav-item-active-bg);
+  color:var(--nav-item-active-text);
+  transform:scale(0.96);
+}
+.nav-tab.active{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+  font-weight:var(--fw-bold);
+  box-shadow:0 2px 8px rgba(0,122,255,0.25);
+}
+.nav-tab[data-page="random"][data-tab-name="giong"].active{
+  background:#AF52DE;border-color:#AF52DE;
+  box-shadow:0 2px 8px rgba(175,82,222,0.25);
+}
+.nav-tab[data-page="analysis"][data-tab-name="zodiac"].active{
+  background:#13a662;border-color:#13a662;
+  box-shadow:0 2px 8px rgba(19,166,98,0.25);
+}
+
+/* ========== 返回顶部按钮 ========== */
+.back-top-btn{
+  position:fixed;right:16px;
+  bottom:calc(90px + var(--safe-bottom));
+  z-index:997;width:46px;height:46px;
+  border-radius:50%;
+  background:var(--primary);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  color:#FFFFFF;border:none;font-size:18px;
+  cursor:pointer;
+  display:grid;place-items:center;
+  /* v2.0.9：阴影更精致 */
+  box-shadow:0 6px 20px rgba(0,122,255,0.35);
+  opacity:0;
+  transition:opacity var(--anim-normal) var(--ease-out),
+             transform var(--anim-fast) var(--ease-out),
+             box-shadow var(--anim-fast) var(--ease-out);
+  pointer-events:none;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  font-weight:var(--fw-bold);
+}
+.back-top-btn.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.back-top-btn:active{
+  opacity:0.7;
+  transform:scale(0.92);
+  box-shadow:0 3px 12px rgba(0,122,255,0.30);
+}
+
+/* ========== 增强深色模式适配 ========== */
+@media (prefers-color-scheme: dark) {
+  /* 生肖卡金/银/铜牌在深色下用变量（design-tokens.css 已定义 --grad-gold 等） */
+  .db-card-item.card-rank-1{background:var(--grad-gold)}
+  .db-card-item.card-rank-2{background:var(--grad-silver)}
+  .db-card-item.card-rank-3{background:var(--grad-bronze)}
+  .db-card-item.card-rank-other{background:var(--grad-other)}
+
+  .zodiac-static-card.card-rank-1{background:var(--grad-gold)}
+  .zodiac-static-card.card-rank-2{background:var(--grad-silver)}
+  .zodiac-static-card.card-rank-3{background:var(--grad-bronze)}
+  .zodiac-static-card.card-rank-other{background:var(--grad-other)}
+
+  /* 深色下金/银/铜牌文字色更柔和 */
+  .db-card-item.card-rank-1 .db-card-name{color:#FFD700}
+  .db-card-item.card-rank-2 .db-card-name{color:#E0E0E5}
+  .db-card-item.card-rank-3 .db-card-name{color:#FFD4A0}
+  .db-card-item.card-rank-other .db-card-name{color:var(--text)}
+
+  .zodiac-static-card.card-rank-1 .zodiac-static-name{color:#FFD700}
+  .zodiac-static-card.card-rank-2 .zodiac-static-name{color:#E0E0E5}
+  .zodiac-static-card.card-rank-3 .zodiac-static-name{color:#FFD4A0}
+  .zodiac-static-card.card-rank-other .zodiac-static-name{color:var(--text)}
+
+  /* 深色下返回顶部按钮 */
+  .back-top-btn{box-shadow:0 6px 20px rgba(10,132,255,0.40)}
+
+  /* 深色下快捷导航顶部阴影更明显 */
+  .quick-nav{box-shadow:0 6px 28px var(--nav-glass-shadow),0 0 0 0.5px var(--nav-glass-border)}
+
+  /* 深色下号码球渐变更深沉 */
+  .红色{background:radial-gradient(circle at 30% 30%, #FF7875, #B3000B)}
+  .蓝色{background:radial-gradient(circle at 30% 30%, #74C8FF, #075AAA)}
+  .绿色{background:radial-gradient(circle at 30% 30%, #85DE55, #2A7B14)}
+
+  /* 深色下生肖金/银/铜牌边框 */
+  .db-card-item{box-shadow:0 4px 14px rgba(0,0,0,0.4) !important}
+  .zodiac-static-card{box-shadow:0 4px 14px rgba(0,0,0,0.4) !important}
+
+  /* 深色下筛选方案选中标签更醒目 */
+  .zodiac-preview-tag.selected{
+    background:rgba(10,132,255,0.18);
+    color:var(--primary);
+    border-color:rgba(10,132,255,0.40);
+  }
+  .zodiac-preview-tag.locked{
+    background:rgba(255,69,58,0.18);
+    color:#FF6961;
+    border-color:rgba(255,69,58,0.40);
+  }
+
+  /* 深色下热门卡/分析卡背景更柔和 */
+  .hot-card{background:var(--card) !important;border-color:var(--border) !important}
+
+  /* 深色下未推荐生肖卡片 */
+  .unrec-card{background:var(--bg-secondary) !important;border-color:var(--border) !important}
+
+  /* 深色下回测模块 */
+  .backtest-summary,
+  .backtest-record-row{
+    background:var(--bg-secondary) !important;
+    border-color:var(--border);
+  }
+  .backtest-record-row.backtest-hit{
+    background:rgba(10,132,255,0.10) !important;
+  }
+  .backtest-record-row.backtest-miss{
+    background:rgba(255,69,58,0.10) !important;
+  }
+
+  /* 深色下 rank-box / 分析项 / 频率表头 */
+  .rank-box,
+  .analysis-item,
+  .freq-table th{
+    background:var(--bg-secondary) !important;
+  }
+
+  /* 深色下核心结论块 */
+  .core-conclusion{
+    background:rgba(255,69,58,0.08) !important;
+    border-color:rgba(255,69,58,0.20) !important;
+  }
+
+  /* 深色下筛选输入/选择器 */
+  .analysis-filter-select,
+  .analysis-filter-input{
+    background:var(--bg-secondary);
+    border-color:var(--border);
+    color:var(--text);
+  }
+
+  /* 深色下热门列表摘要 */
+  .hot-summary-row{
+    background:var(--bg-secondary) !important;
+  }
+
+  /* 深色下数据项 */
+  .data-item-z{background:var(--bg-secondary) !important}
+
+  /* 深色下频率表 */
+  .freq-table-wrap{
+    background:var(--bg-secondary);
+    border-color:var(--border);
+  }
+
+  /* 深色下 recent-follow / tail-follow 卡片 */
+  .latest-follow-content,
+  .tail-follow-content,
+  .latest-follow-item,
+  .tail-follow-item{
+    background:var(--bg-secondary) !important;
+    border-color:var(--border) !important;
+  }
+  .follow-zodiac,
+  .tail-follow-target{
+    background:rgba(255,255,255,0.08);
+  }
+
+  /* 深色下大小/单双/五行/波色分析卡 */
+  .size-analysis-content,
+  .oddeven-analysis-content,
+  .wuxing-analysis-content,
+  .color-analysis-content{
+    background:var(--bg-secondary) !important;
+    border-color:var(--border) !important;
+  }
+
+  /* 深色下大小趋势/单双趋势/五行趋势/波色趋势 */
+  .size-trend-section,
+  .oddeven-trend-section,
+  .wuxing-trend-section,
+  .color-trend-section{
+    background:rgba(255,255,255,0.05) !important;
+    border-color:var(--border) !important;
+  }
+
+  /* 深色下号码球边框 */
+  .ball{box-shadow:inset 0 -2px 4px rgba(0,0,0,0.4), 0 3px 8px rgba(0,0,0,0.3)}
+}
+
+/* ========== 手动深色模式 ========== */
+[data-theme="dark"] {
+  /* 与 prefers-color-scheme 相同的覆盖（自动生效） */
+  .db-card-item.card-rank-1{background:var(--grad-gold)}
+  .db-card-item.card-rank-2{background:var(--grad-silver)}
+  .db-card-item.card-rank-3{background:var(--grad-bronze)}
+  .db-card-item.card-rank-other{background:var(--grad-other)}
+
+  .zodiac-static-card.card-rank-1{background:var(--grad-gold)}
+  .zodiac-static-card.card-rank-2{background:var(--grad-silver)}
+  .zodiac-static-card.card-rank-3{background:var(--grad-bronze)}
+  .zodiac-static-card.card-rank-other{background:var(--grad-other)}
+
+  .db-card-item.card-rank-1 .db-card-name{color:#FFD700}
+  .db-card-item.card-rank-2 .db-card-name{color:#E0E0E5}
+  .db-card-item.card-rank-3 .db-card-name{color:#FFD4A0}
+
+  .zodiac-static-card.card-rank-1 .zodiac-static-name{color:#FFD700}
+  .zodiac-static-card.card-rank-2 .zodiac-static-name{color:#E0E0E5}
+  .zodiac-static-card.card-rank-3 .zodiac-static-name{color:#FFD4A0}
+
+  .红色{background:radial-gradient(circle at 30% 30%, #FF7875, #B3000B)}
+  .蓝色{background:radial-gradient(circle at 30% 30%, #74C8FF, #075AAA)}
+  .绿色{background:radial-gradient(circle at 30% 30%, #85DE55, #2A7B14)}
+}

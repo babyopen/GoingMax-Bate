@@ -292,3 +292,264 @@
 @media (min-width: 1024px) {
   .zodiac-pred-grid{grid-template-columns:repeat(6,1fr)}
 }
+
+/* ===============================================
+   v2.0.9 布局优化补丁（仅追加，不修改任何原有规则）
+   =============================================== */
+
+/* ========== 顶部固定栏优化 ========== */
+.top-box{
+  position:fixed;top:0;left:0;right:0;
+  background:var(--bg);
+  z-index:99;
+  /* v2.0.9：顶部栏增强阴影 */
+  box-shadow:0 1px 0 var(--border);
+  padding:calc(12px + var(--safe-top)) 16px 12px;
+  overflow:hidden;
+  /* v2.0.9：色彩过渡 */
+  transition:background-color var(--anim-normal) var(--ease-out);
+}
+.top-card{
+  background:var(--card);
+  border-radius:var(--radius-xl);
+  padding:18px;
+  /* v2.0.9：阴影更精致 */
+  box-shadow:0 4px 20px rgba(0,0,0,0.06);
+  height:var(--top-card-height);
+  /* v2.0.9：色彩过渡 */
+  transition:background-color var(--anim-normal) var(--ease-out),
+             box-shadow var(--anim-normal) var(--ease-out);
+}
+.top-title{
+  font-size:13px;
+  color:var(--sub-text);
+  display:flex;justify-content:space-between;
+  margin-bottom:12px;
+  font-weight:var(--fw-medium);
+  letter-spacing:var(--letter-tight);
+}
+.top-nums{
+  display:flex;flex-wrap:wrap;
+  gap:7px;
+  justify-content:center;
+  max-height:160px;
+  overflow-y:auto;overflow-x:hidden;
+  padding-right:4px;
+}
+.top-nums::-webkit-scrollbar{width:4px}
+.top-nums::-webkit-scrollbar-thumb{
+  background:var(--sub-text);
+  border-radius:2px;
+  opacity:0.3;
+}
+
+/* ========== 主体内容区 ========== */
+.body-box{
+  margin-top:calc(var(--top-offset) + var(--safe-top));
+  padding:0 16px;
+  padding-bottom:calc(80px + var(--safe-bottom));
+}
+
+/* ========== 标签栏（分析/资料） ========== */
+.analysis-tab-bar,
+.zodiac-tab-bar{
+  display:flex;gap:8px;margin-bottom:16px;
+  /* v2.0.9：标签栏背景 */
+  background:var(--card);
+  padding:6px;
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-xs);
+}
+.analysis-tab-btn,
+.zodiac-tab-btn{
+  flex:1;
+  padding:11px clamp(4px,1vw,8px);
+  border-radius:var(--radius-sm);
+  border:none;
+  font-size:clamp(13px,2.8vw,15px);
+  font-weight:var(--fw-semibold);
+  background:transparent;
+  color:var(--sub-text);
+  cursor:pointer;
+  letter-spacing:var(--letter-tight);
+  /* v2.0.9：标签切换更平滑 */
+  transition:background-color var(--anim-fast) var(--ease-out),
+             color var(--anim-fast) var(--ease-out),
+             transform var(--anim-fast) var(--ease-out),
+             box-shadow var(--anim-fast) var(--ease-out);
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.analysis-tab-btn:active,
+.zodiac-tab-btn:active{transform:scale(0.97)}
+.analysis-tab-btn.active{
+  background:var(--danger);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(255,59,48,0.30);
+}
+.analysis-tab-btn[data-analysis-tab="analysis"].active{
+  background:var(--primary);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(0,122,255,0.30);
+}
+.analysis-tab-btn[data-analysis-tab="zodiac"].active{
+  background:#13a662;
+  color:#fff;
+  box-shadow:0 2px 8px rgba(19,166,98,0.30);
+}
+.zodiac-tab-btn.active{
+  background:var(--primary);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(0,122,255,0.30);
+}
+.zodiac-tab-btn[data-zodiac-tab="giong"].active{
+  background:#AF52DE;
+  color:#fff;
+  box-shadow:0 2px 8px rgba(175,82,222,0.30);
+}
+.zodiac-tab-btn[data-zodiac-tab="db"].active{
+  background:#007AFF;
+  color:#fff;
+  box-shadow:0 2px 8px rgba(0,122,255,0.30);
+}
+
+/* ========== 分析筛选栏 ========== */
+.analysis-filter-bar{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:18px;flex-wrap:wrap;
+  padding:14px;
+  background:var(--bg-secondary);
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+}
+.analysis-filter-select,
+.analysis-filter-input,
+.analysis-filter-btn{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 10px;
+  font-size:13px;
+  background:var(--card);
+  color:var(--text);
+  font-weight:var(--fw-medium);
+  /* v2.0.9：聚焦/激活过渡 */
+  transition:border-color var(--anim-fast) var(--ease-out),
+             background-color var(--anim-fast) var(--ease-out),
+             box-shadow var(--anim-fast) var(--ease-out);
+}
+.analysis-filter-select:focus,
+.analysis-filter-input:focus{
+  border-color:var(--primary);
+  outline:none;
+  background:var(--card);
+  box-shadow:0 0 0 3px rgba(0,122,255,0.10);
+}
+.analysis-filter-select{flex:1;min-width:70px}
+.analysis-filter-input{flex:0.8;min-width:60px}
+.analysis-filter-btn{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  font-weight:var(--fw-semibold);
+  flex-shrink:0;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  box-shadow:0 2px 6px rgba(0,122,255,0.25);
+  -webkit-tap-highlight-color:transparent;
+}
+.analysis-filter-btn:active{
+  opacity:0.7;
+  transform:scale(0.97);
+}
+
+/* ========== 分析区块标题 ========== */
+.analysis-section-title{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:clamp(17px,3.5vw,20px);
+  font-weight:var(--fw-bold);
+  color:var(--text);
+  margin-bottom:clamp(10px,2vw,16px);
+  padding:0 clamp(4px,1vw,8px);
+  letter-spacing:var(--letter-tight);
+}
+.analysis-desc{
+  font-size:clamp(11px,2vw,12px);
+  color:var(--sub-text);
+  margin-bottom:clamp(10px,2vw,16px);
+  font-weight:var(--fw-medium);
+  line-height:var(--lh-normal);
+}
+.analysis-conclusion{
+  background:var(--bg-secondary);
+  border-radius:var(--radius-md);
+  padding:clamp(12px,2vw,16px);
+  margin-top:clamp(10px,2vw,16px);
+  border:1px solid var(--border);
+}
+.analysis-conclusion-title{
+  font-size:clamp(13px,2.5vw,15px);
+  font-weight:var(--fw-bold);
+  color:var(--text);
+  margin-bottom:clamp(6px,1.5vw,10px);
+  letter-spacing:var(--letter-tight);
+}
+.analysis-item{
+  font-size:clamp(12px,2vw,13px);
+  color:var(--text);
+  padding:clamp(4px,0.6vw,6px) 0;
+  font-weight:var(--fw-medium);
+}
+
+/* ========== 切换按钮 ========== */
+.toggle-btn{
+  font-size:12px;
+  font-weight:var(--fw-semibold);
+  color:var(--primary);
+  background:rgba(0,122,255,0.10);
+  padding:5px 12px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  border:none;
+  letter-spacing:var(--letter-tight);
+  /* v2.0.9：微反馈 */
+  transition:background-color var(--anim-fast) var(--ease-out),
+             transform var(--anim-fast) var(--ease-out),
+             opacity var(--anim-fast) var(--ease-out);
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.toggle-btn:active{
+  opacity:0.7;
+  background:rgba(0,122,255,0.20);
+  transform:scale(0.96);
+}
+
+/* ========== 通用页面容器 ========== */
+.analysis-tab-panel,
+.zodiac-tab-panel{
+  display:none;
+  animation:fadeIn 0.25s var(--ease-out);
+}
+.analysis-tab-panel.active,
+.zodiac-tab-panel.active{
+  display:block;
+}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ========== 高优先级：响应式微调（不影响原有断点） ========== */
+@media (max-width: 480px) {
+  .body-box{padding:0 12px;padding-bottom:calc(80px + var(--safe-bottom))}
+  .top-box{padding:calc(10px + var(--safe-top)) 12px 10px}
+  .top-card{padding:14px}
+}
+@media (max-width: 360px) {
+  .body-box{padding:0 10px;padding-bottom:calc(70px + var(--safe-bottom))}
+  .top-box{padding:calc(8px + var(--safe-top)) 10px 8px}
+  .top-card{padding:12px}
+}

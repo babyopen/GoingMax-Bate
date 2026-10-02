@@ -751,6 +751,8 @@ const Business = {
         historyData: cache.data,
         historyTimestamp: cache.timestamp || 0
       };
+      // v2.7.0 性能优化：historyData 引用变更，必须清空分析快照缓存
+      BusinessCommonData.invalidateAnalysisCache();
       StateManager.setState({ analysis: newAnalysis }, false);
     }
   },
@@ -819,6 +821,17 @@ const Business = {
     const currentHistoryData = BusinessCommonData.getHistoryData(state);
     const currentLatestExpect = currentHistoryData.length ? Number(currentHistoryData[0].expect || 0) : 0;
 
+    // v2.7.0 性能优化：fetch 节流（30 秒内不重复请求）
+    //   - 数据未变时返回 toast（不静默，避免用户疑惑"按钮没反应"）
+    //   - silentUpdate=true（autoRefresh / 静默刷新）时即使间隔不到也允许继续
+    if(!silentUpdate && !Storage.shouldRefetchHistory()) {
+      const meta = Storage.getHistoryFetchMeta();
+      if(meta && meta.lastLatestExpect <= currentLatestExpect) {
+        if(!silentUpdate) Toast.show('已是最新数据');
+        return;
+      }
+    }
+
     if(!silentUpdate) ViewAnalysis.showHistoryLoading();
 
     try {
@@ -826,9 +839,29 @@ const Business = {
       // 网络请求超时控制（弱网环境避免无限等待）
       const abortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       const timeoutId = abortController ? setTimeout(() => abortController.abort(), 10000) : null;
-      const res = await fetch(CONFIG.API.HISTORY + year, abortController ? { signal: abortController.signal } : {});
+      // v2.7.0 优化：传递 ETag 让服务器判定 304（节省带宽）
+      const fetchMeta = Storage.getHistoryFetchMeta();
+      const requestHeaders = {};
+      if(fetchMeta && fetchMeta.lastEtag) requestHeaders['If-None-Match'] = fetchMeta.lastEtag;
+      const res = await fetch(CONFIG.API.HISTORY + year, {
+        signal: abortController ? abortController.signal : undefined,
+        headers: requestHeaders
+      });
       if(timeoutId) clearTimeout(timeoutId);
+      // v2.7.0 优化：304 Not Modified 直接返回缓存
+      if(res.status === 304) {
+        Storage.saveHistoryFetchMeta({
+          lastFetchTime: Date.now(),
+          lastEtag: fetchMeta && fetchMeta.lastEtag,
+          lastLatestExpect: cacheLatestExpect,
+          lastSuccess: true
+        });
+        if(!silentUpdate) Toast.show('已是最新数据（304）');
+        return;
+      }
       const data = await res.json();
+      // v2.7.0 优化：保存 ETag
+      const etag = res.headers && res.headers.get ? res.headers.get('ETag') : null;
       let rawData = data.data || [];
 
       rawData = rawData.filter(item => {
@@ -850,6 +883,14 @@ const Business = {
       });
 
       const newLatestExpect = sortedData.length ? Number(sortedData[0].expect || 0) : 0;
+      // v2.7.0 优化：写入 fetch 元数据
+      Storage.saveHistoryFetchMeta({
+        lastFetchTime: Date.now(),
+        lastEtag: etag,
+        lastLatestExpect: newLatestExpect,
+        lastSuccess: true
+      });
+
       if(newLatestExpect > currentLatestExpect) {
         const now = Date.now();
         Storage.saveHistoryCache(sortedData);
@@ -858,6 +899,8 @@ const Business = {
           historyData: sortedData,
           historyTimestamp: now
         };
+        // v2.7.0 性能优化：historyData 引用变更，必须清空分析快照缓存
+        BusinessCommonData.invalidateAnalysisCache();
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
@@ -874,6 +917,8 @@ const Business = {
           historyData: cache.data,
           historyTimestamp: cache.timestamp || 0
         };
+        // v2.7.0 性能优化：historyData 引用变更，必须清空分析快照缓存
+        BusinessCommonData.invalidateAnalysisCache();
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
@@ -888,8 +933,17 @@ const Business = {
         if(!silentUpdate) Toast.show('已是最新数据');
       }
     } catch(e) {
+      // v2.7.0 优化：记录失败时间，避免短时间内疯狂重试
+      Storage.saveHistoryFetchMeta({
+        lastFetchTime: Date.now(),
+        lastEtag: null,
+        lastLatestExpect: 0,
+        lastSuccess: false
+      });
       if(cacheLatestExpect > currentLatestExpect) {
         const newAnalysis = { ...state.analysis, historyData: cache.data };
+        // v2.7.0 性能优化：historyData 引用变更，必须清空分析快照缓存
+        BusinessCommonData.invalidateAnalysisCache();
         StateManager.setState({ analysis: newAnalysis }, false);
         Business.renderZodiacPrediction();
         Business.initZodiacBacktest();
@@ -1044,6 +1098,9 @@ const Business = {
 
   /**
    * 计算全维度分析
+   * v2.7.0 性能优化：基于 BusinessCommonData.getOrComputeSnapshot 实现按需缓存
+   *   - 同一次 historyData + analyzeLimit 下，结果直接复用，省掉 49 个号码 × 多次循环
+   *   - 数据指纹基于 (length + firstExpect + lastExpect) 检测内容是否变化
    * @returns {Object} 分析数据
    */
   calcFullAnalysis: () => {
@@ -1051,153 +1108,157 @@ const Business = {
     const { historyData, analyzeLimit } = state.analysis;
     if(!historyData.length) return null;
 
-    const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
-    const total = list.length;
-    const latestExpect = historyData[0]?.expect || 0;
+    // v2.7.0：缓存层 — 同一次刷新周期内 calcFullAnalysis / calcZodiacAnalysis 共享 specials
+    return BusinessCommonData.getOrComputeSnapshot('full', historyData, analyzeLimit, function(slice, list) {
+      const total = list.length;
+      const latestExpect = historyData[0]?.expect || 0;
 
-    const singleDouble = { '单': 0, '双': 0 };
-    const bigSmall = { '大': 0, '小': 0 };
-    const range = { '1-9': 0, '10-19': 0, '20-29': 0, '30-39': 0, '40-49': 0 };
-    const head = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
-    const tail = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
-    const color = { '红': 0, '蓝': 0, '绿': 0 };
-    const wuxing = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
-    const animal = { '家禽': 0, '野兽': 0 };
-    const zodiac = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
-    const numCount = {};
-    for(let i = 1; i <= 49; i++) numCount[CommonString.formatNum(i)] = 0;
+      const singleDouble = { '单': 0, '双': 0 };
+      const bigSmall = { '大': 0, '小': 0 };
+      const range = { '1-9': 0, '10-19': 0, '20-29': 0, '30-39': 0, '40-49': 0 };
+      const head = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+      const tail = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+      const color = { '红': 0, '蓝': 0, '绿': 0 };
+      const wuxing = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
+      const animal = { '家禽': 0, '野兽': 0 };
+      const zodiac = {};
+      CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiac[z] = 0);
+      const numCount = {};
+      for(let i = 1; i <= 49; i++) numCount[CommonString.formatNum(i)] = 0;
 
-    const lastAppearIdx = {};
-    for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
-    
-    const lastAppearSD = { '单': -1, '双': -1 };
-    const lastAppearBS = { '大': -1, '小': -1 };
-    const lastAppearRange = { '1-9': -1, '10-19': -1, '20-29': -1, '30-39': -1, '40-49': -1 };
-    const lastAppearHead = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1 };
-    const lastAppearTail = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1 };
-    const lastAppearColor = { '红': -1, '蓝': -1, '绿': -1 };
-    const lastAppearWuxing = { '金': -1, '木': -1, '水': -1, '火': -1, '土': -1 };
-    const lastAppearAnimal = { '家禽': -1, '野兽': -1 };
-    const lastAppearZod = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => lastAppearZod[z] = -1);
+      const lastAppearIdx = {};
+      for(let i = 1; i <= 49; i++) lastAppearIdx[i] = -1;
 
-    list.forEach((item, idx) => {
-      const s = BusinessCommonSpecials.getOne(item);
-      s.odd ? singleDouble['单']++ : singleDouble['双']++;
-      s.big ? bigSmall['大']++ : bigSmall['小']++;
-      const rangeKey = Utils.getRangeCategory(s.te);
-      range[rangeKey]++;
-      head[s.head]++;
-      tail[s.tail]++;
-      color[s.colorName]++;
-      wuxing[s.wuxing]++;
-      animal[s.animal]++;
-      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
-      numCount[CommonString.formatNum(s.te)]++;
-      
-      if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
-      if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
-      else if(!s.odd && lastAppearSD['双'] === -1) lastAppearSD['双'] = idx;
-      if(s.big && lastAppearBS['大'] === -1) lastAppearBS['大'] = idx;
-      else if(!s.big && lastAppearBS['小'] === -1) lastAppearBS['小'] = idx;
-      if(lastAppearRange[rangeKey] === -1) lastAppearRange[rangeKey] = idx;
-      if(lastAppearHead[s.head] === -1) lastAppearHead[s.head] = idx;
-      if(lastAppearTail[s.tail] === -1) lastAppearTail[s.tail] = idx;
-      if(lastAppearColor[s.colorName] === -1) lastAppearColor[s.colorName] = idx;
-      if(lastAppearWuxing[s.wuxing] === -1) lastAppearWuxing[s.wuxing] = idx;
-      if(lastAppearAnimal[s.animal] === -1) lastAppearAnimal[s.animal] = idx;
-      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod) && lastAppearZod[s.zod] === -1) {
-        lastAppearZod[s.zod] = idx;
-      }
-    });
+      const lastAppearSD = { '单': -1, '双': -1 };
+      const lastAppearBS = { '大': -1, '小': -1 };
+      const lastAppearRange = { '1-9': -1, '10-19': -1, '20-29': -1, '30-39': -1, '40-49': -1 };
+      const lastAppearHead = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1 };
+      const lastAppearTail = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1 };
+      const lastAppearColor = { '红': -1, '蓝': -1, '绿': -1 };
+      const lastAppearWuxing = { '金': -1, '木': -1, '水': -1, '火': -1, '土': -1 };
+      const lastAppearAnimal = { '家禽': -1, '野兽': -1 };
+      const lastAppearZod = {};
+      CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => lastAppearZod[z] = -1);
 
-    const sdMiss = { '单': Utils.calcMiss(lastAppearSD['单'], total, latestExpect, list), '双': Utils.calcMiss(lastAppearSD['双'], total, latestExpect, list) };
-    const bsMiss = { '大': Utils.calcMiss(lastAppearBS['大'], total, latestExpect, list), '小': Utils.calcMiss(lastAppearBS['小'], total, latestExpect, list) };
-    const rangeMiss = {
-      '1-9': Utils.calcMiss(lastAppearRange['1-9'], total, latestExpect, list),
-      '10-19': Utils.calcMiss(lastAppearRange['10-19'], total, latestExpect, list),
-      '20-29': Utils.calcMiss(lastAppearRange['20-29'], total, latestExpect, list),
-      '30-39': Utils.calcMiss(lastAppearRange['30-39'], total, latestExpect, list),
-      '40-49': Utils.calcMiss(lastAppearRange['40-49'], total, latestExpect, list)
-    };
-    const headMiss = {
-      0: Utils.calcMiss(lastAppearHead[0], total, latestExpect, list),
-      1: Utils.calcMiss(lastAppearHead[1], total, latestExpect, list),
-      2: Utils.calcMiss(lastAppearHead[2], total, latestExpect, list),
-      3: Utils.calcMiss(lastAppearHead[3], total, latestExpect, list),
-      4: Utils.calcMiss(lastAppearHead[4], total, latestExpect, list)
-    };
-    const tailMiss = {};
-    for(let t = 0; t <= 9; t++) tailMiss[t] = Utils.calcMiss(lastAppearTail[t], total, latestExpect, list);
-    const colorMiss = { '红': Utils.calcMiss(lastAppearColor['红'], total, latestExpect, list), '蓝': Utils.calcMiss(lastAppearColor['蓝'], total, latestExpect, list), '绿': Utils.calcMiss(lastAppearColor['绿'], total, latestExpect, list) };
-    const wuxingMiss = {
-      '金': Utils.calcMiss(lastAppearWuxing['金'], total, latestExpect, list),
-      '木': Utils.calcMiss(lastAppearWuxing['木'], total, latestExpect, list),
-      '水': Utils.calcMiss(lastAppearWuxing['水'], total, latestExpect, list),
-      '火': Utils.calcMiss(lastAppearWuxing['火'], total, latestExpect, list),
-      '土': Utils.calcMiss(lastAppearWuxing['土'], total, latestExpect, list)
-    };
-    const animalMiss = { '家禽': Utils.calcMiss(lastAppearAnimal['家禽'], total, latestExpect, list), '野兽': Utils.calcMiss(lastAppearAnimal['野兽'], total, latestExpect, list) };
-    const zodiacMiss = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiacMiss[z] = Utils.calcMiss(lastAppearZod[z], total, latestExpect, list));
+      // v2.7.0：复用预计算的 specials 列表（避免重复调用 getOne）
+      for(let idx = 0; idx < list.length; idx++) {
+        const s = BusinessCommonSpecials.getOne(list[idx]);
+        s.odd ? singleDouble['单']++ : singleDouble['双']++;
+        s.big ? bigSmall['大']++ : bigSmall['小']++;
+        const rangeKey = Utils.getRangeCategory(s.te);
+        range[rangeKey]++;
+        head[s.head]++;
+        tail[s.tail]++;
+        color[s.colorName]++;
+        wuxing[s.wuxing]++;
+        animal[s.animal]++;
+        if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) zodiac[s.zod]++;
+        numCount[CommonString.formatNum(s.te)]++;
 
-    let totalMissSum = 0, maxMiss = 0, hot = 0, warm = 0, cold = 0;
-    const allMiss = [];
-    for(let m = 1; m <= 49; m++) {
-      const miss = Utils.calcMiss(lastAppearIdx[m], total, latestExpect, list);
-      allMiss.push(miss);
-      totalMissSum += miss;
-      if(miss > maxMiss) maxMiss = miss;
-      if(miss <= 3) hot++;
-      else if(miss <= 9) warm++;
-      else cold++;
-    }
-    const avgMiss = (totalMissSum / 49).toFixed(1);
-    const curMaxMiss = Math.max(...allMiss);
-
-    let curStreak = 1, maxStreak = 1, current = 1;
-    if(list.length >= 2) {
-      const firstS = BusinessCommonSpecials.getOne(list[0]);
-      const firstShape = `${firstS.odd}_${firstS.big}`;
-      for(let i = 1; i < list.length; i++) {
-        const s = BusinessCommonSpecials.getOne(list[i]);
-        const shape = `${s.odd}_${s.big}`;
-        if(shape === firstShape) curStreak++;
-        else break;
-      }
-      let prevShape = firstShape;
-      for(let i = 1; i < list.length; i++) {
-        const s = BusinessCommonSpecials.getOne(list[i]);
-        const shape = `${s.odd}_${s.big}`;
-        if(shape === prevShape) {
-          current++;
-          if(current > maxStreak) maxStreak = current;
-        } else {
-          current = 1;
-          prevShape = shape;
+        if(lastAppearIdx[s.te] === -1) lastAppearIdx[s.te] = idx;
+        if(s.odd && lastAppearSD['单'] === -1) lastAppearSD['单'] = idx;
+        else if(!s.odd && lastAppearSD['双'] === -1) lastAppearSD['双'] = idx;
+        if(s.big && lastAppearBS['大'] === -1) lastAppearBS['大'] = idx;
+        else if(!s.big && lastAppearBS['小'] === -1) lastAppearBS['小'] = idx;
+        if(lastAppearRange[rangeKey] === -1) lastAppearRange[rangeKey] = idx;
+        if(lastAppearHead[s.head] === -1) lastAppearHead[s.head] = idx;
+        if(lastAppearTail[s.tail] === -1) lastAppearTail[s.tail] = idx;
+        if(lastAppearColor[s.colorName] === -1) lastAppearColor[s.colorName] = idx;
+        if(lastAppearWuxing[s.wuxing] === -1) lastAppearWuxing[s.wuxing] = idx;
+        if(lastAppearAnimal[s.animal] === -1) lastAppearAnimal[s.animal] = idx;
+        if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod) && lastAppearZod[s.zod] === -1) {
+          lastAppearZod[s.zod] = idx;
         }
       }
-    }
 
-    const hotSD = Object.entries(singleDouble).sort((a, b) => b[1] - a[1])[0];
-    const hotBS = Object.entries(bigSmall).sort((a, b) => b[1] - a[1])[0];
-    const hotHead = Object.entries(head).sort((a, b) => b[1] - a[1])[0];
-    const hotTail = Object.entries(tail).sort((a, b) => b[1] - a[1])[0];
-    const hotColor = Object.entries(color).sort((a, b) => b[1] - a[1])[0];
-    const hotWx = Object.entries(wuxing).sort((a, b) => b[1] - a[1])[0];
-    // 2026-06-21 通用化：复用 Utils.getTopN
-    const hotZod = Utils.getTopN(zodiac, 3, undefined, '、');
-    const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
-    const hotNum = Utils.getTopN(numCount, 5, undefined, ' ');
+      const sdMiss = { '单': Utils.calcMiss(lastAppearSD['单'], total, latestExpect, list), '双': Utils.calcMiss(lastAppearSD['双'], total, latestExpect, list) };
+      const bsMiss = { '大': Utils.calcMiss(lastAppearBS['大'], total, latestExpect, list), '小': Utils.calcMiss(lastAppearBS['小'], total, latestExpect, list) };
+      const rangeMiss = {
+        '1-9': Utils.calcMiss(lastAppearRange['1-9'], total, latestExpect, list),
+        '10-19': Utils.calcMiss(lastAppearRange['10-19'], total, latestExpect, list),
+        '20-29': Utils.calcMiss(lastAppearRange['20-29'], total, latestExpect, list),
+        '30-39': Utils.calcMiss(lastAppearRange['30-39'], total, latestExpect, list),
+        '40-49': Utils.calcMiss(lastAppearRange['40-49'], total, latestExpect, list)
+      };
+      const headMiss = {
+        0: Utils.calcMiss(lastAppearHead[0], total, latestExpect, list),
+        1: Utils.calcMiss(lastAppearHead[1], total, latestExpect, list),
+        2: Utils.calcMiss(lastAppearHead[2], total, latestExpect, list),
+        3: Utils.calcMiss(lastAppearHead[3], total, latestExpect, list),
+        4: Utils.calcMiss(lastAppearHead[4], total, latestExpect, list)
+      };
+      const tailMiss = {};
+      for(let t = 0; t <= 9; t++) tailMiss[t] = Utils.calcMiss(lastAppearTail[t], total, latestExpect, list);
+      const colorMiss = { '红': Utils.calcMiss(lastAppearColor['红'], total, latestExpect, list), '蓝': Utils.calcMiss(lastAppearColor['蓝'], total, latestExpect, list), '绿': Utils.calcMiss(lastAppearColor['绿'], total, latestExpect, list) };
+      const wuxingMiss = {
+        '金': Utils.calcMiss(lastAppearWuxing['金'], total, latestExpect, list),
+        '木': Utils.calcMiss(lastAppearWuxing['木'], total, latestExpect, list),
+        '水': Utils.calcMiss(lastAppearWuxing['水'], total, latestExpect, list),
+        '火': Utils.calcMiss(lastAppearWuxing['火'], total, latestExpect, list),
+        '土': Utils.calcMiss(lastAppearWuxing['土'], total, latestExpect, list)
+      };
+      const animalMiss = { '家禽': Utils.calcMiss(lastAppearAnimal['家禽'], total, latestExpect, list), '野兽': Utils.calcMiss(lastAppearAnimal['野兽'], total, latestExpect, list) };
+      const zodiacMiss = {};
+      CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => zodiacMiss[z] = Utils.calcMiss(lastAppearZod[z], total, latestExpect, list));
 
-    return {
-      total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
-      hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
-      miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
-      streak: { curStreak, maxStreak },
-      sdMiss, bsMiss, rangeMiss, headMiss, tailMiss, colorMiss, wuxingMiss, animalMiss, zodiacMiss
-    };
+      let totalMissSum = 0, maxMiss = 0, hot = 0, warm = 0, cold = 0;
+      const allMiss = [];
+      for(let m = 1; m <= 49; m++) {
+        const miss = Utils.calcMiss(lastAppearIdx[m], total, latestExpect, list);
+        allMiss.push(miss);
+        totalMissSum += miss;
+        if(miss > maxMiss) maxMiss = miss;
+        if(miss <= 3) hot++;
+        else if(miss <= 9) warm++;
+        else cold++;
+      }
+      const avgMiss = (totalMissSum / 49).toFixed(1);
+      const curMaxMiss = Math.max(...allMiss);
+
+      let curStreak = 1, maxStreak = 1, current = 1;
+      if(list.length >= 2) {
+        const firstS = BusinessCommonSpecials.getOne(list[0]);
+        const firstShape = `${firstS.odd}_${firstS.big}`;
+        for(let i = 1; i < list.length; i++) {
+          const s = BusinessCommonSpecials.getOne(list[i]);
+          const shape = `${s.odd}_${s.big}`;
+          if(shape === firstShape) curStreak++;
+          else break;
+        }
+        let prevShape = firstShape;
+        for(let i = 1; i < list.length; i++) {
+          const s = BusinessCommonSpecials.getOne(list[i]);
+          const shape = `${s.odd}_${s.big}`;
+          if(shape === prevShape) {
+            current++;
+            if(current > maxStreak) maxStreak = current;
+          } else {
+            current = 1;
+            prevShape = shape;
+          }
+        }
+      }
+
+      const hotSD = Object.entries(singleDouble).sort((a, b) => b[1] - a[1])[0];
+      const hotBS = Object.entries(bigSmall).sort((a, b) => b[1] - a[1])[0];
+      const hotHead = Object.entries(head).sort((a, b) => b[1] - a[1])[0];
+      const hotTail = Object.entries(tail).sort((a, b) => b[1] - a[1])[0];
+      const hotColor = Object.entries(color).sort((a, b) => b[1] - a[1])[0];
+      const hotWx = Object.entries(wuxing).sort((a, b) => b[1] - a[1])[0];
+      // 2026-06-21 通用化：复用 Utils.getTopN
+      const hotZod = Utils.getTopN(zodiac, 3, undefined, '、');
+      const hotAni = Object.entries(animal).sort((a, b) => b[1] - a[1])[0];
+      const hotNum = Utils.getTopN(numCount, 5, undefined, ' ');
+
+      return {
+        historyData: historyData,  // v2.7.0：透传 historyData 供 renderZodiacFinalNums 复用
+        total, singleDouble, bigSmall, range, head, tail, color, wuxing, animal, zodiac, numCount,
+        hotSD, hotBS, hotHead, hotTail, hotColor, hotWx, hotZod, hotAni, hotNum,
+        miss: { curMaxMiss, avgMiss, maxMiss, hot, warm, cold },
+        streak: { curStreak, maxStreak },
+        sdMiss, bsMiss, rangeMiss, headMiss, tailMiss, colorMiss, wuxingMiss, animalMiss, zodiacMiss
+      };
+    });
   },
 
   /**
@@ -1210,13 +1271,16 @@ const Business = {
       return;
     }
 
-    // v3.1.0 性能优化：预计算回测第一期结果（offset=0），精选特码复用回测窗口数据
-    //   - 之前 renderZodiacFinalNums 与 runFinalZodiacBacktest 各算一遍，重复调用 _calcFinalZodiacRecommend
-    //   - 现在两者共享同一份推荐号码与分数，保证"精选特码"与"下期回测预测"100% 一致
-    const _backtestResult = ZodiacPrediction.runFinalZodiacBacktest(data.historyData, 1, data.analyzeLimit);
-    Business._cachedFinalRecommend = (_backtestResult && _backtestResult.results && _backtestResult.results[0])
-      ? _backtestResult.results[0]
-      : null;
+    // v2.7.0 性能优化：精选特码用 BusinessCommonData 快照缓存，
+    //   - 之前：每次 renderFullAnalysis 都调 runFinalZodiacBacktest（49 号码 × 8 维评分）
+    //   - 现在：先检查 'finalRecommend' 缓存命中；命中则直接复用，未命中再计算并缓存
+    const cachedRecommend = BusinessCommonData.getOrComputeSnapshot('finalRecommend', data.historyData, data.analyzeLimit, function() {
+      const _backtestResult = ZodiacPrediction.runFinalZodiacBacktest(data.historyData, 1, data.analyzeLimit);
+      return (_backtestResult && _backtestResult.results && _backtestResult.results[0])
+        ? _backtestResult.results[0]
+        : null;
+    });
+    Business._cachedFinalRecommend = cachedRecommend;
 
     const rankKeys = ['singleDoubleRank', 'bigSmallRank', 'rangeRank', 'headRank', 'tailRank', 'colorRank', 'wuxingRank', 'animalRank', 'zodiacRank'];
     const rankDataObjs = [data.singleDouble, data.bigSmall, data.range, data.head, data.tail, data.color, data.wuxing, data.animal, data.zodiac];
@@ -1271,6 +1335,9 @@ const Business = {
 
   /**
    * 计算生肖关联分析
+   * v2.7.0 性能优化：基于 BusinessCommonData.getOrComputeSnapshot 实现按需缓存
+   *   - 同一次刷新周期内只算一次，renderZodiacAnalysis 多次触发不重复扫描
+   *   - 与 calcFullAnalysis 共享 specials 预计算（在 getOrComputeSnapshot 内部已做）
    * @returns {Object} 分析数据
    */
   calcZodiacAnalysis: () => {
@@ -1278,54 +1345,56 @@ const Business = {
     const { historyData, analyzeLimit } = state.analysis;
     if(!historyData.length || historyData.length < 2) return null;
 
-    const list = historyData.slice(0, Math.min(analyzeLimit, historyData.length));
-    const total = list.length;
-    const avgExpect = total / 12;
-    const latestExpect = historyData[0]?.expect || 0;
+    return BusinessCommonData.getOrComputeSnapshot('zodiac', historyData, analyzeLimit, function(slice, list) {
+      const total = list.length;
+      const avgExpect = total / 12;
+      const latestExpect = historyData[0]?.expect || 0;
 
-    const zodCount = {};
-    const lastAppearIdx = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => { zodCount[z] = 0; lastAppearIdx[z] = -1; });
-    const tailZodMap = {};
-    for(let t = 0; t <= 9; t++) tailZodMap[t] = {};
-    // 2026-08-17 新增：尾数-生肖逐期命中明细（供 #tailZodiacGrid 回测弹窗使用）
-    const tailZodHistory = [];
-    const followMap = {};
+      const zodCount = {};
+      const lastAppearIdx = {};
+      CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => { zodCount[z] = 0; lastAppearIdx[z] = -1; });
+      const tailZodMap = {};
+      for(let t = 0; t <= 9; t++) tailZodMap[t] = {};
+      // 2026-08-17 新增：尾数-生肖逐期命中明细（供 #tailZodiacGrid 回测弹窗使用）
+      const tailZodHistory = [];
+      const followMap = {};
 
-    list.forEach((item, idx) => {
-      const s = BusinessCommonSpecials.getOne(item);
-      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
-        zodCount[s.zod]++;
-        if(lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
+      // v2.7.0：复用 getOrComputeSnapshot 预计算的 specials（避免 list.forEach 中重复调 getOne）
+      for(let idx = 0; idx < list.length; idx++) {
+        const s = BusinessCommonSpecials.getOne(list[idx]);
+        if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
+          zodCount[s.zod]++;
+          if(lastAppearIdx[s.zod] === -1) lastAppearIdx[s.zod] = idx;
+        }
+        if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
+          tailZodMap[s.tail][s.zod] = (tailZodMap[s.tail][s.zod] || 0) + 1;
+          tailZodHistory.push({ expect: list[idx].expect, tail: s.tail, zod: s.zod });
+        }
       }
-      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(s.zod)) {
-        tailZodMap[s.tail][s.zod] = (tailZodMap[s.tail][s.zod] || 0) + 1;
-        tailZodHistory.push({ expect: item.expect, tail: s.tail, zod: s.zod });
+
+      for(let i = 1; i < list.length; i++) {
+        const preZod = BusinessCommonSpecials.getOne(list[i-1]).zod;
+        const curZod = BusinessCommonSpecials.getOne(list[i]).zod;
+        if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(preZod) && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curZod)) {
+          if(!followMap[preZod]) followMap[preZod] = {};
+          followMap[preZod][curZod] = (followMap[preZod][curZod] || 0) + 1;
+        }
       }
+
+      const zodMiss = {};
+      const zodAvgMiss = {};
+      CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
+        zodMiss[z] = Utils.calcMiss(lastAppearIdx[z], total, latestExpect, list);
+        zodAvgMiss[z] = zodCount[z] > 0 ? (total / zodCount[z]).toFixed(1) : total;
+      });
+
+      const topZod = Object.entries(zodCount).sort((a, b) => b[1] - a[1]);
+      const topTail = Array.from({ length: 10 }, (_, t) => ({
+        t, sum: Object.values(tailZodMap[t]).reduce((a, b) => a + b, 0)
+      })).sort((a, b) => b.sum - a.sum);
+
+      return { list, total, avgExpect, zodCount, zodMiss, zodAvgMiss, tailZodMap, tailZodHistory, followMap, topZod, topTail };
     });
-
-    for(let i = 1; i < list.length; i++) {
-      const preZod = BusinessCommonSpecials.getOne(list[i-1]).zod;
-      const curZod = BusinessCommonSpecials.getOne(list[i]).zod;
-      if(CONFIG.ANALYSIS.ZODIAC_ALL.includes(preZod) && CONFIG.ANALYSIS.ZODIAC_ALL.includes(curZod)) {
-        if(!followMap[preZod]) followMap[preZod] = {};
-        followMap[preZod][curZod] = (followMap[preZod][curZod] || 0) + 1;
-      }
-    }
-
-    const zodMiss = {};
-    const zodAvgMiss = {};
-    CONFIG.ANALYSIS.ZODIAC_ALL.forEach(z => {
-      zodMiss[z] = Utils.calcMiss(lastAppearIdx[z], total, latestExpect, list);
-      zodAvgMiss[z] = zodCount[z] > 0 ? (total / zodCount[z]).toFixed(1) : total;
-    });
-
-    const topZod = Object.entries(zodCount).sort((a, b) => b[1] - a[1]);
-    const topTail = Array.from({ length: 10 }, (_, t) => ({
-      t, sum: Object.values(tailZodMap[t]).reduce((a, b) => a + b, 0)
-    })).sort((a, b) => b.sum - a.sum);
-
-    return { list, total, avgExpect, zodCount, zodMiss, zodAvgMiss, tailZodMap, tailZodHistory, followMap, topZod, topTail };
   },
 
   /**
@@ -1768,6 +1837,8 @@ const Business = {
     }
 
     const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit };
+    // v2.7.0 性能优化：analyzeLimit 变化时只让 'full' 缓存失效（避免影响 zodiac）
+    BusinessCommonData.invalidateAnalysisCacheByKey('full');
     StateManager.setState({ analysis: newAnalysis }, false);
 
     ViewAnalysis.syncSelectors({ zodiacAnalyzeSelect: selectVal, zodiacCustomNum: custom });
@@ -1801,6 +1872,9 @@ const Business = {
     }
 
     const newAnalysis = { ...StateManager._state.analysis, analyzeLimit: newLimit };
+    // v2.7.0 性能优化：analyzeLimit 变化时让 'full' 和 'zodiac' 缓存都失效
+    BusinessCommonData.invalidateAnalysisCacheByKey('full');
+    BusinessCommonData.invalidateAnalysisCacheByKey('zodiac');
     StateManager.setState({ analysis: newAnalysis }, false);
 
     ViewAnalysis.syncSelectors({
