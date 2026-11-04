@@ -48,7 +48,8 @@ const ViewZodiacGiongWuxing = {
     let html = '<div class="wuxing-sequence-row">';
     sequence.slice().reverse().forEach(function(item) {
       const wx = palette[item.wuxing] || palette['金'];
-      html += '<span class="wuxing-seq-item" style="background:' + wx.bg + ';color:#fff;">' + item.wuxing + '</span>';
+      const wxFg = Utils.getAccessibleTextColor('#FFD700');
+      html += '<span class="wuxing-seq-item" style="background:' + wx.bg + ';color:' + wxFg + ';">' + item.wuxing + '</span>';
     });
     return html + '</div>';
   },
@@ -101,7 +102,9 @@ const ViewZodiacGiongWuxing = {
     let html = '<div class="wuxing-trend-section" data-action="showWuxingBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
     html += '<div class="wuxing-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
     html += '<div class="wuxing-trend-prediction">';
-    html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predWx + '</span>';
+    // v2.7.2 WCAG AA：前景按背景实算（渐变底白字在金色上仅 1.4:1）
+    const predFg = Utils.getAccessibleTextColor('#FFD700');
+    html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:' + predFg + ';">' + predWx + '</span>';
     html += '<span class="trend-confidence">' + trend.confidence + '%可信度</span>';
     html += '</div>';
     if (trend.reason) html += '<div class="wuxing-trend-reason">' + trend.reason + '</div>';

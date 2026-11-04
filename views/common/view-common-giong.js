@@ -182,7 +182,8 @@ const ViewCommonGiong = {
     const reversedSequence = data.sequence.slice().reverse();
     reversedSequence.forEach(function(item) {
       const itemColor = config.colors[item[config.dataKey]] || fallback;
-      html += '<span class="' + p + '-seq-item" style="background:' + itemColor.bg + ';color:#fff;">' + item[config.dataKey] + '</span>';
+      const itemFg = Utils.getAccessibleTextColor(itemColor.bg);
+        html += '<span class="' + p + '-seq-item" style="background:' + itemColor.bg + ';color:' + itemFg + ';">' + item[config.dataKey] + '</span>';
     });
     html += '</div>';
 
@@ -231,7 +232,8 @@ const ViewCommonGiong = {
       html += '<div class="' + p + '-trend-section" data-action="' + config.trendAction + '" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
       html += '<div class="' + p + '-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
       html += '<div class="' + p + '-trend-prediction">';
-      html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predCat + '</span>';
+      const predFg = Utils.getAccessibleTextColor('#FFD700');
+      html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:' + predFg + ';">' + predCat + '</span>';
       html += '<span class="trend-confidence">' + data.trend.confidence + '%可信度</span>';
       html += '</div>';
       if (data.trend.reason) {

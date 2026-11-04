@@ -315,6 +315,43 @@ const Utils = {
     return '40-49';
   },
 
+  // ============================================================
+  // v2.7.2 WCAG AA 辅助：自动挑选达标前景色
+  // 用途：色块（背景色由业务数据决定）上的文字颜色不能固定写死 #fff，
+  //       例如金块 #FFD700 上白字仅 1.4:1，远低于 AA 要求的 4.5:1。
+  //       本函数按 WCAG 相对亮度公式实算，返回黑或白中对比度更高者。
+  // ============================================================
+
+  /**
+   * 计算十六进制颜色的相对亮度（WCAG 2.1 定义）
+   * @param {string} hex - 十六进制颜色（#RGB / #RRGGBB）
+   * @returns {number} 相对亮度 0~1
+   */
+  getColorLuminance: (hex) => {
+    if(!hex) return 0;
+    let h = String(hex).trim().replace('#', '');
+    if(h.length === 3) h = h.split('').map(c => c + c).join('');
+    if(h.length !== 6) return 0;
+    const rgb = [0, 2, 4].map(i => {
+      const v = parseInt(h.substr(i, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  },
+
+  /**
+   * 在黑/白中挑选与给定背景对比度更高者（保证 >= 4.5:1）
+   * @param {string} bgHex - 背景色（十六进制）
+   * @returns {string} '#000000' 或 '#FFFFFF'
+   */
+  getAccessibleTextColor: (bgHex) => {
+    const lum = Utils.getColorLuminance(bgHex);
+    // 对比度 = (L1+0.05)/(L2+0.05)，白底亮度为 1，黑底为 0
+    const withWhite = 1.05 / (lum + 0.05);
+    const withBlack = (lum + 0.05) / 0.05;
+    return withBlack >= withWhite ? '#000000' : '#FFFFFF';
+  },
+
   /**
    * 获取数组前N个元素
    * @param {Array} arr - 数组

@@ -40,7 +40,7 @@
   white-space:nowrap;flex-shrink:0;
 }
 .zodiac-preview-tag.selected{
-  background:rgba(0,122,255,0.14);color:var(--primary);
+  background:rgba(0,122,255,0.14);color:var(--fg-ios-blue);
   border-color:rgba(0,122,255,0.3);
 }
 .zodiac-preview-tag.locked{
@@ -68,14 +68,14 @@
 }
 .filter-item-btns{display:flex;gap:6px;margin-top:8px}
 .filter-item-btns button{
-  flex:1;padding:6px;border-radius:10px;border:none;background:var(--bg);color:var(--primary);
+  flex:1;padding:6px;border-radius:10px;border:none;background:var(--bg);color:var(--fg-ios-blue);
   font-size:12px;transition:opacity var(--anim-fast);touch-action:manipulation;
   -webkit-user-select:none;user-select:none;
 }
 .filter-item-btns button:active{opacity:0.6}
 .filter-item-btns .del{background:rgba(255,59,48,0.1);color:var(--danger)}
 .filter-expand{
-  text-align:center;padding:8px;color:var(--primary);cursor:pointer;font-size:14px;
+  text-align:center;padding:8px;color:var(--fg-ios-blue);cursor:pointer;font-size:14px;
   background:var(--bg-secondary);border-radius:10px;margin-top:4px;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;
   /* P1-4: 改 button 后需要的 reset（去掉浏览器默认 border/font/width） */
@@ -94,7 +94,7 @@
 }
 .analysis-card-title::before{content:"";width:4px;height:18px;background:var(--danger);border-radius:2px}
 .analysis-refresh-btn{
-  padding:6px 12px;border-radius:10px;border:none;background:var(--primary);color:#fff;
+  padding:6px 12px;border-radius:10px;border:none;background:var(--primary-bg);color:#fff;
   font-size:14px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
 .analysis-refresh-btn:active{opacity:0.7}
@@ -132,10 +132,10 @@
 }
 .hot-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--danger)}
 .hot-card.full{grid-column:span 2;background:var(--card)}
-.hot-card.full::before{background:var(--primary)}
+.hot-card.full::before{background:var(--primary-bg)}
 .hot-card .label{font-size:13px;color:var(--sub-text);font-weight:500;margin-bottom:8px;letter-spacing:-0.2px}
 .hot-card .value{font-weight:700;font-size:18px;color:var(--text);line-height:1.25;letter-spacing:-0.3px}
-.hot-card.full .value{color:var(--primary);font-size:17px}
+.hot-card.full .value{color:var(--fg-ios-blue);font-size:17px}
 
 /* 排行表格 */
 .rank-box{margin-top:14px;background:var(--bg-secondary);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
@@ -171,7 +171,7 @@
   border-radius:12px;text-align:center;font-size:12px;
 }
 .analysis-item .label{color:var(--sub-text);font-size:11px;margin-bottom:4px}
-.analysis-item .value{font-weight:700;font-size:15px;color:var(--primary)}
+.analysis-item .value{font-weight:700;font-size:15px;color:var(--fg-ios-blue)}
 .analysis-item-full{
   background:var(--bg-secondary);padding:12px 14px;border-radius:12px;margin-bottom:10px;
   font-size:13px;color:var(--text);display:flex;justify-content:space-between;align-items:center;
@@ -194,7 +194,7 @@
 
 /* 生肖关联专用样式 */
 .core-conclusion{background:rgba(255,59,48,0.05);border-radius:12px;padding:12px;margin-bottom:16px}
-.conclusion-title{font-size:16px;font-weight:700;color:#13a662;margin-bottom:8px}
+.conclusion-title{font-size:16px;font-weight:700;color:var(--fg-green);margin-bottom:8px}
 .conclusion-item{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:6px}
 .conclusion-item:last-child{margin-bottom:0}
 .data-grid-z{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
@@ -204,11 +204,11 @@
 .follow-table-z th,.follow-table-z td{border:1px solid var(--border);padding:6px 4px;text-align:center}
 .follow-table-z th{background:var(--bg-secondary);font-weight:700}
 .data-item-z{background:var(--bg-secondary);border-radius:8px;padding:10px 6px;text-align:center;font-size:12px;color:var(--text)}
-.data-item-z.hot{background:rgba(19,166,98,0.1);color:#13a662;font-weight:700}
+.data-item-z.hot{background:rgba(19,166,98,0.1);color:var(--fg-green);font-weight:700}
 .data-item-z.cold{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
-.data-item-z.warm{background:rgba(250,140,22,0.1);color:#fa8c16}
+.data-item-z.warm{background:rgba(250,140,22,0.1);color:var(--attr-warm-fg)}
 /* 2026-08-17 新增：#tailZodiacGrid / #zodiacTotalGrid 二档配色：有次数=蓝，无次数=红 */
-.data-item-z.has{background:rgba(0,122,255,0.1);color:#007aff;font-weight:700}
+.data-item-z.has{background:rgba(0,122,255,0.1);color:var(--fg-ios-blue);font-weight:700}
 .data-item-z.none{background:rgba(255,59,48,0.1);color:var(--danger);font-weight:700}
 
 /* 2026-08-17 新增：#tailZodiacGrid 回测弹窗样式 */
@@ -223,14 +223,14 @@
 .tail-backtest-period-row{display:flex;align-items:center;border-bottom:1px solid rgba(128,128,128,0.08);padding:6px 4px;font-size:13px;color:var(--text)}
 .tail-backtest-period-row.tail-backtest-hit-ok{background:rgba(48,209,88,0.06)}
 .tail-backtest-period-label{font-weight:700;min-width:80px;color:var(--text)}
-.tail-backtest-period-target{flex:1;color:#0A84FF;font-size:12px}
+.tail-backtest-period-target{flex:1;color:var(--fg-ios-blue);font-size:12px}
 .tail-backtest-period-flag{margin-left:8px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:4px}
-.tail-backtest-hit-ok .tail-backtest-period-flag{background:rgba(48,209,88,0.15);color:#30D158}
+.tail-backtest-hit-ok .tail-backtest-period-flag{background:rgba(48,209,88,0.15);color:var(--fg-green)}
 .tail-backtest-hit-no .tail-backtest-period-flag{background:rgba(142,142,147,0.15);color:var(--sub-text)}
 .tail-backtest-empty{text-align:center;color:var(--sub-text);padding:24px 0;font-size:13px}
 .final-recommend-z{
   background:rgba(19,166,98,0.1);border-radius:12px;padding:14px;text-align:center;
-  font-size:15px;font-weight:700;color:#13a662;margin-top:14px;margin-bottom:14px;word-break:break-all;line-height:1.6;
+  font-size:15px;font-weight:700;color:var(--fg-green);margin-top:14px;margin-bottom:14px;word-break:break-all;line-height:1.6;
   /* 2026-06-28 用户需求：手机端允许滑动选中复制
      覆盖 body 全局 user-select:none，开启长按文本选择（参考 .tj-num-chip 实现） */
   -webkit-user-select:text;user-select:text;-webkit-touch-callout:default;
@@ -253,7 +253,7 @@
   position:absolute;top:5px;right:5px;z-index:5;
   width:24px;height:24px;padding:0;
   display:inline-flex;align-items:center;justify-content:center;
-  color:#007AFF;background:rgba(0,122,255,0.12);
+  color:var(--fg-ios-blue);background:rgba(0,122,255,0.12);
   border:1px solid rgba(0,122,255,0.25);border-radius:6px;
   cursor:pointer;line-height:1;
 }
@@ -283,7 +283,7 @@
 }
 .sw-freshness-inline {
   font-size: 11px;
-  color: #30D158;
+  color:var(--fg-green);
   flex: 1;
   white-space: nowrap;
 }
@@ -308,7 +308,7 @@
   margin-bottom:6px;
 }
 .unrec-source-title.unrec-highlight{
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   font-size:13px;
   margin-top:0;
   display:flex;
@@ -334,7 +334,7 @@
 }
 .unrec-section.unrec-merged .unrec-chip{
   background:rgba(10,132,255,0.12);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
 }
 .unrec-section.unrec-final{
   padding-top:4px;
@@ -381,7 +381,7 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(10,132,255,0.12);
   border:1px solid rgba(10,132,255,0.25);
   border-radius:8px;
@@ -424,7 +424,7 @@
 .db-miss-count{font-size:10px;color:var(--sub-text)}
 .db-miss-tag{font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;margin-top:2px}
 .db-miss-tag.miss-hot{background:rgba(255,59,48,0.12);color:var(--danger)}
-.db-miss-tag.miss-warm{background:rgba(0,122,255,0.1);color:var(--primary)}
+.db-miss-tag.miss-warm{background:rgba(0,122,255,0.1);color:var(--fg-ios-blue)}
 .db-miss-tag.miss-cold{background:var(--border);color:var(--sub-text)}
 .db-miss-tag.miss-deep{background:rgba(175,82,222,0.12);color:#AF52DE}
 
@@ -445,18 +445,18 @@
   display:inline-block;padding:clamp(3px,0.6vw,5px) clamp(8px,1.5vw,14px);border-radius:14px;
   font-size:clamp(10px,2vw,12px);font-weight:700;white-space:nowrap;letter-spacing:0.3px;
 }
-.zone-peak{background:var(--zone-peak-bg);color:var(--zone-peak)}
-.zone-high{background:var(--zone-high-bg);color:var(--zone-high)}
-.zone-ovht{background:var(--zone-ovht-bg);color:var(--zone-ovht)}
-.zone-mid{background:var(--zone-mid-bg);color:var(--zone-mid)}
-.zone-active{background:var(--zone-active-bg);color:var(--zone-active)}
-.zone-low{background:var(--zone-low-bg);color:var(--zone-low)}
-.zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait)}
+.zone-peak{background:var(--zone-peak-bg);color:var(--zone-peak-fg)}
+.zone-high{background:var(--zone-high-bg);color:var(--zone-high-fg)}
+.zone-ovht{background:var(--zone-ovht-bg);color:var(--zone-ovht-fg)}
+.zone-mid{background:var(--zone-mid-bg);color:var(--zone-mid-fg)}
+.zone-active{background:var(--zone-active-bg);color:var(--zone-active-fg)}
+.zone-low{background:var(--zone-low-bg);color:var(--zone-low-fg)}
+.zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait-fg)}
 /* 6期窗口专属区域色（短期热→短期冷，渐变区分） */
-.zone-6-peak{background:rgba(255,59,48,0.15);color:#FF3B30}
-.zone-6-high{background:rgba(255,149,0,0.18);color:#FF9500}
-.zone-6-mid{background:rgba(255,214,10,0.18);color:#FFD60A}
-.zone-6-wait{background:rgba(100,210,255,0.18);color:#64D2FF}
+.zone-6-peak{background:rgba(255,59,48,0.15);color:var(--fg-ios-red)}
+.zone-6-high{background:rgba(255,149,0,0.18);color:var(--fg-orange)}
+.zone-6-mid{background:rgba(255,214,10,0.18);color:var(--fg-yellow)}
+.zone-6-wait{background:rgba(100,210,255,0.18);color:var(--fg-ios-blue)}
 
 /* 生肖预测卡片 */
 .zodiac-static-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.2vw,10px);width:100%}
@@ -491,7 +491,7 @@
   flex:1;max-width:120px;padding:8px 0;font-size:13px;font-weight:500;color:var(--sub-text);
   background:rgba(120,120,128,0.08);border:none;border-radius:8px;cursor:pointer;transition:all 0.2s;
 }
-.freq-tab-btn.active{color:#fff;background:var(--primary);font-weight:600}
+.freq-tab-btn.active{color:#fff;background:var(--primary-bg);font-weight:600}
 .freq-panels-container{padding-bottom:0}
 .freq-panel{width:100%}
 .freq-card{
@@ -513,35 +513,35 @@
 }
 .zod-card-count-badge{
   position:absolute;top:clamp(3px,0.8vw,6px);left:clamp(3px,0.8vw,6px);
-  font-size:clamp(10px,2vw,13px);font-weight:800;color:var(--primary);line-height:1;
+  font-size:clamp(10px,2vw,13px);font-weight:800;color:var(--fg-ios-blue);line-height:1;
   min-width:clamp(12px,2vw,16px);text-align:center;
 }
-.zod-card-count-badge.zone-peak{color:var(--zone-peak)}
-.zod-card-count-badge.zone-high{color:var(--zone-high)}
-.zod-card-count-badge.zone-ovht{color:var(--zone-ovht)}
-.zod-card-count-badge.zone-mid{color:var(--zone-mid)}
-.zod-card-count-badge.zone-active{color:var(--zone-active)}
-.zod-card-count-badge.zone-low{color:var(--zone-low)}
-.zod-card-count-badge.zone-wait{color:var(--zone-wait)}
-.drop-arrow{color:#FF3B30;font-size:10px;margin-left:2px;line-height:1}
-.drop-arrow-yellow{color:#FFCC00}
+.zod-card-count-badge.zone-peak{color:var(--zone-peak-fg)}
+.zod-card-count-badge.zone-high{color:var(--zone-high-fg)}
+.zod-card-count-badge.zone-ovht{color:var(--zone-ovht-fg)}
+.zod-card-count-badge.zone-mid{color:var(--zone-mid-fg)}
+.zod-card-count-badge.zone-active{color:var(--zone-active-fg)}
+.zod-card-count-badge.zone-low{color:var(--zone-low-fg)}
+.zod-card-count-badge.zone-wait{color:var(--zone-wait-fg)}
+.drop-arrow{color:var(--fg-ios-red);font-size:10px;margin-left:2px;line-height:1}
+.drop-arrow-yellow{color:var(--fg-yellow)}
 .zod-card-name{
   font-size:clamp(13px,2.2vw,17px);font-weight:700;color:var(--text);line-height:1.2;
   margin-bottom:clamp(4px,0.8vw,7px);letter-spacing:0.5px;
 }
 .zod-card-stats{display:flex;justify-content:center;gap:clamp(4px,0.8vw,6px);font-size:clamp(9px,1.8vw,11px);margin-top:clamp(2px,0.5vw,4px)}
-.zod-card-count{font-weight:700;color:var(--primary);background:rgba(0,122,255,0.08);padding:2px 8px;border-radius:8px}
+.zod-card-count{font-weight:700;color:var(--fg-ios-blue);background:rgba(0,122,255,0.08);padding:2px 8px;border-radius:8px}
 .zod-card-miss{
   font-weight:600;color:var(--sub-text);background:rgba(120,120,128,0.08);
   padding:clamp(2px,0.4vw,3px) clamp(5px,1vw,8px);border-radius:6px;
 }
-.zod-card-miss.zone-peak{color:var(--zone-peak);background:var(--zone-peak-bg-12)}
-.zod-card-miss.zone-high{color:var(--zone-high);background:var(--zone-high-bg-12)}
-.zod-card-miss.zone-ovht{color:var(--zone-ovht);background:var(--zone-ovht-bg-12)}
-.zod-card-miss.zone-mid{color:var(--zone-mid);background:var(--zone-mid-bg-8)}
-.zod-card-miss.zone-active{color:var(--zone-active);background:var(--zone-active-bg-12)}
-.zod-card-miss.zone-low{color:var(--zone-low);background:var(--zone-low-bg)}
-.zod-card-miss.zone-wait{color:var(--zone-wait);background:var(--zone-wait-bg)}
+.zod-card-miss.zone-peak{color:var(--zone-peak-fg);background:var(--zone-peak-bg-12)}
+.zod-card-miss.zone-high{color:var(--zone-high-fg);background:var(--zone-high-bg-12)}
+.zod-card-miss.zone-ovht{color:var(--zone-ovht-fg);background:var(--zone-ovht-bg-12)}
+.zod-card-miss.zone-mid{color:var(--zone-mid-fg);background:var(--zone-mid-bg-8)}
+.zod-card-miss.zone-active{color:var(--zone-active-fg);background:var(--zone-active-bg-12)}
+.zod-card-miss.zone-low{color:var(--zone-low-fg);background:var(--zone-low-bg)}
+.zod-card-miss.zone-wait{color:var(--zone-wait-fg);background:var(--zone-wait-bg)}
 
 /* 回测追踪模块 */
 .backtest-summary{
@@ -553,9 +553,9 @@
 .backtest-stat{flex:1;text-align:center}
 .backtest-stat-label{display:block;font-size:clamp(10px,2vw,12px);color:var(--sub-text);margin-bottom:clamp(3px,0.6vw,6px)}
 .backtest-stat-value{font-size:clamp(16px,3.5vw,22px);font-weight:800;color:var(--text)}
-.backtest-rate-high{color:#30D158}
-.backtest-rate-mid{color:#FF9500}
-.backtest-rate-low{color:#FF453A}
+.backtest-rate-high{color:var(--fg-green)}
+.backtest-rate-mid{color:var(--fg-orange)}
+.backtest-rate-low{color:var(--fg-red)}
 .backtest-breakdown{display:flex;gap:clamp(8px,2vw,14px);justify-content:center;flex-wrap:wrap}
 .backtest-breakdown-item{font-size:clamp(10px,2vw,12px);color:var(--sub-text)}
 .backtest-records{display:flex;flex-direction:column;gap:clamp(6px,1.5vw,10px)}
@@ -563,9 +563,9 @@
   background:var(--bg-secondary);border-radius:12px;padding:clamp(10px,2vw,14px) clamp(12px,2.5vw,16px);
   border-left:3px solid var(--border);
 }
-.backtest-record-row.backtest-hit{border-left-color:#0A84FF;background:rgba(10,132,255,0.04)}
-.backtest-record-row.backtest-miss{border-left-color:#FF453A;background:rgba(255,69,58,0.03)}
-.backtest-record-period{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--primary);margin-bottom:clamp(3px,0.6vw,6px)}
+.backtest-record-row.backtest-hit{border-left-color:var(--fg-ios-blue);background:rgba(10,132,255,0.04)}
+.backtest-record-row.backtest-miss{border-left-color:var(--fg-red);background:rgba(255,69,58,0.03)}
+.backtest-record-period{font-size:clamp(12px,2.5vw,15px);font-weight:700;color:var(--fg-ios-blue);margin-bottom:clamp(3px,0.6vw,6px)}
 .backtest-record-predict{font-size:clamp(11px,2vw,13px);color:var(--sub-text);margin-bottom:2px}
 .backtest-record-result{font-size:clamp(11px,2vw,13px);color:var(--text)}
 /* 一行显示的回测记录（仅作用于使用 .backtest-records-inline 的容器，不影响其他回测区） */
@@ -611,7 +611,7 @@
 }
 /* 通用：生肖列表红色（对所有 .backtest-records 容器生效，inline 与终极回测都覆盖到） */
 .backtest-record-zodiacs{
-  color:#FF3B30;word-break:keep-all;
+  color:var(--fg-ios-red);word-break:keep-all;
   font-size:clamp(13px,2.5vw,15px);
 }
 /* 行内回测容器下覆盖强制继承的字号 */
@@ -619,7 +619,7 @@
   font-size:clamp(13px,2.5vw,15px);
 }
 /* 命中的生肖字变蓝色高亮 */
-.backtest-record-zodiac-hit{color:#007AFF;font-weight:700}
+.backtest-record-zodiac-hit{color:var(--fg-ios-blue);font-weight:700}
 /* V1.4.2 新增：Rule 2 软降权的生肖（仅与交叉排除联动时存在） */
 .backtest-record-zodiac-down{
   color:var(--sub-text,#999);
@@ -633,16 +633,16 @@
   white-space:nowrap;
 }
 .backtest-records-inline .backtest-record-result b{color:var(--text);font-weight:700;margin:0 1px}
-.backtest-records-inline .backtest-record-row.backtest-hit{border-left-color:#0A84FF;background:rgba(10,132,255,0.04)}
-.backtest-records-inline .backtest-record-row.backtest-backup-hit{border-left-color:#0A84FF;background:rgba(10,132,255,0.04)}
-.backtest-records-inline .backtest-record-row.backtest-miss{border-left-color:#FF453A}
-.backtest-records-inline .backtest-record-row.backtest-pending{border-left-color:var(--primary);background:rgba(10,132,255,0.04)}
+.backtest-records-inline .backtest-record-row.backtest-hit{border-left-color:var(--fg-ios-blue);background:rgba(10,132,255,0.04)}
+.backtest-records-inline .backtest-record-row.backtest-backup-hit{border-left-color:var(--fg-ios-blue);background:rgba(10,132,255,0.04)}
+.backtest-records-inline .backtest-record-row.backtest-miss{border-left-color:var(--fg-red)}
+.backtest-records-inline .backtest-record-row.backtest-pending{border-left-color:var(--fg-ios-blue);background:rgba(10,132,255,0.04)}
 .backtest-records-inline .backtest-record-hittext{font-weight:700;margin-left:clamp(2px,0.4vw,4px)}
-.backtest-records-inline .backtest-record-row.backtest-hit .backtest-record-hittext{color:#0A84FF}
-.backtest-records-inline .backtest-record-row.backtest-miss .backtest-record-hittext{color:#FF453A}
-.backtest-records-inline .backtest-record-row.backtest-pending .backtest-record-hittext{color:var(--primary)}
+.backtest-records-inline .backtest-record-row.backtest-hit .backtest-record-hittext{color:var(--fg-ios-blue)}
+.backtest-records-inline .backtest-record-row.backtest-miss .backtest-record-hittext{color:var(--fg-red)}
+.backtest-records-inline .backtest-record-row.backtest-pending .backtest-record-hittext{color:var(--fg-ios-blue)}
 .backtest-miss-analysis{margin-top:10px;padding:10px;background:rgba(255,69,58,0.05);border-radius:8px;border:1px solid rgba(255,69,58,0.15)}
-.backtest-miss-title{font-size:clamp(12px,2vw,14px);font-weight:600;color:#FF453A;margin-bottom:8px}
+.backtest-miss-title{font-size:clamp(12px,2vw,14px);font-weight:600;color:var(--fg-red);margin-bottom:8px}
 .backtest-miss-row{display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,1.8vw,13px);padding:4px 0;color:var(--sub-text)}
 .backtest-miss-row span:first-child{color:var(--text);font-weight:500}
 .backtest-stage-tag{
@@ -652,22 +652,22 @@
 }
 .backtest-black-info{
   display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;
-  background:rgba(255,149,0,0.15);color:#FF9500;margin-left:6px;vertical-align:middle;font-weight:500;
+  background:rgba(255,149,0,0.15);color:var(--fg-orange);margin-left:6px;vertical-align:middle;font-weight:500;
 }
 .backtest-adaptive-info{
   background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.2);border-radius:8px;
   padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;
 }
 .adaptive-badge-small{
-  font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
+  font-size:11px;color:var(--fg-orange);background:rgba(255,149,0,0.15);
   padding:2px 6px;border-radius:8px;font-weight:500;
 }
 .backtest-section-group{background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:10px}
-.backtest-section-title{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.backtest-section-title{font-size:13px;font-weight:600;color:var(--fg-ios-blue);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.08)}
 .backtest-total-highlight{background:linear-gradient(135deg, rgba(52,199,89,0.12), rgba(48,209,88,0.08));border:1px solid rgba(52,199,89,0.25)}
 .backtest-total-highlight .backtest-section-title{color:#34C759}
 /* 备选命中行：命中后容器底色改为蓝色（提高透明度让底色看起来更透） */
-.backtest-backup-hit{background:rgba(10,132,255,0.04);border-left:3px solid #0A84FF}
+.backtest-backup-hit{background:rgba(10,132,255,0.04);border-left:3px solid var(--fg-ios-blue)}
 
 /* 回测弹窗模态框 */
 .backtest-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center}
@@ -686,15 +686,15 @@
 
 /* 概率条 */
 .prob-bar{display:inline-block;padding:clamp(2px,0.4vw,4px) clamp(6px,1.5vw,10px);border-radius:10px;font-size:clamp(11px,2vw,13px);font-weight:700}
-.prob-high{background:rgba(255,69,58,0.25);color:#FF453A}
-.prob-mid{background:rgba(255,149,0,0.2);color:#FF9500}
+.prob-high{background:rgba(255,69,58,0.25);color:var(--fg-red)}
+.prob-mid{background:rgba(255,149,0,0.2);color:var(--fg-orange)}
 .prob-low{background:rgba(90,200,250,0.2);color:#5AC8FA}
 .prob-mini{background:rgba(255,255,255,0.06);color:var(--sub-text)}
 
 /* 终极算法 */
-.ultimate-expect-display{text-align:left;font-size:13px;color:var(--primary);margin-top:4px;font-weight:600}
+.ultimate-expect-display{text-align:left;font-size:13px;color:var(--fg-ios-blue);margin-top:4px;font-weight:600}
 .adaptive-badge{
-  display:inline-block;font-size:11px;color:#FF9500;background:rgba(255,149,0,0.15);
+  display:inline-block;font-size:11px;color:var(--fg-orange);background:rgba(255,149,0,0.15);
   padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:500;
 }
 /* 卡片折叠功能 */
@@ -1465,7 +1465,7 @@
 }
 
 .oddeven-seq-item.type-odd {
-  color: #9333EA;
+  color:var(--fg-purple);
   background: rgba(191,90,242,0.12);
 }
 
@@ -1508,7 +1508,7 @@
 }
 
 .oddeven-stat-odd .oddeven-stat-value {
-  color: #9333EA;
+  color:var(--fg-purple);
 }
 
 .oddeven-stat-even .oddeven-stat-value {
@@ -1965,8 +1965,8 @@
 /* v2.0.8 修复：移除 .combined-tab:hover（违反红线 11：禁止鼠标悬停效果） */
 
 .combined-tab.active {
-  color: #9333EA;
-  border-bottom-color: #9333EA;
+  color:var(--fg-purple);
+  border-bottom-color:var(--fg-purple);
   background: rgba(147,51,234,0.06);
 }
 
@@ -2006,13 +2006,13 @@
 }
 
 /* 大小样式 */
-.combined-seq-item.size-big { color: #cf1322; background: rgba(255,77,79,0.12); border-color: rgba(207,19,34,0.25); }
+.combined-seq-item.size-big { color: var(--attr-big-fg); background: rgba(255,77,79,0.12); border-color: rgba(207,19,34,0.25); }
 
-.combined-seq-item.size-small { color: #096dd9; background: rgba(24,144,255,0.12); border-color: rgba(9,109,217,0.25); }
+.combined-seq-item.size-small { color: var(--attr-small-fg); background: rgba(24,144,255,0.12); border-color: rgba(9,109,217,0.25); }
 
 /* 单双样式 */
-.combined-seq-item.oddeven-type-odd { color: #9333EA; background: rgba(191,90,242,0.12); border-color: rgba(147,51,234,0.25); }
-.combined-seq-item.oddeven-type-even { color: #EA580C; background: rgba(255,159,10,0.12); border-color: rgba(234,88,12,0.25); }
+.combined-seq-item.oddeven-type-odd { color: var(--attr-odd-fg); background: rgba(191,90,242,0.12); border-color: rgba(147,51,234,0.25); }
+.combined-seq-item.oddeven-type-even { color: var(--attr-even-fg); background: rgba(255,159,10,0.12); border-color: rgba(234,88,12,0.25); }
 
 /* 五行/波色样式 */
 .combined-seq-item.wx-item,
@@ -2047,10 +2047,11 @@
   font-size: 11px;
 }
 
-.stat-label.stat-big { color: #cf1322; background: rgba(255,77,79,0.12); }
-.stat-label.stat-small { color: #096dd9; background: rgba(24,144,255,0.12); }
-.stat-label.stat-odd { color: #9333EA; background: rgba(191,90,242,0.12); }
-.stat-label.stat-even { color: #EA580C; background: rgba(255,159,10,0.12); }
+/* v2.7.2 WCAG AA：前景改用语义 token（深浅双值），修复深色模式下对比度崩溃到 2.3:1 */
+.stat-label.stat-big { color: var(--attr-big-fg); background: rgba(255,77,79,0.12); }
+.stat-label.stat-small { color: var(--attr-small-fg); background: rgba(24,144,255,0.12); }
+.stat-label.stat-odd { color: var(--attr-odd-fg); background: rgba(191,90,242,0.12); }
+.stat-label.stat-even { color: var(--attr-even-fg); background: rgba(255,159,10,0.12); }
 
 .stat-value {
   font-weight: 700;
@@ -2087,6 +2088,9 @@
 .cl-name {
   font-weight: 700;
   min-width: 16px;
+  /* v2.7.2 WCAG AA：文字前景由主题 var(--text) 自动控制，
+     避免金 #FFD700  on 白底仅 1.4:1、绿 #22C55E on 白底仅 2.28:1 */
+  color: var(--text);
 }
 
 .wx-count,
@@ -2134,7 +2138,7 @@
   padding: 2px 8px;
   border-radius: 10px;
   background: rgba(147,51,234,0.12);
-  color: #9333EA;
+  color: var(--attr-odd-fg);
 }
 
 /* 趋势预测 */
@@ -2157,10 +2161,11 @@
   border-radius: 4px;
 }
 
-.trend-predict.trend-big { color: #cf1322; background: rgba(255,77,79,0.15); }
-.trend-predict.trend-small { color: #096dd9; background: rgba(24,144,255,0.15); }
-.trend-predict.trend-odd { color: #9333EA; background: rgba(191,90,242,0.15); }
-.trend-predict.trend-even { color: #EA580C; background: rgba(255,159,10,0.15); }
+/* v2.7.2 WCAG AA：前景改用语义 token（深浅双值） */
+.trend-predict.trend-big { color: var(--attr-big-fg); background: rgba(255,77,79,0.15); }
+.trend-predict.trend-small { color: var(--attr-small-fg); background: rgba(24,144,255,0.15); }
+.trend-predict.trend-odd { color: var(--attr-odd-fg); background: rgba(191,90,242,0.15); }
+.trend-predict.trend-even { color: var(--attr-even-fg); background: rgba(255,159,10,0.15); }
 
 .trend-conf {
   font-size: 11px;
@@ -2327,13 +2332,14 @@
   border-radius: 4px;
   font-weight: 600;
 }
-.zone-change-zone-tag.zone-peak { background: rgba(255,59,48,0.15); color: #FF3B30; }
-.zone-change-zone-tag.zone-high { background: rgba(255,149,0,0.15); color: #FF9500; }
-.zone-change-zone-tag.zone-ovht { background: rgba(255,107,107,0.15); color: #FF6B6B; }
-.zone-change-zone-tag.zone-mid { background: rgba(10,132,255,0.15); color: var(--primary); }
-.zone-change-zone-tag.zone-active { background: rgba(230,168,35,0.15); color: #E6A823; }
-.zone-change-zone-tag.zone-low { background: rgba(48,209,88,0.15); color: #30D158; }
-.zone-change-zone-tag.zone-wait { background: rgba(175,82,222,0.15); color: #AF52DE; }
+/* v2.7.2 WCAG AA：前景改用实算达标的 --zone-*-fg token（原前景=底色同色相，仅 1.6~3.5:1） */
+.zone-change-zone-tag.zone-peak { background: rgba(255,59,48,0.15); color: var(--zone-peak-fg); }
+.zone-change-zone-tag.zone-high { background: rgba(255,149,0,0.15); color: var(--zone-high-fg); }
+.zone-change-zone-tag.zone-ovht { background: rgba(255,107,107,0.15); color: var(--zone-ovht-fg); }
+.zone-change-zone-tag.zone-mid { background: rgba(10,132,255,0.15); color: var(--zone-mid-fg); }
+.zone-change-zone-tag.zone-active { background: rgba(230,168,35,0.15); color: var(--zone-active-fg); }
+.zone-change-zone-tag.zone-low { background: rgba(48,209,88,0.15); color: var(--zone-low-fg); }
+.zone-change-zone-tag.zone-wait { background: rgba(175,82,222,0.15); color: var(--zone-wait-fg); }
 .zone-change-arrow {
   font-size: 12px;
   color: var(--sub-text);
@@ -2612,7 +2618,7 @@
 }
 .sw-freshness-fresh {
   background: rgba(48, 209, 88, 0.10);
-  color: #30D158;
+  color:var(--fg-green);
   border: 1px solid rgba(48, 209, 88, 0.25);
 }
 .sw-freshness-stale {
@@ -2802,7 +2808,7 @@
   border-left: 3px solid var(--border);
 }
 .sw-score-card-top6 {
-  border-left-color: #30D158;
+  border-left-color:var(--fg-green);
   background: rgba(48,209,88,0.04);
 }
 .sw-score-card-header {
@@ -2821,7 +2827,7 @@
   color: #FF9F0A;
 }
 .sw-score-card-name.sw-zone-cold {
-  color: #64D2FF;
+  color:var(--fg-ios-blue);
 }
 .sw-score-card-score {
   font-size: 18px;
@@ -3080,14 +3086,14 @@
 .tj-row-main.tj-level-hot      > td:first-child { box-shadow: inset 3px 0 0 #FF9500; }
 .tj-row-main.tj-level-warm     > td:first-child { box-shadow: inset 3px 0 0 #FFD60A; }
 .tj-row-main.tj-level-cool     > td:first-child { box-shadow: inset 3px 0 0 #34C759; }
-.tj-row-main.tj-level-cold     > td:first-child { box-shadow: inset 3px 0 0 #0A84FF; }
+.tj-row-main.tj-level-cold     > td:first-child { box-shadow: inset 3px 0 0 var(--fg-ios-blue); }
 .tj-row-main.tj-level-deep     > td:first-child { box-shadow: inset 3px 0 0 #AF52DE; }
 /* 副行最左 td 也加同样色条，保持视觉连贯 */
 .tj-row-rep.tj-level-superhot  > .tj-td-rep    { box-shadow: inset 3px 0 0 #FF3B30; }
 .tj-row-rep.tj-level-hot       > .tj-td-rep    { box-shadow: inset 3px 0 0 #FF9500; }
 .tj-row-rep.tj-level-warm      > .tj-td-rep    { box-shadow: inset 3px 0 0 #FFD60A; }
 .tj-row-rep.tj-level-cool      > .tj-td-rep    { box-shadow: inset 3px 0 0 #34C759; }
-.tj-row-rep.tj-level-cold      > .tj-td-rep    { box-shadow: inset 3px 0 0 #0A84FF; }
+.tj-row-rep.tj-level-cold      > .tj-td-rep    { box-shadow: inset 3px 0 0 var(--fg-ios-blue); }
 .tj-row-rep.tj-level-deep      > .tj-td-rep    { box-shadow: inset 3px 0 0 #AF52DE; }
 /* 等级之间分组：主行 top 加 6px 间距（除第一组外） */
 .tj-level-table tbody tr.tj-row-main:not(:first-of-type) > td {
@@ -3332,8 +3338,8 @@
   transition:color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .filter-group-tab.active{
-  background:var(--primary);
-  border-color:var(--primary);
+  background:var(--primary-bg);
+  border-color:var(--fg-ios-blue);
   color:#fff;
   font-weight:600;
   box-shadow:0 1px 4px rgba(0,122,255,0.3);
@@ -3697,7 +3703,7 @@
 }
 .impossible-summary-acc-high { color: #16a34a; }
 .impossible-summary-acc-mid  { color: #f59e0b; }
-.impossible-summary-acc-low  { color: #DC2626; }
+.impossible-summary-acc-low  { color:var(--fg-red); }
 
 @media (prefers-color-scheme: dark) {
   .impossible-entry {
@@ -3825,7 +3831,7 @@
 }
 .impossible-bm-err-cell {
   /* 2026-08-15 用户要求：错误 td 红色背景+红色文字 */
-  color: #DC2626;
+  color:var(--fg-red);
   font-weight: 700;
   background: rgba(239,68,68,0.12);
   border-radius: 4px;
@@ -3943,7 +3949,7 @@
 	/* OK 胶囊：无特殊样式，纯文本 */
 	/* 错误胶囊：红色文字标记 */
 	.impossible-pill-err {
-	  color: #DC2626;
+	  color:var(--fg-red);
 	}
 
 /* ====== 命中/错标记（已移除，改用胶囊 outline 表示） ====== */
@@ -4136,7 +4142,7 @@
 
 	/* 错误胶囊：红色文字 + 浅红底 */
 	.impossible-pill-err {
-	  color: #DC2626;
+	  color:var(--fg-red);
 	  background: rgba(239, 68, 68, 0.12);
 	}
 
@@ -4248,7 +4254,7 @@
 /* 命中率颜色：>=70% 绿，>=50% 橙，<50% 红 */
 .impossible-summary-acc-high { color: #16a34a !important; }
 .impossible-summary-acc-mid  { color: #F59E0B !important; }
-.impossible-summary-acc-low  { color: #DC2626 !important; }
+.impossible-summary-acc-low  { color:var(--fg-red) !important; }
 
 /* ----- 评分规则说明紧凑化 ----- */
 .impossible-footer {
@@ -4460,7 +4466,7 @@
 }
 .zodiac-preview-tag.selected{
   background:var(--hit-bg);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   border-color:rgba(0,122,255,0.30);
 }
 .zodiac-preview-tag.locked{
@@ -4496,7 +4502,7 @@
   border-radius:var(--radius-sm);
   border:none;
   background:var(--bg);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   font-size:12px;
   font-weight:var(--fw-medium);
   cursor:pointer;
@@ -4518,7 +4524,7 @@
 .filter-expand{
   text-align:center;
   padding:10px;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   cursor:pointer;
   font-size:14px;
   font-weight:var(--fw-medium);
@@ -4573,7 +4579,7 @@
   padding:7px 14px;
   border-radius:var(--radius-sm);
   border:none;
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#fff;
   font-size:13px;
   font-weight:var(--fw-semibold);
@@ -4674,7 +4680,7 @@
   background:var(--danger);
 }
 .hot-card.full{grid-column:span 2;background:var(--card)}
-.hot-card.full::before{background:var(--primary)}
+.hot-card.full::before{background:var(--primary-bg)}
 .hot-card .label{
   font-size:13px !important;
   color:var(--sub-text);
@@ -4689,7 +4695,7 @@
   line-height:1.25;
   letter-spacing:var(--letter-tight);
 }
-.hot-card.full .value{color:var(--primary);font-size:17px}
+.hot-card.full .value{color:var(--fg-ios-blue);font-size:17px}
 
 /* ========== 排行表格 ========== */
 .rank-box{
@@ -4780,7 +4786,7 @@
 .analysis-item .value{
   font-weight:var(--fw-bold) !important;
   font-size:16px !important;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
 }
 .analysis-item-full{
   background:var(--bg-secondary) !important;
@@ -4842,7 +4848,7 @@
 .conclusion-title{
   font-size:17px !important;
   font-weight:var(--fw-bold) !important;
-  color:#13a662;
+  color:var(--fg-green);
   margin-bottom:10px;
   letter-spacing:var(--letter-tight);
 }
@@ -4885,7 +4891,7 @@
 }
 .data-item-z.hot{
   background:rgba(19,166,98,0.12);
-  color:#13a662;
+  color:var(--fg-green);
   font-weight:var(--fw-bold);
 }
 .data-item-z.cold{
@@ -4895,12 +4901,12 @@
 }
 .data-item-z.warm{
   background:rgba(250,140,22,0.12);
-  color:#fa8c16;
+  color:var(--attr-warm-fg);
   font-weight:var(--fw-semibold);
 }
 .data-item-z.has{
   background:rgba(0,122,255,0.12);
-  color:#007aff;
+  color:var(--fg-ios-blue);
   font-weight:var(--fw-bold);
 }
 .data-item-z.none{
@@ -4961,7 +4967,7 @@
 }
 .tail-backtest-period-target{
   flex:1;
-  color:#0A84FF;
+  color:var(--fg-ios-blue);
   font-size:12px;
 }
 .tail-backtest-period-flag{
@@ -4973,7 +4979,7 @@
 }
 .tail-backtest-hit-ok .tail-backtest-period-flag{
   background:rgba(48,209,88,0.15);
-  color:#30D158;
+  color:var(--fg-green);
 }
 .tail-backtest-hit-no .tail-backtest-period-flag{
   background:rgba(142,142,147,0.15);
@@ -4992,7 +4998,7 @@
   text-align:center;
   font-size:16px !important;
   font-weight:var(--fw-bold) !important;
-  color:#13a662 !important;
+  color:var(--fg-green) !important;
   margin-top:14px;
   margin-bottom:14px;
   word-break:break-all;
@@ -5020,7 +5026,7 @@
   position:absolute;top:6px;right:6px;z-index:5;
   width:28px;height:28px;padding:0;
   display:inline-flex;align-items:center;justify-content:center;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(0,122,255,0.12);
   border:1px solid rgba(0,122,255,0.30);
   border-radius:8px;
@@ -5041,7 +5047,7 @@
   margin:0 8px 0 0 !important;flex:0 0 auto;
 }
 .sw-freshness-inline{
-  font-size:11px;color:#30D158;flex:1;white-space:nowrap;font-weight:var(--fw-medium);
+  font-size:11px;color:var(--fg-green);flex:1;white-space:nowrap;font-weight:var(--fw-medium);
 }
 
 /* ========== 未推荐生肖卡片 ========== */
@@ -5063,7 +5069,7 @@
   letter-spacing:var(--letter-wide);
 }
 .unrec-source-title.unrec-highlight{
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   font-size:14px;
   margin-top:0;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -5081,7 +5087,7 @@
 }
 .unrec-section.unrec-merged .unrec-chip{
   background:rgba(10,132,255,0.12);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   border-color:rgba(10,132,255,0.30);
 }
 .unrec-section.unrec-final{padding-top:4px;margin-top:0}
@@ -5108,7 +5114,7 @@
   position:relative;flex-shrink:0;z-index:5;
   width:30px;height:30px;padding:0;
   display:inline-flex;align-items:center;justify-content:center;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(10,132,255,0.12);
   border:1px solid rgba(10,132,255,0.30);
   border-radius:8px;
@@ -5232,7 +5238,7 @@
   margin-top:2px;
 }
 .db-miss-tag.miss-hot{background:var(--miss-bg);color:var(--danger)}
-.db-miss-tag.miss-warm{background:rgba(0,122,255,0.12);color:var(--primary)}
+.db-miss-tag.miss-warm{background:rgba(0,122,255,0.12);color:var(--fg-ios-blue)}
 .db-miss-tag.miss-cold{background:var(--border);color:var(--sub-text)}
 .db-miss-tag.miss-deep{background:rgba(175,82,222,0.12);color:#AF52DE}
 
@@ -5284,17 +5290,18 @@
   white-space:nowrap;
   letter-spacing:var(--letter-tight);
 }
-.zone-peak{background:var(--zone-peak-bg);color:var(--zone-peak)}
-.zone-high{background:var(--zone-high-bg);color:var(--zone-high)}
-.zone-ovht{background:var(--zone-ovht-bg);color:var(--zone-ovht)}
-.zone-mid{background:var(--zone-mid-bg);color:var(--zone-mid)}
-.zone-active{background:var(--zone-active-bg);color:var(--zone-active)}
-.zone-low{background:var(--zone-low-bg);color:var(--zone-low)}
-.zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait)}
-.zone-6-peak{background:rgba(255,59,48,0.15);color:#FF3B30}
-.zone-6-high{background:rgba(255,149,0,0.18);color:#FF9500}
-.zone-6-mid{background:rgba(255,214,10,0.18);color:#FFD60A}
-.zone-6-wait{background:rgba(100,210,255,0.18);color:#64D2FF}
+/* v2.7.2 WCAG AA：zone 标签前景改用实算达标的 --zone-*-fg token（原前景=底色同色相，仅 1.7~3.5:1） */
+.zone-peak{background:var(--zone-peak-bg);color:var(--zone-peak-fg)}
+.zone-high{background:var(--zone-high-bg);color:var(--zone-high-fg)}
+.zone-ovht{background:var(--zone-ovht-bg);color:var(--zone-ovht-fg)}
+.zone-mid{background:var(--zone-mid-bg);color:var(--zone-mid-fg)}
+.zone-active{background:var(--zone-active-bg);color:var(--zone-active-fg)}
+.zone-low{background:var(--zone-low-bg);color:var(--zone-low-fg)}
+.zone-wait{background:var(--zone-wait-bg);color:var(--zone-wait-fg)}
+.zone-6-peak{background:rgba(255,59,48,0.15);color:#D62016}
+.zone-6-high{background:rgba(255,149,0,0.18);color:#A05D00}
+.zone-6-mid{background:rgba(255,214,10,0.18);color:var(--fg-yellow)}
+.zone-6-wait{background:rgba(100,210,255,0.18);color:var(--fg-ios-blue)}
 
 /* ========== 生肖预测卡片（金/银/铜牌） ========== */
 .zodiac-static-grid{
@@ -5369,7 +5376,7 @@
 }
 .freq-tab-btn.active{
   color:#fff;
-  background:var(--primary);
+  background:var(--primary-bg);
   font-weight:var(--fw-semibold);
   box-shadow:0 2px 8px rgba(0,122,255,0.30);
 }
@@ -5435,15 +5442,15 @@
   min-width:clamp(12px,2vw,16px);
   text-align:center;
 }
-.zod-card-count-badge.zone-peak{color:var(--zone-peak)}
-.zod-card-count-badge.zone-high{color:var(--zone-high)}
-.zod-card-count-badge.zone-ovht{color:var(--zone-ovht)}
-.zod-card-count-badge.zone-mid{color:var(--zone-mid)}
-.zod-card-count-badge.zone-active{color:var(--zone-active)}
-.zod-card-count-badge.zone-low{color:var(--zone-low)}
-.zod-card-count-badge.zone-wait{color:var(--zone-wait)}
-.drop-arrow{color:#FF3B30;font-size:10px;margin-left:2px;line-height:1}
-.drop-arrow-yellow{color:#FFCC00}
+.zod-card-count-badge.zone-peak{color:var(--zone-peak-fg)}
+.zod-card-count-badge.zone-high{color:var(--zone-high-fg)}
+.zod-card-count-badge.zone-ovht{color:var(--zone-ovht-fg)}
+.zod-card-count-badge.zone-mid{color:var(--zone-mid-fg)}
+.zod-card-count-badge.zone-active{color:var(--zone-active-fg)}
+.zod-card-count-badge.zone-low{color:var(--zone-low-fg)}
+.zod-card-count-badge.zone-wait{color:var(--zone-wait-fg)}
+.drop-arrow{color:var(--fg-ios-red);font-size:10px;margin-left:2px;line-height:1}
+.drop-arrow-yellow{color:var(--fg-yellow)}
 .zod-card-name{
   font-size:clamp(13px,2.2vw,17px);
   font-weight:var(--fw-bold);
@@ -5459,7 +5466,7 @@
 }
 .zod-card-count{
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(0,122,255,0.10);
   padding:2px 8px;
   border-radius:6px;
@@ -5471,13 +5478,13 @@
   padding:clamp(2px,0.4vw,3px) clamp(5px,1vw,8px);
   border-radius:6px;
 }
-.zod-card-miss.zone-peak{color:var(--zone-peak);background:var(--zone-peak-bg-12)}
-.zod-card-miss.zone-high{color:var(--zone-high);background:var(--zone-high-bg-12)}
-.zod-card-miss.zone-ovht{color:var(--zone-ovht);background:var(--zone-ovht-bg-12)}
-.zod-card-miss.zone-mid{color:var(--zone-mid);background:var(--zone-mid-bg-8)}
-.zod-card-miss.zone-active{color:var(--zone-active);background:var(--zone-active-bg-12)}
-.zod-card-miss.zone-low{color:var(--zone-low);background:var(--zone-low-bg)}
-.zod-card-miss.zone-wait{color:var(--zone-wait);background:var(--zone-wait-bg)}
+.zod-card-miss.zone-peak{color:var(--zone-peak-fg);background:var(--zone-peak-bg-12)}
+.zod-card-miss.zone-high{color:var(--zone-high-fg);background:var(--zone-high-bg-12)}
+.zod-card-miss.zone-ovht{color:var(--zone-ovht-fg);background:var(--zone-ovht-bg-12)}
+.zod-card-miss.zone-mid{color:var(--zone-mid-fg);background:var(--zone-mid-bg-8)}
+.zod-card-miss.zone-active{color:var(--zone-active-fg);background:var(--zone-active-bg-12)}
+.zod-card-miss.zone-low{color:var(--zone-low-fg);background:var(--zone-low-bg)}
+.zod-card-miss.zone-wait{color:var(--zone-wait-fg);background:var(--zone-wait-bg)}
 
 /* ========== 回测追踪模块 ========== */
 .backtest-summary{
@@ -5510,7 +5517,7 @@
   color:var(--text);
 }
 .backtest-rate-high{color:var(--green) !important}
-.backtest-rate-mid{color:var(--orange) !important}
+.backtest-rate-mid{color:var(--fg-orange) !important}
 .backtest-rate-low{color:var(--danger) !important}
 .backtest-breakdown{display:flex;gap:clamp(8px,2vw,14px);justify-content:center;flex-wrap:wrap}
 .backtest-breakdown-item{
@@ -5528,17 +5535,17 @@
   transition:background-color var(--anim-fast) var(--ease-out);
 }
 .backtest-record-row.backtest-hit{
-  border-left-color:#0A84FF;
+  border-left-color:var(--fg-ios-blue);
   background:rgba(10,132,255,0.06) !important;
 }
 .backtest-record-row.backtest-miss{
-  border-left-color:#FF453A;
+  border-left-color:var(--fg-red);
   background:rgba(255,69,58,0.06) !important;
 }
 .backtest-record-period{
   font-size:clamp(12px,2.5vw,15px);
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   margin-bottom:clamp(3px,0.6vw,6px);
 }
 .backtest-record-predict{
@@ -5560,8 +5567,8 @@
   font-weight:var(--fw-bold);
   letter-spacing:var(--letter-tight);
 }
-.prob-high{background:rgba(255,69,58,0.25);color:#FF453A}
-.prob-mid{background:rgba(255,149,0,0.20);color:#FF9500}
+.prob-high{background:rgba(255,69,58,0.25);color:var(--fg-red)}
+.prob-mid{background:rgba(255,149,0,0.20);color:var(--fg-orange)}
 .prob-low{background:rgba(90,200,250,0.20);color:#5AC8FA}
 .prob-mini{background:rgba(255,255,255,0.06);color:var(--sub-text)}
 
@@ -5569,14 +5576,14 @@
 .ultimate-expect-display{
   text-align:left;
   font-size:13px;
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   margin-top:4px;
   font-weight:var(--fw-semibold);
 }
 .adaptive-badge{
   display:inline-block;
   font-size:11px;
-  color:#FF9500;
+  color:var(--fg-orange);
   background:rgba(255,149,0,0.15);
   padding:2px 8px;
   border-radius:8px;
@@ -5609,7 +5616,7 @@
 .latest-zodiac{
   font-size:15px;
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(0,122,255,0.12);
   padding:5px 11px;
   border-radius:8px;
@@ -5643,7 +5650,7 @@
 .latest-follow-count{
   font-size:13px;
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   margin-bottom:2px;
 }
 .latest-follow-percent{
@@ -5689,11 +5696,11 @@
   line-height:1.4;
 }
 .size-seq-item.size-big{
-  color:#cf1322;
+  color:var(--attr-big-fg);
   background:rgba(255,77,79,0.12);
 }
 .size-seq-item.size-small{
-  color:#096dd9;
+  color:var(--attr-small-fg);
   background:rgba(24,144,255,0.12);
 }
 .size-seq-arrow{
@@ -5722,8 +5729,8 @@
   font-weight:var(--fw-bold);
   margin-bottom:4px;
 }
-.size-stat-big .size-stat-value{color:#cf1322}
-.size-stat-small .size-stat-value{color:#096dd9}
+.size-stat-big .size-stat-value{color:var(--attr-big-fg)}
+.size-stat-small .size-stat-value{color:var(--attr-small-fg)}
 .size-stat-percent{
   font-size:12px;
   color:var(--sub-text);
@@ -5750,8 +5757,9 @@
   font-weight:var(--fw-semibold);
   color:#fff;
 }
-.pattern-streak{background:linear-gradient(135deg, #faad14, #d48806)}
-.pattern-alternate{background:linear-gradient(135deg, #52c41a, #389e0d)}
+/* v2.7.2 WCAG AA：渐变底加深，确保白字 >= 4.5:1（原 #faad14 端点仅 1.90:1） */
+.pattern-streak{background:linear-gradient(135deg, #9C6703, #7A4F02)}
+.pattern-alternate{background:linear-gradient(135deg, #2E7D32, #1B5E20)}
 .pattern-count{font-size:10px;opacity:0.9}
 .size-trend-section{
   background:rgba(255,255,255,0.04);
@@ -5822,11 +5830,11 @@
   line-height:1.4;
 }
 .oddeven-seq-item.type-odd{
-  color:#9333EA;
+  color:var(--attr-odd-fg);
   background:rgba(191,90,242,0.12);
 }
 .oddeven-seq-item.type-even{
-  color:#EA580C;
+  color:var(--attr-even-fg);
   background:rgba(255,159,10,0.12);
 }
 .oddeven-seq-arrow{
@@ -6011,7 +6019,7 @@
   font-weight:var(--fw-medium);
 }
 .tail-follow-subtitle .tail-follow-current{
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   font-weight:var(--fw-bold);
   font-size:14px;
   margin:0 2px;
@@ -6031,7 +6039,7 @@
 .tail-follow-current-tag{
   font-size:15px;
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(0,122,255,0.12);
   padding:5px 11px;
   border-radius:8px;
@@ -6065,7 +6073,7 @@
 .tail-follow-count{
   font-size:13px;
   font-weight:var(--fw-bold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   margin-bottom:2px;
 }
 .tail-follow-percent{
@@ -6092,7 +6100,7 @@
 
 /* ========== 通用：未优化但用户高频使用的元素 ========== */
 .text-secondary{color:var(--sub-text)}
-.text-primary{color:var(--primary)}
+.text-primary{color:var(--fg-ios-blue)}
 .text-danger{color:var(--danger)}
 .text-success{color:var(--green)}
 .fw-semibold{font-weight:var(--fw-semibold)}
@@ -6106,4 +6114,186 @@
 ::-moz-selection{
   background:rgba(0,122,255,0.30);
   color:var(--text);
+}
+
+/* ===============================================
+   v2.7.2 触摸热区增强（WCAG 2.5.8 Target Size Minimum）
+   修复前：64 处可点击元素小于 44x44px（最小 30x30px）
+   修复后：用伪元素扩展命中区到 >=44px，视觉尺寸完全不变
+   原理：伪元素绝对定位溢出父容器，接收点击事件（父元素即事件委托目标）
+   =============================================== */
+
+/* 通用热区扩展工具类（供后续新组件复用） */
+.tap-target::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:max(100%,44px);
+  height:max(100%,44px);
+  pointer-events:auto;
+}
+
+/* ---- 分组管理按钮（30x30 → 44x44）---- */
+.filter-group-add,
+.filter-group-clear{
+  position:relative;
+}
+.filter-group-add::after,
+.filter-group-clear::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 分组标签（高 30px → 44px）---- */
+.filter-group-tab{
+  position:relative;
+}
+.filter-group-tab::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100%;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 图标按钮（36x36 → 44x44）---- */
+.btn-mini.btn-icon,
+.btn-icon{
+  position:relative;
+}
+.btn-mini.btn-icon::after,
+.btn-icon::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 迷你文字按钮（高 29px → 44px）---- */
+.btn-mini{
+  position:relative;
+}
+.btn-mini::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  min-width:100%;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 主按钮（高 42px → 44px）---- */
+.btn-line{
+  position:relative;
+}
+.btn-line::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100%;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 卡片头部操作按钮组（各图标按钮）---- */
+.card-header .btn-icon,
+.analysis-refresh-btn{
+  position:relative;
+}
+.card-header .btn-icon::after,
+.analysis-refresh-btn::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 复制按钮（28x28 → 44x44）---- */
+.db-copy-btn,
+.unrec-view-sources-btn,
+.latest-follow-copy-btn,
+.tail-follow-copy-btn{
+  position:relative;
+}
+.db-copy-btn::after,
+.unrec-view-sources-btn::after,
+.latest-follow-copy-btn::after,
+.tail-follow-copy-btn::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 关闭按钮（模态框 / 弹窗）---- */
+.batch-modal-close,
+.tail-backtest-close{
+  position:relative;
+}
+.batch-modal-close::after,
+.tail-backtest-close::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 导航折叠按钮 ---- */
+.bottom-nav-toggle{
+  position:relative;
+}
+.bottom-nav-toggle::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:max(100%,44px);
+  height:max(100%,44px);
+  pointer-events:auto;
+}
+
+/* ---- 标签（.tag 高 34px → 44px 命中区）---- */
+.tag{
+  position:relative;
+}
+.tag::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100%;
+  height:44px;
+  pointer-events:auto;
+}
+
+/* ---- 号码标签网格（.num-tags .tag 尺寸较小）---- */
+.num-tags .tag::after{
+  height:max(100%,40px);
+}
+
+/* ====== v2.1.1 WCAG AA 硬编码替换 ====== */
+.sw-freshness-expired{
+  color:var(--fg-red);
 }

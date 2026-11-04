@@ -689,7 +689,9 @@ const ViewCommon = {
     reversedSeq.forEach(function(item) {
       const val = item[valueKey] || item.value || '';
       const color = colors[val] || '#999';
-      html += '<span class="combined-seq-item ' + prefix + '-item" style="background:' + color + ';color:#fff;">' + val + '</span>';
+      // v2.7.2 WCAG AA：前景色按背景实算挑选黑/白（原写死 #fff，金色块上仅 1.4:1）
+      const fg = Utils.getAccessibleTextColor(color);
+      html += '<span class="combined-seq-item ' + prefix + '-item" style="background:' + color + ';color:' + fg + ';">' + val + '</span>';
     });
     html += '</div>';
 
@@ -703,7 +705,9 @@ const ViewCommon = {
           const total = config.total || 1;
           const percent = total > 0 ? Math.round((count / total) * 100) : 0;
           const color = colors[key] || '#999';
-          html += '<div class="' + prefix + '-stat"><span class="' + prefix + '-name" style="color:' + color + '">' + key + '</span><span class="' + prefix + '-count">' + count + '</span><span class="' + prefix + '-bar-bg"><span class="' + prefix + '-bar-fill" style="width:' + percent + '%;background:' + color + ';"></span></span><span class="' + prefix + '-pct">' + percent + '%</span></div>';
+          // v2.7.2 WCAG AA：文字前景由 CSS var(--text) 控制（自动跟随主题），
+          // 装饰色仅用于 bar-fill 背景，保证金/绿等浅色 on 白底的 1.4~2.3:1 不再出现
+          html += '<div class="' + prefix + '-stat"><span class="' + prefix + '-name">' + key + '</span><span class="' + prefix + '-count">' + count + '</span><span class="' + prefix + '-bar-bg"><span class="' + prefix + '-bar-fill" style="width:' + percent + '%;background:' + color + ';"></span></span><span class="' + prefix + '-pct">' + percent + '%</span></div>';
         });
         html += '</div>';
       }
@@ -714,7 +718,9 @@ const ViewCommon = {
       html += '<div class="combined-patterns">';
       config.patterns.forEach(function(p) {
         const pColor = colors[p.type.charAt(0)] || '#666';
-        html += '<span class="pattern-tag" style="background:' + pColor + ';color:#fff;">' + p.type + p.count + '</span>';
+        // v2.7.2 WCAG AA：前景按背景实算（绿底 #22C55E 上白字仅 2.28:1）
+        const pFg = Utils.getAccessibleTextColor(pColor);
+        html += '<span class="pattern-tag" style="background:' + pColor + ';color:' + pFg + ';">' + p.type + p.count + '</span>';
       });
       html += '</div>';
     }
@@ -727,7 +733,8 @@ const ViewCommon = {
         const wx = item.wuxing || item.prediction;
         if (!wx || wx === '-') return;
         const wxColor = colors[wx] || '#999';
-        html += '<span class="trend-predict ' + prefix + '-predict trend-top3-item" data-idx="' + idx + '" style="background:' + wxColor + ';color:#fff;">' + wx + '</span>';
+        const wxFg = Utils.getAccessibleTextColor(wxColor);
+        html += '<span class="trend-predict ' + prefix + '-predict trend-top3-item" data-idx="' + idx + '" style="background:' + wxColor + ';color:' + wxFg + ';">' + wx + '</span>';
         html += '<span class="trend-conf trend-top3-conf">' + item.confidence + '%</span>';
       });
       if (config.trendTop3[0] && config.trendTop3[0].reason) {
@@ -741,7 +748,8 @@ const ViewCommon = {
         const cl = item.color || item.prediction;
         if (!cl || cl === '-') return;
         const clColor = colors[cl] || '#999';
-        html += '<span class="trend-predict ' + prefix + '-predict trend-top2-item" data-idx="' + idx + '" style="background:' + clColor + ';color:#fff;">' + cl + '</span>';
+        const clFg = Utils.getAccessibleTextColor(clColor);
+        html += '<span class="trend-predict ' + prefix + '-predict trend-top2-item" data-idx="' + idx + '" style="background:' + clColor + ';color:' + clFg + ';">' + cl + '</span>';
         html += '<span class="trend-conf trend-top2-conf">' + item.confidence + '%</span>';
       });
       if (config.trendTop2[0] && config.trendTop2[0].reason) {
@@ -751,7 +759,8 @@ const ViewCommon = {
     } else if (config.trend && config.trend.prediction !== '-') {
       const predColor = colors[config.trend.prediction] || '#999';
       html += '<div class="combined-trend" data-action="' + config.trendAction + '" style="cursor:pointer;">';
-      html += '<span class="trend-predict ' + prefix + '-predict" style="background:' + predColor + ';color:#fff;">' + config.trend.prediction + '</span>';
+      const tFg = Utils.getAccessibleTextColor(predColor);
+      html += '<span class="trend-predict ' + prefix + '-predict" style="background:' + predColor + ';color:' + tFg + ';">' + config.trend.prediction + '</span>';
       html += '<span class="trend-conf">' + config.trend.confidence + '%</span>';
       if (config.trend.reason) html += '<span class="trend-reason">' + config.trend.reason + '</span>';
       html += '</div>';

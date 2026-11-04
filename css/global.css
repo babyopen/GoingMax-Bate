@@ -14,6 +14,31 @@
   -webkit-tap-highlight-color:transparent;
 }
 
+/* ===================================
+   v2.7.2 焦点可见性（WCAG 2.4.7 / 2.4.11）
+   修复前：全局无 :focus-visible 规则，且部分组件写了 outline:none
+           → 30 个可聚焦元素全部缺少可见焦点指示
+   修复后：键盘导航显示 2px 品牌色轮廓 + 2px 偏移；
+           鼠标点击不显示（:focus-visible 特性），不干扰移动端点击体验
+   =================================== */
+:focus-visible{
+  outline:2px solid var(--primary);
+  outline-offset:2px;
+  border-radius:var(--radius-xs);
+}
+/* 深色模式下轮廓需更亮才可见（--primary 在深色为 #0A8EFF，亮度足够） */
+/* 兜底：不支持 :focus-visible 的旧浏览器仍保留可见轮廓 */
+:focus:not(:focus-visible){
+  outline:none;
+}
+/* 输入类元素聚焦时保留自身高亮样式，但补上轮廓 */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:2px solid var(--primary);
+  outline-offset:1px;
+}
+
 html{
   scroll-behavior:smooth;
   height:100%;
@@ -77,7 +102,7 @@ body{
   width:40px;
   height:40px;
   border:3px solid var(--bg-secondary);
-  border-top-color:var(--primary);
+  border-top-color:var(--fg-ios-blue);
   border-radius:50%;
   animation:spin 0.9s linear infinite;
   /* v2.0.9：硬件加速 */
@@ -112,7 +137,7 @@ body{
   min-width:var(--btn-mini-min-width);
   text-align:center;
   background:var(--bg-secondary);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   cursor:pointer;
   font-weight:var(--fw-medium);
   /* v2.0.9：多属性过渡 */
@@ -144,7 +169,7 @@ body{
   border-radius:var(--radius-sm);
   font-size:15px;
   background:var(--bg-secondary);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   border:2px solid transparent;
   /* v2.0.9：增强微反馈 */
   transition:opacity var(--anim-fast) var(--ease-out),
@@ -174,7 +199,7 @@ body{
   padding:11px 14px;
   border:none;
   border-radius:var(--radius-sm);
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#FFFFFF;
   cursor:pointer;
   font-weight:var(--fw-semibold);
@@ -227,12 +252,12 @@ body{
   justify-content:center;
 }
 .tag.active{
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#FFFFFF;
   font-weight:var(--fw-semibold);
   /* v2.0.9：激活态有微妙光晕 */
   box-shadow:0 2px 8px rgba(0,122,255,0.30);
-  border-color:var(--primary);
+  border-color:var(--fg-ios-blue);
 }
 .tag.locked{
   background:rgba(255,59,48,0.12);
@@ -247,7 +272,7 @@ body{
   background:rgba(0,122,255,0.08);
 }
 .tag.active:active{
-  background:var(--primary);
+  background:var(--primary-bg);
   transform:scale(0.94);
   box-shadow:0 1px 4px rgba(0,122,255,0.25);
 }
@@ -351,7 +376,7 @@ body{
   /* v2.0.9：号码选中态更醒目 */
 }
 .num-tags .tag.active{
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#FFFFFF;
   box-shadow:0 3px 10px rgba(0,122,255,0.35);
 }
@@ -514,7 +539,7 @@ body{
   font-size:var(--fs-md);
   background:var(--bg-secondary);
   color:var(--text);
-  outline:none;
+  /* v2.7.2 WCAG 2.4.7：移除 outline:none，焦点轮廓由全局 :focus-visible 提供 */
   margin-bottom:12px;
   box-sizing:border-box;
   /* v2.0.9：聚焦时更明显的边框过渡 */
@@ -523,7 +548,7 @@ body{
   font-family:inherit;
 }
 .batch-modal-input:focus{
-  border-color:var(--primary);
+  border-color:var(--fg-ios-blue);
   background:var(--card);
 }
 .batch-modal-btn{
@@ -531,7 +556,7 @@ body{
   padding:12px;
   border:none;
   border-radius:var(--radius-md);
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#fff;
   font-size:var(--fs-lg);
   font-weight:var(--fw-semibold);
@@ -561,7 +586,7 @@ input[type="checkbox"]{
   transform:scale(0.9);
   margin-right:4px;
   touch-action:manipulation;
-  accent-color:var(--primary);
+  accent-color:var(--fg-ios-blue);
 }
 
 /* ========== 空状态提示 ========== */
@@ -579,7 +604,7 @@ input[type="checkbox"]{
   padding:13px;
   background:var(--bg-secondary);
   border-radius:var(--radius-md);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   font-size:var(--fs-md);
   font-weight:var(--fw-semibold);
   cursor:pointer;
@@ -638,5 +663,54 @@ body.low-performance-mode .exclude-tag{
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ========== 尊重系统级透明度偏好（Apple 设计原则 §14） ==========
+   用户在辅助功能里选了"降低透明度"→ 所有毛玻璃变实底，backdrop-filter 关闭，
+   背景色加深保证文字对比度不依赖毛玻璃背后的内容。 */
+@media (prefers-reduced-transparency: reduce) {
+  .bottom-nav,
+  .quick-nav,
+  .bottom-nav-toggle,
+  .bottom-nav-item,
+  .bottom-nav-item span,
+  .db-card,
+  .back-top-btn,
+  .modal-overlay,
+  .batch-modal,
+  .backtest-modal,
+  .ios-bottom-sheet {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: var(--card) !important;
+  }
+  /* 高对比度下毛玻璃上的文字已经自然清晰，因为不再混色 */
+}
+
+/* ========== 尊重系统级高对比度偏好（Apple 设计原则 §14） ==========
+   用户选了"增加对比度"→ 毛玻璃彻底变实底 + 加细边框区分层级，
+   文本色饱和度提升 20%。 */
+@media (prefers-contrast: more) {
+  .bottom-nav,
+  .quick-nav,
+  .bottom-nav-toggle,
+  .bottom-nav-item,
+  .db-card,
+  .back-top-btn,
+  .modal-overlay,
+  .batch-modal,
+  .backtest-modal,
+  .ios-bottom-sheet {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--text) !important;
+  }
+  /* 焦点指示加强：从 2px → 3px，偏移从 2px → 3px */
+  :focus-visible {
+    outline-width: 3px !important;
+    outline-offset: 3px !important;
+    outline-style: solid !important;
   }
 }

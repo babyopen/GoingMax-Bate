@@ -23,10 +23,11 @@
   border:1px solid var(--border);border-radius:12px;padding:10px 8px;font-size:13px;
   background:var(--card);color:var(--text);transition:border var(--anim-fast);
 }
-.analysis-filter-select:focus,.analysis-filter-input:focus{border-color:var(--primary);outline:none}
+/* v2.7.2 WCAG 2.4.7：移除 outline:none，焦点轮廓交由全局 :focus-visible 统一提供 */
+.analysis-filter-select:focus,.analysis-filter-input:focus{border-color:var(--fg-ios-blue)}
 .analysis-filter-select{flex:1;min-width:70px}
 .analysis-filter-input{flex:0.8;min-width:60px}
-.analysis-filter-btn{background:var(--primary);color:#fff;border:none;cursor:pointer;font-weight:600;flex-shrink:0;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.analysis-filter-btn{background:var(--primary-bg);color:#fff;border:none;cursor:pointer;font-weight:600;flex-shrink:0;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .analysis-filter-btn:active{opacity:0.7}
 
 /* 分析标签栏 */
@@ -37,7 +38,7 @@
   cursor:pointer;transition:all var(--anim-fast);touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
 .analysis-tab-btn.active{background:var(--danger);color:#fff}
-.analysis-tab-btn[data-analysis-tab="analysis"].active{background:var(--primary);color:#fff}
+.analysis-tab-btn[data-analysis-tab="analysis"].active{background:var(--primary-bg);color:#fff}
 .analysis-tab-btn[data-analysis-tab="zodiac"].active{background:#13a662;color:#fff}
 
 /* 资料页标签栏 */
@@ -47,7 +48,7 @@
   font-size:clamp(12px,2.5vw,15px);font-weight:600;background:var(--bg-secondary);color:var(--sub-text);
   cursor:pointer;transition:all var(--anim-fast);touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
-.zodiac-tab-btn.active{background:var(--primary);color:#fff}
+.zodiac-tab-btn.active{background:var(--primary-bg);color:#fff}
 .zodiac-tab-btn[data-zodiac-tab="giong"].active{background:#AF52DE;color:#fff}
 .zodiac-tab-panel{display:none}
 .zodiac-tab-panel.active{display:block}
@@ -103,7 +104,7 @@
 }
 .freq-swiper-dots{display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 0 8px;background:var(--card);flex-shrink:0}
 .freq-swiper-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s ease;cursor:pointer}
-.freq-swiper-dot.active{width:24px;border-radius:4px;background:var(--primary)}
+.freq-swiper-dot.active{width:24px;border-radius:4px;background:var(--primary-bg)}
 
 /* 区域Swiper容器（v2.0.9 同样去掉 pan-y 让垂直滚动穿透外层） */
 .zone-swiper-container{
@@ -120,7 +121,7 @@
 }
 .zone-swiper-dots{display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 0 8px}
 .zone-swiper-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s ease;cursor:pointer}
-.zone-swiper-dot.active{width:24px;border-radius:4px;background:var(--primary)}
+.zone-swiper-dot.active{width:24px;border-radius:4px;background:var(--primary-bg)}
 
 /* 预测网格特殊布局 */
 #zodiacPredictionGrid{display:flex;flex-direction:column;width:100%;height:auto;min-height:auto}
@@ -146,7 +147,7 @@
 
 /* 切换按钮 */
 .toggle-btn{
-  font-size:12px;font-weight:600;color:var(--primary);background:rgba(0,122,255,0.1);
+  font-size:12px;font-weight:600;color:var(--fg-ios-blue);background:rgba(0,122,255,0.1);
   padding:4px 10px;border-radius:10px;cursor:pointer;border:none;transition:background var(--anim-fast);
   touch-action:manipulation;-webkit-user-select:none;user-select:none;
 }
@@ -389,7 +390,7 @@
   box-shadow:0 2px 8px rgba(255,59,48,0.30);
 }
 .analysis-tab-btn[data-analysis-tab="analysis"].active{
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#fff;
   box-shadow:0 2px 8px rgba(0,122,255,0.30);
 }
@@ -399,7 +400,7 @@
   box-shadow:0 2px 8px rgba(19,166,98,0.30);
 }
 .zodiac-tab-btn.active{
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#fff;
   box-shadow:0 2px 8px rgba(0,122,255,0.30);
 }
@@ -438,17 +439,17 @@
              background-color var(--anim-fast) var(--ease-out),
              box-shadow var(--anim-fast) var(--ease-out);
 }
+/* v2.7.2 WCAG 2.4.7：移除 outline:none，改由全局 :focus-visible 提供可见焦点轮廓 */
 .analysis-filter-select:focus,
 .analysis-filter-input:focus{
-  border-color:var(--primary);
-  outline:none;
+  border-color:var(--fg-ios-blue);
   background:var(--card);
   box-shadow:0 0 0 3px rgba(0,122,255,0.10);
 }
 .analysis-filter-select{flex:1;min-width:70px}
 .analysis-filter-input{flex:0.8;min-width:60px}
 .analysis-filter-btn{
-  background:var(--primary);
+  background:var(--primary-bg);
   color:#fff;
   border:none;
   cursor:pointer;
@@ -506,7 +507,7 @@
 .toggle-btn{
   font-size:12px;
   font-weight:var(--fw-semibold);
-  color:var(--primary);
+  color:var(--fg-ios-blue);
   background:rgba(0,122,255,0.10);
   padding:5px 12px;
   border-radius:var(--radius-sm);
@@ -552,4 +553,10 @@
   .body-box{padding:0 10px;padding-bottom:calc(70px + var(--safe-bottom))}
   .top-box{padding:calc(8px + var(--safe-top)) 10px 8px}
   .top-card{padding:12px}
+}
+
+/* ====== v2.1.1 WCAG AA 硬编码替换 ====== */
+.analysis-tab-btn[data-analysis-tab="zodiac"].active{
+  background:var(--green-btn-bg);
+  box-shadow:0 2px 8px rgba(29,127,53,0.30);
 }

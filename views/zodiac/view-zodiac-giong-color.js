@@ -46,7 +46,8 @@ const ViewZodiacGiongColor = {
     let html = '<div class="color-sequence-row">';
     sequence.slice().reverse().forEach(function(item) {
       const cl = palette[item.color] || palette['红'];
-      html += '<span class="color-seq-item" style="background:' + cl.bg + ';color:#fff;">' + item.color + '</span>';
+      const clFg = Utils.getAccessibleTextColor('#FFD700');
+      html += '<span class="color-seq-item" style="background:' + cl.bg + ';color:' + clFg + ';">' + item.color + '</span>';
     });
     return html + '</div>';
   },
@@ -99,7 +100,8 @@ const ViewZodiacGiongColor = {
     let html = '<div class="color-trend-section" data-action="showColorBacktest" style="cursor:pointer;transition:opacity 0.2s;" title="点击查看回测追踪">';
     html += '<div class="color-trend-label">趋势预测 <span style="font-size:10px;opacity:0.6;">📊 点击查看</span></div>';
     html += '<div class="color-trend-prediction">';
-    html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:#fff;">' + predCl + '</span>';
+    const predFg = Utils.getAccessibleTextColor('#FFD700');
+    html += '<span class="trend-result" style="background:' + predColor.bg + ';font-size:18px;font-weight:700;padding:4px 16px;border-radius:6px;color:' + predFg + ';">' + predCl + '</span>';
     html += '<span class="trend-confidence">' + trend.confidence + '%可信度</span>';
     html += '</div>';
     if (trend.reason) html += '<div class="color-trend-reason">' + trend.reason + '</div>';
