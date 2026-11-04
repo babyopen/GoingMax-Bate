@@ -740,3 +740,148 @@
 .backtest-record-row.backtest-miss{
   border-left-color:var(--fg-red);
 }
+
+/* ===============================================
+   v2.1.3 iOS 26 Liquid Glass —— 底部导航液态玻璃
+   仅追加，不修改任何原有规则
+   核心：blur 40px 强雾化 + brightness 奶白 + inset 镜面高光 + 受光渐变底
+   解决：旧版 rgba(255,255,255,0.65) + blur(28px) 视觉太"透"，看不出磨砂
+   =============================================== */
+:root{
+  --nav-liquid-blur:40px;
+  --nav-liquid-saturate:220%;
+  --nav-liquid-brightness:1.08;
+  /* 受光渐变：顶部略亮（受光面）、底部略实（挡光面），模拟玻璃厚度 */
+  --nav-liquid-bg:linear-gradient(to bottom,
+    rgba(255,255,255,0.72) 0%,
+    rgba(255,255,255,0.60) 100%);
+  /* 顶部 1px 镜面高光（玻璃边缘反光）+ 底部微暗（厚度感） */
+  --nav-liquid-highlight:inset 0 1px 0 rgba(255,255,255,0.65);
+  --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.04);
+}
+
+/* ====== 底部导航栏 · Liquid Glass 主体 ====== */
+.bottom-nav{
+  -webkit-backdrop-filter:blur(var(--nav-liquid-blur)) saturate(var(--nav-liquid-saturate)) brightness(var(--nav-liquid-brightness));
+  backdrop-filter:blur(var(--nav-liquid-blur)) saturate(var(--nav-liquid-saturate)) brightness(var(--nav-liquid-brightness));
+  background:var(--nav-liquid-bg);
+  box-shadow:
+    var(--nav-liquid-highlight),
+    var(--nav-liquid-inner-shade),
+    0 8px 32px rgba(0,0,0,0.10),
+    0 0 0 0.5px rgba(255,255,255,0.35);
+}
+
+/* ====== 圆形切换按钮 · 同步 Liquid Glass（与导航栏视觉一体） ======
+   注意：特异性 (0,1,0) 低于 .bottom-nav-toggle.active (0,2,0)，
+   active 态背景与红色阴影不受影响 */
+.bottom-nav-toggle{
+  -webkit-backdrop-filter:blur(var(--nav-liquid-blur)) saturate(var(--nav-liquid-saturate)) brightness(var(--nav-liquid-brightness));
+  backdrop-filter:blur(var(--nav-liquid-blur)) saturate(var(--nav-liquid-saturate)) brightness(var(--nav-liquid-brightness));
+  background:var(--nav-liquid-bg);
+  box-shadow:
+    var(--nav-liquid-highlight),
+    0 4px 16px rgba(0,0,0,0.08),
+    0 0 0 0.5px rgba(255,255,255,0.35);
+}
+
+/* ====== 深色模式 · Liquid Glass（深色玻璃需提亮才能透出模糊内容） ====== */
+@media (prefers-color-scheme: dark){
+  :root{
+    --nav-liquid-brightness:1.25;
+    --nav-liquid-bg:linear-gradient(to bottom,
+      rgba(58,58,60,0.72) 0%,
+      rgba(28,28,30,0.62) 100%);
+    --nav-liquid-highlight:inset 0 1px 0 rgba(255,255,255,0.18);
+    --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.25);
+  }
+  .bottom-nav{
+    box-shadow:
+      var(--nav-liquid-highlight),
+      var(--nav-liquid-inner-shade),
+      0 8px 32px rgba(0,0,0,0.45),
+      0 0 0 0.5px rgba(255,255,255,0.12);
+  }
+  .bottom-nav-toggle{
+    box-shadow:
+      var(--nav-liquid-highlight),
+      0 4px 16px rgba(0,0,0,0.40),
+      0 0 0 0.5px rgba(255,255,255,0.12);
+  }
+}
+[data-theme="dark"]{
+  --nav-liquid-brightness:1.25;
+  --nav-liquid-bg:linear-gradient(to bottom,
+    rgba(58,58,60,0.72) 0%,
+    rgba(28,28,30,0.62) 100%);
+  --nav-liquid-highlight:inset 0 1px 0 rgba(255,255,255,0.18);
+  --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.25);
+}
+[data-theme="dark"] .bottom-nav{
+  box-shadow:
+    var(--nav-liquid-highlight),
+    var(--nav-liquid-inner-shade),
+    0 8px 32px rgba(0,0,0,0.45),
+    0 0 0 0.5px rgba(255,255,255,0.12);
+}
+[data-theme="dark"] .bottom-nav-toggle{
+  box-shadow:
+    var(--nav-liquid-highlight),
+    0 4px 16px rgba(0,0,0,0.40),
+    0 0 0 0.5px rgba(255,255,255,0.12);
+}
+
+/* ====== 低端设备降级 · 保性能（置末压过本补丁主规则的 40px blur） ====== */
+@media (max-width: 375px), (max-height: 667px){
+  .bottom-nav,
+  .bottom-nav-toggle{
+    -webkit-backdrop-filter:blur(16px) saturate(160%) brightness(var(--nav-liquid-brightness));
+    backdrop-filter:blur(16px) saturate(160%) brightness(var(--nav-liquid-brightness));
+  }
+}
+
+/* ===============================================
+   v2.1.4 Liquid Glass 加强版 —— 更浓雾化、更不透明
+   仅追加，不修改任何原有规则
+   通过重定义变量生效（主规则引用 var()，自动解析为新值）
+   加强：blur 40→56px / 底色不透明度 +10% / 高光加粗至 1.5px
+   =============================================== */
+:root{
+  --nav-liquid-blur:56px;
+  --nav-liquid-saturate:240%;
+  --nav-liquid-brightness:1.12;
+  --nav-liquid-bg:linear-gradient(to bottom,
+    rgba(255,255,255,0.82) 0%,
+    rgba(255,255,255,0.70) 100%);
+  --nav-liquid-highlight:inset 0 1.5px 0 rgba(255,255,255,0.80);
+  --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.06);
+}
+
+/* ====== 深色模式 · 加强版变量 ====== */
+@media (prefers-color-scheme: dark){
+  :root{
+    --nav-liquid-brightness:1.35;
+    --nav-liquid-bg:linear-gradient(to bottom,
+      rgba(68,68,70,0.80) 0%,
+      rgba(28,28,30,0.72) 100%);
+    --nav-liquid-highlight:inset 0 1.5px 0 rgba(255,255,255,0.25);
+    --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.35);
+  }
+}
+[data-theme="dark"]{
+  --nav-liquid-brightness:1.35;
+  --nav-liquid-bg:linear-gradient(to bottom,
+    rgba(68,68,70,0.80) 0%,
+    rgba(28,28,30,0.72) 100%);
+  --nav-liquid-highlight:inset 0 1.5px 0 rgba(255,255,255,0.25);
+  --nav-liquid-inner-shade:inset 0 -1px 0 rgba(0,0,0,0.35);
+}
+
+/* ====== 低端设备降级 · 同步略升（置末压过 v2.1.3 的 16px） ====== */
+@media (max-width: 375px), (max-height: 667px){
+  .bottom-nav,
+  .bottom-nav-toggle{
+    -webkit-backdrop-filter:blur(22px) saturate(180%) brightness(var(--nav-liquid-brightness));
+    backdrop-filter:blur(22px) saturate(180%) brightness(var(--nav-liquid-brightness));
+  }
+}

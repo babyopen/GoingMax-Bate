@@ -714,3 +714,28 @@ body.low-performance-mode .exclude-tag{
     outline-style: solid !important;
   }
 }
+
+/* ===============================================
+   v2.1.5 号码球放大 —— 用户反馈球号数字太小
+   仅追加，不修改任何原有规则
+   28px→32px / 13px→15px；小屏同步放大 26→29px / 12→13px
+   .top-nums 容器 overflow-y:auto，放大后超高自动滚动，不破坏布局
+   =============================================== */
+.num-ball{
+  width:32px;
+  height:32px;
+  font-size:15px;
+}
+@media (max-width: 375px) {
+  .num-ball{width:29px;height:29px;font-size:13px}
+}
+
+/* ===============================================
+   v2.1.6 选中标签移除边框 —— 用户反馈选中态边框多余
+   仅追加，不修改任何原有规则
+   原 .tag.active 有 border-color:var(--fg-ios-blue)（254 行），
+   选中态改回透明边框，保留背景色+光晕表达选中
+   =============================================== */
+.tag.active{
+  border-color:transparent;
+}

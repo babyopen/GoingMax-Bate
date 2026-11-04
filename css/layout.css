@@ -560,3 +560,9 @@
   background:var(--green-btn-bg);
   box-shadow:0 2px 8px rgba(29,127,53,0.30);
 }
+
+/* ====== v2.1.5 号码球放大 · 小屏同步（压过上方 273 行的 26px/12px） ======
+   layout.css 加载晚于 global.css，此处才能覆盖本文件内的小屏降级 */
+@media (max-width: 375px) {
+  .num-ball{width:29px;height:29px;font-size:13px}
+}
